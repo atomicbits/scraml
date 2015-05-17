@@ -18,7 +18,7 @@ object Resource {
 
     val oldActionsList: List[org.raml.model.Action] = resource.getActions.values().asScala.toSet.toList
     val newActionList = oldActionsList.map(a => Action(a))
-    
+
     Resource(relativeUri, uriParameters, newActionList)
   }
 
