@@ -1,4 +1,4 @@
-This is your new Play application
-=================================
+Scala RAML client generator
+===========================
 
-This file will be packaged with your application, when using `activator dist`.
+This is Spike code to start build a Scala client library generator based on RAML definition files.
