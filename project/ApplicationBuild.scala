@@ -19,9 +19,7 @@ with Dependencies {
     base = file("modules/scramlgen"),
     settings = projectSettings(dependencies = scramlgenDeps ++ testDeps)
   ) settings(
-    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository",
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
-    incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
+    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository"
     ) dependsOn scramlgenParser
 
   val scramlgenTest = Project(
