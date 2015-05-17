@@ -1,9 +1,11 @@
-package io.atomicbits.scramlgen.parser.domain.service
+package io.atomicbits.scraml
 
 import java.io.InputStream
+
 import org.raml.model.Raml
 import org.raml.parser.rule.ValidationResult
-import org.raml.parser.visitor.{RamlValidationService, RamlDocumentBuilder}
+import org.raml.parser.visitor.{RamlDocumentBuilder, RamlValidationService}
+
 import scala.collection.JavaConverters._
 
 /**
@@ -13,7 +15,7 @@ import scala.collection.JavaConverters._
  */
 object RamlService {
 
-  def build(path: String): Raml = {
+  def buildRaml(path: String): Raml = {
     new RamlDocumentBuilder().build(getInputStream(path), path)
   }
 

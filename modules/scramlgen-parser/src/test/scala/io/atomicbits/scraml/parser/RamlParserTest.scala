@@ -1,12 +1,12 @@
-package io.atomicbits.scramlgen.parser
+package io.atomicbits.scraml.parser
 
-import io.atomicbits.scramlgen.parser.domain.service.RamlService
+import io.atomicbits.scraml.{RamlService, _}
 import org.raml.model._
 import org.raml.parser.rule.ValidationResult
-import org.raml.parser.visitor.RamlValidationService
-import org.scalatest._
-import scala.collection.JavaConverters._
 import org.scalatest.Matchers._
+import org.scalatest._
+
+import scala.collection.JavaConverters._
 
 /**
  * Created by peter on 12/05/15, Atomic BITS bvba (http://atomicbits.io). 
@@ -34,12 +34,25 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       val ramlSource = "io/atomicbits/rules/instagram.yaml"
 
       When("we build the RAML model")
-      val raml: Raml = RamlService.build(ramlSource)
+      val raml: Raml = RamlService.buildRaml(ramlSource)
 
       Then("we get a valid RAML model")
       val locationsResource = raml.getResources.asScala.get("/locations")
       locationsResource shouldBe defined
       println(prettyResource(locationsResource.get))
+
+    }
+
+    scenario("test Raml.asScala version of the RAML model") {
+
+      Given("the source of a valid RAML model")
+      val ramlSource = "io/atomicbits/rules/instagram.yaml"
+
+      When("we build the RAML.asScala model")
+      val raml = RamlService.buildRaml(ramlSource).asScala
+
+      Then("we get a valid RAML Scala model")
+      println(s"Scala RAML model: $raml")
 
     }
 
@@ -91,7 +104,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       body match {
         case Some(bdy) =>
           bdy.keys.map { key =>
-            s"$key -> ${Option(bdy(key)).map(_.getType).getOrElse("")}"
+            s"$key --> ${Option(bdy(key)).map(_.getType).getOrElse("")}"
           }.mkString(", ")
         case _ => "no body"
       }
