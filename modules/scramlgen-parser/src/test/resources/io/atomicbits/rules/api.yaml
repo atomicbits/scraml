@@ -1,0 +1,31 @@
+#%RAML 0.8
+---
+title: test
+version: v1
+
+schemas:
+  - gebruiker-basis:      |
+  {
+    "void": "6c9d8748-c70e-4ee3-b042-6f198cf0403e",
+    "voornaam": "Jan",
+    "naam": "Janssens",
+    "organisatie": {
+      "code": "1M8KAI",
+      "naam": "Contracten"
+    },
+    "functie": "Contractbeheerder"
+  }
+
+
+/rest/gebruiker/{void}:
+    uriParameters:
+      void:
+        description: De Vo ID van de gevraagde gebruiker.
+        type: string
+    description: Vraag beperkte, niet privacy-gevoelige gegevens op van een gebruiker.
+    get:
+      responses:
+        200:
+          body:
+             application/vnd.awv.po-v3.0+json:
+                schema: gebruiker-basis

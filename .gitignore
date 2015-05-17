@@ -1,0 +1,7 @@
+modules/scramlgen-parser/target
+modules/scramlgen-test/target
+modules/scramlgen-testdef/target
+modules/scramlgen/target
+project/project/target
+project/target
+target
