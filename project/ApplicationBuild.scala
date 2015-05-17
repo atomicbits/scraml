@@ -1,5 +1,3 @@
-
-//import play.PlayScala
 import sbt.Keys._
 import sbt._
 
@@ -19,7 +17,7 @@ with Dependencies {
     base = file("modules/scramlgen"),
     settings = projectSettings(dependencies = scramlgenDeps ++ testDeps)
   ) settings(
-    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository"
+    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository" // why does Resolver.mavenLocal not work?
     ) dependsOn scramlgenParser
 
   val scramlgenTest = Project(
