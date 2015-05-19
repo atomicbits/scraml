@@ -23,15 +23,13 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
               validAcceptHeaders = List("application/json"),
               req = request
             ) {
-              //              def execute() =
-
 
               def headers(headers: Map[String, String]) = new HeaderPathElement(
                 headers = headers,
                 req = request
               ) {
 
-                def format = new FormatPathElement(request) {
+                def formatJson = new FormatJsonPathElement(request) {
                   def execute() = new ExecutePathElement(request).execute()
                 }
 
@@ -96,7 +94,7 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
       When("we create an instance of Foo")
 
       XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").get(opschrift = 2.0, afstand = 50, crs = Option(123))
-        .headers(Map("Accept" -> "application/json")).format.execute()
+        .headers(Map("Accept" -> "application/json")).formatJson.execute()
 
       XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").put("body")
         .headers(Map("Content-Type" -> "application/json", "Accept" -> "application/json")).execute()

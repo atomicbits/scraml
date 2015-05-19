@@ -103,9 +103,9 @@ class PutPathElement(body: String,
 }
 
 
-class FormatPathElement(req: Request) extends PathElement {
+class FormatJsonPathElement(req: Request) extends PathElement {
 
-  protected val request = req.copy(formatResultBody = true)
+  protected val request = req.copy(formatJsonResultBody = true)
 
 }
 
@@ -152,4 +152,4 @@ case class Request(protocol: String,
                    validContentTypeHeaders: List[String] = Nil,
                    headers: Map[String, String] = Map(),
                    body: Option[String] = None,
-                   formatResultBody: Boolean = false)
+                   formatJsonResultBody: Boolean = false)
