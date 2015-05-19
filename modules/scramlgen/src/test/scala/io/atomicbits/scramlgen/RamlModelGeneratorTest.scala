@@ -21,7 +21,7 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
    *
    * XoClient("http://host:8080").rest.locatie.weglocatie.weg.ident8("N0080001").delete()
    * --> Future[Result]
-   * 
+   *
    */
 
 
