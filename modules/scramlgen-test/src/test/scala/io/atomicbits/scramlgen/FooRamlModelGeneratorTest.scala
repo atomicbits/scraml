@@ -25,7 +25,12 @@ import scala.concurrent.Future
 
 sealed trait PathElement {
 
-  def request: Request
+  protected def request: Request
+
+  def headers(headers: List[(String, String)], req: Request): PathElement = {
+    this
+  }
+
 }
 
 case class PlainPathElement(pathElement: String, req: Request) extends PathElement {
@@ -69,21 +74,6 @@ case class PutPathElement(body: String, req: Request) extends MethodPathElement 
 
 }
 
-trait AcceptEntryPathElement
-
-trait ContentTypeEntryPathElement
-
-case class AcceptPathElement(accept: String, req: Request) {
-
-  val request = req.copy(acceptHeader = accept)
-
-}
-
-case class ContentTypePathElement(contentType: String, req: Request) {
-
-  val request = req.copy(contentTypeHeader = contentType)
-
-}
 
 case class FormatPathElement(req: Request) {
 
@@ -130,8 +120,8 @@ case class Request(protocol: String,
                    reversePath: List[String] = Nil,
                    method: Method = Get,
                    queryParameters: Map[String, String] = Map.empty,
-                   acceptHeader: String = "text/html",
-                   contentTypeHeader: String = "text/html",
+                   validAcceptHeaders: List[String] = Nil,
+                   validContentTypeHeaders: List[String] = Nil,
                    body: Option[String] = None,
                    formatResultBody: Boolean = false)
 
@@ -154,27 +144,19 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
             ) {
               //              def execute() =
 
-              def accept = new AcceptEntryPathElement {
-                def applicationJson = new AcceptPathElement("application/json", request) {
-                  def format = new FormatPathElement(request) {
-                    def execute() = new ExecutePathElement(request).execute()
-                  }
 
-                  def execute() = new ExecutePathElement(request).execute()
-                }
+              def format = new FormatPathElement(request) {
+                def execute() = new ExecutePathElement(request).execute()
               }
+
+              def execute() = new ExecutePathElement(request).execute()
             }
 
+
             def put(body: String) = new PutPathElement(body, request) {
-              def contentType = new ContentTypeEntryPathElement {
-                def applicationJson = new ContentTypePathElement("application/json", request) {
-                  def accept = new AcceptEntryPathElement {
-                    def applicationJson = new AcceptPathElement("application/json", request) {
-                      def execute() = new ExecutePathElement(request).execute()
-                    }
-                  }
-                }
-              }
+
+              def execute() = new ExecutePathElement(request).execute()
+
             }
           }
         }
@@ -198,13 +180,12 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       When("we create an instance of Foo")
       XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").get(opschrift = 2.0, afstand = 50, crs = Option(123))
-        .accept.applicationJson.format.execute()
+        .format.execute()
       println("Creating foo: ")
 
       val foo = Foo("hello")
 
-      XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").put("body")
-        .contentType.applicationJson.accept.applicationJson.execute()
+      XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").put("body").execute()
 
       Then("we should be able to print foo")
       println(s"foo: $foo")
