@@ -63,7 +63,15 @@ case class GetPathElement(queryParams: List[(String, Option[String])], req: Requ
 
 }
 
+case class PutPathElement(body: String, req: Request) extends MethodPathElement {
+
+  val request = req.copy(method = Put, body = Option(body))
+
+}
+
 trait AcceptEntryPathElement
+
+trait ContentTypeEntryPathElement
 
 case class AcceptPathElement(accept: String, req: Request) {
 
@@ -71,9 +79,15 @@ case class AcceptPathElement(accept: String, req: Request) {
 
 }
 
+case class ContentTypePathElement(contentType: String, req: Request) {
+
+  val request = req.copy(contentTypeHeader = contentType)
+
+}
+
 case class FormatPathElement(req: Request) {
 
-  val request = req.copy(format = true)
+  val request = req.copy(formatResultBody = true)
 
 }
 
@@ -100,10 +114,15 @@ case object Opt extends Method
 
 case object Patch extends Method
 
-trait AcceptHeader {
+trait MediaTypeHeader {
 
   def mediaType: String
+
 }
+
+trait AcceptHeader extends MediaTypeHeader
+
+trait ContentTypeHeader extends MediaTypeHeader
 
 case class Request(protocol: String,
                    host: String,
@@ -112,7 +131,9 @@ case class Request(protocol: String,
                    method: Method = Get,
                    queryParameters: Map[String, String] = Map.empty,
                    acceptHeader: String = "text/html",
-                   format: Boolean = false)
+                   contentTypeHeader: String = "text/html",
+                   body: Option[String] = None,
+                   formatResultBody: Boolean = false)
 
 case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
 
@@ -143,6 +164,18 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
                 }
               }
             }
+
+            def put(body: String) = new PutPathElement(body, request) {
+              def contentType = new ContentTypeEntryPathElement {
+                def applicationJson = new ContentTypePathElement("application/json", request) {
+                  def accept = new AcceptEntryPathElement {
+                    def applicationJson = new AcceptPathElement("application/json", request) {
+                      def execute() = new ExecutePathElement(request).execute()
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -167,7 +200,11 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
       XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").get(opschrift = 2.0, afstand = 50, crs = Option(123))
         .accept.applicationJson.format.execute()
       println("Creating foo: ")
+
       val foo = Foo("hello")
+
+      XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").put("body")
+        .contentType.applicationJson.accept.applicationJson.execute()
 
       Then("we should be able to print foo")
       println(s"foo: $foo")
