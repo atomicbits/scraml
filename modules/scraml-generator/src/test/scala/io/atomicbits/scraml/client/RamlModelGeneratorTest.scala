@@ -4,21 +4,23 @@ import io.atomicbits.scraml._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 import scala.language.reflectiveCalls
 
-
+/**
+ * This code is manually written to understand what kind of code we need to generate to support the DSL.
+ */
 case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
 
   val request = Request(protocol, host, port)
 
   def rest = new PlainPathElement("rest", request) {
-    def locatie = new PlainPathElement("locatie", request) {
-      def weglocatie = new PlainPathElement("weglocatie", request) {
-        def weg = new PlainPathElement("weg", request) {
-          def ident8(value: String) = new StringPathElement(value, request) {
-            def get(opschrift: Double, afstand: Int, crs: Option[Int] = None) = new GetPathElement(
+    def some = new PlainPathElement("some", request) {
+      def smart = new PlainPathElement("smart", request) {
+        def webservice = new PlainPathElement("webservice", request) {
+          def pathparam(value: String) = new StringPathElement(value, request) {
+            def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetPathElement(
               queryParams = Map(
-                "opschrift" -> Option(opschrift).map(_.toString),
-                "afstand" -> Option(afstand).map(_.toString),
-                "crs" -> crs.map(_.toString)
+                "queryparX" -> Option(queryparX).map(_.toString),
+                "queryparY" -> Option(queryparY).map(_.toString),
+                "queryParZ" -> queryParZ.map(_.toString)
               ),
               validAcceptHeaders = List("application/json"),
               req = request
@@ -60,29 +62,10 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
 
 }
 
-
 /**
  * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
  */
 class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
-
-  /**
-   * Proposed DSL:
-   *
-   * XoClient("http://host:8080").rest.locatie.weglocatie.weg.ident8("N0080001").get.query(opschrift=2.0, afstand=50, crs=Option(123)).accept(ApplicationJson).format.exec()
-   * --> Future[Result(200, FormattedJson(...))]
-   *
-   * XoClient("http://host:8080").rest.locatie.weglocatie.weg.post(PostData(...)).content(ApplicationJson).accept(ApplicationJson)
-   * --> Future[Result]
-   *
-   * XoClient("http://host:8080").rest.locatie.weglocatie.weg.put(PostData(...)).content(ApplicationJson).accept(ApplicationJson)
-   * --> Future[Result]
-   *
-   * XoClient("http://host:8080").rest.locatie.weglocatie.weg.ident8("N0080001").delete()
-   * --> Future[Result]
-   *
-   */
-
 
   feature("generate a foo case class") {
 
@@ -94,14 +77,14 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
       When("we create an instance of Foo")
 
       XoClient(protocol = "http", host = "host", port = 8080)
-        .rest.locatie.weglocatie.weg.ident8("N0080001")
-        .get(opschrift = 2.0, afstand = 50, crs = Option(123))
+        .rest.some.smart.webservice.pathparam("path-param-value")
+        .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
         .headers("Accept" -> "application/json")
         .formatJson
         .execute()
 
       XoClient(protocol = "http", host = "host", port = 8080)
-        .rest.locatie.weglocatie.weg.ident8("N0080001")
+        .rest.some.smart.webservice.pathparam("path-param-value")
         .put("body")
         .headers(
           "Content-Type" -> "application/json",
@@ -109,7 +92,7 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
         )
         .execute()
 
-      Then("we should be able to print foo")
+      Then("we should see the generated Request model printed out")
 
     }
   }

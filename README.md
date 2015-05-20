@@ -2,7 +2,7 @@ Scala RAML client generator
 ===========================
 
 This is Spike code to start build a Scala client library generator based on RAML definition files. This project
-needs at lease Scala 2.11.
+needs at least Scala 2.11.
 
 The code contains the following modules:
 
