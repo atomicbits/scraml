@@ -65,14 +65,14 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
 
 class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
-  feature("generate a foo case class") {
+  feature("build a restful request using a Scala DSL") {
 
-    scenario("test scala macros with quasiquotes") {
+    scenario("test manually written Scala DSL") {
 
-      Given("the FromRamlCode macro annotation")
+      Given("some manually written DSL code")
 
 
-      When("we create an instance of Foo")
+      When("we create a restful request using the DSL")
 
       XoClient(protocol = "http", host = "host", port = 8080)
         .rest.some.smart.webservice.pathparam("path-param-value")
@@ -91,7 +91,7 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
         .execute()
 
 
-      Then("we should see the generated Request model printed out")
+      Then("we should see the generated Request model printed out by the execute method")
 
     }
   }
