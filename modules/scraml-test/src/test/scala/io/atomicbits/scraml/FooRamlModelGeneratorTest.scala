@@ -3,8 +3,6 @@ package io.atomicbits.scraml
 import io.atomicbits.scraml.examples.Foo
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
-
-
 /**
  * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
  */
@@ -23,7 +21,6 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       Then("we should be able to print foo")
       println(s"foo: $foo")
-
 
     }
   }

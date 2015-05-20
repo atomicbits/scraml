@@ -18,7 +18,7 @@ trait Dependencies { this:Build =>
 
   // test scope
   val scalaTest       =   "org.scalatest"               %%    "scalatest"         % "2.2.4"    % "test"
-  val scramlgenTestCode   =  "io.atomicbits"            %%    "scramlgen-testdef" % "0.1.0-SNAPSHOT"
+  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"    % "0.1.0-SNAPSHOT"
 
   val scramlgenDeps = Seq (
     scalaReflect
