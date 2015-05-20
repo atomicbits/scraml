@@ -4,23 +4,6 @@ import scala.language.reflectiveCalls
 import scala.concurrent.Future
 
 
-/**
- * Proposed DSL:
- *
- * XoClient("http://host:8080").rest.locatie.weglocatie.weg.ident8("N0080001").get.query(opschrift=2.0, afstand=50, crs=Option(123)).accept(ApplicationJson).format.exec()
- * --> Future[Result(200, FormattedJson(...))]
- *
- * XoClient("http://host:8080").rest.locatie.weglocatie.weg.post(PostData(...)).content(ApplicationJson).accept(ApplicationJson)
- * --> Future[Result]
- *
- * XoClient("http://host:8080").rest.locatie.weglocatie.weg.put(PostData(...)).content(ApplicationJson).accept(ApplicationJson)
- * --> Future[Result]
- *
- * XoClient("http://host:8080").rest.locatie.weglocatie.weg.ident8("N0080001").delete()
- * --> Future[Result]
- *
- */
-
 sealed trait PathElement {
 
   protected def request: Request

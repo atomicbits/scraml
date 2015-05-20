@@ -62,16 +62,14 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
 
 }
 
-/**
- * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
- */
+
 class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
   feature("generate a foo case class") {
 
     scenario("test scala macros with quasiquotes") {
 
-      Given("the FromMacroCode macro annotation")
+      Given("the FromRamlCode macro annotation")
 
 
       When("we create an instance of Foo")
@@ -91,6 +89,7 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
           "Accept" -> "application/json"
         )
         .execute()
+
 
       Then("we should see the generated Request model printed out")
 

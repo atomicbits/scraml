@@ -5,4 +5,4 @@ import io.atomicbits.scraml._
 /**
  * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
  */
-@FromMacroCode("bla") class Foo
+@FromRaml("/here/comes/the/path/to/the/api.raml") class Foo

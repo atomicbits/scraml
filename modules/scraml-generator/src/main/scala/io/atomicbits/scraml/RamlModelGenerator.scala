@@ -4,9 +4,7 @@ import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros._
 
-/**
- * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
- */
+
 object RamlModelGenerator {
 
   // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
@@ -37,7 +35,7 @@ object RamlModelGenerator {
 
 }
 
-class FromMacroCode(schemaFile: String) extends StaticAnnotation {
+class FromRaml(schemaFile: String) extends StaticAnnotation {
 
   def macroTransform(annottees: Any*): Any = macro RamlModelGenerator.generate
 
