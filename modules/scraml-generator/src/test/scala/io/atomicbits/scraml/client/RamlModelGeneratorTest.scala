@@ -1,7 +1,6 @@
 package io.atomicbits.scraml.client
 
 import io.atomicbits.scraml._
-import io.atomicbits.scramlgen._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 import scala.language.reflectiveCalls
 
