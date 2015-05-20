@@ -1,4 +1,4 @@
-package io.atomicbits.scramlgen
+package io.atomicbits.scraml
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros

@@ -1,4 +1,4 @@
-package io.atomicbits.scramlgen
+package io.atomicbits.scraml
 
 /**
  * Created by peter on 16/05/15, Atomic BITS bvba (http://atomicbits.io). 

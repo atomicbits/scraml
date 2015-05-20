@@ -1,5 +1,6 @@
 package io.atomicbits.scraml.client
 
+import io.atomicbits.scraml._
 import io.atomicbits.scramlgen._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 import scala.language.reflectiveCalls
@@ -24,8 +25,8 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
               req = request
             ) {
 
-              def headers(headers: Map[String, String]) = new HeaderPathElement(
-                headers = headers,
+              def headers(headers: (String, String)*) = new HeaderPathElement(
+                headers = headers.toMap,
                 req = request
               ) {
 
@@ -44,8 +45,8 @@ case class XoClient(host: String, port: Int = 80, protocol: String = "http") {
               validContentTypeHeaders = List("application/json"),
               req = request) {
 
-              def headers(headers: Map[String, String]) = new HeaderPathElement(
-                headers = headers,
+              def headers(headers: (String, String)*) = new HeaderPathElement(
+                headers = headers.toMap,
                 req = request
               ) {
                 def execute() = new ExecutePathElement(request).execute()
@@ -93,11 +94,21 @@ class RamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       When("we create an instance of Foo")
 
-      XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").get(opschrift = 2.0, afstand = 50, crs = Option(123))
-        .headers(Map("Accept" -> "application/json")).formatJson.execute()
+      XoClient(protocol = "http", host = "host", port = 8080)
+        .rest.locatie.weglocatie.weg.ident8("N0080001")
+        .get(opschrift = 2.0, afstand = 50, crs = Option(123))
+        .headers("Accept" -> "application/json")
+        .formatJson
+        .execute()
 
-      XoClient("host", 8080, "http").rest.locatie.weglocatie.weg.ident8("N0080001").put("body")
-        .headers(Map("Content-Type" -> "application/json", "Accept" -> "application/json")).execute()
+      XoClient(protocol = "http", host = "host", port = 8080)
+        .rest.locatie.weglocatie.weg.ident8("N0080001")
+        .put("body")
+        .headers(
+          "Content-Type" -> "application/json",
+          "Accept" -> "application/json"
+        )
+        .execute()
 
       Then("we should be able to print foo")
 

@@ -1,6 +1,6 @@
-package io.atomicbits.scramlgen
+package io.atomicbits.scraml
 
-import io.atomicbits.scramlgen.examples.Foo
+import io.atomicbits.scraml.examples.Foo
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
 
