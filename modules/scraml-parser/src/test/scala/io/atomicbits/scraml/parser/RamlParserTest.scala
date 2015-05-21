@@ -1,6 +1,5 @@
 package io.atomicbits.scraml.parser
 
-import io.atomicbits.scraml.{RamlService, _}
 import org.raml.model._
 import org.raml.parser.rule.ValidationResult
 import org.scalatest.Matchers._
@@ -21,7 +20,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       val ramlSource = "io/atomicbits/rules/instagram.yaml"
 
       When("we validate the RAML model")
-      val validationResults: List[ValidationResult] = RamlService.validateRaml(ramlSource)
+      val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlSource)
 
       Then("the validation result should have no errors")
       validationResults shouldBe empty
@@ -34,7 +33,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       val ramlSource = "io/atomicbits/rules/instagram.yaml"
 
       When("we build the RAML model")
-      val raml: Raml = RamlService.buildRaml(ramlSource)
+      val raml: Raml = RamlParser.buildRaml(ramlSource)
 
       Then("we get a valid RAML model")
       val locationsResource = raml.getResources.asScala.get("/locations")
@@ -49,7 +48,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       val ramlSource = "io/atomicbits/rules/instagram.yaml"
 
       When("we build the RAML.asScala model")
-      val raml = RamlService.buildRaml(ramlSource).asScala
+      val raml = RamlParser.buildRaml(ramlSource).asScala
 
       Then("we get a valid RAML Scala model")
       println(s"Scala RAML model: $raml")

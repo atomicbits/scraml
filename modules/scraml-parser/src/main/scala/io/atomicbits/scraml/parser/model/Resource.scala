@@ -1,4 +1,4 @@
-package io.atomicbits.scraml.model
+package io.atomicbits.scraml.parser.model
 
 import scala.collection.JavaConverters._
 

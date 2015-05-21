@@ -1,4 +1,4 @@
-package io.atomicbits.scraml
+package io.atomicbits.scraml.parser
 
 import java.io.InputStream
 
@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
  *
  * Created by peter on 12/05/15, Atomic BITS bvba (http://atomicbits.io).
  */
-object RamlService {
+object RamlParser {
 
   def buildRaml(path: String): Raml = {
     new RamlDocumentBuilder().build(getInputStream(path), path)

@@ -1,4 +1,4 @@
-package io.atomicbits.scraml.model
+package io.atomicbits.scraml.parser.model
 
 /**
  * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
