@@ -1,7 +1,11 @@
-package io.atomicbits.scraml
+package io.atomicbits.scraml.generator.path
+
+import play.api.libs.json.{Reads, JsValue}
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.language.reflectiveCalls
-import scala.concurrent.Future
 
 
 sealed trait PathElement {
@@ -92,47 +96,13 @@ class FormatJsonPathElement(req: Request) extends PathElement {
 
 }
 
+
 class ExecutePathElement(req: Request) {
 
-  //  def execute[T](): Future[T] = ???
-  def execute(): Unit = println(s"request: $req")
+  def execute() = req.execute() // println(s"request: $req")
+
+  def executeToJson() = req.executeToJson()
+
+  def executeToJsonDto[T]()(implicit reader: Reads[T]) = req.executeToJsonDto()
 
 }
-
-sealed trait Method
-
-case object Get extends Method
-
-case object Post extends Method
-
-case object Put extends Method
-
-case object Delete extends Method
-
-case object Head extends Method
-
-case object Opt extends Method
-
-case object Patch extends Method
-
-trait MediaTypeHeader {
-
-  def mediaType: String
-
-}
-
-trait AcceptHeader extends MediaTypeHeader
-
-trait ContentTypeHeader extends MediaTypeHeader
-
-case class Request(protocol: String,
-                   host: String,
-                   port: Int,
-                   reversePath: List[String] = Nil,
-                   method: Method = Get,
-                   queryParameters: Map[String, String] = Map.empty,
-                   validAcceptHeaders: List[String] = Nil,
-                   validContentTypeHeaders: List[String] = Nil,
-                   headers: Map[String, String] = Map(),
-                   body: Option[String] = None,
-                   formatJsonResultBody: Boolean = false)

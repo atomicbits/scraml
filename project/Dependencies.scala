@@ -3,40 +3,44 @@ import sbt._
 
 trait Dependencies { this:Build =>
 
-  val macwireMacros   =   "com.softwaremill.macwire"    %%    "macros"            % "1.0.1"
-  val macwireRuntime  =   "com.softwaremill.macwire"    %%    "runtime"           % "1.0.1"
+  // main dependencies
+  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
+  val logback         =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
 
-  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"     % "3.1.0"
-  val logback         =   "ch.qos.logback"              %     "logback-classic"   % "1.1.1"
+  val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.1.0-SNAPSHOT"
+  val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.3.7"
 
-  val scalactic       =   "org.scalactic"               %%    "scalactic"         % "2.2.1"
+  val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"       % "2.11.6"
 
-  val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"     % "2.11.6"
-
-  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"       % "0.9-SNAPSHOT"
+  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
 
 
-  // test scope
-  val scalaTest       =   "org.scalatest"               %%    "scalatest"         % "2.2.4"    % "test"
-  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"    % "0.1.0-SNAPSHOT"
+  // test dependencies
+  val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
+  val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.53"     % "test"
 
-  val scramlgenDeps = Seq (
-    scalaReflect
+  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.0-SNAPSHOT"
+
+
+
+  // inclusion of the above dependencies in the modules
+  val scramlGeneratorDeps = Seq (
+    scalaReflect,
+    rxHttpClient,
+    playJson,
+    wiremock
   )
 
-  val scramlgenTestDeps = Seq (
+  val scramlTestDeps = Seq (
     scramlgenTestCode
   )
 
-  val scramlgenParserDeps = Seq(
+  val scramlParserDeps = Seq(
     ramlJavaParser
   )
 
   val mainDeps = Seq(
-    macwireMacros,
-    macwireRuntime,
     scalaLogging,
-    scalactic,
     logback
   )
 

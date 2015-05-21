@@ -1,11 +1,11 @@
-package io.atomicbits.scraml
+package io.atomicbits.scraml.generator
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros._
 
 
-object RamlModelGenerator {
+object ScramlGenerator {
 
   // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
   // See: http://docs.scala-lang.org/overviews/macros/annotations.html
@@ -37,6 +37,6 @@ object RamlModelGenerator {
 
 class FromRaml(schemaFile: String) extends StaticAnnotation {
 
-  def macroTransform(annottees: Any*): Any = macro RamlModelGenerator.generate
+  def macroTransform(annottees: Any*): Any = macro ScramlGenerator.generate
 
 }
