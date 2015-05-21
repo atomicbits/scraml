@@ -1,9 +1,8 @@
 package io.atomicbits.scraml.generator.path
 
 import io.atomicbits.scraml.generator.client.Client
-import play.api.libs.json.{JsResult, Reads, JsValue}
+import play.api.libs.json.Reads
 
-import scala.concurrent.Future
 
 /**
  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
@@ -18,7 +17,7 @@ case class Request(client: Client,
                    body: Option[String] = None,
                    formatJsonResultBody: Boolean = false) {
 
-  def relativePath = reversePath.reverse.mkString("/", "", "/")
+  def relativePath = reversePath.reverse.mkString("/", "/", "")
 
   def execute() = client.execute(this)
 

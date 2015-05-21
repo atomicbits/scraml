@@ -99,7 +99,10 @@ class FormatJsonPathElement(req: Request) extends PathElement {
 
 class ExecutePathElement(req: Request) {
 
-  def execute() = req.execute() // println(s"request: $req")
+  def execute() = {
+    println(s"request: $req")
+    req.execute()
+  }
 
   def executeToJson() = req.executeToJson()
 
