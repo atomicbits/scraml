@@ -5,6 +5,12 @@ import scala.language.experimental.macros
 import scala.reflect.macros._
 
 
+// Selective packaging: http://www.scala-sbt.org/sbt-native-packager/formats/universal.html
+// Macro projects: http://www.scala-sbt.org/0.13/docs/Macro-Projects.html (macro module in same project as core module)
+
+// What we need is:
+// http://stackoverflow.com/questions/21515325/add-a-compile-time-only-dependency-in-sbt
+
 object ScRamlGenerator {
 
   // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
