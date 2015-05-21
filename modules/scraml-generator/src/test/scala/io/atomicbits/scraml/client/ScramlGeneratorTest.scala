@@ -4,9 +4,9 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import io.atomicbits.scraml.generator.client.Response
-import io.atomicbits.scraml.generator.client.rxhttpclient.RxHttpClient
-import io.atomicbits.scraml.generator.path._
+import io.atomicbits.scraml.dsl.Response
+import io.atomicbits.scraml.dsl.support._
+import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 import scala.concurrent._
@@ -22,13 +22,13 @@ case class XoClient(host: String,
                     requestTimeout: Int = 5000,
                     maxConnections: Int = 5) {
 
-  val request = Request(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+  val request = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
   def rest = new PlainPathElement("rest", request) {
-    def some = new PlainPathElement("some", request) {
-      def smart = new PlainPathElement("smart", request) {
-        def webservice = new PlainPathElement("webservice", request) {
-          def pathparam(value: String) = new StringPathElement(value, request) {
+    def some = new PlainPathElement("some", requestBuilder) {
+      def smart = new PlainPathElement("smart", requestBuilder) {
+        def webservice = new PlainPathElement("webservice", requestBuilder) {
+          def pathparam(value: String) = new StringPathElement(value, requestBuilder) {
             def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetPathElement(
               queryParams = Map(
                 "queryparX" -> Option(queryparX).map(_.toString),
@@ -36,19 +36,19 @@ case class XoClient(host: String,
                 "queryParZ" -> queryParZ.map(_.toString)
               ),
               validAcceptHeaders = List("application/json"),
-              req = request
+              req = requestBuilder
             ) {
 
               def headers(headers: (String, String)*) = new HeaderPathElement(
                 headers = headers.toMap,
-                req = request
+                req = requestBuilder
               ) {
 
-                def formatJson = new FormatJsonPathElement(request) {
-                  def execute() = new ExecutePathElement(request).execute()
+                def formatJson = new FormatJsonPathElement(requestBuilder) {
+                  def execute() = new ExecutePathElement(requestBuilder).execute()
                 }
 
-                def execute() = new ExecutePathElement(request).execute()
+                def execute() = new ExecutePathElement(requestBuilder).execute()
               }
 
             }
@@ -57,13 +57,13 @@ case class XoClient(host: String,
               body = body,
               validAcceptHeaders = List("application/json"),
               validContentTypeHeaders = List("application/json"),
-              req = request) {
+              req = requestBuilder) {
 
               def headers(headers: (String, String)*) = new HeaderPathElement(
                 headers = headers.toMap,
-                req = request
+                req = requestBuilder
               ) {
-                def execute() = new ExecutePathElement(request).execute()
+                def execute() = new ExecutePathElement(requestBuilder).execute()
               }
 
             }
@@ -76,7 +76,7 @@ case class XoClient(host: String,
 }
 
 
-class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   val port = 8181
   val host = "localhost"
@@ -119,14 +119,14 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       When("we execute some restful requests using the DSL")
 
-      val futureResultGet =
+      val futureResultGet: Future[Response[String]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .headers("Accept" -> "application/json")
           .execute()
 
-      val futureResultPut =
+      val futureResultPut: Future[Response[String]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .put("body")

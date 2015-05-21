@@ -1,45 +1,42 @@
-package io.atomicbits.scraml.generator.path
+package io.atomicbits.scraml.dsl.support
 
-import play.api.libs.json.{Reads, JsValue}
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.json.Reads
 
 import scala.language.reflectiveCalls
 
 
 sealed trait PathElement {
 
-  protected def request: Request
+  protected def requestBuilder: RequestBuilder
 
 }
 
-class PlainPathElement(pathElement: String, req: Request) extends PathElement {
+class PlainPathElement(pathElement: String, req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(reversePath = pathElement :: req.reversePath)
+  protected val requestBuilder = req.copy(reversePath = pathElement :: req.reversePath)
 }
 
-class StringPathElement(value: String, req: Request) extends PathElement {
+class StringPathElement(value: String, req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(reversePath = value :: req.reversePath)
+  protected val requestBuilder = req.copy(reversePath = value :: req.reversePath)
 }
 
-class IntPathelement(value: Int, req: Request) extends PathElement {
+class IntPathelement(value: Int, req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(reversePath = value.toString :: req.reversePath)
+  protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class DoublePathelement(value: Double, req: Request) extends PathElement {
+class DoublePathelement(value: Double, req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(reversePath = value.toString :: req.reversePath)
+  protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class BooleanPathelement(value: Boolean, req: Request) extends PathElement {
+class BooleanPathelement(value: Boolean, req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(reversePath = value.toString :: req.reversePath)
+  protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class HeaderPathElement(headers: Map[String, String], req: Request) extends PathElement {
+class HeaderPathElement(headers: Map[String, String], req: RequestBuilder) extends PathElement {
 
   assert(
     req.validAcceptHeaders.isEmpty || headers.get("Accept").exists(req.validAcceptHeaders.contains(_)),
@@ -55,7 +52,7 @@ class HeaderPathElement(headers: Map[String, String], req: Request) extends Path
      """.stripMargin
   )
 
-  protected val request = req.copy(headers = headers)
+  protected val requestBuilder = req.copy(headers = headers)
 
 }
 
@@ -63,11 +60,11 @@ sealed trait MethodPathElement extends PathElement
 
 class GetPathElement(queryParams: Map[String, Option[String]],
                      validAcceptHeaders: List[String],
-                     req: Request) extends MethodPathElement {
+                     req: RequestBuilder) extends MethodPathElement {
 
   protected val queryParameterMap = queryParams.collect { case (key, Some(value)) => (key, value) }
 
-  protected val request = req.copy(
+  protected val requestBuilder = req.copy(
     queryParameters = queryParameterMap,
     method = Get,
     validAcceptHeaders = validAcceptHeaders
@@ -78,9 +75,9 @@ class GetPathElement(queryParams: Map[String, Option[String]],
 class PutPathElement(body: String,
                      validAcceptHeaders: List[String],
                      validContentTypeHeaders: List[String],
-                     req: Request) extends MethodPathElement {
+                     req: RequestBuilder) extends MethodPathElement {
 
-  protected val request = req.copy(
+  protected val requestBuilder = req.copy(
     method = Put,
     body = Option(body),
     validAcceptHeaders = validAcceptHeaders,
@@ -90,14 +87,14 @@ class PutPathElement(body: String,
 }
 
 
-class FormatJsonPathElement(req: Request) extends PathElement {
+class FormatJsonPathElement(req: RequestBuilder) extends PathElement {
 
-  protected val request = req.copy(formatJsonResultBody = true)
+  protected val requestBuilder = req.copy(formatJsonResultBody = true)
 
 }
 
 
-class ExecutePathElement(req: Request) {
+class ExecutePathElement(req: RequestBuilder) {
 
   def execute() = {
     println(s"request: $req")

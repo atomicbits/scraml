@@ -1,13 +1,12 @@
-package io.atomicbits.scraml.generator.client
-package rxhttpclient
+package io.atomicbits.scraml.dsl.support.client.rxhttpclient
 
-import io.atomicbits.scraml.generator.client.Client
-import io.atomicbits.scraml.generator.path.Request
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
+import io.atomicbits.scraml.dsl.Response
+import io.atomicbits.scraml.dsl.support.{Client, RequestBuilder}
 import play.api.libs.json._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.postfixOps
 
 /**
@@ -29,7 +28,7 @@ case class RxHttpClient(protocol: String,
       .setBaseUrl(s"$protocol://$host:$port")
       .build.asScala
 
-  def execute(request: Request): Future[Response[String]] = {
+  def execute(request: RequestBuilder): Future[Response[String]] = {
 
     val clientWithPathAndMethod = {
       client
@@ -62,10 +61,10 @@ case class RxHttpClient(protocol: String,
     )
   }
 
-  override def executeToJson(request: Request): Future[Response[JsValue]] =
+  override def executeToJson(request: RequestBuilder): Future[Response[JsValue]] =
     execute(request).map(res => res.map(Json.parse))
 
-  override def executeToJsonDto[T](request: Request)
+  override def executeToJsonDto[T](request: RequestBuilder)
                                   (implicit reader: Reads[T]): Future[Response[T]] = {
     executeToJson(request) map (res => res.map(reader.reads)) flatMap {
       case Response(status, JsSuccess(t, path)) => Future.successful(Response(status, t))

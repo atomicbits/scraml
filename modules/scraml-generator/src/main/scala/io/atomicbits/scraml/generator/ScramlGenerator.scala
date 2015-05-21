@@ -5,7 +5,7 @@ import scala.language.experimental.macros
 import scala.reflect.macros._
 
 
-object ScramlGenerator {
+object ScRamlGenerator {
 
   // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
   // See: http://docs.scala-lang.org/overviews/macros/annotations.html
@@ -35,8 +35,8 @@ object ScramlGenerator {
 
 }
 
-class FromRaml(schemaFile: String) extends StaticAnnotation {
+class ScRaml(schemaFile: String) extends StaticAnnotation {
 
-  def macroTransform(annottees: Any*): Any = macro ScramlGenerator.generate
+  def macroTransform(annottees: Any*): Any = macro ScRamlGenerator.generate
 
 }

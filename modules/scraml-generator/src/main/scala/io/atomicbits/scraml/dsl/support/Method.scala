@@ -1,4 +1,4 @@
-package io.atomicbits.scraml.generator.path
+package io.atomicbits.scraml.dsl.support
 
 /**
  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
