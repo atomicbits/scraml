@@ -3,7 +3,7 @@ package io.atomicbits.scraml.generator
 import org.raml.parser.rule.ValidationResult
 
 import io.atomicbits.scraml.parser._
-import io.atomicbits.scraml.parser.model.Raml
+import io.atomicbits.scraml.parser.model.{Resource, Raml}
 
 import scala.annotation.StaticAnnotation
 import scala.io.Source
@@ -42,22 +42,46 @@ object ScRamlGenerator {
     }
 
     // Validate RAML spec
-    println(s"Running RAML validation on path $ramlSpecPath: ")
+    println(s"Running RAML validation on $ramlSpecPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlSpecPath)
     if (validationResults.nonEmpty) {
+      println("Invalid RAML specification:")
       c.abort(c.enclosingPosition, RamlParser.printValidations(validationResults))
     }
+    println("RAML model is valid")
 
     // Generate the RAML model
     println("Running RAML model generation")
     val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
-    println(s"RAML model is: $raml")
+    println(s"RAML model generated")
 
     def expandResourcesFromRaml(): List[c.universe.Tree] = {
 
+      /**
+       * Lift a given String to a c.universe.Name (by default a String is lifted into c.universe.Tree)
+       * Is there a shorter/smarter way to do this?
+       */
+      def liftStringToName(nameString: String): c.universe.Name = {
+        val q"def $name()" = s"def $nameString()"
+        name
+      }
+
+      /**
+       * Expanding a resource consists of two high-level steps:
+       * 1. Follow the relative path of the resource including the path parameters and expand it into the DSL
+       * 2. Once we reached the end of the current resource path, expand its actions and its sub-resources recursively
+       */
+      def expandResource(resource: Resource): c.universe.Tree = {
 
 
-      List(q"def rest(): String = ???", q"def path(): String = ???")
+
+      }
+
+      // ToDo: incorporate RAML schemas: raml.schemas
+
+      raml.resources.map(resource => expandResource(resource))
+
+      // List(q"def rest(): String = ???", q"def path(): String = ???") // Simple test to generate def rest() and def path()
     }
 
     val resources = expandResourcesFromRaml()
