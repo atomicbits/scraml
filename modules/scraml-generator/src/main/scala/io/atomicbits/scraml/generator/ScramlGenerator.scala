@@ -3,10 +3,9 @@ package io.atomicbits.scraml.generator
 import org.raml.parser.rule.ValidationResult
 
 import io.atomicbits.scraml.parser._
-import io.atomicbits.scraml.parser.model.{Resource, Raml}
+import io.atomicbits.scraml.parser.model._
 
 import scala.annotation.StaticAnnotation
-import scala.io.Source
 import scala.language.experimental.macros
 import scala.reflect.macros._
 
@@ -55,10 +54,11 @@ object ScRamlGenerator {
     val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
     println(s"RAML model generated")
 
+
     def expandResourcesFromRaml(): List[c.universe.Tree] = {
 
       /**
-       * Lift a given String to a c.universe.Name (by default a String is lifted into c.universe.Tree)
+       * Lift a given String to a c.universe.Name (by default a String is lifted into c.universe.Tree).
        * Is there a shorter/smarter way to do this?
        */
       def liftStringToName(nameString: String): c.universe.Name = {
@@ -68,20 +68,91 @@ object ScRamlGenerator {
 
       /**
        * Expanding a resource consists of two high-level steps:
-       * 1. Follow the relative path of the resource including the path parameters and expand it into the DSL
-       * 2. Once we reached the end of the current resource path, expand its actions and its sub-resources recursively
+       * 1. expand the current path segment (possibly a path parameter) if it is non-empty and expand it into the DSL
+       * 2. expand the resource's actions and sub-resources recursively
        */
       def expandResource(resource: Resource): c.universe.Tree = {
 
+        val urlSegment = resource.urlSegment
+        val segmentAsString = q""" $urlSegment """
+        val segmentAsDefName = TermName(resource.urlSegment)
 
+        val expandedSubResources = resource.resources.map(resource => expandResource(resource))
+        val expandedActions = resource.actions.map(action => expandAction(action))
 
+        def noPath = {
+          q"""
+              ..$expandedActions
+              ..$expandedSubResources
+           """
+        }
+
+        def plainPath = {
+          q"""
+            def $segmentAsDefName = new PlainPathElement($segmentAsString, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        def stringPath = {
+          q"""
+            def $segmentAsDefName(value: String) = new StringPathElement(value, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        def intPath = {
+          q"""
+            def $segmentAsDefName(value: Int) = new IntPathelement(value, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        def doublePath = {
+          q"""
+            def $segmentAsDefName(value: Double) = new DoublePathelement(value, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        def booleanPath = {
+          q"""
+            def $segmentAsDefName(value: Boolean) = new BooleanPathelement(value, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        if (resource.urlSegment.isEmpty) {
+          noPath
+        } else
+          resource.urlParameter match {
+            case None => plainPath
+            case Some(Parameter(StringType, _)) => stringPath
+            case Some(Parameter(IntegerType, _)) => intPath
+            case Some(Parameter(NumberType, _)) => doublePath
+            case Some(Parameter(BooleanType, _)) => booleanPath
+          }
+
+      }
+
+      def expandAction(action: Action): c.universe.Tree = {
+        q""
       }
 
       // ToDo: incorporate RAML schemas: raml.schemas
 
       raml.resources.map(resource => expandResource(resource))
 
-      // List(q"def rest(): String = ???", q"def path(): String = ???") // Simple test to generate def rest() and def path()
     }
 
     val resources = expandResourcesFromRaml()
@@ -98,29 +169,13 @@ object ScRamlGenerator {
          import io.atomicbits.scraml.dsl.support._
          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
-         val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+         protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
          ..$resources
 
        }
      """
     )
-
-    //    val bar = c.Expr[Any](q""" case class Foo(val text: String) """)
-    //    println(s"RAML model generation called: $c, bar: $bar")
-    //    bar
-
-    //    val q"class $name" = q"class Foo"
-    //    val params = List(q"val text: String")
-
-    //    annottees.map(_.tree) match {
-    //      case (classDecl: ClassDef) :: Nil => c.Expr(q"""case class Foo(val text: String) { } """)
-    //      case _ => c.Expr(q"""case class Foo(val text: String) { } """)
-    //    }
-
-    //    c.Expr(q"""case class $name(..$params) { } """)
-    //    c.Expr(q"""case class Foo(text: String) { } """)
-
 
   }
 

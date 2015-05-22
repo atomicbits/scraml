@@ -56,7 +56,11 @@ object Resource {
       }
     }
 
-    breakdownResourceUrl(relativeUri.split('/').toList)
+    // Make sure we can handle the root segment as wel
+    if (relativeUri == "/")
+      breakdownResourceUrl(Nil)
+    else
+      breakdownResourceUrl(relativeUri.split('/').toList.filter(!_.isEmpty))
   }
 
 }
