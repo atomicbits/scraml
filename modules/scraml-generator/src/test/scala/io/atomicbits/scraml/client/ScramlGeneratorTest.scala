@@ -33,7 +33,7 @@ case class XoClient(host: String,
     def some = new PlainSegment("some", requestBuilder) {
       def smart = new PlainSegment("smart", requestBuilder) {
         def webservice = new PlainSegment("webservice", requestBuilder) {
-          def pathparam(value: String) = new StringSegment(value, requestBuilder) {
+          def pathparam(value: String) = new ParamSegment[String](value, requestBuilder) {
             def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetSegment(
               queryParams = Map(
                 "queryparX" -> Option(queryparX).map(_.toString),

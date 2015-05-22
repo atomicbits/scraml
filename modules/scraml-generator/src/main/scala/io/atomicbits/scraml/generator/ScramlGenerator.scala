@@ -89,7 +89,7 @@ object ScRamlGenerator {
 
         def stringSegment = {
           q"""
-            def $segmentAsDefName(value: String) = new StringSegment(value, requestBuilder) {
+            def $segmentAsDefName(value: String) = new ParamSegment[String](value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
@@ -98,7 +98,7 @@ object ScRamlGenerator {
 
         def intSegment = {
           q"""
-            def $segmentAsDefName(value: Int) = new IntSegment(value, requestBuilder) {
+            def $segmentAsDefName(value: Int) = new ParamSegment[Int](value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
@@ -107,7 +107,7 @@ object ScRamlGenerator {
 
         def doubleSegment = {
           q"""
-            def $segmentAsDefName(value: Double) = new DoubleSegment(value, requestBuilder) {
+            def $segmentAsDefName(value: Double) = new ParamSegment[Double](value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
@@ -116,7 +116,7 @@ object ScRamlGenerator {
 
         def booleanSegment = {
           q"""
-            def $segmentAsDefName(value: Boolean) = new BooleanSegment(value, requestBuilder) {
+            def $segmentAsDefName(value: Boolean) = new ParamSegment[Boolean](value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }

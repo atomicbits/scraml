@@ -16,22 +16,7 @@ class PlainSegment(pathElement: String, req: RequestBuilder) extends Segment {
   protected val requestBuilder = req.copy(reversePath = pathElement :: req.reversePath)
 }
 
-class StringSegment(value: String, req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = req.copy(reversePath = value :: req.reversePath)
-}
-
-class IntSegment(value: Int, req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
-}
-
-class DoubleSegment(value: Double, req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
-}
-
-class BooleanSegment(value: Boolean, req: RequestBuilder) extends Segment {
+class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
@@ -59,8 +44,8 @@ class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends S
 sealed trait MethodSegment extends Segment
 
 class GetSegment(queryParams: Map[String, Option[String]],
-                     validAcceptHeaders: List[String],
-                     req: RequestBuilder) extends MethodSegment {
+                 validAcceptHeaders: List[String],
+                 req: RequestBuilder) extends MethodSegment {
 
   protected val queryParameterMap = queryParams.collect { case (key, Some(value)) => (key, value) }
 
@@ -73,9 +58,9 @@ class GetSegment(queryParams: Map[String, Option[String]],
 }
 
 class PutSegment(body: String,
-                     validAcceptHeaders: List[String],
-                     validContentTypeHeaders: List[String],
-                     req: RequestBuilder) extends MethodSegment {
+                 validAcceptHeaders: List[String],
+                 validContentTypeHeaders: List[String],
+                 req: RequestBuilder) extends MethodSegment {
 
   protected val requestBuilder = req.copy(
     method = Put,
