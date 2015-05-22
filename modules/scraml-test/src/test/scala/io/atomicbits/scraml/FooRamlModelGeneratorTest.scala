@@ -1,6 +1,6 @@
 package io.atomicbits.scraml
 
-import io.atomicbits.scraml.examples.{TestClient01, Foo}
+import io.atomicbits.scraml.examples.TestClient01
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
 /**
