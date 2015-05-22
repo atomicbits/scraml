@@ -5,38 +5,38 @@ import play.api.libs.json.Reads
 import scala.language.reflectiveCalls
 
 
-sealed trait PathElement {
+sealed trait Segment {
 
   protected def requestBuilder: RequestBuilder
 
 }
 
-class PlainPathElement(pathElement: String, req: RequestBuilder) extends PathElement {
+class PlainSegment(pathElement: String, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = pathElement :: req.reversePath)
 }
 
-class StringPathElement(value: String, req: RequestBuilder) extends PathElement {
+class StringSegment(value: String, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = value :: req.reversePath)
 }
 
-class IntPathelement(value: Int, req: RequestBuilder) extends PathElement {
+class IntSegment(value: Int, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class DoublePathelement(value: Double, req: RequestBuilder) extends PathElement {
+class DoubleSegment(value: Double, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class BooleanPathelement(value: Boolean, req: RequestBuilder) extends PathElement {
+class BooleanSegment(value: Boolean, req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(reversePath = value.toString :: req.reversePath)
 }
 
-class HeaderPathElement(headers: Map[String, String], req: RequestBuilder) extends PathElement {
+class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends Segment {
 
   assert(
     req.validAcceptHeaders.isEmpty || headers.get("Accept").exists(req.validAcceptHeaders.contains(_)),
@@ -56,11 +56,11 @@ class HeaderPathElement(headers: Map[String, String], req: RequestBuilder) exten
 
 }
 
-sealed trait MethodPathElement extends PathElement
+sealed trait MethodSegment extends Segment
 
-class GetPathElement(queryParams: Map[String, Option[String]],
+class GetSegment(queryParams: Map[String, Option[String]],
                      validAcceptHeaders: List[String],
-                     req: RequestBuilder) extends MethodPathElement {
+                     req: RequestBuilder) extends MethodSegment {
 
   protected val queryParameterMap = queryParams.collect { case (key, Some(value)) => (key, value) }
 
@@ -72,10 +72,10 @@ class GetPathElement(queryParams: Map[String, Option[String]],
 
 }
 
-class PutPathElement(body: String,
+class PutSegment(body: String,
                      validAcceptHeaders: List[String],
                      validContentTypeHeaders: List[String],
-                     req: RequestBuilder) extends MethodPathElement {
+                     req: RequestBuilder) extends MethodSegment {
 
   protected val requestBuilder = req.copy(
     method = Put,
@@ -87,14 +87,14 @@ class PutPathElement(body: String,
 }
 
 
-class FormatJsonPathElement(req: RequestBuilder) extends PathElement {
+class FormatJsonSegment(req: RequestBuilder) extends Segment {
 
   protected val requestBuilder = req.copy(formatJsonResultBody = true)
 
 }
 
 
-class ExecutePathElement(req: RequestBuilder) {
+class ExecuteSegment(req: RequestBuilder) {
 
   def execute() = {
     println(s"request: $req")

@@ -29,12 +29,12 @@ case class XoClient(host: String,
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
-  def rest = new PlainPathElement("rest", requestBuilder) {
-    def some = new PlainPathElement("some", requestBuilder) {
-      def smart = new PlainPathElement("smart", requestBuilder) {
-        def webservice = new PlainPathElement("webservice", requestBuilder) {
-          def pathparam(value: String) = new StringPathElement(value, requestBuilder) {
-            def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetPathElement(
+  def rest = new PlainSegment("rest", requestBuilder) {
+    def some = new PlainSegment("some", requestBuilder) {
+      def smart = new PlainSegment("smart", requestBuilder) {
+        def webservice = new PlainSegment("webservice", requestBuilder) {
+          def pathparam(value: String) = new StringSegment(value, requestBuilder) {
+            def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetSegment(
               queryParams = Map(
                 "queryparX" -> Option(queryparX).map(_.toString),
                 "queryparY" -> Option(queryparY).map(_.toString),
@@ -44,31 +44,31 @@ case class XoClient(host: String,
               req = requestBuilder
             ) {
 
-              def headers(headers: (String, String)*) = new HeaderPathElement(
+              def headers(headers: (String, String)*) = new HeaderSegment(
                 headers = headers.toMap,
                 req = requestBuilder
               ) {
 
-                def formatJson = new FormatJsonPathElement(requestBuilder) {
-                  def execute() = new ExecutePathElement(requestBuilder).execute()
+                def formatJson = new FormatJsonSegment(requestBuilder) {
+                  def execute() = new ExecuteSegment(requestBuilder).execute()
                 }
 
-                def execute() = new ExecutePathElement(requestBuilder).execute()
+                def execute() = new ExecuteSegment(requestBuilder).execute()
               }
 
             }
 
-            def put(body: String) = new PutPathElement(
+            def put(body: String) = new PutSegment(
               body = body,
               validAcceptHeaders = List("application/json"),
               validContentTypeHeaders = List("application/json"),
               req = requestBuilder) {
 
-              def headers(headers: (String, String)*) = new HeaderPathElement(
+              def headers(headers: (String, String)*) = new HeaderSegment(
                 headers = headers.toMap,
                 req = requestBuilder
               ) {
-                def execute() = new ExecutePathElement(requestBuilder).execute()
+                def execute() = new ExecuteSegment(requestBuilder).execute()
               }
 
             }

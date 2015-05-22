@@ -19,7 +19,8 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       When("we create an instance of Foo")
       println("Creating foo: ")
-      val foo = TestClient01(host = "localhost", port = 8080).rest.user.userid("foobar")
+      val foo = TestClient01(host = "localhost", port = 8080).rest
+      foo.user.userid("foobar")
 
 
       Then("we should be able to print foo")

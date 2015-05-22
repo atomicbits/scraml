@@ -58,15 +58,6 @@ object ScRamlGenerator {
     def expandResourcesFromRaml(): List[c.universe.Tree] = {
 
       /**
-       * Lift a given String to a c.universe.Name (by default a String is lifted into c.universe.Tree).
-       * Is there a shorter/smarter way to do this?
-       */
-      def liftStringToName(nameString: String): c.universe.Name = {
-        val q"def $name()" = s"def $nameString()"
-        name
-      }
-
-      /**
        * Expanding a resource consists of two high-level steps:
        * 1. expand the current path segment (possibly a path parameter) if it is non-empty and expand it into the DSL
        * 2. expand the resource's actions and sub-resources recursively
@@ -80,52 +71,52 @@ object ScRamlGenerator {
         val expandedSubResources = resource.resources.map(resource => expandResource(resource))
         val expandedActions = resource.actions.map(action => expandAction(action))
 
-        def noPath = {
+        def noSegment = {
           q"""
               ..$expandedActions
               ..$expandedSubResources
            """
         }
 
-        def plainPath = {
+        def plainSegment = {
           q"""
-            def $segmentAsDefName = new PlainPathElement($segmentAsString, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
-            }
-           """
-        }
-
-        def stringPath = {
-          q"""
-            def $segmentAsDefName(value: String) = new StringPathElement(value, requestBuilder) {
+            def $segmentAsDefName = new PlainSegment($segmentAsString, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
            """
         }
 
-        def intPath = {
+        def stringSegment = {
           q"""
-            def $segmentAsDefName(value: Int) = new IntPathelement(value, requestBuilder) {
+            def $segmentAsDefName(value: String) = new StringSegment(value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
            """
         }
 
-        def doublePath = {
+        def intSegment = {
           q"""
-            def $segmentAsDefName(value: Double) = new DoublePathelement(value, requestBuilder) {
+            def $segmentAsDefName(value: Int) = new IntSegment(value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
            """
         }
 
-        def booleanPath = {
+        def doubleSegment = {
           q"""
-            def $segmentAsDefName(value: Boolean) = new BooleanPathelement(value, requestBuilder) {
+            def $segmentAsDefName(value: Double) = new DoubleSegment(value, requestBuilder) {
+              ..$expandedActions
+              ..$expandedSubResources
+            }
+           """
+        }
+
+        def booleanSegment = {
+          q"""
+            def $segmentAsDefName(value: Boolean) = new BooleanSegment(value, requestBuilder) {
               ..$expandedActions
               ..$expandedSubResources
             }
@@ -133,14 +124,14 @@ object ScRamlGenerator {
         }
 
         if (resource.urlSegment.isEmpty) {
-          noPath
+          noSegment
         } else
           resource.urlParameter match {
-            case None => plainPath
-            case Some(Parameter(StringType, _)) => stringPath
-            case Some(Parameter(IntegerType, _)) => intPath
-            case Some(Parameter(NumberType, _)) => doublePath
-            case Some(Parameter(BooleanType, _)) => booleanPath
+            case None => plainSegment
+            case Some(Parameter(StringType, _)) => stringSegment
+            case Some(Parameter(IntegerType, _)) => intSegment
+            case Some(Parameter(NumberType, _)) => doubleSegment
+            case Some(Parameter(BooleanType, _)) => booleanSegment
           }
 
       }
