@@ -1,6 +1,6 @@
 package io.atomicbits.scraml
 
-import io.atomicbits.scraml.examples.Foo
+import io.atomicbits.scraml.examples.{TestClient01, Foo}
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
 /**
@@ -17,7 +17,8 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       When("we create an instance of Foo")
       println("Creating foo: ")
-      val foo = Foo("hello")
+      val foo = TestClient01(host = "localhost", port = 8080)
+
 
       Then("we should be able to print foo")
       println(s"foo: $foo")

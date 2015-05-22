@@ -4,14 +4,15 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+
 import io.atomicbits.scraml.dsl.Response
-import io.atomicbits.scraml.dsl.support._
-import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+
+import scala.language.{postfixOps, reflectiveCalls}
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.language.{postfixOps, reflectiveCalls}
+
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
 /**
  * The client in this test is manually written to understand what kind of code we need to generate to support the DSL.
@@ -22,9 +23,13 @@ case class XoClient(host: String,
                     requestTimeout: Int = 5000,
                     maxConnections: Int = 5) {
 
-  val request = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
-  def rest = new PlainPathElement("rest", request) {
+  import io.atomicbits.scraml.dsl.support._
+  import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+
+  val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+
+  def rest = new PlainPathElement("rest", requestBuilder) {
     def some = new PlainPathElement("some", requestBuilder) {
       def smart = new PlainPathElement("smart", requestBuilder) {
         def webservice = new PlainPathElement("webservice", requestBuilder) {
