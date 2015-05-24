@@ -71,6 +71,24 @@ class PutSegment(body: String,
 
 }
 
+class PostSegment(formParams: Map[String, Option[String]],
+                  body: Option[String],
+                  validAcceptHeaders: List[String],
+                  validContentTypeHeaders: List[String],
+                  req: RequestBuilder) extends MethodSegment {
+
+  protected val formParameterMap = formParams.collect { case (key, Some(value)) => (key, value) }
+
+  protected val requestBuilder = req.copy(
+    method = Post,
+    formParameters = formParameterMap,
+    body = body,
+    validAcceptHeaders = validAcceptHeaders,
+    validContentTypeHeaders = validContentTypeHeaders
+  )
+
+}
+
 
 class FormatJsonSegment(req: RequestBuilder) extends Segment {
 

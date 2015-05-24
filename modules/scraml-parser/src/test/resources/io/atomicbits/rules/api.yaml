@@ -3,20 +3,6 @@
 title: test
 version: v1
 
-schemas:
-  - gebruiker-basis:      |
-  {
-    "void": "6c9d8748-c70e-4ee3-b042-6f198cf0403e",
-    "voornaam": "Jan",
-    "naam": "Janssens",
-    "organisatie": {
-      "code": "1M8KAI",
-      "naam": "Contracten"
-    },
-    "functie": "Contractbeheerder"
-  }
-
-
 /rest/gebruiker/{void}:
     uriParameters:
       void:
@@ -29,3 +15,15 @@ schemas:
           body:
              application/vnd.awv.po-v3.0+json:
                 schema: gebruiker-basis
+    post:
+      description: Create a comment on a media. Please email apidevelopers[at]instagram.com for access.
+      body:
+        application/x-www-form-urlencoded:
+          formParameters:
+            text:
+              description: Text to post as a comment on the media as specified in {mediaId}.
+              type: string
+              required: true
+      responses:
+        200:
+          body:

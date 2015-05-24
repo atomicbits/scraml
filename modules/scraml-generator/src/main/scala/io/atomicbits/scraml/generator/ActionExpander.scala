@@ -49,14 +49,12 @@ object ActionExpander {
       val queryParameterMapEntries =
         action.queryParameters.toList.map(param => expandQueryParameterAsMapEntry(param))
 
-      val validAcceptHeaders = action.responses.values.toList.flatMap(response => response.headers.keys.map(header => q"$header"))
-
       q"""
           def get(..$queryParameterGetParameters) = new GetSegment(
             queryParams = Map(
               ..$queryParameterMapEntries
             ),
-            validAcceptHeaders = List(..$validAcceptHeaders),
+            validAcceptHeaders = List(..${validAcceptHeaders()}),
             req = requestBuilder
           ) {
 
@@ -67,13 +65,22 @@ object ActionExpander {
     }
 
     def expandPutAction(): c.universe.Tree = {
+      q"""
+          def put(body: String) = new PutSegment(
+            body = body,
+            validAcceptHeaders = List(..${validAcceptHeaders()}),
+            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+            req = requestBuilder) {
 
+            ${expandHeaders()}
 
-      q""
+          }
+       """
     }
 
     def expandPostAction(): c.universe.Tree = {
 
+//      if(action.)
 
       q""
     }
@@ -99,6 +106,14 @@ object ActionExpander {
       q"""
          def execute() = new ExecuteSegment(requestBuilder).execute()
        """
+    }
+
+    def validAcceptHeaders(): List[c.universe.Tree] = {
+      action.responses.values.toList.flatMap(response => response.headers.keys.map(header => q"$header"))
+    }
+
+    def validContentTypeHeaders(): List[c.universe.Tree] = {
+      action.body.keys.toList.map(header => q"$header")
     }
 
     action.actionType match {

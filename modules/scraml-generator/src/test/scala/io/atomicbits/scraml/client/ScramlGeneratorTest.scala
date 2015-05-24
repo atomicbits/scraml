@@ -72,6 +72,30 @@ case class XoClient(host: String,
               }
 
             }
+
+            def post(formparX: Int, formParY: Double, formParZ: Option[String]) = new PostSegment(
+              formParams = Map(
+                "formparX" -> Option(formparX).map(_.toString),
+                "formParY" -> Option(formParY).map(_.toString),
+                "formParZ" -> formParZ.map(_.toString)
+              ),
+              body = None,
+              validAcceptHeaders = List("application/json"),
+              validContentTypeHeaders = List("application/json"),
+              req = requestBuilder
+            ) {
+
+              def headers(headers: (String, String)*) = new HeaderSegment(
+                headers = headers.toMap,
+                req = requestBuilder
+              ) {
+
+                def execute() = new ExecuteSegment(requestBuilder).execute()
+
+              }
+
+            }
+
           }
         }
       }
