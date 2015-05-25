@@ -27,7 +27,10 @@ case class XoClient(host: String,
   import io.atomicbits.scraml.dsl.support._
   import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
+  import XoClient._  // ToDo generate import.
+
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+
 
   def rest = new PlainSegment("rest", requestBuilder) {
     def some = new PlainSegment("some", requestBuilder) {
@@ -101,6 +104,11 @@ case class XoClient(host: String,
       }
     }
   }
+
+}
+
+object XoClient {
+
 
 }
 

@@ -89,6 +89,20 @@ class PostSegment(formParams: Map[String, Option[String]],
 
 }
 
+class DeleteSegment(body: Option[String],
+                    validAcceptHeaders: List[String],
+                    validContentTypeHeaders: List[String],
+                    req: RequestBuilder) extends MethodSegment {
+
+  protected val requestBuilder = req.copy(
+    method = Delete,
+    body = body,
+    validAcceptHeaders = validAcceptHeaders,
+    validContentTypeHeaders = validContentTypeHeaders
+  )
+
+}
+
 
 class FormatJsonSegment(req: RequestBuilder) extends Segment {
 

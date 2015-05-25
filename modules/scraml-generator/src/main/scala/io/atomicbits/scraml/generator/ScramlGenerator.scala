@@ -40,6 +40,8 @@ object ScRamlGenerator {
       case _ => c.abort(c.enclosingPosition, "the annotation can only be used with classes")
     }
 
+    val classAsTermName = TermName(className.toString)
+
     // Validate RAML spec
     println(s"Running RAML validation on $ramlSpecPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlSpecPath)
@@ -68,11 +70,21 @@ object ScRamlGenerator {
          import io.atomicbits.scraml.dsl.support._
          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
+         import $classAsTermName._
+
          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
          ..$resources
 
        }
+
+
+       object $classAsTermName {
+
+         case object Foo {}
+
+       }
+
      """
     )
 
