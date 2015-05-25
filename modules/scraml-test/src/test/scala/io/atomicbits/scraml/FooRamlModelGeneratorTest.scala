@@ -29,7 +29,6 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       userFoobarResource
         .post(text = "Hello Foobar", value = None)
-        .headers("Content-Type" -> "application/x-www-form-urlencoded")
         .execute()
 
       userFoobarResource
