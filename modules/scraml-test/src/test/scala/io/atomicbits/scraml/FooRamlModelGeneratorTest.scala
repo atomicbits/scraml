@@ -28,6 +28,24 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
         .headers("Accept" -> "application/json")
         .execute()
 
+      userFoobarResource
+        .post(text = "Hello Foobar", value = None)
+        .headers("Content-Type" -> "application/x-www-form-urlencoded")
+        .execute()
+
+      userFoobarResource
+        .put("blablabla")
+        .headers(
+          "Content-Type" -> "application/json",
+          "Accept" -> "application/json"
+        )
+        .execute()
+
+      userFoobarResource.delete().headers().execute()
+
+      // Or, shorter if there are no required Accept or Content-Type headers:
+      userFoobarResource.delete().execute()
+
 
       Then("we should be able to print foo")
       println(s"foo: $userFoobarResource")

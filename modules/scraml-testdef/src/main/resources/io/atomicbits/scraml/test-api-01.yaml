@@ -31,3 +31,26 @@ version: v1
                  "surname": "Smith",
                  "id": 12
               }
+  post:
+    body:
+      application/x-www-form-urlencoded:
+        formParameters:
+          text:
+            description: Text to post as a comment on the user.
+            type: string
+            required: true
+          value:
+            description: Value to give to a user.
+            type: integer
+            required: false
+    responses:
+      200:
+        body:
+  delete:
+  put:
+    body:
+      application/json:
+    responses:
+      200:
+        body:
+          application/json:

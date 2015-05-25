@@ -28,9 +28,10 @@ case class RxHttpClient(protocol: String,
       .setBaseUrl(s"$protocol://$host:$port")
       .build.asScala
 
-  def execute(request: RequestBuilder): Future[Response[String]] = {
 
-    val clientWithPathAndMethod = {
+  override def execute(request: RequestBuilder): Future[Response[String]] = {
+
+    val clientWithResourcePathAndMethod = {
       client
         .requestBuilder()
         .setUrlRelativetoBase(request.relativePath)
@@ -39,21 +40,26 @@ case class RxHttpClient(protocol: String,
 
     request.headers.foreach { element =>
       val (key, value) = element
-      clientWithPathAndMethod.addHeader(key, value)
+      clientWithResourcePathAndMethod.addHeader(key, value)
     }
 
     request.queryParameters.foreach { element =>
       val (key, value) = element
-      clientWithPathAndMethod.addQueryParam(key, value)
+      clientWithResourcePathAndMethod.addQueryParam(key, value)
     }
 
     // ToDo: support for form parameters, different body types (Array[Byte]), streaming,
 
     request.body.foreach { body =>
-      clientWithPathAndMethod.setBody(body)
+      clientWithResourcePathAndMethod.setBody(body)
     }
 
-    val clientRequest = clientWithPathAndMethod.build()
+    request.formParameters.foreach { element =>
+      val (key, value) = element
+      clientWithResourcePathAndMethod.addFormParam(key, value)
+    }
+    
+    val clientRequest = clientWithResourcePathAndMethod.build()
 
     client.execute[Response[String]](
       clientRequest,
@@ -61,8 +67,10 @@ case class RxHttpClient(protocol: String,
     )
   }
 
+
   override def executeToJson(request: RequestBuilder): Future[Response[JsValue]] =
     execute(request).map(res => res.map(Json.parse))
+
 
   override def executeToJsonDto[T](request: RequestBuilder)
                                   (implicit reader: Reads[T]): Future[Response[T]] = {
