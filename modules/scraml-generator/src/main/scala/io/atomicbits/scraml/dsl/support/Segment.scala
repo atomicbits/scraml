@@ -23,21 +23,23 @@ class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
 
 class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends Segment {
 
+  protected val requestBuilder = req.copy(headers = headers)
+
   assert(
-    req.validAcceptHeaders.isEmpty || headers.get("Accept").exists(req.validAcceptHeaders.contains(_)),
+    req.validAcceptHeaders.isEmpty ||
+      requestBuilder.allHeaders.get("Accept").exists(req.validAcceptHeaders.contains(_)),
     s"""no valid Accept header is given for this resource:
        |valid Accept headers are: ${req.validAcceptHeaders.mkString(", ")}
      """.stripMargin
   )
 
   assert(
-    req.validContentTypeHeaders.isEmpty || headers.get("Content-Type").exists(req.validContentTypeHeaders.contains(_)),
+    req.validContentTypeHeaders.isEmpty ||
+      requestBuilder.allHeaders.get("Content-Type").exists(req.validContentTypeHeaders.contains(_)),
     s"""no valid Content-Type header is given for this resource:
        |valid Content-Type headers are: ${req.validContentTypeHeaders.mkString(", ")}
      """.stripMargin
   )
-
-  protected val requestBuilder = req.copy(headers = headers)
 
 }
 

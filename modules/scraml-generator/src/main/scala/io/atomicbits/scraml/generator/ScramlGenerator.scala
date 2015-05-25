@@ -65,7 +65,8 @@ object ScRamlGenerator {
                              port: Int = 80,
                              protocol: String = "http",
                              requestTimeout: Int = 5000,
-                             maxConnections: Int = 2) {
+                             maxConnections: Int = 2,
+                             defaultHeaders: Map[String, String] = Map.empty) {
 
          import io.atomicbits.scraml.dsl.support._
          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient

@@ -14,10 +14,13 @@ case class RequestBuilder(client: Client,
                           validAcceptHeaders: List[String] = Nil,
                           validContentTypeHeaders: List[String] = Nil,
                           headers: Map[String, String] = Map(),
+                          defaultHeaders: Map[String, String] = Map.empty,
                           body: Option[String] = None,
                           formatJsonResultBody: Boolean = false) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
+
+  def allHeaders = defaultHeaders ++ headers
 
   def execute() = client.execute(this)
 

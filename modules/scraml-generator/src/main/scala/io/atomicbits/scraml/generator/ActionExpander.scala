@@ -125,20 +125,8 @@ object ActionExpander {
     }
 
     def expandHeaders(): List[c.universe.Tree] = {
-
-      if (needsAcceptHeader || needsContentTypeHeader) {
-        List( q"""
-               def headers(headers: (String, String)*) = new HeaderSegment(
-                 headers = headers.toMap,
-                 req = requestBuilder
-               ) {
-                 ${expandExecution()}
-               }
-             """
-        )
-      } else {
-        List(
-          q"""
+      List(
+        q"""
            def headers(headers: (String, String)*) = new HeaderSegment(
              headers = headers.toMap,
              req = requestBuilder
@@ -146,12 +134,10 @@ object ActionExpander {
              ${expandExecution()}
            }
          """,
-          q"""
+        q"""
            ${expandExecution()}
          """
-        )
-      }
-
+      )
     }
 
     def expandExecution(): c.universe.Tree = {

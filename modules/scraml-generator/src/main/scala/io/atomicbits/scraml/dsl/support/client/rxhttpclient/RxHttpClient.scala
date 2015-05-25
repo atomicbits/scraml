@@ -29,36 +29,36 @@ case class RxHttpClient(protocol: String,
       .build.asScala
 
 
-  override def execute(request: RequestBuilder): Future[Response[String]] = {
+  override def execute(requesBuilder: RequestBuilder): Future[Response[String]] = {
 
     val clientWithResourcePathAndMethod = {
       client
         .requestBuilder()
-        .setUrlRelativetoBase(request.relativePath)
-        .setMethod(request.method.toString)
+        .setUrlRelativetoBase(requesBuilder.relativePath)
+        .setMethod(requesBuilder.method.toString)
     }
 
-    request.headers.foreach { element =>
+    requesBuilder.allHeaders.foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addHeader(key, value)
     }
 
-    request.queryParameters.foreach { element =>
+    requesBuilder.queryParameters.foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addQueryParam(key, value)
     }
 
     // ToDo: support for form parameters, different body types (Array[Byte]), streaming,
 
-    request.body.foreach { body =>
+    requesBuilder.body.foreach { body =>
       clientWithResourcePathAndMethod.setBody(body)
     }
 
-    request.formParameters.foreach { element =>
+    requesBuilder.formParameters.foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addFormParam(key, value)
     }
-    
+
     val clientRequest = clientWithResourcePathAndMethod.build()
 
     client.execute[Response[String]](

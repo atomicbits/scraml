@@ -21,7 +21,8 @@ case class XoClient(host: String,
                     port: Int = 80,
                     protocol: String = "http",
                     requestTimeout: Int = 5000,
-                    maxConnections: Int = 5) {
+                    maxConnections: Int = 5,
+                    defaultHeaders: Map[String, String] = Map()) {
 
 
   import io.atomicbits.scraml.dsl.support._
