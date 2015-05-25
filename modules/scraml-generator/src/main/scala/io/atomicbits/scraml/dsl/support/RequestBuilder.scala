@@ -22,6 +22,8 @@ case class RequestBuilder(client: Client,
 
   def allHeaders = defaultHeaders ++ headers
 
+  def isFormPost: Boolean = method == Post && formParameters.nonEmpty
+
   def execute() = client.execute(this)
 
   def executeToJson() = client.executeToJson(this)

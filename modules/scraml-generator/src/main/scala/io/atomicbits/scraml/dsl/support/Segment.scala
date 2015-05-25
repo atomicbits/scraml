@@ -23,7 +23,15 @@ class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
 
 class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends Segment {
 
-  protected val requestBuilder = req.copy(headers = headers)
+  protected val requestBuilder = {
+
+    if (req.isFormPost && (req.defaultHeaders ++ headers).get("Content-Type").isEmpty) {
+      val headersWithAddedContentType = headers.updated("Content-Type", "application/x-www-form-urlencoded")
+      req.copy(headers = headersWithAddedContentType)
+    } else {
+      req.copy(headers = headers)
+    }
+  }
 
   assert(
     req.validAcceptHeaders.isEmpty ||
