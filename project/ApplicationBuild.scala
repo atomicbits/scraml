@@ -15,6 +15,12 @@ with Dependencies {
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     )
 
+  val scramlJsonSchemaParser = Project(
+    id = "scraml-jsonschema-parser",
+    base = file("modules/scraml-jsonschema-parser"),
+    settings = projectSettings(dependencies = scramlJsonSchemaParserDeps ++ testDeps)
+  ) settings ()
+
   val scramlGenerator = Project(
     id = "scraml-generator",
     base = file("modules/scraml-generator"),
@@ -57,6 +63,6 @@ with Dependencies {
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlGenerator, scramlTest, scramlTestDef)
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator, scramlTest, scramlTestDef)
 
 }

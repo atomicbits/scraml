@@ -39,6 +39,12 @@ trait Dependencies { this:Build =>
     ramlJavaParser
   )
 
+  val scramlJsonSchemaParserDeps = Seq(
+    scalaLogging,
+    logback,
+    playJson
+  )
+
   val mainDeps = Seq(
     scalaLogging,
     logback

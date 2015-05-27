@@ -3,6 +3,11 @@
 title: test
 version: v1
 
+schemas:
+  - link:     !include schemas/link.scheme
+  - user:     !include schemas/user.scheme
+
+
 /rest/gebruiker/{void}:
     uriParameters:
       void:
