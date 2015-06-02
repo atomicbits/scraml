@@ -13,7 +13,10 @@ object IdExtractor {
       case Some(id) =>
         if (isRoot(id)) Root(id = cleanRoot(id))
         else Relative(id = id.trim.stripPrefix("/"))
-      case None => NoId
+      case None =>
+        if (isModelObject(schema))
+          throw new IllegalArgumentException(s"Anonymous object reference found in JSON schema: $schema")
+        else NoId
     }
 
     Option(idType)
@@ -25,8 +28,12 @@ object IdExtractor {
     root.trim.stripSuffix("#")
   }
 
-  def anchorFromRoot(root: String): String = {
-    root.split('/').toList.dropRight(1).mkString("/")
+  def isModelObject(schema: JsObject): Boolean = {
+
+    (schema \ "type").asOpt[String].exists { typeValue =>
+      typeValue == "object" && (schema \ "properties").isInstanceOf[JsObject]
+    }
+
   }
 
 }

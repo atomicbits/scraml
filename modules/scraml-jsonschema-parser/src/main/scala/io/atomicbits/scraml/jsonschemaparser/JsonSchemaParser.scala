@@ -11,11 +11,12 @@ object JsonSchemaParser {
 
   /**
    * Features:
-   * + schema lookup table by expanding all schema id's using inline dereferencing
+   * + expanding all ("$ref") schema references to the absolute schema id's for easy lookup using the lookup table
    * + reverse dereferencing for anonymous object references
+   * - --> too complex for now, we detect anonymous ("id"-less) object references in the IdExtractor and fail
+   * + schema lookup table by expanding all schema id's to their absolute id
    * + Canonical name generation for each schema
-   * + expanding all ("$ref") schema references to the expanded schema id's for easy lookup using the lookup table
-   * + case class generation based on the above schema manipulations and canonical names
+   * + case class generation based on the above schema manipulations and canonical names using inline dereferencing
    *
    * References:
    * + par. 7.2.2 http://json-schema.org/latest/json-schema-core.html
@@ -42,7 +43,6 @@ object JsonSchemaParser {
   }
 
 
-
   private[jsonschemaparser] def expandToAbsoluteRefs(schema: JsObject): JsObject = {
 
     schema match {
@@ -55,6 +55,10 @@ object JsonSchemaParser {
     }
 
     def expandRefsFromRoot(schema: JsObject, root: Root): JsObject = {
+
+      def childObjectsFieldMap(schema: JsObject) = {
+        schema.fields.collect { case (fieldName, jsObj: JsObject) => (fieldName, jsObj) }
+      }
 
       val currentRoot =
         schema match {
@@ -78,12 +82,7 @@ object JsonSchemaParser {
 
     }
 
-    def childObjectsFieldMap(schema: JsObject) = {
-      schema.fields.collect { case (fieldName, jsObj: JsObject) => (fieldName, jsObj) }
-    }
-
   }
-
 
 
   private[jsonschemaparser] def registerAbsoluteSchemaIds(schemaLookup: SchemaLookup,
@@ -121,10 +120,10 @@ object JsonSchemaParser {
 
       }
 
-    }
+      def childObjects(schema: JsObject) = {
+        schema.values.collect { case jsObj: JsObject => jsObj }
+      }
 
-    def childObjects(schema: JsObject) = {
-      schema.values.collect { case jsObj: JsObject => jsObj }
     }
 
   }
