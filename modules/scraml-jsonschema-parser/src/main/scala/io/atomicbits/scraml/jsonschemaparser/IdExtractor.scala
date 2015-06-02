@@ -11,8 +11,8 @@ object IdExtractor {
 
     val idType = (schema \ "id").asOpt[String] match {
       case Some(id) =>
-        if (isRoot(id)) Root(id = cleanRoot(id), anchorFromRoot(id))
-        else Relative(id = id.trim)
+        if (isRoot(id)) Root(id = cleanRoot(id))
+        else Relative(id = id.trim.stripPrefix("/"))
       case None => NoId
     }
 

@@ -34,28 +34,100 @@ object JsonSchemaParser {
    * @return A schema lookup table.
    */
   def parse(schemas: List[String]): SchemaLookup = {
-    val jsonSchemas: List[JsObject] = schemas map Json.parse collect { case schema: JsObject => schema }
-    val schemaLookup = jsonSchemas.foldLeft(SchemaLookup())(registerExpandedIds)
-
-    ???
+    schemas
+      .map(Json.parse)
+      .collect { case schema: JsObject => schema }
+      .map(expandToAbsoluteRefs)
+      .foldLeft(SchemaLookup())(registerAbsoluteSchemaIds)
   }
 
-  private[jsonschemaparser] def registerExpandedIds(schemaLookup: SchemaLookup, schema: JsObject): SchemaLookup = {
+
+
+  private[jsonschemaparser] def expandToAbsoluteRefs(schema: JsObject): JsObject = {
 
     schema match {
-      case IdExtractor(Root(id, anchor)) =>
-        val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (id -> schema))
-        // for all fields of schema that refer to an object, call expand with the current root and anchor
-        // and do that recursively with adjusted root and anchor where necessary
-        // ? expand all "$ref" fields already ?
-        ???
+      case IdExtractor(Root(id)) =>
+        // This is just an initial check to see if all given schema's have an id that is a schema root.
+        expandRefsFromRoot(schema, Root(id))
+
       case _ => throw new IllegalArgumentException("A top-level schema should have a root id.")
+
     }
 
-    def registerIds(subSchema: JsObject, root: Root) = {
-      ???
+    def expandRefsFromRoot(schema: JsObject, root: Root): JsObject = {
+
+      val currentRoot =
+        schema match {
+          case IdExtractor(Root(id)) => Root(id)
+          case IdExtractor(Relative(id)) => root.rootFromRelative(Relative(id))
+          case IdExtractor(NoId) => root
+        }
+
+      val schemaWithUpdatedRef =
+        (schema \ "$ref").asOpt[String]
+          .map(currentRoot.expandRef)
+          .map(expanded => schema ++ Json.obj("$ref" -> expanded))
+          .getOrElse(schema)
+
+      val childObjects: Seq[(String, JsObject)] = childObjectsFieldMap(schemaWithUpdatedRef)
+
+      childObjects.foldLeft(schemaWithUpdatedRef) { (updatedSchema, childObjectWithField) =>
+        val (fieldName, childObject) = childObjectWithField
+        updatedSchema ++ Json.obj(fieldName -> expandRefsFromRoot(childObject, currentRoot))
+      }
+
+    }
+
+    def childObjectsFieldMap(schema: JsObject) = {
+      schema.fields.collect { case (fieldName, jsObj: JsObject) => (fieldName, jsObj) }
     }
 
   }
+
+
+
+  private[jsonschemaparser] def registerAbsoluteSchemaIds(schemaLookup: SchemaLookup,
+                                                          schema: JsObject): SchemaLookup = {
+
+    schema match {
+      case IdExtractor(Root(id)) =>
+        // This is just an initial check to see if all given schema's have an id that is a schema root.
+        registerIds(schema, Root(id), schemaLookup)
+
+      case _ => throw new IllegalArgumentException("A top-level schema should have a root id.")
+
+    }
+
+    def registerIds(schema: JsObject, root: Root, schemaLookup: SchemaLookup): SchemaLookup = {
+
+      schema match {
+        case IdExtractor(Root(id)) =>
+          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (id -> schema))
+          childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
+            registerIds(childObject, Root(id), lookup)
+          }
+
+        case IdExtractor(Relative(id)) =>
+          val newRoot = root.rootFromRelative(Relative(id))
+          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (newRoot.id -> schema))
+          childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
+            registerIds(childObject, newRoot, lookup)
+          }
+
+        case IdExtractor(NoId) =>
+          childObjects(schema).foldLeft(schemaLookup) { (lookup, childObject) =>
+            registerIds(childObject, root, lookup)
+          }
+
+      }
+
+    }
+
+    def childObjects(schema: JsObject) = {
+      schema.values.collect { case jsObj: JsObject => jsObj }
+    }
+
+  }
+
 
 }

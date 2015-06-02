@@ -5,7 +5,23 @@ package io.atomicbits.scraml.jsonschemaparser
  */
 sealed trait IdType
 
-case class Root(id: String, anchor: String) extends IdType
+case class Root(id: String) extends IdType {
+
+  lazy val anchor: String = id.split('/').toList.dropRight(1).mkString("/")
+
+  def rootFromRelative(relative: Relative) = Root(s"$anchor/${relative.id}")
+
+  def expandRef(ref: String): String = {
+
+    val refTrimmed = ref.trim
+
+    if (refTrimmed.contains("://")) refTrimmed // Absolute
+    else if (refTrimmed.startsWith("#")) s"$id$refTrimmed" // Fragment
+    else s"$anchor$refTrimmed" // Relative
+
+  }
+
+}
 
 case class Relative(id: String) extends IdType
 
