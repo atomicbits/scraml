@@ -40,6 +40,7 @@ object JsonSchemaParser {
       .collect { case schema: JsObject => schema }
       .map(expandToAbsoluteRefs)
       .foldLeft(SchemaLookup())(registerAbsoluteSchemaIds)
+      .map(CanonicalNameGenerator.deduceCanonicalNames)
   }
 
 
@@ -55,9 +56,6 @@ object JsonSchemaParser {
         schema match {
           case IdExtractor(Root(id)) => Root(id)
           case _ => root
-//          case IdExtractor(Relative(id)) => root.rootFromRelative(Relative(id))
-//          case IdExtractor(Fragment(id)) => root.rootFromFragment(Fragment(id))
-//          case IdExtractor(NoId) => root
         }
 
       val schemaWithUpdatedRef =
@@ -136,6 +134,5 @@ object JsonSchemaParser {
     }
 
   }
-
 
 }

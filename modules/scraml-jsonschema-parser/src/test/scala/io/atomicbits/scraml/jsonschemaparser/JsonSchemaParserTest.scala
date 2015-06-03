@@ -67,25 +67,24 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
       """
         | SchemaLookup(
         |   Map(
-        |     http://my.site/myschema ->
-        |       {
-        |         "id": "http://my.site/myschema#",
-        |         "definitions": {
-        |           "schema1":
-        |             {
-        |               "id": "schema1",
-        |               "type": "integer"
-        |             },
-        |           "schema2":
-        |             {
-        |               "id": "#/definitions/schema2",
-        |               "type": "array",
-        |               "items": {
-        |                 "$ref": "http://my.site/schema1"
-        |               }
+        |     http://my.site/myschema -> {
+        |       "id": "http://my.site/myschema#",
+        |       "definitions": {
+        |         "schema1":
+        |           {
+        |             "id": "schema1",
+        |             "type": "integer"
+        |           },
+        |         "schema2":
+        |           {
+        |             "id": "#/definitions/schema2",
+        |             "type": "array",
+        |             "items": {
+        |               "$ref": "http://my.site/schema1"
         |             }
         |           }
-        |         },
+        |         }
+        |       },
         |     http://my.site/schema1 -> {
         |       "id": "schema1",
         |       "type": "integer"
