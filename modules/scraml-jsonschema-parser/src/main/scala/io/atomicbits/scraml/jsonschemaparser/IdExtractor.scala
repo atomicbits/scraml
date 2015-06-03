@@ -12,6 +12,7 @@ object IdExtractor {
     val idType = (schema \ "id").asOpt[String] match {
       case Some(id) =>
         if (isRoot(id)) Root(id = cleanRoot(id))
+        else if (isFragment(id)) Fragment(id)
         else Relative(id = id.trim.stripPrefix("/"))
       case None =>
         if (isModelObject(schema))
@@ -23,6 +24,8 @@ object IdExtractor {
   }
 
   def isRoot(id: String): Boolean = id.contains("://")
+
+  def isFragment(id: String): Boolean = id.trim.startsWith("#")
 
   def cleanRoot(root: String): String = {
     root.trim.stripSuffix("#")
