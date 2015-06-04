@@ -28,17 +28,17 @@ object JsonSchemaParser {
 
   /**
    *
-   * @param schemas A list containing the String-representation of JSON schema files. A single schema may contain
-   *                nested schemas.
+   * @param schemas A map containing the String-representation of JSON schema files as values. The keys are external
+   *                links referring to the schema. A single schema may contain nested schemas.
    *                All schemas MUST have an "id" property containing an absolute or relative identification for
    *                the schema, e.g.: { "id": "http://atomicbits.io/schema/user.json#", ... }
    * @return A schema lookup table.
    */
-  def parse(schemas: List[String]): SchemaLookup = {
+  def parse(schemas: Map[String, String]): SchemaLookup = {
     schemas
-      .map(Json.parse)
-      .collect { case schema: JsObject => schema }
-      .map(expandToAbsoluteRefs)
+      .mapValues(Json.parse)
+      .collect { case (id, schema: JsObject) => (id, schema) }
+      .mapValues(expandToAbsoluteRefs)
       .foldLeft(SchemaLookup())(registerAbsoluteSchemaIds)
       .map(CanonicalNameGenerator.deduceCanonicalNames)
   }
@@ -86,7 +86,7 @@ object JsonSchemaParser {
 
 
   private[jsonschemaparser] def registerAbsoluteSchemaIds(schemaLookup: SchemaLookup,
-                                                          schema: JsObject): SchemaLookup = {
+                                                          linkedSchema: (String, JsObject)): SchemaLookup = {
 
     def registerIds(schema: JsObject, root: Root, schemaLookup: SchemaLookup): SchemaLookup = {
 
@@ -124,10 +124,14 @@ object JsonSchemaParser {
 
     }
 
+    val (link, schema) = linkedSchema
+
     schema match {
       case IdExtractor(Root(id)) =>
         // This is just an initial check to see if all given schema's have an id that is a schema root.
-        registerIds(schema, Root(id), schemaLookup)
+        val updatedSchemaLookup =
+          schemaLookup.copy(externalSchemaLinks = schemaLookup.externalSchemaLinks + (link -> id))
+        registerIds(schema, Root(id), updatedSchemaLookup)
 
       case _ => throw new IllegalArgumentException("A top-level schema should have a root id.")
 

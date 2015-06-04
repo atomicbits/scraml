@@ -36,7 +36,7 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
 
 
       When("the definition is parsed")
-      val schemaLookup = JsonSchemaParser.parse(List(source))
+      val schemaLookup = JsonSchemaParser.parse(Map("link1" -> source))
 
 
       Then("the schemalookup must contain absolute references to the nested schemas")
@@ -189,7 +189,7 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
 
 
       When("the definition is parsed")
-      val schemaLookup = JsonSchemaParser.parse(List(source))
+      val schemaLookup = JsonSchemaParser.parse(Map("link2" -> source))
 
 
       Then("the object ids should be mapped onto their canonical names")

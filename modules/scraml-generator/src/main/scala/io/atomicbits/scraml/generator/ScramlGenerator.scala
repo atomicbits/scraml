@@ -1,5 +1,6 @@
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
 
 import io.atomicbits.scraml.parser._
@@ -56,9 +57,9 @@ object ScRamlGenerator {
     val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
     println(s"RAML model generated")
 
-    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource,c))
+    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, c))
 
-    raml.schemas
+    val schemaLookup = JsonSchemaParser.parse(raml.schemas)
 
     // rewrite the class definition
     c.Expr(
