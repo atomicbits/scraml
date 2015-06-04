@@ -15,8 +15,7 @@ case class RequestBuilder(client: Client,
                           validContentTypeHeaders: List[String] = Nil,
                           headers: Map[String, String] = Map(),
                           defaultHeaders: Map[String, String] = Map.empty,
-                          body: Option[String] = None,
-                          formatJsonResultBody: Boolean = false) {
+                          body: Option[String] = None) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
 

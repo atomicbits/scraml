@@ -6,6 +6,7 @@
   "description": "A user object.",
   "definitions": {
     "address": {
+      "id": "#/definitions/address",
       "type": "object",
       "properties": {
         "streetAddress": { "type": "string" },

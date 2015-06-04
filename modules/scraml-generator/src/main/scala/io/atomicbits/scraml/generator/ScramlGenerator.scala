@@ -61,6 +61,9 @@ object ScRamlGenerator {
 
     val schemaLookup = JsonSchemaParser.parse(raml.schemas)
 
+    // ToDo: enable and implement
+//    val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
+
     // rewrite the class definition
     c.Expr(
       q"""
@@ -85,11 +88,15 @@ object ScRamlGenerator {
 
        object $classAsTermName {
 
-         case object Foo {}
+
 
        }
 
      """
+
+    // ToDo: enable
+    // ..$caseClasses
+
     )
 
   }

@@ -114,14 +114,7 @@ class DeleteSegment(body: Option[String],
 }
 
 
-class FormatJsonSegment(req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = req.copy(formatJsonResultBody = true)
-
-}
-
-
-class ExecuteSegment(req: RequestBuilder) {
+class ExecuteSegment[T](req: RequestBuilder) {
 
   def execute() = {
     println(s"request: $req")
@@ -130,6 +123,6 @@ class ExecuteSegment(req: RequestBuilder) {
 
   def executeToJson() = req.executeToJson()
 
-  def executeToJsonDto[T]()(implicit reader: Reads[T]) = req.executeToJsonDto()
+  def executeToJsonDto()(implicit reader: Reads[T]) = req.executeToJsonDto()
 
 }

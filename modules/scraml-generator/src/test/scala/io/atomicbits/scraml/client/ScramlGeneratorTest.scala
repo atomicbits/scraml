@@ -4,9 +4,11 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import io.atomicbits.scraml.client.XoClient.User
 
 import io.atomicbits.scraml.dsl.Response
 import org.scalatest.concurrent.ScalaFutures
+import play.api.libs.json.JsValue
 
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.concurrent._
@@ -28,7 +30,9 @@ case class XoClient(host: String,
   import io.atomicbits.scraml.dsl.support._
   import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
-  import XoClient._  // ToDo generate import.
+  import XoClient._
+
+  // ToDo generate import.
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
@@ -53,11 +57,14 @@ case class XoClient(host: String,
                 req = requestBuilder
               ) {
 
-                def formatJson = new FormatJsonSegment(requestBuilder) {
-                  def execute() = new ExecuteSegment(requestBuilder).execute()
-                }
+                private val executeSegment = new ExecuteSegment[User](requestBuilder)
 
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+//                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
               }
 
             }
@@ -72,7 +79,38 @@ case class XoClient(host: String,
                 headers = headers.toMap,
                 req = requestBuilder
               ) {
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+
+                private val executeSegment = new ExecuteSegment[User](requestBuilder)
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+//                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
+              }
+
+            }
+
+            def put(body: User) = new PutSegment(
+              body = body.toString,
+              validAcceptHeaders = List("application/json"),
+              validContentTypeHeaders = List("application/json"),
+              req = requestBuilder) {
+
+              def headers(headers: (String, String)*) = new HeaderSegment(
+                headers = headers.toMap,
+                req = requestBuilder
+              ) {
+
+                private val executeSegment = new ExecuteSegment[User](requestBuilder)
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+//                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
               }
 
             }
@@ -94,7 +132,13 @@ case class XoClient(host: String,
                 req = requestBuilder
               ) {
 
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+                private val executeSegment = new ExecuteSegment[User](requestBuilder)
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+//                def executeToJsonDto() = executeSegment.executeToJsonDto()
 
               }
 
@@ -110,6 +154,7 @@ case class XoClient(host: String,
 
 object XoClient {
 
+  case class User(firstName: String, lastName: String, age: Int)
 
 }
 
@@ -141,17 +186,17 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           .withHeader("Accept", equalTo("application/json"))
           .willReturn(
             aResponse()
-              .withBody( """{"test": "OK"}""")
+              .withBody( """{"test":"OK"}""")
               .withStatus(200)))
 
       stubFor(
         put(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
-          .withRequestBody(equalTo("body"))
+          .withRequestBody(equalTo("User(John,Doe,21)"))
           .willReturn(
             aResponse()
-              .withBody( """{"test": "OK"}""")
+              .withBody( """{"test":"OK"}""")
               .withStatus(200)))
 
 
@@ -167,7 +212,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       val futureResultPut: Future[Response[String]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
-          .put("body")
+          .put(User("John", "Doe", 21))
           .headers(
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
@@ -178,10 +223,10 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       Then("we should see the expected response values")
 
       val resultGet = Await.result(futureResultGet, 2 seconds)
-      assertResult(Response(200, """{"test": "OK"}"""))(resultGet)
+      assertResult(Response(200, """{"test":"OK"}"""))(resultGet)
 
       val resultPut = Await.result(futureResultPut, 2 seconds)
-      assertResult(Response(200, """{"test": "OK"}"""))(resultPut)
+      assertResult(Response(200, """{"test":"OK"}"""))(resultPut)
 
     }
   }

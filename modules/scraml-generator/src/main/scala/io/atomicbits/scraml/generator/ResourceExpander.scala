@@ -9,7 +9,7 @@ import scala.language.experimental.macros
 /**
  * Created by peter on 24/05/15, Atomic BITS (http://atomicbits.io). 
  */
-object ResourceExpander  {
+object ResourceExpander {
 
 
   /**
