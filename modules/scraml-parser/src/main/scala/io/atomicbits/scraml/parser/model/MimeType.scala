@@ -11,7 +11,7 @@ import java.util.{List => JList}
  * I would expect a Map from String to a signle FormParameter.
  *
  */
-case class MimeType(mimeType: String, schema: String, formParameters: Map[String, List[Parameter]])
+case class MimeType(mimeType: String, schema: Option[String], formParameters: Map[String, List[Parameter]])
 
 object MimeType {
 
@@ -24,7 +24,7 @@ object MimeType {
       }(mimeType.getFormParameters)
 
 
-    MimeType(mimeType.getType, mimeType.getSchema, formParameters)
+    MimeType(mimeType.getType, Option(mimeType.getSchema), formParameters)
   }
 
 }

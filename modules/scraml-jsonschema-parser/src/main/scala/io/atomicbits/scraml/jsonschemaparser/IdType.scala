@@ -17,7 +17,7 @@ case class Root(id: String) extends IdType {
 
     val refTrimmed = ref.trim
 
-    if (refTrimmed.contains("://")) refTrimmed // Absolute
+    if (refTrimmed.contains("://")) refTrimmed.stripSuffix("#") // Absolute
     else if (refTrimmed.startsWith("#")) s"$id$refTrimmed" // Fragment
     else s"$anchor/$refTrimmed" // Relative
 

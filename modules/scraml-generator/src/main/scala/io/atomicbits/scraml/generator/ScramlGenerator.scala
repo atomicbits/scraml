@@ -58,6 +58,8 @@ object ScRamlGenerator {
 
     val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource,c))
 
+    raml.schemas
+
     // rewrite the class definition
     c.Expr(
       q"""
