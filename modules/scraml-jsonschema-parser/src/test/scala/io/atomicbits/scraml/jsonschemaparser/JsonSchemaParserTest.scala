@@ -102,7 +102,106 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
 
     }
 
-  }
+    scenario("Object references in a nested JSON schema definition should be given original canonical names") {
 
+      Given("a nested JSON schema definition containing object references")
+      val source =
+        """
+          |{
+          | "id": "http://my.site/user.json#",
+          | "definitions": {
+          |   "address": {
+          |     "id": "home-address.json",
+          |     "type": "object",
+          |     "properties": {
+          |       "streetAddress": { "type": "string" },
+          |       "city":          { "type": "string" },
+          |       "state":         { "type": "string" }
+          |     },
+          |     "required": ["streetAddress", "city", "state"]
+          |    },
+          |   "certificate": {
+          |     "id": "#/definitions/certificate",
+          |     "type": "object",
+          |     "properties": {
+          |       "name": {
+          |         "type": "string",
+          |         "required": true
+          |       },
+          |       "grade": {
+          |         "type": "string",
+          |         "required": true
+          |       }
+          |     }
+          |   },
+          |   "credentials": {
+          |     "id": "#/definitions/credentials",
+          |     "type": "object",
+          |     "properties": {
+          |       "schoolName": {
+          |         "type": "string",
+          |         "required": true
+          |       },
+          |       "certificates": {
+          |         "type": "array",
+          |         "items": {
+          |           "$ref": "#/definitions/certificate"
+          |         }
+          |       }
+          |     }
+          |   },
+          |   "non-object-schema": {
+          |     "id": "will-not-have-canonical-name",
+          |     "type": "integer"
+          |   }
+          | },
+          | "type": "object",
+          | "properties": {
+          |   "id": {
+          |      "required": true,
+          |      "type": "string"
+          |    },
+          |    "firstName": {
+          |      "required": true,
+          |      "type": "string"
+          |    },
+          |    "lastName": {
+          |      "required": true,
+          |      "type": "string"
+          |    },
+          |    "age": {
+          |      "required": true,
+          |      "type": "integer"
+          |    },
+          |    "homePage": {
+          |      "required": false,
+          |      "type": "integer"
+          |    },
+          |    "address": {
+          |      "$ref": "home-address.json"
+          |    },
+          |    "credentials": {
+          |      "$ref": "#/definitions/credentials"
+          |    }
+          |  }
+          |}
+        """.stripMargin
+
+
+      When("the definition is parsed")
+      val schemaLookup = JsonSchemaParser.parse(List(source))
+
+
+      Then("the object ids should be mapped onto their canonical names")
+      schemaLookup.canonicalNames shouldEqual
+        Map(
+          "http://my.site/user.json" -> "User",
+          "http://my.site/home-address.json" -> "HomeAddress",
+          "http://my.site/user.json#/definitions/certificate" -> "Certificate",
+          "http://my.site/user.json#/definitions/credentials" -> "Credentials")
+
+    }
+
+  }
 
 }

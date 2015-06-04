@@ -7,7 +7,9 @@ object CanonicalNameGenerator {
 
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val schemaPaths = schemaLookup.lookupTable.keys.map(SchemaPath(_)).toList
+    val schemaPaths = schemaLookup.lookupTable
+      .collect { case (id, jsObj) if IdExtractor.isModelObject(jsObj) => (id, jsObj) }
+      .keys.map(SchemaPath(_)).toList
 
     val groupedByHasFragment = schemaPaths.groupBy(_.reverseFragment.isEmpty)
 

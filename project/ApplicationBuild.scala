@@ -31,7 +31,7 @@ with Dependencies {
     // Important: The paradise compiler plugin must be included in the project that defines the macro!
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
     incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
-    ) dependsOn scramlParser
+    ) dependsOn (scramlParser, scramlJsonSchemaParser)
 
   val scramlTest = Project(
     id = "scraml-test",
