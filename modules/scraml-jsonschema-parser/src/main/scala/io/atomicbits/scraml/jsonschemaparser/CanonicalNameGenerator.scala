@@ -7,9 +7,10 @@ object CanonicalNameGenerator {
 
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val schemaPaths = schemaLookup.lookupTable
-      .collect { case (id, jsObj) if IdExtractor.isModelObject(jsObj) => (id, jsObj) }
-      .keys.map(SchemaPath(_)).toList
+    val schemaPaths: List[SchemaPath] =
+      schemaLookup.lookupTable
+        .collect { case (id, jsObj) if IdExtractor.isModelObject(jsObj) => (id, jsObj) }
+        .keys.map(SchemaPath(_)).toList
 
     val groupedByHasFragment = schemaPaths.groupBy(_.reverseFragment.isEmpty)
 
@@ -73,7 +74,7 @@ object CanonicalNameGenerator {
 
       }
 
-    schemaLookup.copy(canonicalNames = canonicals)
+    schemaLookup // ToDo: Fix... .copy(canonicalNames = canonicals)
   }
 
 }
@@ -89,9 +90,9 @@ case class SchemaPath(reversePath: List[String], reverseFragment: List[String], 
 
 object SchemaPath {
 
-  def apply(origin: String): SchemaPath = {
+  def apply(origin: AbsoluteId): SchemaPath = {
 
-    val withoutProtocol = origin.split("://").drop(1).head
+    val withoutProtocol = origin.id.split("://").drop(1).head
     val (pathPart, fragmentPart) =
       withoutProtocol.split("#").toList match {
         case path :: Nil => (path, None)
@@ -111,8 +112,9 @@ object SchemaPath {
       case fileName :: path => cleanFileName(fileName) :: path
     }
 
-    SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)
-
+    // ToDo: fix
+    // SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)
+    SchemaPath(List.empty, List.empty, "")
   }
 
   private def cleanFileName(fileName: String): String = {

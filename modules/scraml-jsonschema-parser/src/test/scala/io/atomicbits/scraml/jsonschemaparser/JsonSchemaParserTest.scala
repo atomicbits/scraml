@@ -50,16 +50,6 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
           "type" -> "integer"
         )
 
-      schemaLookup.lookupTable("http://my.site/myschema#/definitions/schema2") shouldEqual
-        Json.obj(
-          "id" -> "#/definitions/schema2",
-          "type" -> "array",
-          "items" ->
-            Json.obj(
-              "$ref" -> "http://my.site/schema1"
-            )
-        )
-
       (schemaLookup.lookupTable("http://my.site/myschema") \\ "$ref") shouldEqual
         Seq(JsString("http://my.site/schema1"))
 
@@ -196,9 +186,11 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
       schemaLookup.canonicalNames shouldEqual
         Map(
           "http://my.site/user.json" -> "User",
-          "http://my.site/home-address.json" -> "HomeAddress",
-          "http://my.site/user.json#/definitions/certificate" -> "Certificate",
-          "http://my.site/user.json#/definitions/credentials" -> "Credentials")
+          "http://my.site/home-address.json" -> "HomeAddress"
+          //          ,
+          //          "http://my.site/user.json#/definitions/certificate" -> "Certificate",
+          //          "http://my.site/user.json#/definitions/credentials" -> "Credentials"
+        )
 
     }
 

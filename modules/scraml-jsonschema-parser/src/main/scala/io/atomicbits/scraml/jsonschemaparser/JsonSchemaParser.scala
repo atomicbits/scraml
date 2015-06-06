@@ -38,15 +38,18 @@ object JsonSchemaParser {
     schemas
       .mapValues(Json.parse)
       .collect { case (id, schema: JsObject) => (id, schema) }
-      .mapValues(expandToAbsoluteRefs)
-      .foldLeft(SchemaLookup())(registerAbsoluteSchemaIds)
-      .map(CanonicalNameGenerator.deduceCanonicalNames)
+      .mapValues(Schema(_)) // we now have a Map[String, Schema]
+
+    //      .mapValues(expandToAbsoluteRefs)
+    //      .foldLeft(SchemaLookup())(registerAbsoluteSchemaIds)
+    //      .map(CanonicalNameGenerator.deduceCanonicalNames)
+    SchemaLookup() // ToDo: fix
   }
 
 
   private[jsonschemaparser] def expandToAbsoluteRefs(schema: JsObject): JsObject = {
 
-    def expandRefsFromRoot(schema: JsObject, root: Root): JsObject = {
+    def expandRefsFromRoot(schema: JsObject, root: AbsoluteId): JsObject = {
 
       def childObjectsFieldMap(schema: JsObject) = {
         schema.fields.collect { case (fieldName, jsObj: JsObject) => (fieldName, jsObj) }
@@ -54,7 +57,7 @@ object JsonSchemaParser {
 
       val currentRoot =
         schema match {
-          case IdExtractor(Root(id)) => Root(id)
+          case IdExtractor(AbsoluteId(id)) => AbsoluteId(id)
           case _ => root
         }
 
@@ -74,9 +77,9 @@ object JsonSchemaParser {
     }
 
     schema match {
-      case IdExtractor(Root(id)) =>
+      case IdExtractor(AbsoluteId(id)) =>
         // This is just an initial check to see if all given schema's have an id that is a schema root.
-        expandRefsFromRoot(schema, Root(id))
+        expandRefsFromRoot(schema, AbsoluteId(id))
 
       case _ => throw new IllegalArgumentException("A top-level schema should have a root id.")
 
@@ -88,34 +91,38 @@ object JsonSchemaParser {
   private[jsonschemaparser] def registerAbsoluteSchemaIds(schemaLookup: SchemaLookup,
                                                           linkedSchema: (String, JsObject)): SchemaLookup = {
 
-    def registerIds(schema: JsObject, root: Root, schemaLookup: SchemaLookup): SchemaLookup = {
+    def registerIds(schema: JsObject, root: AbsoluteId, schemaLookup: SchemaLookup): SchemaLookup = {
 
       def childObjects(schema: JsObject) = {
         schema.values.collect { case jsObj: JsObject => jsObj }
       }
 
       schema match {
-        case IdExtractor(Root(id)) =>
-          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (id -> schema))
+        case IdExtractor(AbsoluteId(id)) =>
+          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (AbsoluteId(id) -> schema))
           childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
-            registerIds(childObject, Root(id), lookup)
+            registerIds(childObject, AbsoluteId(id), lookup)
           }
 
-        case IdExtractor(Relative(id)) =>
-          val absoluteId = root.rootFromRelative(Relative(id))
-          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (absoluteId.id -> schema))
-          childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
-            registerIds(childObject, root, lookup)
-          }
-
-        case IdExtractor(Fragment(id)) =>
-          val absoluteId = root.rootFromFragment(Fragment(id))
-          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (absoluteId.id -> schema))
+        case IdExtractor(RelativeId(id)) =>
+          val absoluteId = root.toAbsolute(RelativeId(id))
+          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (absoluteId -> schema))
           childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
             registerIds(childObject, root, lookup)
           }
 
-        case IdExtractor(NoId) =>
+        case IdExtractor(FragmentId(id)) =>
+          childObjects(schema).foldLeft(schemaLookup) { (lookup, childObject) =>
+            registerIds(childObject, root, lookup)
+          }
+        // We do not need to register fragmented ids because they are resolved through their base URL.
+        //          val absoluteId = root.rootFromFragment(Fragment(id))
+        //          val updatedSchemaLookup = schemaLookup.copy(lookupTable = schemaLookup.lookupTable + (absoluteId.id -> schema))
+        //          childObjects(schema).foldLeft(updatedSchemaLookup) { (lookup, childObject) =>
+        //            registerIds(childObject, root, lookup)
+        //          }
+
+        case IdExtractor(ImplicitId) =>
           childObjects(schema).foldLeft(schemaLookup) { (lookup, childObject) =>
             registerIds(childObject, root, lookup)
           }
@@ -127,11 +134,11 @@ object JsonSchemaParser {
     val (link, schema) = linkedSchema
 
     schema match {
-      case IdExtractor(Root(id)) =>
+      case IdExtractor(AbsoluteId(id)) =>
         // This is just an initial check to see if all given schema's have an id that is a schema root.
         val updatedSchemaLookup =
-          schemaLookup.copy(externalSchemaLinks = schemaLookup.externalSchemaLinks + (link -> id))
-        registerIds(schema, Root(id), updatedSchemaLookup)
+          schemaLookup.copy(externalSchemaLinks = schemaLookup.externalSchemaLinks + (link -> AbsoluteId(id)))
+        registerIds(schema, AbsoluteId(id), updatedSchemaLookup)
 
       case _ => throw new IllegalArgumentException("A top-level schema should have a root id.")
 
