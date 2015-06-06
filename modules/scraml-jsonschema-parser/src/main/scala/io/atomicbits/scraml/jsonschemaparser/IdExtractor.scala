@@ -7,33 +7,24 @@ import play.api.libs.json.JsObject
  */
 object IdExtractor {
 
-  def unapply(schema: JsObject): Option[Id] = {
-
-    import IdAnalyser._
-
-    val idType = (schema \ "id").asOpt[String] match {
-      case Some(id) =>
-        if (isRoot(id)) AbsoluteId(id = cleanRoot(id))
-        else if (isFragment(id)) FragmentId(id)
-        else RelativeId(id = id.trim.stripPrefix("/"))
-      case None => ImplicitId
-    }
-
-    Option(idType)
-  }
+  def unapply(schema: JsObject): Option[Id] = IdAnalyser.idFromField(schema, "id")
 
 }
 
 object RefExtractor {
 
-  def unapply(schema: JsObject): Option[Id] = {
+  def unapply(schema: JsObject): Option[Id] = IdAnalyser.idFromField(schema, "$ref")
 
-    import IdAnalyser._
+}
 
-    val idType = (schema \ "$ref").asOpt[String] match {
+object IdAnalyser {
+
+  def idFromField(schema: JsObject, field: String): Option[Id] = {
+    val idType = (schema \ field).asOpt[String] match {
       case Some(id) =>
         if (isRoot(id)) AbsoluteId(id = cleanRoot(id))
         else if (isFragment(id)) FragmentId(id)
+        else if (isAbsoluteFragment(id)) AbsoluteFragmentId(id)
         else RelativeId(id = id.trim.stripPrefix("/"))
       case None => ImplicitId
     }
@@ -41,14 +32,15 @@ object RefExtractor {
     Option(idType)
   }
 
-}
-
-object IdAnalyser {
-
   def isRoot(id: String): Boolean = id.contains("://")
 
   def isFragment(id: String): Boolean = {
-    id.trim.split("#").length == 2 // this includes String objects that start with "#"
+    id.trim.startsWith("#")
+  }
+
+  def isAbsoluteFragment(id: String): Boolean = {
+    val parts = id.trim.split("#")
+    parts.length == 2 && parts(0).contains("://")
   }
 
   def cleanRoot(root: String): String = {

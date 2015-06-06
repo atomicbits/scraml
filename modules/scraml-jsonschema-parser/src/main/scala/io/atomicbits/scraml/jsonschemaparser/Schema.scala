@@ -1,11 +1,14 @@
 package io.atomicbits.scraml.jsonschemaparser
 
-import play.api.libs.json.{JsArray, JsValue, JsObject}
+import play.api.libs.json._
 
 import scala.language.postfixOps
 
 /**
- * Created by peter on 5/06/15, Atomic BITS (http://atomicbits.io). 
+ * Created by peter on 5/06/15, Atomic BITS (http://atomicbits.io).
+ *
+ * See: http://tools.ietf.org/html/draft-zyp-json-schema-03#section-5.7
+ *
  */
 trait Schema {
 
@@ -17,17 +20,21 @@ object Schema {
 
   def apply(schema: JsObject): Schema = {
     (schema \ "type").asOpt[String] match {
-      case Some("object") =>
-      case Some("array") =>
-      case Some("string") =>
-      case Some("number") =>
-      case Some("integer") =>
-      case Some("boolean") =>
-      case Some("null") =>
+      case Some("object") => ObjectEl(schema)
+      case Some("array") => ArrayEl(schema)
+      case Some("string") => StringEl(schema)
+      case Some("number") => NumberEl(schema)
+      case Some("integer") => IntegerEl(schema)
+      case Some("boolean") => BooleanEl(schema)
+      case Some("null") => NullEl(schema)
       case None =>
         (schema \ "$ref").asOpt[String] match {
           case Some(_) => SchemaReference(schema)
-          case None => Fragment(schema)
+          case None =>
+            (schema \ "enum").asOpt[List[String]] match {
+              case Some(choices) => EnumEl(schema)
+              case None => Fragment(schema)
+            }
         }
     }
   }
@@ -55,6 +62,7 @@ object Fragment {
 
 }
 
+
 case class SchemaReference(id: Id, refersTo: Id) extends Schema
 
 object SchemaReference {
@@ -71,24 +79,30 @@ object SchemaReference {
 
 }
 
+
 case class ObjectReference(id: Id, refersTo: ObjectEl) extends Schema
+
 
 case class ObjectEl(id: Id,
                     properties: Map[String, Schema],
-                    required: Map[String, Boolean] = Map.empty,
+                    required: Boolean,
+                    requiredFields: List[String] = List.empty,
                     oneOfSelection: List[Selection] = List.empty,
                     fragments: Map[String, Schema] = Map.empty,
                     name: Option[String] = None,
                     canonicalName: Option[String] = None) extends Schema
-// ToDo: handle the required field
+
 // ToDo: handle the oneOf field
-// ToDo: handle the name field
 object ObjectEl {
 
   def apply(schema: JsObject): ObjectEl = {
+
+    // Process the id
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
     }
+
+    // Process the properties
     val properties =
       schema \ "properties" match {
         case props: JsObject =>
@@ -97,6 +111,8 @@ object ObjectEl {
           } toMap)
         case _ => None
       }
+
+    // Process the fragments
     val keysToExclude = Seq("id", "properties", "required", "oneOf", "anyOf", "allOf")
     val fragmentsToKeep =
       keysToExclude.foldLeft[Map[String, JsValue]](schema.value.toMap) { (schemaMap, excludeKey) =>
@@ -105,28 +121,210 @@ object ObjectEl {
     val fragments = fragmentsToKeep collect {
       case (fragmentFieldName, fragment: JsObject) => (fragmentFieldName, Schema(fragment))
     }
+
+    // Process the required field
+    val (required, requiredFields) =
+      schema \ "required" match {
+        case req: JsArray =>
+          (None, Some(req.value.toList collect {
+            case JsString(value) => value
+          }))
+        case JsBoolean(b) => (Some(b), None)
+        case _ => (None, None)
+      }
+
+    // Process the named field
+    val name = (schema \ "name").asOpt[String]
+
     ObjectEl(
       id = id,
+      required = required.getOrElse(false),
+      requiredFields = requiredFields.getOrElse(List.empty[String]),
       properties = properties.getOrElse(Map.empty[String, Schema]),
-      fragments = fragments.toMap
+      fragments = fragments.toMap,
+      name = name
     )
+
   }
 
 }
 
-case class ArrayEl(id: Id, items: Schema) extends Schema
 
-case class StringEl(id: Id) extends Schema
+case class ArrayEl(id: Id, items: Schema, required: Boolean = false) extends Schema
 
-case class NumberEl(id: Id) extends Schema
+object ArrayEl {
 
-case class IntEl(id: Id) extends Schema
+  def apply(schema: JsObject): ArrayEl = {
 
-case class BooleanEl(id: Id) extends Schema
+    // Process the id
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
 
-case class NullEl(id: Id) extends Schema
+    // Process the items type
+    val items =
+      schema \ "items" match {
+        case obj: JsObject => Some(Schema(obj))
+        case _ => None
+      }
 
-case class EnumEl(id: Id, choices: List[String]) extends Schema
+    // Process the required field
+    val required = (schema \ "required").asOpt[Boolean]
+
+    ArrayEl(
+      id = id,
+      items = items.getOrElse(
+        throw JsonSchemaParseException("An array type must have an 'items' field that refers to a JsObject")
+      ),
+      required = required.getOrElse(false)
+    )
+
+  }
+
+}
+
+
+/**
+ *
+ * @param id
+ * @param format See http://tools.ietf.org/html/draft-zyp-json-schema-03#section-5.7
+ * @param required
+ */
+case class StringEl(id: Id, format: Option[String] = None, required: Boolean = false) extends Schema
+
+object StringEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val format = (schema \ "format").asOpt[String]
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    StringEl(id, format, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class NumberEl(id: Id, required: Boolean = false) extends Schema
+
+object NumberEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    NumberEl(id, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class IntegerEl(id: Id, required: Boolean = false) extends Schema
+
+object IntegerEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    IntegerEl(id, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class IntEl(id: Id, required: Boolean = false) extends Schema
+
+object IntEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    IntEl(id, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class BooleanEl(id: Id, required: Boolean = false) extends Schema
+
+object BooleanEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    BooleanEl(id, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class NullEl(id: Id, required: Boolean = false) extends Schema
+
+object NullEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    NullEl(id, required.getOrElse(false))
+
+  }
+
+}
+
+
+case class EnumEl(id: Id, choices: List[String], required: Boolean = false) extends Schema
+
+object EnumEl {
+
+  def apply(schema: JsObject): Schema = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
+    }
+
+    val choices = (schema \ "enum").asOpt[List[String]]
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    EnumEl(id, choices.getOrElse(List.empty), required.getOrElse(false))
+
+  }
+
+}
 
 trait Selection extends Schema
 

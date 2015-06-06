@@ -61,12 +61,17 @@ case class RelativeId(id: String) extends Id
  * path and is redundant from that point of view.
  * It is of the form "#/some/schema/path/license"
  *
- * Mind that this parser never expands a schema fragment id to its absolute form. The absolute form of a fragment id
- * is only used in references (e.g.: { "$ref": "http://atomicbits.io/schema/User.json#/some/schema/path/license" }).
- *
  * @param id The string representation of the id
  */
 case class FragmentId(id: String) extends Id
+
+/**
+ * This is the absolute version of a fragment id. It is prepended with its root's achor.
+ * E.g. "http://atomicbits.io/schema/User.json#/some/schema/path/license"
+ *
+ * @param id The string representation of the id
+ */
+case class AbsoluteFragmentId(id: String) extends Id
 
 /**
  * An implicit id marks the absense of an id. It implies that the schema should be uniquely identified by the schema
