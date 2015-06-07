@@ -18,19 +18,18 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
-import io.atomicbits.scraml.jsonschemaparser.AbsoluteId
+import io.atomicbits.scraml.jsonschemaparser.model._
 import org.scalatest._
 import org.scalatest.Matchers._
-import play.api.libs.json.{JsString, Json}
 
 /**
  * Created by peter on 27/05/15, Atomic BITS (http://atomicbits.io). 
  */
 class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
 
-  feature("Subschema dereferencing") {
+  feature("Parsing a raw JSON schema") {
 
-    scenario("A nested JSON schema definition should be referenced correctly") {
+    scenario("A nested JSON schema definition should be parsed into the schema model without simplifications") {
 
       Given("a nested JSON schema definition")
       val source =
@@ -54,66 +53,37 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
         """.stripMargin
 
 
-      When("the definition is parsed")
-      val schemaLookup = JsonSchemaParser.parse(Map("link1" -> source))
+      When("the definition is parsed to the raw schema model")
+      val rawSchemas = JsonSchemaParser.parseRawSchemas(Map("link1" -> source))
 
-
-      Then("the schemalookup must contain absolute references to the nested schemas")
-      And("the reference to the inner schema must be correctly expanded")
-
-      println(s"schema lookup: $schemaLookup")
-
-      schemaLookup.lookupTable(AbsoluteId("http://my.site/schema1")) shouldEqual
-        Json.obj(
-          "id" -> "schema1",
-          "type" -> "integer"
+      Then("the raw schema adheres to the expected model")
+      rawSchemas shouldEqual
+        Map(
+          "link1" ->
+            Fragment(
+              AbsoluteId("http://my.site/myschema"),
+              Map(
+                "definitions" ->
+                  Fragment(
+                    ImplicitId,
+                    Map(
+                      "schema1" -> IntegerEl(RelativeId("schema1"), required = false),
+                      "schema2" ->
+                        ArrayEl(
+                          FragmentId("#/definitions/schema2"),
+                          SchemaReference(ImplicitId, RelativeId("schema1")), required = false
+                        )
+                    )
+                  )
+              )
+            )
         )
-
-      (schemaLookup.lookupTable(AbsoluteId("http://my.site/myschema")) \\ "$ref") shouldEqual
-        Seq(JsString("http://my.site/schema1"))
-
-      // The schemaLookup looks as follows:
-      """
-        | SchemaLookup(
-        |   Map(
-        |     http://my.site/myschema -> {
-        |       "id": "http://my.site/myschema#",
-        |       "definitions": {
-        |         "schema1":
-        |           {
-        |             "id": "schema1",
-        |             "type": "integer"
-        |           },
-        |         "schema2":
-        |           {
-        |             "id": "#/definitions/schema2",
-        |             "type": "array",
-        |             "items": {
-        |               "$ref": "http://my.site/schema1"
-        |             }
-        |           }
-        |         }
-        |       },
-        |     http://my.site/schema1 -> {
-        |       "id": "schema1",
-        |       "type": "integer"
-        |     },
-        |     http://my.site/myschema#/definitions/schema2 -> {
-        |       "id": "#/definitions/schema2",
-        |       "type": "array",
-        |       "items": {
-        |         "$ref": "http://my.site/schema1"
-        |       }
-        |     }
-        |   )
-        | )
-      """
 
     }
 
-    scenario("Object references in a nested JSON schema definition should be given original canonical names") {
+    scenario("A complex JSON schema definition should be parsed into the schema model without simplifications") {
 
-      Given("a nested JSON schema definition containing object references")
+      Given("a nested JSON schema definition 2")
       val source =
         """
           |{
@@ -197,17 +167,93 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
         """.stripMargin
 
 
-      When("the definition is parsed")
-      val schemaLookup = JsonSchemaParser.parse(Map("link2" -> source))
+      When("the definition is parsed to the raw schema model 2")
+      val rawSchema2 = JsonSchemaParser.parseRawSchemas(Map("link2" -> source))
 
 
-      Then("the object ids should be mapped onto their canonical names")
-//      schemaLookup.canonicalNames shouldEqual
-//        Map(
-//          "http://my.site/user.json" -> "User",
-//          "http://my.site/home-address.json" -> "HomeAddress"
-//        )
-
+      Then("the raw schema adheres to the expected model 2")
+      rawSchema2 shouldEqual
+        Map(
+          "link2" ->
+            ObjectEl(
+              AbsoluteId("http://my.site/user.json"),
+              Map(
+                "homePage" -> IntegerEl(ImplicitId, required = false),
+                "age" -> IntegerEl(ImplicitId, required = true),
+                "lastName" -> StringEl(ImplicitId, None, required = true),
+                "firstName" -> StringEl(ImplicitId, None, required = true),
+                "id" -> StringEl(ImplicitId, None, required = true),
+                "address" -> SchemaReference(ImplicitId, RelativeId("home-address.json")),
+                "credentials" -> SchemaReference(ImplicitId, FragmentId("#/definitions/credentials"))
+              ),
+              required = false,
+              List(),
+              List(),
+              Map(
+                "definitions" ->
+                  Fragment(
+                    ImplicitId,
+                    Map(
+                      "address" ->
+                        ObjectEl(
+                          RelativeId("home-address.json"),
+                          Map(
+                            "streetAddress" -> StringEl(ImplicitId, None, required = false),
+                            "city" -> StringEl(ImplicitId, None, required = false),
+                            "state" -> StringEl(ImplicitId, None, required = false)
+                          ),
+                          required = false,
+                          List("streetAddress", "city", "state"),
+                          List(),
+                          Map(),
+                          None,
+                          None
+                        ),
+                      "certificate" ->
+                        ObjectEl(
+                          FragmentId("#/definitions/certificate"),
+                          Map(
+                            "name" -> StringEl(ImplicitId, None, required = true),
+                            "grade" -> StringEl(ImplicitId, None, required = true)
+                          ),
+                          required = false,
+                          List(),
+                          List(),
+                          Map(),
+                          None,
+                          None
+                        ),
+                      "credentials" ->
+                        ObjectEl(
+                          FragmentId("#/definitions/credentials"),
+                          Map(
+                            "schoolName" -> StringEl(ImplicitId, None, required = true),
+                            "certificates" ->
+                              ArrayEl(
+                                ImplicitId,
+                                SchemaReference(ImplicitId, FragmentId("#/definitions/certificate")),
+                                required = false
+                              )
+                          ),
+                          required = false,
+                          List(),
+                          List(),
+                          Map(),
+                          None,
+                          None
+                        ),
+                      "non-object-schema" ->
+                        IntegerEl(
+                          RelativeId("will-not-have-canonical-name"),
+                          required = false
+                        )
+                    )
+                  )
+              ),
+              None,
+              None
+            )
+        )
     }
 
   }

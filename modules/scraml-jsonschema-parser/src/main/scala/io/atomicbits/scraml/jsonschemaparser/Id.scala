@@ -28,13 +28,6 @@ package io.atomicbits.scraml.jsonschemaparser
  */
 sealed trait Id
 
-object Id {
-
-  def apply(id: String): Id = {
-    ???
-  }
-
-}
 
 /**
  * An absolute id uniquely identifies a schema. A schema with an absolute id is the root for its child-schemas that

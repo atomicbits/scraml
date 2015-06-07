@@ -65,6 +65,13 @@ object JsonSchemaParser {
     SchemaLookup() // ToDo: fix
   }
 
+  def parseRawSchemas(schemas: Map[String, String]): Map[String, Schema] = {
+    schemas
+      .mapValues(Json.parse)
+      .collect { case (id, schema: JsObject) => (id, schema) }
+      .mapValues(Schema(_))
+  }
+
 
   private[jsonschemaparser] def expandToAbsoluteRefs(schema: JsObject): JsObject = {
 
