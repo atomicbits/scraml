@@ -18,6 +18,7 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
+import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import play.api.libs.json.{JsObject, Json}
 
 import scala.language.postfixOps
