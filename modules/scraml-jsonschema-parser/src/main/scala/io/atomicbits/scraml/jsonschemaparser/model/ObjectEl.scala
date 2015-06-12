@@ -31,7 +31,11 @@ case class ObjectEl(id: Id,
                     oneOfSelection: List[Selection] = List.empty,
                     fragments: Map[String, Schema] = Map.empty,
                     name: Option[String] = None,
-                    canonicalName: Option[String] = None) extends Schema
+                    canonicalName: Option[String] = None) extends FragmentedSchema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 // ToDo: handle the oneOf field
 object ObjectEl {

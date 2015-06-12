@@ -30,7 +30,11 @@ import play.api.libs.json.JsObject
  * @param format See http://tools.ietf.org/html/draft-zyp-json-schema-03#section-5.7
  * @param required
  */
-case class StringEl(id: Id, format: Option[String] = None, required: Boolean = false) extends Schema
+case class StringEl(id: Id, format: Option[String] = None, required: Boolean = false) extends PrimitiveSchema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 object StringEl {
 

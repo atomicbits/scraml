@@ -40,9 +40,9 @@ object IdAnalyser {
   def idFromField(schema: JsObject, field: String): Option[Id] = {
     val idType = (schema \ field).asOpt[String] match {
       case Some(id) =>
-        if (isRoot(id)) AbsoluteId(id = cleanRoot(id))
-        else if (isFragment(id)) FragmentId(id)
-        else if (isAbsoluteFragment(id)) AbsoluteFragmentId(id)
+        if (isRoot(id)) RootId(id = cleanRoot(id))
+        else if (isFragment(id)) idFromFragment(id)
+        else if (isAbsoluteFragment(id)) idFromAbsoluteFragment(id)
         else RelativeId(id = id.trim.stripPrefix("/"))
       case None => ImplicitId
     }
@@ -56,9 +56,18 @@ object IdAnalyser {
     id.trim.startsWith("#")
   }
 
+  def idFromFragment(id: String): FragmentId = {
+    FragmentId(id.trim.stripPrefix("#").stripPrefix("/").split("/").toList)
+  }
+
   def isAbsoluteFragment(id: String): Boolean = {
     val parts = id.trim.split("#")
     parts.length == 2 && parts(0).contains("://")
+  }
+
+  def idFromAbsoluteFragment(id: String): AbsoluteFragmentId = {
+    val parts = id.trim.split("#")
+    AbsoluteFragmentId(RootId(parts(0)), parts(1).split("/").toList.collect { case part if part.nonEmpty => part })
   }
 
   def cleanRoot(root: String): String = {

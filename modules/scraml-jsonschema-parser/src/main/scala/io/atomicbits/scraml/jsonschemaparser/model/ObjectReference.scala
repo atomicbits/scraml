@@ -23,4 +23,8 @@ import io.atomicbits.scraml.jsonschemaparser.Id
 /**
  * Created by peter on 7/06/15. 
  */
-case class ObjectReference(id: Id, refersTo: ObjectEl) extends Schema
+case class ObjectReference(id: Id, refersTo: ObjectEl) extends Schema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}

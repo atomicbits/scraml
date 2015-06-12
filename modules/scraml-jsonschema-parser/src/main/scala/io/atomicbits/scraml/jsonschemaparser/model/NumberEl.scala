@@ -24,7 +24,11 @@ import play.api.libs.json.JsObject
 /**
  * Created by peter on 7/06/15. 
  */
-case class NumberEl(id: Id, required: Boolean = false) extends Schema
+case class NumberEl(id: Id, required: Boolean = false) extends PrimitiveSchema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 object NumberEl {
 

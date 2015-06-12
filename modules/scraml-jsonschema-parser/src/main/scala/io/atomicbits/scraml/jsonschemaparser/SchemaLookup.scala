@@ -18,8 +18,7 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
-import io.atomicbits.scraml.jsonschemaparser.SchemaLookup._
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, ObjectEl, Schema}
 
 /**
  * A lookup table to follow schema ids and external links to schema definitions (JsObject) and canonical names.
@@ -33,15 +32,12 @@ import play.api.libs.json.JsObject
  *                            actual type (integer, number, string, boolean, object, List[integer], List[number],
  *                            List[string], List[boolean], List[object], or even nested lists).
  */
-case class SchemaLookup(lookupTable: Map[AbsoluteId, JsObject] = Map.empty,
-                        externalSchemaLinks: Map[Link, Id] = Map.empty) {
+case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
+                        objectMap: Map[AbsoluteId, ObjectEl] = Map.empty,
+                        enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
+                        canonicalNames: Map[AbsoluteId, String] = Map.empty,
+                        externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
   def map(f: SchemaLookup => SchemaLookup): SchemaLookup = f(this)
-
-}
-
-object SchemaLookup {
-
-  type Link = String
 
 }

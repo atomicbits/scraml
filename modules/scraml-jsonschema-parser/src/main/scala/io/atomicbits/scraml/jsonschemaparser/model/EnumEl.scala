@@ -24,7 +24,11 @@ import play.api.libs.json.JsObject
 /**
  * Created by peter on 7/06/15. 
  */
-case class EnumEl(id: Id, choices: List[String], required: Boolean = false) extends Schema
+case class EnumEl(id: Id, choices: List[String], required: Boolean = false) extends PrimitiveSchema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 object EnumEl {
 

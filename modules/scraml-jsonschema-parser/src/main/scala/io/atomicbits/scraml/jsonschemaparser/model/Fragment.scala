@@ -24,7 +24,11 @@ import play.api.libs.json.JsObject
 /**
  * Created by peter on 7/06/15. 
  */
-case class Fragment(id: Id, fragments: Map[String, Schema]) extends Schema
+case class Fragment(id: Id, fragments: Map[String, Schema]) extends FragmentedSchema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 object Fragment {
 

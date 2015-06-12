@@ -33,6 +33,16 @@ trait Schema {
 
   def id: Id
 
+  def updated(id: Id): Schema
+
+}
+
+trait PrimitiveSchema extends Schema
+
+trait FragmentedSchema extends Schema {
+
+  def fragments: Map[String, Schema]
+  
 }
 
 object Schema {
@@ -57,9 +67,5 @@ object Schema {
         }
     }
   }
-
-  def updateLookup(lookup: SchemaLookup, schema: Schema): SchemaLookup = ???
-
-  def simplify(schemas: List[Schema], lookup: SchemaLookup): List[Schema] = ???
 
 }

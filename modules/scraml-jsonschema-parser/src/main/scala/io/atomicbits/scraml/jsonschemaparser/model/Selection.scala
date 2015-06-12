@@ -27,8 +27,20 @@ trait Selection extends Schema
 
 case class OneOf(id: Id,
                  selection: List[Schema],
-                 discriminatorField: Option[String] = None) extends Selection
+                 discriminatorField: Option[String] = None) extends Selection {
 
-case class AnyOf(id: Id, selection: List[Schema]) extends Selection
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
 
-case class AllOf(id: Id, selection: List[Schema]) extends Selection
+}
+
+case class AnyOf(id: Id, selection: List[Schema]) extends Selection {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
+
+case class AllOf(id: Id, selection: List[Schema]) extends Selection {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}

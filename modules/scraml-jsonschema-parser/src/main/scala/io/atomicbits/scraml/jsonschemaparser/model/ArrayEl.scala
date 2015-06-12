@@ -24,7 +24,11 @@ import play.api.libs.json.JsObject
 /**
  * Created by peter on 7/06/15. 
  */
-case class ArrayEl(id: Id, items: Schema, required: Boolean = false) extends Schema
+case class ArrayEl(id: Id, items: Schema, required: Boolean = false) extends Schema {
+
+  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+
+}
 
 object ArrayEl {
 

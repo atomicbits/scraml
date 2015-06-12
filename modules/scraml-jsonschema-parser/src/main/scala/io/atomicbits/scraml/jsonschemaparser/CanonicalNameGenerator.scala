@@ -26,9 +26,11 @@ object CanonicalNameGenerator {
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
     val schemaPaths: List[SchemaPath] =
-      schemaLookup.lookupTable
-        .collect { case (id, jsObj) if IdAnalyser.isModelObject(jsObj) => (id, jsObj) }
-        .keys.map(SchemaPath(_)).toList
+      schemaLookup.objectMap.toList.collect {
+        case (absId, _) => SchemaPath(absId)
+      } ++ schemaLookup.enumMap.toList.collect {
+        case (absId, _) => SchemaPath(absId)
+      }
 
     val groupedByHasFragment = schemaPaths.groupBy(_.reverseFragment.isEmpty)
 
@@ -38,7 +40,7 @@ object CanonicalNameGenerator {
     // First find canonical names for schema paths without their fragments.
 
     // Map from schema origins to their canonical names
-    type CanonicalMap = Map[String, String]
+    type CanonicalMap = Map[AbsoluteId, String]
 
     val canonicalMap: CanonicalMap = Map.empty
 
@@ -68,7 +70,7 @@ object CanonicalNameGenerator {
       schemaPathsWithFragment.foldLeft(canonicalBasePaths) { (canMap, schemaPath) =>
 
         val taken = canMap.values.toList
-        val basePath = schemaPath.origin.split("#").head
+        val basePath = schemaPath.origin.rootPart
         val canonicalBase =
           canMap.getOrElse(
             basePath,
@@ -92,7 +94,7 @@ object CanonicalNameGenerator {
 
       }
 
-    schemaLookup // ToDo: Fix... .copy(canonicalNames = canonicals)
+    schemaLookup.copy(canonicalNames = canonicals)
   }
 
 }
@@ -104,21 +106,14 @@ object CanonicalNameGenerator {
  * @param reverseFragment The fragment path of the schema ID reversed.
  * @param origin The original schema ID.
  */
-case class SchemaPath(reversePath: List[String], reverseFragment: List[String], origin: String)
+case class SchemaPath(reversePath: List[String], reverseFragment: List[String], origin: AbsoluteId)
 
 object SchemaPath {
 
   def apply(origin: AbsoluteId): SchemaPath = {
 
-    val withoutProtocol = origin.id.split("://").drop(1).head
-    val (pathPart, fragmentPart) =
-      withoutProtocol.split("#").toList match {
-        case path :: Nil => (path, None)
-        case path :: fragment => (path, Some(fragment.head))
-      }
-
-    val reverseRelativePath = pathPart.split("/").drop(1).toList.reverse
-    val reverseFragmentPath = fragmentPart.map(_.split("/").toList.reverse).getOrElse(Nil).filter(_.nonEmpty)
+    val reverseRelativePath = origin.rootPath.reverse
+    val reverseFragmentPath = origin.fragments.reverse
 
     // E.g. when the origin is: http://my.site/schemas/myschema.json#/definitions/schema2
     // then:
@@ -130,9 +125,7 @@ object SchemaPath {
       case fileName :: path => cleanFileName(fileName) :: path
     }
 
-    // ToDo: fix
-    // SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)
-    SchemaPath(List.empty, List.empty, "")
+    SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)
   }
 
   private def cleanFileName(fileName: String): String = {

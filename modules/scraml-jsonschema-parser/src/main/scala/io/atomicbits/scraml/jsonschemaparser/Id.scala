@@ -28,6 +28,15 @@ package io.atomicbits.scraml.jsonschemaparser
  */
 sealed trait Id
 
+trait AbsoluteId extends Id {
+
+  def rootPart: RootId
+
+  def rootPath: List[String]
+
+  def fragments: List[String] = List.empty
+
+}
 
 /**
  * An absolute id uniquely identifies a schema. A schema with an absolute id is the root for its child-schemas that
@@ -36,22 +45,26 @@ sealed trait Id
  *
  * @param id The string representation of the id
  */
-case class AbsoluteId(id: String) extends Id {
+case class RootId(id: String) extends AbsoluteId {
 
   lazy val anchor: String = id.split('/').toList.dropRight(1).mkString("/")
 
-  def toAbsolute(relative: RelativeId) = AbsoluteId(s"$anchor/${relative.id}")
+  def toAbsolute(id: Id, path: List[String] = List.empty): AbsoluteId = {
+    id match {
+      case absoluteId: RootId => absoluteId
+      case relativeId: RelativeId => RootId(s"$anchor/${relativeId.id}")
+      case fragmentId: FragmentId => AbsoluteFragmentId(this, fragmentId.fragments)
+      case absFragmentId: AbsoluteFragmentId => absFragmentId
+      case ImplicitId => AbsoluteFragmentId(this, path)
+    }
+  }
 
-  def toAbsolute(fragment: FragmentId) = AbsoluteId(s"$id${fragment.id}")
+  override def rootPart: RootId = this
 
-  def expandRef(ref: String): String = {
-
-    val refTrimmed = ref.trim
-
-    if (refTrimmed.contains("://")) refTrimmed.stripSuffix("#") // Absolute
-    else if (refTrimmed.startsWith("#")) s"$id$refTrimmed" // Fragment
-    else s"$anchor/$refTrimmed" // Relative
-
+  override def rootPath: List[String] = {
+    val withoutProtocol = id.split("://").drop(1).head
+    val withoutHost = withoutProtocol.split("/").drop(1).toList
+    withoutHost
   }
 
 }
@@ -72,17 +85,30 @@ case class RelativeId(id: String) extends Id
  * path and is redundant from that point of view.
  * It is of the form "#/some/schema/path/license"
  *
- * @param id The string representation of the id
+ * @param fragments The path that composes the fragment id.
  */
-case class FragmentId(id: String) extends Id
+case class FragmentId(fragments: List[String]) extends Id {
+
+  def id: String = s"#/${fragments.mkString("/")}"
+
+}
 
 /**
  * This is the absolute version of a fragment id. It is prepended with its root's achor.
  * E.g. "http://atomicbits.io/schema/User.json#/some/schema/path/license"
  *
- * @param id The string representation of the id
+ * @param root The root of this absolute fragment id.
+ * @param fragments The path that composes the fragment id.
  */
-case class AbsoluteFragmentId(id: String) extends Id
+case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]) extends AbsoluteId {
+
+  def id: String = s"${root.id}#/${fragments.mkString("/")}"
+
+  override def rootPart: RootId = root
+
+  override def rootPath = rootPart.rootPath
+
+}
 
 /**
  * An implicit id marks the absense of an id. It implies that the schema should be uniquely identified by the schema
