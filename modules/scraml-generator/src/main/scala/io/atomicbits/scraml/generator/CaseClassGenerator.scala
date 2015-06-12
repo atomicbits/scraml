@@ -35,7 +35,12 @@ object CaseClassGenerator {
     // Expand all canonical names into their case class definitions.
 
     val caseClasses = schemaLookup.objectMap.keys.toList.map { key =>
-      generateCaseClassWithCompanionObject(schemaLookup.canonicalNames(key), schemaLookup.objectMap(key), schemaLookup, c)
+      generateCaseClassWithCompanionObject(
+        schemaLookup.canonicalNames(key),
+        schemaLookup.objectMap(key),
+        schemaLookup,
+        c
+      )
     }
 
     caseClasses.flatten
@@ -81,6 +86,8 @@ object CaseClassGenerator {
      """,
       q"""
        object $classAsTermName {
+
+         implicit val jsonFormatter: Format[$className] = Json.format[$className]
 
        }
      """)

@@ -18,6 +18,7 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -27,19 +28,20 @@ import scala.reflect.macros.whitebox
  */
 object ActionExpander {
 
-  def expandAction(action: Action, c: whitebox.Context): c.universe.Tree = {
+  def expandAction(action: Action, schemaLookup: SchemaLookup, c: whitebox.Context): List[c.universe.Tree] = {
 
     import c.universe._
 
 
-    def expandGetAction(): c.universe.Tree = {
+    def expandGetAction(): List[c.universe.Tree] = {
 
       val queryParameterMethodParameters =
         action.queryParameters.toList.map(param => expandParameterAsMethodParameter(param))
       val queryParameterMapEntries =
         action.queryParameters.toList.map(param => expandParameterAsMapEntry(param))
 
-      q"""
+      List(
+        q"""
           def get(..$queryParameterMethodParameters) = new GetSegment(
             queryParams = Map(
               ..$queryParameterMapEntries
@@ -51,11 +53,12 @@ object ActionExpander {
             ..${expandHeaders()}
 
           }
-       """
+       """)
     }
 
-    def expandPutAction(): c.universe.Tree = {
-      q"""
+    def expandPutAction(): List[c.universe.Tree] = {
+      List(
+        q"""
           def put(body: String) = new PutSegment(
             body = body,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
@@ -65,10 +68,10 @@ object ActionExpander {
             ..${expandHeaders()}
 
           }
-       """
+       """)
     }
 
-    def expandPostAction(): c.universe.Tree = {
+    def expandPostAction(): List[c.universe.Tree] = {
 
       /**
        * We currently only support the first context-type mimeType that we see in a POST statement. We should
@@ -80,7 +83,10 @@ object ActionExpander {
 
       if (formParameters.isEmpty) {
         // We support a custom body instead.
-        q"""
+        val maybeRootId = mimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
+        maybeRootId
+        List(
+          q"""
           def post(body: String) = new PostSegment(
             formParams = Map.empty,
             body = body,
@@ -91,7 +97,7 @@ object ActionExpander {
             ..${expandHeaders()}
 
           }
-       """
+       """)
       } else {
         // We support the given form parameters.
         val formParameterMethodParameters =
@@ -110,7 +116,8 @@ object ActionExpander {
             expandParameterAsMapEntry((name, paramList.head))
           }
 
-        q"""
+        List(
+          q"""
           def post(..$formParameterMethodParameters) = new PostSegment(
             formParams = Map(
               ..$formParameterMapEntries
@@ -123,13 +130,14 @@ object ActionExpander {
             ..${expandHeaders()}
 
           }
-       """
+       """)
       }
 
     }
 
-    def expandDeleteAction(): c.universe.Tree = {
-      q"""
+    def expandDeleteAction(): List[c.universe.Tree] = {
+      List(
+        q"""
           def delete(body: Option[String] = None) = new DeleteSegment(
             body = body,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
@@ -139,7 +147,7 @@ object ActionExpander {
             ..${expandHeaders()}
 
           }
-       """
+       """)
     }
 
     def expandHeaders(): List[c.universe.Tree] = {
@@ -158,10 +166,11 @@ object ActionExpander {
       )
     }
 
-    def expandExecution(): c.universe.Tree = {
-      q"""
+    def expandExecution(): List[c.universe.Tree] = {
+      List(
+        q"""
          def execute() = new ExecuteSegment(requestBuilder).execute()
-       """
+       """)
     }
 
     def needsAcceptHeader: Boolean = {
@@ -206,6 +215,7 @@ object ActionExpander {
         case Parameter(_, false) => q"""$queryParameterName -> $nameTermName.map(_.toString)"""
       }
     }
+
 
     action.actionType match {
       case Get => expandGetAction()

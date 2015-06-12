@@ -75,13 +75,14 @@ object ScRamlGenerator {
     val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
     println(s"RAML model generated")
 
-    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, c))
-
     val schemaLookup: SchemaLookup = JsonSchemaParser.parse(raml.schemas)
     println(s"Schema Lookup generated")
 
     val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
     println(s"Case classes generated: $caseClasses")
+
+    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup, c))
+    println(s"Resources DSL generated")
 
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
@@ -109,6 +110,8 @@ object ScRamlGenerator {
 
 
        object $classAsTermName {
+
+         import play.api.libs.json.{Json, Format}
 
          ..$caseClasses
 

@@ -19,6 +19,7 @@
 package io.atomicbits.scraml
 
 import io.atomicbits.scraml.examples.TestClient01
+import io.atomicbits.scraml.examples.TestClient01._
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
 import scala.language.reflectiveCalls

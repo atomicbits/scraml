@@ -18,7 +18,7 @@
 
 package io.atomicbits.scraml.dsl.support
 
-import play.api.libs.json.Reads
+import play.api.libs.json.{Format, Reads}
 
 
 /**
@@ -32,8 +32,7 @@ case class RequestBuilder(client: Client,
                           validAcceptHeaders: List[String] = Nil,
                           validContentTypeHeaders: List[String] = Nil,
                           headers: Map[String, String] = Map(),
-                          defaultHeaders: Map[String, String] = Map.empty,
-                          body: Option[String] = None) {
+                          defaultHeaders: Map[String, String] = Map.empty) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
 
@@ -41,10 +40,12 @@ case class RequestBuilder(client: Client,
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 
-  def execute() = client.execute(this)
+  def execute[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.execute(this, body)
 
-  def executeToJson() = client.executeToJson(this)
+  def executeToJson[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.executeToJson(this, body)
 
-  def executeToJsonDto[T]()(implicit reader: Reads[T]) = client.executeToJsonDto[T](this)
+  def executeToJsonDto[B, R](body: Option[B])
+                            (implicit bodyFormat: Format[B], responseFormat: Format[R]) =
+    client.executeToJsonDto[B, R](this, body)
 
 }

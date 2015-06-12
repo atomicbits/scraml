@@ -18,6 +18,7 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -35,7 +36,7 @@ object ResourceExpander {
    * 1. expand the current path segment (possibly a path parameter) if it is non-empty and expand it into the DSL
    * 2. expand the resource's actions and sub-resources recursively
    */
-  def expandResource(resource: Resource, c: whitebox.Context): c.universe.Tree = {
+  def expandResource(resource: Resource, schemaLookup: SchemaLookup, c: whitebox.Context): c.universe.Tree = {
 
     import c.universe._
 
@@ -43,8 +44,8 @@ object ResourceExpander {
     val segmentAsString = q""" $urlSegment """
     val segmentAsDefName = TermName(resource.urlSegment)
 
-    val expandedSubResources = resource.resources.map(resource => expandResource(resource, c))
-    val expandedActions = resource.actions.map(action => ActionExpander.expandAction(action, c))
+    val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup, c))
+    val expandedActions = resource.actions.map(action => ActionExpander.expandAction(action, schemaLookup, c)).flatten
 
     def noSegment = {
       q"""
