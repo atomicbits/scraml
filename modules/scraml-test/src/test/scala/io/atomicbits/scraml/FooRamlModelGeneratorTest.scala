@@ -18,10 +18,12 @@
 
 package io.atomicbits.scraml
 
+import io.atomicbits.scraml.dsl.Response
 import io.atomicbits.scraml.examples.TestClient01
 import io.atomicbits.scraml.examples.TestClient01._
 import org.scalatest.{GivenWhenThen, FeatureSpec}
 
+import scala.concurrent.Future
 import scala.language.reflectiveCalls
 
 /**
@@ -43,13 +45,13 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
 
       val userFoobarResource = client.rest.user.userid("foobar")
 
-      userFoobarResource
-        .get(age = Some(51), firstName = Some("John"), lastName = None)
-        .execute()
+      val userResponse: Future[Response[User]] =
+        userFoobarResource
+          .get(age = Some(51), firstName = Some("John"), lastName = None)
+          .executeToJsonDto()
 
       userFoobarResource
-        .post(text = "Hello Foobar", value = None)
-        .execute()
+        .post(text = "Hello Foobar", value = None).execute()
 
       userFoobarResource
         .put("blablabla")

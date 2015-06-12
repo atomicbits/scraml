@@ -79,10 +79,10 @@ object ScRamlGenerator {
     println(s"Schema Lookup generated")
 
     val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
-    println(s"Case classes generated: $caseClasses")
+    println(s"Case classes generated")
 
     val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup, c))
-    println(s"Resources DSL generated")
+    println(s"Resources DSL generated: $resources")
 
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
@@ -100,6 +100,8 @@ object ScRamlGenerator {
          import io.atomicbits.scraml.dsl.support._
          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
+         import play.api.libs.json._
+
          import $classAsTermName._
 
          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
@@ -111,7 +113,7 @@ object ScRamlGenerator {
 
        object $classAsTermName {
 
-         import play.api.libs.json.{Json, Format}
+         import play.api.libs.json._
 
          ..$caseClasses
 
