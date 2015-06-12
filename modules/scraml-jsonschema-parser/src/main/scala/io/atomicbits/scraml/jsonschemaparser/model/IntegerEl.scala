@@ -24,7 +24,7 @@ import play.api.libs.json.JsObject
 /**
  * Created by peter on 7/06/15. 
  */
-case class IntegerEl(id: Id, required: Boolean = false) extends PrimitiveSchema {
+case class IntegerEl(id: Id, required: Boolean = false) extends PrimitiveSchema with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Schema = copy(id = updatedId)
 

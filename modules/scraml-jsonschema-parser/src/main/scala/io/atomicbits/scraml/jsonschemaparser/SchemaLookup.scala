@@ -18,7 +18,9 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
-import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.model.{FragmentedSchema, EnumEl, ObjectEl, Schema}
+
+import scala.annotation.tailrec
 
 /**
  * A lookup table to follow schema ids and external links to schema definitions (JsObject) and canonical names.
@@ -39,5 +41,34 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
   def map(f: SchemaLookup => SchemaLookup): SchemaLookup = f(this)
+
+  /**
+   *
+   * @param id
+   * @return
+   */
+  def lookupSchema(id: Id): Schema = {
+
+    // ToDo: this code to get the absolute id appears everywhere, we must find a way to refactor this!
+    val absoluteId = id match {
+      case absId: AbsoluteId => absId
+      case _ => sys.error("Only absolute IDs can be used to do a schema lookup.")
+    }
+
+    @tailrec
+    def fragmentSearch(schema: Schema, fragmentPath: List[String]): Schema = {
+      fragmentPath match {
+        case Nil => schema
+        case fr :: frs =>
+          schema match {
+            case fragmentedSchema: FragmentedSchema => fragmentSearch(fragmentedSchema.fragments(fr), frs)
+            case _ => sys.error(s"Cannot follow the following fragment path: ${absoluteId.id}")
+          }
+      }
+    }
+
+    fragmentSearch(lookupTable(absoluteId.rootPart), absoluteId.fragments)
+
+  }
 
 }

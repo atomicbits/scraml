@@ -30,6 +30,8 @@ sealed trait Id
 
 trait AbsoluteId extends Id {
 
+  def id: String
+
   def rootPart: RootId
 
   def rootPath: List[String]

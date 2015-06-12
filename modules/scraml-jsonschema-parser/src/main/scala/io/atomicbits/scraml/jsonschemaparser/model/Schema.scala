@@ -45,6 +45,12 @@ trait FragmentedSchema extends Schema {
   
 }
 
+trait AllowedAsObjectField {
+
+  def required: Boolean
+
+}
+
 object Schema {
 
   def apply(schema: JsObject): Schema = {

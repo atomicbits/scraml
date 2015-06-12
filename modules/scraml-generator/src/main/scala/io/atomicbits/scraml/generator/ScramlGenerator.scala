@@ -18,7 +18,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
+import io.atomicbits.scraml.jsonschemaparser.{SchemaLookup, JsonSchemaParser}
 import org.raml.parser.rule.ValidationResult
 
 import io.atomicbits.scraml.parser._
@@ -77,10 +77,14 @@ object ScRamlGenerator {
 
     val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, c))
 
-    val schemaLookup = JsonSchemaParser.parse(raml.schemas)
+    val schemaLookup: SchemaLookup = JsonSchemaParser.parse(raml.schemas)
+    println(s"Schema Lookup generated")
 
-    // ToDo: enable and implement
-//    val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
+    val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
+    println(s"Case classes generated: $caseClasses")
+
+    // ToDo: process enumerations
+    //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
     // rewrite the class definition
     c.Expr(
@@ -106,14 +110,12 @@ object ScRamlGenerator {
 
        object $classAsTermName {
 
-
+         ..$caseClasses
 
        }
 
      """
 
-    // ToDo: enable
-    // ..$caseClasses
 
     )
 

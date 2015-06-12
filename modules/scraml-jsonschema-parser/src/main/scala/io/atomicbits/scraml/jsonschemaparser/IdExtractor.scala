@@ -37,17 +37,28 @@ object RefExtractor {
 
 object IdAnalyser {
 
+  /**
+   * Transform the given field of the schema to an Id if possible.
+   *
+   * @param schema The schema
+   * @param field The id field
+   * @return The Id
+   */
   def idFromField(schema: JsObject, field: String): Option[Id] = {
+
     val idType = (schema \ field).asOpt[String] match {
-      case Some(id) =>
-        if (isRoot(id)) RootId(id = cleanRoot(id))
-        else if (isFragment(id)) idFromFragment(id)
-        else if (isAbsoluteFragment(id)) idFromAbsoluteFragment(id)
-        else RelativeId(id = id.trim.stripPrefix("/"))
+      case Some(id) => idFromString(id)
       case None => ImplicitId
     }
 
     Option(idType)
+  }
+
+  def idFromString(id: String): Id = {
+    if (isRoot(id)) RootId(id = cleanRoot(id))
+    else if (isFragment(id)) idFromFragment(id)
+    else if (isAbsoluteFragment(id)) idFromAbsoluteFragment(id)
+    else RelativeId(id = id.trim.stripPrefix("/"))
   }
 
   def isRoot(id: String): Boolean = id.contains("://")
