@@ -82,7 +82,7 @@ object ScRamlGenerator {
     println(s"Case classes generated")
 
     val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup, c))
-    println(s"Resources DSL generated: $resources")
+    println(s"Resources DSL generated")
 
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)

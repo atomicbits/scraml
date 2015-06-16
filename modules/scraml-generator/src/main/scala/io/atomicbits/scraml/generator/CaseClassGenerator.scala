@@ -26,7 +26,14 @@ import scala.language.experimental.macros
 
 
 /**
- * Created by peter on 4/06/15, Atomic BITS (http://atomicbits.io). 
+ * Created by peter on 4/06/15, Atomic BITS (http://atomicbits.io).
+ *
+ * JSON schema and referencing:
+ * http://json-schema.org/latest/json-schema-core.html
+ * http://tools.ietf.org/html/draft-zyp-json-schema-03
+ * http://spacetelescope.github.io/understanding-json-schema/structuring.html
+ * http://forums.raml.org/t/how-do-you-reference-another-schema-from-a-schema/485
+ *
  */
 object CaseClassGenerator {
 

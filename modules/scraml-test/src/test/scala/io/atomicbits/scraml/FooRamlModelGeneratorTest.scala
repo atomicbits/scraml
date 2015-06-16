@@ -50,6 +50,15 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen {
           .get(age = Some(51), firstName = Some("John"), lastName = None)
           .executeToJsonDto()
 
+      val user = User(
+        homePage = Some(Link("bla", "GET", None)),
+        address = Some(Address("bla", "Bla", "bla")),
+        age = 21,
+        firstName = "John",
+        lastName = "Doe",
+        id = "1"
+      )
+
       userFoobarResource
         .post(text = "Hello Foobar", value = None).execute()
 
