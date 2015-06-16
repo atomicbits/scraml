@@ -80,6 +80,8 @@ case class RxHttpClient(protocol: String,
 
     val clientRequest = clientWithResourcePathAndMethod.build()
 
+    println(s"Executing request: $clientRequest")
+
     client.execute[Response[String]](
       clientRequest,
       serverResponse => Response(serverResponse.getStatusCode, serverResponse.getResponseBody)

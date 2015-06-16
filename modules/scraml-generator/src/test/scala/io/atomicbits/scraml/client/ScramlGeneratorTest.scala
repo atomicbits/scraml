@@ -153,7 +153,7 @@ case class XoClient(host: String,
 
                 def executeToJson() = executeSegment.executeToJson()
 
-//                def executeToJsonDto() = executeSegment.executeToJsonDto()
+                //                def executeToJsonDto() = executeSegment.executeToJsonDto()
 
               }
 
@@ -222,7 +222,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
         put(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
-          .withRequestBody(equalTo("User(John,Doe,21)"))
+          .withRequestBody(equalTo("""{"firstName":"John","lastName":"Doe","age":21}"""))
           .willReturn(
             aResponse()
               .withBody( """{"street":"Mulholland Drive", "city": "LA", "zip": "90210", "number": 105}""")
@@ -238,6 +238,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           .headers("Accept" -> "application/json")
           .executeToJsonDto()
 
+
       val futureResultPut: Future[Response[Address]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
@@ -248,8 +249,9 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           )
           .executeToJsonDto()
 
-
       Then("we should see the expected response values")
+
+//      val jsObj = Json.obj("firstName" -> "John", "lastName" -> "Doe", "age" -> 21)
 
       val resultGet = Await.result(futureResultGet, 2 seconds)
       assertResult(Response(200, User("John", "Doe", 21)))(resultGet)

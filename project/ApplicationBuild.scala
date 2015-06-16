@@ -63,7 +63,7 @@ with Dependencies {
   val scramlTestDef = Project(
     id = "scraml-testdef",
     base = file("modules/scraml-testdef"),
-    settings = projectSettings(dependencies = scramlGeneratorDeps ++ testDeps)
+    settings = projectSettings(dependencies = scramlGeneratorTestDefDeps ++ testDeps)
   ) settings(
     // Sonatype snapshot resolver is needed to fetch raml-java-parser 0.9-SNAPSHOT.
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",

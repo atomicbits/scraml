@@ -35,7 +35,7 @@ trait Dependencies { this:Build =>
 
   // test dependencies
   val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
-  val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.55"     % "test"
+  val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
 
   val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.0-SNAPSHOT"
 
@@ -43,6 +43,13 @@ trait Dependencies { this:Build =>
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
+    scalaReflect,
+    rxHttpClient,
+    playJson,
+    wiremock
+  )
+
+  val scramlGeneratorTestDefDeps = Seq (
     scalaReflect,
     rxHttpClient,
     playJson,
