@@ -1,3 +1,21 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.dsl.support.client.rxhttpclient
 
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
@@ -29,7 +47,8 @@ case class RxHttpClient(protocol: String,
       .build.asScala
 
 
-  override def execute(requesBuilder: RequestBuilder): Future[Response[String]] = {
+  override def execute[B](requesBuilder: RequestBuilder, body: Option[B])
+                         (implicit bodyFormat: Format[B]): Future[Response[String]] = {
 
     val clientWithResourcePathAndMethod = {
       client
@@ -50,8 +69,8 @@ case class RxHttpClient(protocol: String,
 
     // ToDo: support for form parameters, different body types (Array[Byte]), streaming,
 
-    requesBuilder.body.foreach { body =>
-      clientWithResourcePathAndMethod.setBody(body)
+    body.foreach { body =>
+      clientWithResourcePathAndMethod.setBody(bodyFormat.writes(body).toString())
     }
 
     requesBuilder.formParameters.foreach { element =>
@@ -68,13 +87,15 @@ case class RxHttpClient(protocol: String,
   }
 
 
-  override def executeToJson(request: RequestBuilder): Future[Response[JsValue]] =
-    execute(request).map(res => res.map(Json.parse))
+  override def executeToJson[B](request: RequestBuilder, body: Option[B])
+                               (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
+    execute(request, body).map(res => res.map(Json.parse))
 
 
-  override def executeToJsonDto[T](request: RequestBuilder)
-                                  (implicit reader: Reads[T]): Future[Response[T]] = {
-    executeToJson(request) map (res => res.map(reader.reads)) flatMap {
+  override def executeToJsonDto[B, R](request: RequestBuilder, body: Option[B])
+                                     (implicit bodyFormat: Format[B],
+                                      responseFormat: Format[R]): Future[Response[R]] = {
+    executeToJson(request, body) map (res => res.map(responseFormat.reads)) flatMap {
       case Response(status, JsSuccess(t, path)) => Future.successful(Response(status, t))
       case Response(status, JsError(e)) =>
         val validationMessages: Seq[String] = {

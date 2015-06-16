@@ -1,5 +1,24 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -9,19 +28,46 @@ import scala.reflect.macros.whitebox
  */
 object ActionExpander {
 
-  def expandAction(action: Action, c: whitebox.Context): c.universe.Tree = {
+  def expandAction(action: Action, schemaLookup: SchemaLookup, c: whitebox.Context): List[c.universe.Tree] = {
 
     import c.universe._
 
 
-    def expandGetAction(): c.universe.Tree = {
+    // We currently only support the first context-type mimeType that we see. We should extend this later on.
+    val bodyMimeType = action.body.values.toList.headOption
+    val maybeBodyRootId = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
+    val maybeBodyClassName = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
+
+    val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
+
+    // We currently only support the first response mimeType that we see. We should extend this later on.
+    val response = action.responses.values.toList.headOption
+    // We currently only support the first response body mimeType that we see. We should extend this later on.
+    val responseMimeType = response.flatMap(_.body.values.toList.headOption)
+    val maybeResponseRootId = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
+    val maybeResponseClassName = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
+
+    val (hasJsonDtoBody, bodyClassName) = maybeBodyClassName match {
+      case Some(bdClass) => (true, bdClass)
+      case None => (false, "String")
+    }
+
+    val (hasJsonDtoResponse, responseClassName) = maybeResponseClassName match {
+      case Some(rsClass) => (true, rsClass)
+      case None => (false, "String")
+    }
+
+
+
+    def expandGetAction(): List[c.universe.Tree] = {
 
       val queryParameterMethodParameters =
         action.queryParameters.toList.map(param => expandParameterAsMethodParameter(param))
       val queryParameterMapEntries =
         action.queryParameters.toList.map(param => expandParameterAsMapEntry(param))
 
-      q"""
+      List(
+        q"""
           def get(..$queryParameterMethodParameters) = new GetSegment(
             queryParams = Map(
               ..$queryParameterMapEntries
@@ -30,50 +76,88 @@ object ActionExpander {
             req = requestBuilder
           ) {
 
-            ..${expandHeaders()}
+            ..${expandHeaders(hasBody = false, "String")}
 
           }
-       """
+       """)
     }
 
-    def expandPutAction(): c.universe.Tree = {
-      q"""
+    def expandPutAction(): List[c.universe.Tree] = {
+      List(
+        q"""
           def put(body: String) = new PutSegment(
-            body = body,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders()}
+            ..${expandHeaders(hasBody = true, "String")}
+
+          }
+       """,
+        q"""
+          def put(body: JsValue) = new PutSegment(
+            validAcceptHeaders = List(..${validAcceptHeaders()}),
+            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+            req = requestBuilder) {
+
+            ..${expandHeaders(hasBody = true, "JsValue")}
 
           }
        """
+      )
     }
 
-    def expandPostAction(): c.universe.Tree = {
-
-      /**
-       * We currently only support the first context-type mimeType that we see in a POST statement. We should
-       * extend this later on.
-       */
-      val mimeType = action.body.values.toList.headOption
-
-      val formParameters: Map[String, List[Parameter]] = mimeType.map(_.formParameters).getOrElse(Map.empty)
+    def expandPostAction(): List[c.universe.Tree] = {
 
       if (formParameters.isEmpty) {
         // We support a custom body instead.
-        q"""
+        val defaultActions =
+          List(
+            q"""
           def post(body: String) = new PostSegment(
             formParams = Map.empty,
-            body = body,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders()}
+            ..${expandHeaders(hasBody = true, "String")}
+
+          }
+       """,
+            q"""
+          def post(body: JsValue) = new PostSegment(
+            formParams = Map.empty,
+            validAcceptHeaders = List(..${validAcceptHeaders()}),
+            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+            req = requestBuilder) {
+
+            ..${expandHeaders(hasBody = true, "JsValue")}
 
           }
        """
+          )
+
+        val additionalAction =
+          if (hasJsonDtoBody) {
+            val typeTypeName = TypeName(bodyClassName)
+            val bodyParam = List(q"val body: $typeTypeName")
+            List(
+              q"""
+                  def post(..$bodyParam) = new PostSegment(
+                    formParams = Map.empty,
+                    validAcceptHeaders = List(..${validAcceptHeaders()}),
+                    validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+                    req = requestBuilder) {
+
+                      ..${expandHeaders(hasBody = true, bodyClassName)}
+
+                  }
+                """
+            )
+          } else Nil
+
+        defaultActions ++ additionalAction
+
       } else {
         // We support the given form parameters.
         val formParameterMethodParameters =
@@ -92,58 +176,72 @@ object ActionExpander {
             expandParameterAsMapEntry((name, paramList.head))
           }
 
-        q"""
+        List(
+          q"""
           def post(..$formParameterMethodParameters) = new PostSegment(
             formParams = Map(
               ..$formParameterMapEntries
             ),
-            body = None,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders()}
+              ..${expandHeaders(hasBody = false, "String")}
 
           }
-       """
+       """)
       }
 
     }
 
-    def expandDeleteAction(): c.universe.Tree = {
-      q"""
-          def delete(body: Option[String] = None) = new DeleteSegment(
-            body = body,
+    def expandDeleteAction(): List[c.universe.Tree] = {
+      List(
+        q"""
+          def delete() = new DeleteSegment(
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders()}
+            ..${expandHeaders(hasBody = false, "String")}
 
           }
-       """
+       """)
     }
 
-    def expandHeaders(): List[c.universe.Tree] = {
+    def expandHeaders(hasBody: Boolean, bodyClassName: String): List[c.universe.Tree] = {
       List(
         q"""
            def headers(headers: (String, String)*) = new HeaderSegment(
              headers = headers.toMap,
              req = requestBuilder
            ) {
-             ${expandExecution()}
+             ..${expandExecution(hasBody,bodyClassName)}
            }
-         """,
-        q"""
-           ${expandExecution()}
          """
-      )
+      ) ++ expandExecution(hasBody,bodyClassName)
     }
 
-    def expandExecution(): c.universe.Tree = {
-      q"""
-         def execute() = new ExecuteSegment(requestBuilder).execute()
-       """
+    def expandExecution(hasBody: Boolean, bodyClassName: String): List[c.universe.Tree] = {
+      val bodyTypeName = TypeName(bodyClassName)
+      val responseTypeName = TypeName(responseClassName)
+      val executeSegment =
+        if (hasBody) {
+          q"""
+           private val executeSegment = new ExecuteSegment[$bodyTypeName, $responseTypeName](requestBuilder, Some(body))
+         """
+        } else {
+          q"""
+           private val executeSegment = new ExecuteSegment[$bodyTypeName, $responseTypeName](requestBuilder, None)
+         """
+        }
+      val jsonDtoExecutor =
+        if (hasJsonDtoResponse) List( q""" def executeToJsonDto() = executeSegment.executeToJsonDto() """)
+        else Nil
+      List(
+        executeSegment,
+        q""" def execute() = executeSegment.execute() """,
+        q""" def executeToJson() = executeSegment.executeToJson() """
+      ) ++ jsonDtoExecutor
     }
 
     def needsAcceptHeader: Boolean = {
@@ -188,6 +286,7 @@ object ActionExpander {
         case Parameter(_, false) => q"""$queryParameterName -> $nameTermName.map(_.toString)"""
       }
     }
+
 
     action.actionType match {
       case Get => expandGetAction()

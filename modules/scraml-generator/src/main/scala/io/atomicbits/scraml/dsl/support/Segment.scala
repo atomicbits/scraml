@@ -1,7 +1,27 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.dsl.support
 
-import play.api.libs.json.Reads
+import io.atomicbits.scraml.dsl.Response
+import play.api.libs.json.{Format, JsValue, Reads}
 
+import scala.concurrent.Future
 import scala.language.reflectiveCalls
 
 
@@ -53,6 +73,7 @@ class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends S
 
 sealed trait MethodSegment extends Segment
 
+
 class GetSegment(queryParams: Map[String, Option[String]],
                  validAcceptHeaders: List[String],
                  req: RequestBuilder) extends MethodSegment {
@@ -67,22 +88,21 @@ class GetSegment(queryParams: Map[String, Option[String]],
 
 }
 
-class PutSegment(body: String,
-                 validAcceptHeaders: List[String],
+
+class PutSegment(validAcceptHeaders: List[String],
                  validContentTypeHeaders: List[String],
                  req: RequestBuilder) extends MethodSegment {
 
   protected val requestBuilder = req.copy(
     method = Put,
-    body = Option(body),
     validAcceptHeaders = validAcceptHeaders,
     validContentTypeHeaders = validContentTypeHeaders
   )
 
 }
 
+
 class PostSegment(formParams: Map[String, Option[String]],
-                  body: Option[String],
                   validAcceptHeaders: List[String],
                   validContentTypeHeaders: List[String],
                   req: RequestBuilder) extends MethodSegment {
@@ -92,21 +112,19 @@ class PostSegment(formParams: Map[String, Option[String]],
   protected val requestBuilder = req.copy(
     method = Post,
     formParameters = formParameterMap,
-    body = body,
     validAcceptHeaders = validAcceptHeaders,
     validContentTypeHeaders = validContentTypeHeaders
   )
 
 }
 
-class DeleteSegment(body: Option[String],
-                    validAcceptHeaders: List[String],
+
+class DeleteSegment(validAcceptHeaders: List[String],
                     validContentTypeHeaders: List[String],
                     req: RequestBuilder) extends MethodSegment {
 
   protected val requestBuilder = req.copy(
     method = Delete,
-    body = body,
     validAcceptHeaders = validAcceptHeaders,
     validContentTypeHeaders = validContentTypeHeaders
   )
@@ -114,22 +132,16 @@ class DeleteSegment(body: Option[String],
 }
 
 
-class FormatJsonSegment(req: RequestBuilder) extends Segment {
+class ExecuteSegment[B, R](req: RequestBuilder, body: Option[B]) {
 
-  protected val requestBuilder = req.copy(formatJsonResultBody = true)
-
-}
-
-
-class ExecuteSegment(req: RequestBuilder) {
-
-  def execute() = {
+  def execute()(implicit bodyFormat: Format[B]) = {
     println(s"request: $req")
-    req.execute()
+    req.execute(body)
   }
 
-  def executeToJson() = req.executeToJson()
+  def executeToJson()(implicit bodyFormat: Format[B]) = req.executeToJson(body)
 
-  def executeToJsonDto[T]()(implicit reader: Reads[T]) = req.executeToJsonDto()
+  def executeToJsonDto()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
+    req.executeToJsonDto(body)
 
 }

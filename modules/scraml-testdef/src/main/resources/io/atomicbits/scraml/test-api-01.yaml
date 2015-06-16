@@ -3,6 +3,11 @@
 title: test01
 version: v1
 
+schemas:
+  - link:     !include schemas/link.scheme
+  - user:     !include schemas/user.scheme
+
+
 /rest/user/{userid}:
   uriParameters:
     userid:
@@ -11,26 +16,20 @@ version: v1
       required: true
   get:
     queryParameters:
-      lat:
-        description: Latitude of the center search coordinate. If used, lng is required.
+      age:
+        description: The age of the user.
         type: number
-      lng:
-        description: Longitude of the center search coordinate. If used, lat is required.
-        type: number
-      distance:
-        description: Default is 1000m (distance=1000), max distance is 5000.
-        type: integer
+      firstName:
+        description: The firstname of the user.
+        type: string
+      lastName:
+        description: The last name of the user.
+        type: string
     responses:
       200:
         body:
           application/json:
-            schema: |
-              {
-                 "": "http://json-schema.org/draft-03/schema",
-                 "name": "Joe",
-                 "surname": "Smith",
-                 "id": 12
-              }
+            schema: user
   post:
     body:
       application/x-www-form-urlencoded:
@@ -54,3 +53,16 @@ version: v1
       200:
         body:
           application/json:
+            schema: |
+              {
+                "$schema": "http://json-schema.org/draft-03/schema",
+                "id": "http://atomicbits.io/schema/result-object.json#",
+                "type": "object",
+                "description": "A result object.",
+                "properties": {
+                  "result": {
+                    "required": true,
+                    "type": "string"
+                  }
+                }
+              }

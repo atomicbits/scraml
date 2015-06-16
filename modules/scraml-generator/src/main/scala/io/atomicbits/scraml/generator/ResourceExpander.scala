@@ -1,5 +1,24 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -9,7 +28,7 @@ import scala.language.experimental.macros
 /**
  * Created by peter on 24/05/15, Atomic BITS (http://atomicbits.io). 
  */
-object ResourceExpander  {
+object ResourceExpander {
 
 
   /**
@@ -17,7 +36,7 @@ object ResourceExpander  {
    * 1. expand the current path segment (possibly a path parameter) if it is non-empty and expand it into the DSL
    * 2. expand the resource's actions and sub-resources recursively
    */
-  def expandResource(resource: Resource, c: whitebox.Context): c.universe.Tree = {
+  def expandResource(resource: Resource, schemaLookup: SchemaLookup, c: whitebox.Context): c.universe.Tree = {
 
     import c.universe._
 
@@ -25,8 +44,8 @@ object ResourceExpander  {
     val segmentAsString = q""" $urlSegment """
     val segmentAsDefName = TermName(resource.urlSegment)
 
-    val expandedSubResources = resource.resources.map(resource => expandResource(resource, c))
-    val expandedActions = resource.actions.map(action => ActionExpander.expandAction(action, c))
+    val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup, c))
+    val expandedActions = resource.actions.map(action => ActionExpander.expandAction(action, schemaLookup, c)).flatten
 
     def noSegment = {
       q"""

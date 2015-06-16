@@ -3,6 +3,11 @@
 title: test
 version: v1
 
+schemas:
+  - link:     !include schemas/link.scheme
+  - user:     !include schemas/user.scheme
+
+
 /rest/gebruiker/{void}:
     uriParameters:
       void:
@@ -13,8 +18,8 @@ version: v1
       responses:
         200:
           body:
-             application/vnd.awv.po-v3.0+json:
-                schema: gebruiker-basis
+            application/vnd.awv.po-v3.0+json:
+              schema: user
     post:
       description: Create a comment on a media. Please email apidevelopers[at]instagram.com for access.
       body:
@@ -27,3 +32,22 @@ version: v1
       responses:
         200:
           body:
+            application/vnd.awv.po-v3.0+json:
+              schema: |
+                {
+                  "$schema": "http://json-schema.org/draft-03/schema",
+                  "id": "http://atomicbits.io/schema/link-alternative.json#",
+                  "type": "object",
+                  "description": "A href",
+                  "properties": {
+                    "href": {
+                      "type": "string",
+                      "required": true
+                    },
+                    "method": {
+                      "type": "string",
+                      "required": true,
+                      "enum": [ "GET", "PUT", "POST", "DELETE", "HEAD", "CONNECT", "TRACE", "OPTIONS" ]
+                    }
+                  }
+                }

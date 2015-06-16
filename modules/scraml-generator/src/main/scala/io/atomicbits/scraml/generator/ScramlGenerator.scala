@@ -1,5 +1,24 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.jsonschemaparser.{SchemaLookup, JsonSchemaParser}
 import org.raml.parser.rule.ValidationResult
 
 import io.atomicbits.scraml.parser._
@@ -56,7 +75,17 @@ object ScRamlGenerator {
     val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
     println(s"RAML model generated")
 
-    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource,c))
+    val schemaLookup: SchemaLookup = JsonSchemaParser.parse(raml.schemas)
+    println(s"Schema Lookup generated")
+
+    val caseClasses = CaseClassGenerator.generateCaseClasses(schemaLookup, c)
+    println(s"Case classes generated")
+
+    val resources = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup, c))
+    println(s"Resources DSL generated")
+
+    // ToDo: process enumerations
+    //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
     // rewrite the class definition
     c.Expr(
@@ -71,6 +100,8 @@ object ScRamlGenerator {
          import io.atomicbits.scraml.dsl.support._
          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
+         import play.api.libs.json._
+
          import $classAsTermName._
 
          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
@@ -82,11 +113,15 @@ object ScRamlGenerator {
 
        object $classAsTermName {
 
-         case object Foo {}
+         import play.api.libs.json._
+
+         ..$caseClasses
 
        }
 
      """
+
+
     )
 
   }

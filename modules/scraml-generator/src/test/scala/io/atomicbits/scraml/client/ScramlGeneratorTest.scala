@@ -1,12 +1,32 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
+
 package io.atomicbits.scraml.client
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import io.atomicbits.scraml.client.XoClient.{Address, User}
 
 import io.atomicbits.scraml.dsl.Response
 import org.scalatest.concurrent.ScalaFutures
+import play.api.libs.json.{Json, Format, JsValue}
 
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.concurrent._
@@ -28,7 +48,9 @@ case class XoClient(host: String,
   import io.atomicbits.scraml.dsl.support._
   import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
-  import XoClient._  // ToDo generate import.
+  import XoClient._
+
+  // ToDo generate import.
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
@@ -53,17 +75,19 @@ case class XoClient(host: String,
                 req = requestBuilder
               ) {
 
-                def formatJson = new FormatJsonSegment(requestBuilder) {
-                  def execute() = new ExecuteSegment(requestBuilder).execute()
-                }
+                private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
 
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
               }
 
             }
 
             def put(body: String) = new PutSegment(
-              body = body,
               validAcceptHeaders = List("application/json"),
               validContentTypeHeaders = List("application/json"),
               req = requestBuilder) {
@@ -72,7 +96,37 @@ case class XoClient(host: String,
                 headers = headers.toMap,
                 req = requestBuilder
               ) {
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+
+                private val executeSegment = new ExecuteSegment[String, Address](requestBuilder, Some(body))
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
+              }
+
+            }
+
+            def put(body: User) = new PutSegment(
+              validAcceptHeaders = List("application/json"),
+              validContentTypeHeaders = List("application/json"),
+              req = requestBuilder) {
+
+              def headers(headers: (String, String)*) = new HeaderSegment(
+                headers = headers.toMap,
+                req = requestBuilder
+              ) {
+
+                private val executeSegment = new ExecuteSegment[User, Address](requestBuilder, Some(body))
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+                def executeToJsonDto() = executeSegment.executeToJsonDto()
+
               }
 
             }
@@ -83,7 +137,6 @@ case class XoClient(host: String,
                 "formParY" -> Option(formParY).map(_.toString),
                 "formParZ" -> formParZ.map(_.toString)
               ),
-              body = None,
               validAcceptHeaders = List("application/json"),
               validContentTypeHeaders = List("application/json"),
               req = requestBuilder
@@ -94,7 +147,13 @@ case class XoClient(host: String,
                 req = requestBuilder
               ) {
 
-                def execute() = new ExecuteSegment(requestBuilder).execute()
+                private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
+
+                def execute() = executeSegment.execute()
+
+                def executeToJson() = executeSegment.executeToJson()
+
+//                def executeToJsonDto() = executeSegment.executeToJsonDto()
 
               }
 
@@ -110,6 +169,21 @@ case class XoClient(host: String,
 
 object XoClient {
 
+  case class User(firstName: String, lastName: String, age: Int)
+
+  object User {
+
+    implicit val jsonFormatter: Format[User] = Json.format[User]
+
+  }
+
+  case class Address(street: String, city: String, zip: String, number: Int)
+
+  object Address {
+
+    implicit val jsonFormatter: Format[Address] = Json.format[Address]
+
+  }
 
 }
 
@@ -141,47 +215,47 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           .withHeader("Accept", equalTo("application/json"))
           .willReturn(
             aResponse()
-              .withBody( """{"test": "OK"}""")
+              .withBody( """{"firstName":"John", "lastName": "Doe", "age": 21}""")
               .withStatus(200)))
 
       stubFor(
         put(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
-          .withRequestBody(equalTo("body"))
+          .withRequestBody(equalTo("User(John,Doe,21)"))
           .willReturn(
             aResponse()
-              .withBody( """{"test": "OK"}""")
+              .withBody( """{"street":"Mulholland Drive", "city": "LA", "zip": "90210", "number": 105}""")
               .withStatus(200)))
 
 
       When("we execute some restful requests using the DSL")
 
-      val futureResultGet: Future[Response[String]] =
+      val futureResultGet: Future[Response[User]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .headers("Accept" -> "application/json")
-          .execute()
+          .executeToJsonDto()
 
-      val futureResultPut: Future[Response[String]] =
+      val futureResultPut: Future[Response[Address]] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
-          .put("body")
+          .put(User("John", "Doe", 21))
           .headers(
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
-          .execute()
+          .executeToJsonDto()
 
 
       Then("we should see the expected response values")
 
       val resultGet = Await.result(futureResultGet, 2 seconds)
-      assertResult(Response(200, """{"test": "OK"}"""))(resultGet)
+      assertResult(Response(200, User("John", "Doe", 21)))(resultGet)
 
       val resultPut = Await.result(futureResultPut, 2 seconds)
-      assertResult(Response(200, """{"test": "OK"}"""))(resultPut)
+      assertResult(Response(200, Address("Mulholland Drive", "LA", "90210", 105)))(resultPut)
 
     }
   }
