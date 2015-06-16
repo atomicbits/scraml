@@ -123,6 +123,7 @@ object SchemaPath {
     // cleanup of the head of reverseRelativePath
     val cleanReverseRelativePath = reverseRelativePath match {
       case fileName :: path => cleanFileName(fileName) :: path
+      case Nil => sys.error("A relative path must have a path and file name.")
     }
 
     SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)

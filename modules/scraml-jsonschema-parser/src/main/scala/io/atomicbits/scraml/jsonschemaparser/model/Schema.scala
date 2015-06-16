@@ -62,6 +62,7 @@ object Schema {
       case Some("integer") => IntegerEl(schema)
       case Some("boolean") => BooleanEl(schema)
       case Some("null") => NullEl(schema)
+      case Some(x) => sys.error(s"Unkown json-schema type $x")
       case None =>
         (schema \ "$ref").asOpt[String] match {
           case Some(_) => SchemaReference(schema)

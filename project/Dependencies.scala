@@ -26,7 +26,7 @@ trait Dependencies { this:Build =>
   val logback         =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
 
   val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.1.0-SNAPSHOT"
-  val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.3.7"
+  val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.4.0"
 
   val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"       % "2.11.6"
 

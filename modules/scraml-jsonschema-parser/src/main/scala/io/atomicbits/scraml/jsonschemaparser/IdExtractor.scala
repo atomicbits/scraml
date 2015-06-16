@@ -88,8 +88,6 @@ object IdAnalyser {
   def isModelObject(schema: JsObject): Boolean = {
 
     (schema \ "type").asOpt[String].contains("object")
-    // && (schema \ "properties").isInstanceOf[JsObject]
-    // --> the above is unsafe because an object may not have a properties field, but a oneOf instead
 
   }
 

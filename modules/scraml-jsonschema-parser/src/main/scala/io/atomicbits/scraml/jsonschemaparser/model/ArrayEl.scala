@@ -21,6 +21,8 @@ package io.atomicbits.scraml.jsonschemaparser.model
 import io.atomicbits.scraml.jsonschemaparser._
 import play.api.libs.json.JsObject
 
+import scala.language.postfixOps
+
 /**
  * Created by peter on 7/06/15. 
  */
@@ -41,8 +43,8 @@ object ArrayEl {
 
     // Process the items type
     val items =
-      schema \ "items" match {
-        case obj: JsObject => Some(Schema(obj))
+      schema \ "items" toOption match {
+        case Some(obj: JsObject) => Some(Schema(obj))
         case _ => None
       }
 

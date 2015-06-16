@@ -21,6 +21,8 @@ package io.atomicbits.scraml.jsonschemaparser.model
 import io.atomicbits.scraml.jsonschemaparser._
 import play.api.libs.json._
 
+import scala.language.postfixOps
+
 /**
  * Created by peter on 7/06/15. 
  */
@@ -49,8 +51,8 @@ object ObjectEl {
 
     // Process the properties
     val properties =
-      schema \ "properties" match {
-        case props: JsObject =>
+      schema \ "properties" toOption match {
+        case Some(props: JsObject) =>
           Some(props.value.toSeq collect {
             case (fieldName, fragment: JsObject) => (fieldName, Schema(fragment))
           } toMap)
@@ -69,12 +71,12 @@ object ObjectEl {
 
     // Process the required field
     val (required, requiredFields) =
-      schema \ "required" match {
-        case req: JsArray =>
+      schema \ "required" toOption match {
+        case Some(req: JsArray) =>
           (None, Some(req.value.toList collect {
             case JsString(value) => value
           }))
-        case JsBoolean(b) => (Some(b), None)
+        case Some(JsBoolean(b)) => (Some(b), None)
         case _ => (None, None)
       }
 

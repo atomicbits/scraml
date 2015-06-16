@@ -108,6 +108,7 @@ object ResourceExpander {
         case Some(Parameter(IntegerType, _)) => intSegment
         case Some(Parameter(NumberType, _)) => doubleSegment
         case Some(Parameter(BooleanType, _)) => booleanSegment
+        case Some(x) => sys.error(s"Unknown URL parameter type $x")
       }
 
   }

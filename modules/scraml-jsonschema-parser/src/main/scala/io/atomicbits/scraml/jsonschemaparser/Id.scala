@@ -58,6 +58,7 @@ case class RootId(id: String) extends AbsoluteId {
       case fragmentId: FragmentId => AbsoluteFragmentId(this, fragmentId.fragments)
       case absFragmentId: AbsoluteFragmentId => absFragmentId
       case ImplicitId => AbsoluteFragmentId(this, path)
+      case absId: AbsoluteId => sys.error("All absolute IDs should be covered already.")
     }
   }
 

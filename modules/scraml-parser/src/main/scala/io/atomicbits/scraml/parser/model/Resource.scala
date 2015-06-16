@@ -71,6 +71,7 @@ object Resource {
       urlSegments match {
         case segment :: Nil => buildResourceSegment(segment).copy(actions = newActionList, resources = subResources)
         case segment :: segs => buildResourceSegment(segment).copy(resources = List(breakdownResourceUrl(segs)))
+        case Nil => sys.error("URL segments should never be empty.")
       }
     }
 

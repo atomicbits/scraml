@@ -269,6 +269,8 @@ object ActionExpander {
         case IntegerType => TypeName("Int")
         case NumberType => TypeName("Double")
         case BooleanType => TypeName("Boolean")
+        case FileType => sys.error(s"RAML type 'FileType' is not yet supported.")
+        case DateType => sys.error(s"RAML type 'DateType' is not yet supported.")
       }
 
       if (parameter.required) {
