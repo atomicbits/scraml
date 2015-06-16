@@ -76,7 +76,8 @@ trait Dependencies { this:Build =>
   )
 
   val testDeps = Seq(
-    scalaTest
+    scalaTest,
+    wiremock
   )
 
   val allDeps = mainDeps ++ testDeps

@@ -251,8 +251,6 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       Then("we should see the expected response values")
 
-//      val jsObj = Json.obj("firstName" -> "John", "lastName" -> "Doe", "age" -> 21)
-
       val resultGet = Await.result(futureResultGet, 2 seconds)
       assertResult(Response(200, User("John", "Doe", 21)))(resultGet)
 
