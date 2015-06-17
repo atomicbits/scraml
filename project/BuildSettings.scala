@@ -20,15 +20,77 @@ import sbt._
 import sbt.Keys._
 
 
-trait BuildSettings { this:Build => 
+trait BuildSettings {
+  this: Build =>
 
-  val scalacBuildOptions = Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
-  def projectSettings(dependencies:Seq[ModuleID]) = {
-    Seq(
-      scalacOptions := scalacBuildOptions,
-      libraryDependencies ++= dependencies
-    )
+  val Organization = "io.atomicbits"
+
+  val snapshotSuffix = "-SNAPSHOT"
+  val Version = "0.1.0" + snapshotSuffix
+
+  val ScalaVersion = "2.11.6"
+
+  val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
+
+  def projectSettings(extraDependencies: Seq[ModuleID]) = Seq(
+    organization := Organization,
+    version := Version,
+    isSnapshot := Version.endsWith(snapshotSuffix),
+    scalaVersion := ScalaVersion,
+    scalacOptions := scalacBuildOptions,
+    // Sonatype snapshot resolver is needed to fetch raml-java-parser 0.9-SNAPSHOT.
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    libraryDependencies ++= extraDependencies
+  )
+
+  val publishingCredentials = (for {
+    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+  } yield
+    Seq(Credentials(
+      "Sonatype Nexus Repository Manager",
+      "oss.sonatype.org",
+      username,
+      password)
+    )).getOrElse(Seq())
+
+  val publishSettings = Seq(
+    publishMavenStyle := true,
+    pomIncludeRepository := { _ => false},
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    pomExtra := pomInfo,
+    credentials ++= publishingCredentials
+  )
+
+  def buildSettings(dependencies: Seq[ModuleID]) = {
+    projectSettings(dependencies) ++ publishSettings
   }
+
+  lazy val pomInfo = <url>https://github.com/atomicbits/scraml</url>
+    <licenses>
+      <license>
+        <name>AGPL licencse</name>
+        <url>http://www.gnu.org/licenses/agpl-3.0.en.html</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com:atomicbits/scraml.git</url>
+      <connection>scm:git:git@github.com:atomicbits/scraml.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>rigolepe</id>
+        <name>Peter Rigole</name>
+        <url>http://atomicbits.io</url>
+      </developer>
+    </developers>
 
 }
