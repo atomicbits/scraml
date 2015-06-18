@@ -37,7 +37,7 @@ import scala.concurrent.duration._
  */
 class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  val port = 8181
+  val port = 8281
   val host = "localhost"
 
   val wireMockServer = new WireMockServer(wireMockConfig().port(port))

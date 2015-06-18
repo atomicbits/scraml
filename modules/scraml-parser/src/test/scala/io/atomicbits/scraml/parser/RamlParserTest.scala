@@ -35,7 +35,8 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
     scenario("test the RAML validator") {
 
       Given("the source of a valid RAML model")
-      val ramlSource = "io/atomicbits/rules/instagram.yaml"
+//      val ramlSource = "io/atomicbits/rules/instagram.yaml"
+      val ramlSource = "io/atomicbits/rules/api.yaml"
 
       When("we validate the RAML model")
       val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlSource)

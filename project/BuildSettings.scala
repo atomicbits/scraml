@@ -39,6 +39,7 @@ trait BuildSettings {
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
     scalacOptions := scalacBuildOptions,
+    parallelExecution := false,
     // Sonatype snapshot resolver is needed to fetch raml-java-parser 0.9-SNAPSHOT.
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= extraDependencies
