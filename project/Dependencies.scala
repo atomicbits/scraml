@@ -49,17 +49,6 @@ trait Dependencies { this:Build =>
     wiremock
   )
 
-  val scramlGeneratorTestDefDeps = Seq (
-    scalaReflect,
-    rxHttpClient,
-    playJson,
-    wiremock
-  )
-
-  val scramlTestDeps = Seq (
-    scramlgenTestCode
-  )
-
   val scramlParserDeps = Seq(
     ramlJavaParser
   )

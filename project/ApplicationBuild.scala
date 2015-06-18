@@ -46,31 +46,14 @@ with Dependencies {
     incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
     ) dependsOn (scramlParser, scramlJsonSchemaParser)
 
-  val scramlTest = Project(
-    id = "scraml-test",
-    base = file("modules/scraml-test"),
-    settings = buildSettings(dependencies = scramlTestDeps ++ testDeps)
-  )
-  val scramlTestDef = Project(
-    id = "scraml-testdef",
-    base = file("modules/scraml-testdef"),
-    settings = buildSettings(dependencies = scramlGeneratorTestDefDeps ++ testDeps)
-  ) settings(
-    // Obviously, the paradise compiler plugin must be included in the project that uses the macro!
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
-    incOptions := incOptions.value.withNameHashing(false), // See issue: https://github.com/sbt/sbt/issues/1593
-    // add resources of the current project into the build classpath,
-    // see: http://stackoverflow.com/questions/17134244/reading-resources-from-a-macro-in-an-sbt-project
-    unmanagedClasspath in Compile <++= unmanagedResources in Compile
-    ) dependsOn scramlGenerator
 
   val main = Project(
     id = "scraml-project",
     base = file("."),
-    settings = buildSettings(dependencies = allDeps)
+    settings = buildSettings(dependencies = allDeps) // can we remove the allDeps here?
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator, scramlTest, scramlTestDef)
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator)
 
 }
