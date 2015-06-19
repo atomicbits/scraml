@@ -127,17 +127,21 @@ object ScRamlGenerator {
          ..$classDefinitions
        """
 
+    // I'm not happy yet with the ad hoc approach to find the path to the project's base dir.
     val pid = c.enclosingPackage.pid
-    //    println(s"package is: ${pid.toString()}")
-    //    println(s"Generated code: \n ${showCode(fullTree)}")
-    writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, showCode(fullTree))
+    val baseDir = c.enclosingPosition.source.path.split("src/main/scala").toList.head
+    writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, baseDir, showCode(fullTree))
 
     c.Expr(fullTree)
 
   }
 
+
   // Todo: move this to another location
-  private def writeSourceCode(fileName: String, packageParts: List[String], codeWithoutPackage: String) = {
+  private def writeSourceCode(fileName: String,
+                              packageParts: List[String],
+                              baseDir: String,
+                              codeWithoutPackage: String) = {
 
     def write(fileName: String, path: String, txt: String): Unit = {
       import java.nio.file.{Paths, Files}
@@ -148,9 +152,9 @@ object ScRamlGenerator {
     }
 
     val fullSource = s"package ${packageParts.mkString(".")}\n\n$codeWithoutPackage"
-    val fullPath = "target" :: "codegen" :: packageParts
+    val fullPath = baseDir + "target/codegen/" + packageParts.mkString("/")
 
-    write(fileName, fullPath.mkString("/"), fullSource)
+    write(fileName, fullPath, fullSource)
 
   }
 

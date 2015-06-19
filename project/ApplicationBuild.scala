@@ -62,7 +62,11 @@ with Dependencies {
     // add resources of the current project into the build classpath,
     // see: http://stackoverflow.com/questions/17134244/reading-resources-from-a-macro-in-an-sbt-project
     unmanagedClasspath in Compile <++= unmanagedResources in Compile,
-    // We overwrite the packaged source with the generated source code.
+    // We overwrite the packaged source with the generated source code by replacing the file mappings.
+    // Warning: to get the generated source files into the source artifact this way, the compile step and the
+    // publish(Local) step need to be executed separately: ;compile;publishLocal
+    // If you rely on publish(Local) to do both steps at once, the mappings below will
+    // be set *before* compilation, and thus before code generation! The source artifact will be empty in that case.
     mappings in (Compile, packageSrc) := {
       // Recursively add the necessary file mappings, see https://github.com/sbt/sbt-native-packager/issues/69
       val codegenDir = target.value / "codegen"
@@ -79,6 +83,6 @@ with Dependencies {
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator) // , scramlTest, scramlTestDef)
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator, scramlTest, scramlTestDef)
 
 }
