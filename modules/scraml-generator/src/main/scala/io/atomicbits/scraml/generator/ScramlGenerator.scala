@@ -51,12 +51,12 @@ object ScRamlGenerator {
 
     val ramlSpecPath = c.prefix.tree match {
       case Apply(_, List(Literal(Constant(x)))) => x.toString
-      case _ => c.abort(c.enclosingPosition, "RAML specification path not specified")
+      case _                                    => c.abort(c.enclosingPosition, "RAML specification path not specified")
     }
 
     val className = annottees.map(_.tree) match {
       case List(q"class $name") => name
-      case _ => c.abort(c.enclosingPosition, "the annotation can only be used with classes")
+      case _                    => c.abort(c.enclosingPosition, "the annotation can only be used with classes")
     }
 
     val classAsTermName = TermName(className.toString)
@@ -88,29 +88,30 @@ object ScRamlGenerator {
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
     // rewrite the class definition
-    c.Expr(
+
+    val classDefinitions = List(
       q"""
-       case class $className(host: String,
-                             port: Int = 80,
-                             protocol: String = "http",
-                             requestTimeout: Int = 5000,
-                             maxConnections: Int = 2,
-                             defaultHeaders: Map[String, String] = Map.empty) {
+        case class $className(host: String,
+                              port: Int = 80,
+                              protocol: String = "http",
+                              requestTimeout: Int = 5000,
+                              maxConnections: Int = 2,
+                              defaultHeaders: Map[String, String] = Map.empty) {
 
-         import io.atomicbits.scraml.dsl.support._
-         import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+          import io.atomicbits.scraml.dsl.support._
+          import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
 
-         import play.api.libs.json._
+          import play.api.libs.json._
 
-         import $classAsTermName._
+          import $classAsTermName._
 
-         protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
 
-         ..$resources
+          ..$resources
 
-       }
-
-
+        }
+      """,
+      q"""
        object $classAsTermName {
 
          import play.api.libs.json._
@@ -118,11 +119,38 @@ object ScRamlGenerator {
          ..$caseClasses
 
        }
-
      """
-
-
     )
+
+    val fullTree: c.Tree =
+      q"""
+         ..$classDefinitions
+       """
+
+    val pid = c.enclosingPackage.pid
+    //    println(s"package is: ${pid.toString()}")
+    //    println(s"Generated code: \n ${showCode(fullTree)}")
+    writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, showCode(fullTree))
+
+    c.Expr(fullTree)
+
+  }
+
+  // Todo: move this to another location
+  private def writeSourceCode(fileName: String, packageParts: List[String], codeWithoutPackage: String) = {
+
+    def write(fileName: String, path: String, txt: String): Unit = {
+      import java.nio.file.{Paths, Files}
+      import java.nio.charset.StandardCharsets
+
+      Files.createDirectories(Paths.get(path))
+      Files.write(Paths.get(s"$path/$fileName"), txt.getBytes(StandardCharsets.UTF_8))
+    }
+
+    val fullSource = s"package ${packageParts.mkString(".")}\n\n$codeWithoutPackage"
+    val fullPath = "target" :: "codegen" :: packageParts
+
+    write(fileName, fullPath.mkString("/"), fullSource)
 
   }
 
