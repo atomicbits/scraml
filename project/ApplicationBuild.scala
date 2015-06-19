@@ -44,7 +44,7 @@ with Dependencies {
     // Important: The paradise compiler plugin must be included in the project that defines the macro!
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
     incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
-    ) dependsOn (scramlParser, scramlJsonSchemaParser)
+    ) dependsOn(scramlParser, scramlJsonSchemaParser)
 
   val scramlTest = Project(
     id = "scraml-test",
@@ -61,7 +61,15 @@ with Dependencies {
     incOptions := incOptions.value.withNameHashing(false), // See issue: https://github.com/sbt/sbt/issues/1593
     // add resources of the current project into the build classpath,
     // see: http://stackoverflow.com/questions/17134244/reading-resources-from-a-macro-in-an-sbt-project
-    unmanagedClasspath in Compile <++= unmanagedResources in Compile
+    unmanagedClasspath in Compile <++= unmanagedResources in Compile,
+    // We overwrite the packaged source with the generated source code.
+    mappings in (Compile, packageSrc) := {
+      // Recursively add the necessary file mappings, see https://github.com/sbt/sbt-native-packager/issues/69
+      val codegenDir = target.value / "codegen"
+      for {
+        (file, relativePath) <-  (codegenDir.*** --- codegenDir) x relativeTo(codegenDir)
+      } yield file -> s"$relativePath"
+    }
     ) dependsOn scramlGenerator
 
   val main = Project(
@@ -71,6 +79,6 @@ with Dependencies {
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator) // , scramlTest, scramlTestDef
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator) // , scramlTest, scramlTestDef)
 
 }
