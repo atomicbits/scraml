@@ -84,23 +84,23 @@ object JsonSchemaParser {
 
       val schemaWithUpdatedFragments =
         schema match {
-          case objEl: ObjectEl =>
+          case objEl: ObjectEl      =>
             objEl.copy(
               fragments = objEl.fragments.map(expandFragment),
               properties = objEl.properties.map(expandFragment)
             )
-          case frag: Fragment => frag.copy(fragments = frag.fragments.map(expandFragment))
-          case arr: ArrayEl =>
+          case frag: Fragment       => frag.copy(fragments = frag.fragments.map(expandFragment))
+          case arr: ArrayEl         =>
             val (_, expanded) = expandFragment(("items", arr.items))
             arr.copy(items = expanded)
           case ref: SchemaReference => ref.copy(refersTo = root.toAbsolute(ref.refersTo, path))
-          case _ => schema
+          case _                    => schema
         }
 
       val schemaWithUpdatedProperties =
         schemaWithUpdatedFragments match {
           case objEl: ObjectEl => objEl.copy(properties = objEl.properties.map(expandFragment))
-          case _ => schemaWithUpdatedFragments
+          case _               => schemaWithUpdatedFragments
         }
 
       schemaWithUpdatedProperties.updated(expandedId)
@@ -108,7 +108,7 @@ object JsonSchemaParser {
 
     schema.id match {
       case rootId: RootId => expandWithRootAndPath(schema, rootId)
-      case _ => throw JsonSchemaParseException("We cannot expand the ids in a schema that has no absolute root id.")
+      case _              => throw JsonSchemaParseException("We cannot expand the ids in a schema that has no absolute root id.")
     }
 
   }
@@ -132,16 +132,16 @@ object JsonSchemaParser {
         schema.id match {
           case rootId: RootId =>
             lookup.copy(lookupTable = lookup.lookupTable + (rootId -> schema))
-          case _ => lookup
+          case _              => lookup
         }
 
       val absoluteId = schema.id match {
         case absId: AbsoluteId => absId
-        case _ => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
+        case _                 => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
       }
 
       schema match {
-        case objEl: ObjectEl =>
+        case objEl: ObjectEl    =>
           val schemaLookupWithObjectFragments =
             objEl.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
           val schemaLookupWithObjectProperties =
@@ -150,11 +150,12 @@ object JsonSchemaParser {
             .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> objEl))
         case fragment: Fragment =>
           fragment.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
-        case enumEl: EnumEl =>
+        case enumEl: EnumEl     =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumEl))
-        case arr: ArrayEl =>
-          updateLookupAndObjectMapInternal(updatedSchemaLookup, ("", arr.items))
-        case _ => updatedSchemaLookup
+        case arr: ArrayEl       =>
+          val schemaLookupWithArrays = updatedSchemaLookup.copy(arrayMap = updatedSchemaLookup.arrayMap + (absoluteId -> arr))
+          updateLookupAndObjectMapInternal(schemaLookupWithArrays, ("", arr.items))
+        case _                  => updatedSchemaLookup
       }
 
     }
@@ -165,7 +166,7 @@ object JsonSchemaParser {
     val schemaLookupWithUpdatedExternalLinks = schema.id match {
       case id: RootId =>
         lookup.copy(externalSchemaLinks = lookup.externalSchemaLinks + (externalLink -> id))
-      case _ => throw JsonSchemaParseException(s"A top-level schema must have a root id (is ${schema.id}).")
+      case _          => throw JsonSchemaParseException(s"A top-level schema must have a root id (is ${schema.id}).")
     }
 
     updateLookupAndObjectMapInternal(schemaLookupWithUpdatedExternalLinks, ("", schema))

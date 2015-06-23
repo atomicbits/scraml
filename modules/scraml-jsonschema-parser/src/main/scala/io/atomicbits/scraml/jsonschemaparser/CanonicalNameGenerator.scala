@@ -32,6 +32,9 @@ object CanonicalNameGenerator {
         case (absId, _) => SchemaPath(absId)
       }
 
+    // ToDo: schemalookup.arrayMap met ArrayEl omzetten naar de juiste ClassRep en linken in de canonical map
+    // ToDo: de ActionExpander zal dan overweg moeten leren kunnen met de verschillende ClassRep's 
+
     val groupedByHasFragment = schemaPaths.groupBy(_.reverseFragment.isEmpty)
 
     val schemaPathsWithoutFragment = groupedByHasFragment.getOrElse(true, Nil).sortBy(_.reversePath.length)
@@ -40,7 +43,7 @@ object CanonicalNameGenerator {
     // First find canonical names for schema paths without their fragments.
 
     // Map from schema origins to their canonical names
-    type CanonicalMap = Map[AbsoluteId, String]
+    type CanonicalMap = Map[AbsoluteId, ClassRep]
 
     val canonicalMap: CanonicalMap = Map.empty
 
@@ -53,7 +56,7 @@ object CanonicalNameGenerator {
           reversePath match {
             case p :: ps =>
               val canonicalProposal = s"${p.capitalize}$suffix"
-              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> canonicalProposal)
+              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> PlainClassRep(canonicalProposal))
               else deduce(ps, canonicalProposal)
             case Nil =>
               throw new IllegalArgumentException(s"Cannot deduce a canonical name for schema ${schemaPath.origin}")
@@ -81,9 +84,9 @@ object CanonicalNameGenerator {
           reverseFragment match {
             case f :: fs =>
               val canonicalProposal = s"${f.capitalize}$suffix"
-              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> canonicalProposal)
+              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> PlainClassRep(canonicalProposal))
               else if (!taken.contains(s"$canonicalBase$canonicalProposal"))
-                canMap + (schemaPath.origin -> s"$canonicalBase$canonicalProposal")
+                canMap + (schemaPath.origin -> PlainClassRep(s"$canonicalBase$canonicalProposal"))
               else deduce(fs, canonicalProposal)
             case Nil =>
               throw new IllegalArgumentException(s"Cannot deduce a canonical name for schema ${schemaPath.origin}")
