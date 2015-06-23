@@ -47,7 +47,7 @@ object IdAnalyser {
   def idFromField(schema: JsObject, field: String): Option[Id] = {
 
     val idType = (schema \ field).asOpt[String] match {
-      case Some(id) => idFromString(id)
+      case Some(idOrRef) => idFromString(idOrRef)
       case None => ImplicitId
     }
 

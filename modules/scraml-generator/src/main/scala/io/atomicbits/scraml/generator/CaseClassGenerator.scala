@@ -59,7 +59,64 @@ object CaseClassGenerator {
                                            schemaLookup: SchemaLookup,
                                            c: whitebox.Context): List[c.universe.Tree] = {
 
-    def toField(property: (String, Schema), requiredFields: List[String]): c.universe.Tree = {
+    println(s"Generating case class for: $canonicalName")
+
+    import c.universe._
+
+    def expandFieldName(fieldName: TermName,
+                        typeName: Tree,
+                        required: Boolean): Tree = {
+
+//      val nameTermName = TermName(fieldName)
+//      val typeTypeName = TypeName(typeName)
+
+      if (required) {
+        q"val $fieldName: $typeName"
+      } else {
+        q"val $fieldName: Option[$typeName]"
+      }
+    }
+
+    def fetchTypeNameFor(schema: Schema, schemaLookup: SchemaLookup): Tree = {
+
+      // ToDo: this code to get the absolute id appears everywhere, we must find a way to refactor this!
+      val absoluteId = schema.id match {
+        case absId: AbsoluteId => absId
+        case _ => sys.error("All schema references must be absolute for case class generation.")
+      }
+
+      schema match {
+        case objEl: ObjectEl =>
+          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId))
+          val q"val foo: $objectType" = q"val foo: $typeName"
+          objectType
+        case arrEl: ArrayEl =>
+          val q"val foo: $listType" = q"val foo: List[${fetchTypeNameFor(arrEl.items, schemaLookup)}]"
+          listType //TypeName(s"List[${fetchTypeNameFor(arrEl.items, schemaLookup)}]")
+        case stringEl: StringEl =>
+          val q"val foo: $stringType" = q"val foo: String"
+          stringType
+        case numberEl: NumberEl =>
+          val q"val foo: $doubleType" = q"val foo: Double"
+          doubleType
+        case integerEl: IntegerEl =>
+          val q"val foo: $intType" = q"val foo: Int"
+          intType
+        case booleanEl: BooleanEl =>
+          val q"val foo: $intType" = q"val foo: Boolean"
+          intType
+        case schemaRef: SchemaReference => fetchTypeNameFor(schemaLookup.lookupSchema(schemaRef.refersTo), schemaLookup)
+        case enumEl: EnumEl =>
+          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId))
+          val q"val foo: $enumType" = q"val foo: $typeName"
+          enumType
+        case otherSchema => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a List type parameter.")
+      }
+    }
+
+    def toField(property: (String, Schema), requiredFields: List[String]): Tree = {
+
+      import c.universe._
 
       val (propertyName, schema) = property
       val cleanName = cleanFieldName(propertyName)
@@ -73,7 +130,7 @@ object CaseClassGenerator {
         schema match {
           case objField: AllowedAsObjectField =>
             val required = requiredFields.contains(propertyName) || objField.required
-            expandFieldName(cleanName, fetchTypeNameFor(objField, schemaLookup), required, c)
+            expandFieldName(TermName(cleanName), fetchTypeNameFor(objField, schemaLookup), required)
           case noObjectField =>
             sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
         }
@@ -81,11 +138,9 @@ object CaseClassGenerator {
       field
     }
 
-    import c.universe._
-
     val className = TypeName(canonicalName)
     val classAsTermName = TermName(canonicalName)
-    val caseClassFields: List[c.universe.Tree] = objectEl.properties.toList.map(toField(_, objectEl.requiredFields))
+    val caseClassFields: List[Tree] = objectEl.properties.toList.map(toField(_, objectEl.requiredFields))
 
     List(
       q"""
@@ -102,50 +157,6 @@ object CaseClassGenerator {
   }
 
 
-  private def expandFieldName(fieldName: String,
-                              typeName: String,
-                              required: Boolean,
-                              c: whitebox.Context): c.universe.Tree = {
-    import c.universe._
-
-    val nameTermName = TermName(fieldName)
-    val typeTypeName = TypeName(typeName)
-
-    if (required) {
-      q"val $nameTermName: $typeTypeName"
-    } else {
-      q"val $nameTermName: Option[$typeTypeName]"
-    }
-  }
-
-
-  private def expandTypedArray(arrayEl: ArrayEl, schemaLookup: SchemaLookup): String = {
-
-    s"List[${fetchTypeNameFor(arrayEl.items, schemaLookup)}]"
-
-  }
-
-
-  private def fetchTypeNameFor(schema: Schema, schemaLookup: SchemaLookup): String = {
-
-    // ToDo: this code to get the absolute id appears everywhere, we must find a way to refactor this!
-    val absoluteId = schema.id match {
-      case absId: AbsoluteId => absId
-      case _ => sys.error("All schema references must be absolute for case class generation.")
-    }
-
-    schema match {
-      case objEl: ObjectEl => schemaLookup.canonicalNames(absoluteId)
-      case arrEl: ArrayEl => s"List[${fetchTypeNameFor(arrEl, schemaLookup)}]"
-      case stringEl: StringEl => "String"
-      case numberEl: NumberEl => "Double"
-      case integerEl: IntegerEl => "Int"
-      case booleanEl: BooleanEl => "Boolean"
-      case schemaRef: SchemaReference => fetchTypeNameFor(schemaLookup.lookupSchema(schemaRef.refersTo), schemaLookup)
-      case enumEl: EnumEl => schemaLookup.canonicalNames(absoluteId)
-      case otherSchema => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a List type parameter.")
-    }
-  }
 
 
   private def cleanFieldName(propertyName: String): String = {

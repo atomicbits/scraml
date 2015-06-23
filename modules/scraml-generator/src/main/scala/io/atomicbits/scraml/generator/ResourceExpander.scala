@@ -45,7 +45,7 @@ object ResourceExpander {
     val segmentAsDefName = TermName(resource.urlSegment)
 
     val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup, c))
-    val expandedActions = resource.actions.map(action => ActionExpander.expandAction(action, schemaLookup, c)).flatten
+    val expandedActions = resource.actions.flatMap(action => ActionExpander.expandAction(action, schemaLookup, c))
 
     def noSegment = {
       q"""

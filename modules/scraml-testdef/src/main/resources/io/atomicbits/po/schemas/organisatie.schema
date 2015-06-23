@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://wegenenverkeer.be/po/schema/organisatie.json",
+  "type": "object",
+  "description": "Een organisatie.",
+  "properties": {
+    "code": {
+      "required": true,
+      "type": "string"
+    },
+    "naam": {
+      "required": true,
+      "type": "string"
+    }
+  }
+}

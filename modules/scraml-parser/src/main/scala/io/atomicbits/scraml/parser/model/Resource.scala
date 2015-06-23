@@ -41,8 +41,13 @@ object Resource {
     val oldActionsList: List[org.raml.model.Action] = resource.getActions.values().asScala.toSet.toList
     val newActionList = oldActionsList.map(a => Action(a))
 
-    val subResources: List[Resource] =
+    val allSubResources: List[Resource] =
       Transformer.transformMap[org.raml.model.Resource, Resource](Resource(_))(resource.getResources).values.toList
+
+    val (emptySubResources, nonEmptySubResources) = allSubResources.partition(_.urlSegment.isEmpty)
+
+    val actionList = newActionList ++ emptySubResources.flatMap(_.actions)
+    val subResources = nonEmptySubResources
 
     /**
      * Resources in the Java RAML model can have relative URLs that consist of multiple segments,
@@ -69,9 +74,10 @@ object Resource {
       }
 
       urlSegments match {
-        case segment :: Nil => buildResourceSegment(segment).copy(actions = newActionList, resources = subResources)
+        case segment :: Nil => buildResourceSegment(segment).copy(actions = actionList, resources = subResources)
         case segment :: segs => buildResourceSegment(segment).copy(resources = List(breakdownResourceUrl(segs)))
-        case Nil => sys.error("URL segments should never be empty.")
+          // Todo: handle the case Nil without introducing an extra 'root' path
+        case Nil => buildResourceSegment("").copy(actions = actionList, resources = subResources)
       }
     }
 

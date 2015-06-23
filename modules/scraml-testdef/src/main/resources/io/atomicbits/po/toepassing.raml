@@ -1,0 +1,18 @@
+# /rest/toepassing
+
+/:
+  description: Vraag alle toepassingen op.
+  get:
+    is: [acceptjson]
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+            schema: |
+              {
+                "id": "http://wegenenverkeer.be/po/schema/toepassingen-lijst.json",
+                "type": "array",
+                "items": {
+                  "$ref": "toepassing-basis.json"
+                }
+              }

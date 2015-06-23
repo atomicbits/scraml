@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://wegenenverkeer.be/po/schema/toelating.json",
+  "type": "object",
+  "description": "Een toelating.",
+  "properties": {
+    "code": {
+      "required": true,
+      "type": "string"
+    },
+    "naam": {
+      "required": true,
+      "type": "string"
+    }
+  }
+}
