@@ -18,7 +18,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
+import io.atomicbits.scraml.jsonschemaparser.{ClassRep, PlainClassRep, SchemaLookup}
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -32,11 +32,12 @@ object ActionExpander {
 
     import c.universe._
 
+    // ToDo: handle different types of ClassReps.
 
     // We currently only support the first context-type mimeType that we see. We should extend this later on.
     val bodyMimeType = action.body.values.toList.headOption
     val maybeBodyRootId = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
-    val maybeBodyClassName = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
+    val maybeBodyClassRep = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
 
     val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
 
@@ -45,18 +46,17 @@ object ActionExpander {
     // We currently only support the first response body mimeType that we see. We should extend this later on.
     val responseMimeType = response.flatMap(_.body.values.toList.headOption)
     val maybeResponseRootId = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
-    val maybeResponseClassName = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
+    val maybeResponseClassRep = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
 
-    val (hasJsonDtoBody, bodyClassName) = maybeBodyClassName match {
+    val (hasJsonDtoBody, bodyClassRep) = maybeBodyClassRep match {
       case Some(bdClass) => (true, bdClass)
-      case None => (false, "String")
+      case None          => (false, PlainClassRep("String"))
     }
 
-    val (hasJsonDtoResponse, responseClassName) = maybeResponseClassName match {
+    val (hasJsonDtoResponse, responseClassRep) = maybeResponseClassRep match {
       case Some(rsClass) => (true, rsClass)
-      case None => (false, "String")
+      case None          => (false, PlainClassRep("String"))
     }
-
 
 
     def expandGetAction(): List[c.universe.Tree] = {
@@ -76,35 +76,56 @@ object ActionExpander {
             req = requestBuilder
           ) {
 
-            ..${expandHeaders(hasBody = false, "String")}
+            ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
 
           }
        """)
     }
 
     def expandPutAction(): List[c.universe.Tree] = {
-      List(
-        q"""
+      val defaultActions =
+        List(
+          q"""
           def put(body: String) = new PutSegment(
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders(hasBody = true, "String")}
+            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
 
           }
        """,
-        q"""
+          q"""
           def put(body: JsValue) = new PutSegment(
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders(hasBody = true, "JsValue")}
+            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
 
           }
        """
-      )
+        )
+
+      val additionalAction =
+        if (hasJsonDtoBody) {
+          val typeTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
+          val bodyParam = List(q"val body: $typeTypeName")
+          List(
+            q"""
+              def put(..$bodyParam) = new PutSegment(
+                validAcceptHeaders = List(..${validAcceptHeaders()}),
+                validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+                req = requestBuilder) {
+
+                  ..${expandHeadersAndExecution(hasBody = true, bodyClassRep)}
+
+              }
+             """
+          )
+        } else Nil
+
+      defaultActions ++ additionalAction
     }
 
     def expandPostAction(): List[c.universe.Tree] = {
@@ -120,7 +141,7 @@ object ActionExpander {
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders(hasBody = true, "String")}
+            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
 
           }
        """,
@@ -131,7 +152,7 @@ object ActionExpander {
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders(hasBody = true, "JsValue")}
+            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
 
           }
        """
@@ -139,7 +160,7 @@ object ActionExpander {
 
         val additionalAction =
           if (hasJsonDtoBody) {
-            val typeTypeName = TypeName(bodyClassName)
+            val typeTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
             val bodyParam = List(q"val body: $typeTypeName")
             List(
               q"""
@@ -149,7 +170,7 @@ object ActionExpander {
                     validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                     req = requestBuilder) {
 
-                      ..${expandHeaders(hasBody = true, bodyClassName)}
+                      ..${expandHeadersAndExecution(hasBody = true, bodyClassRep)}
 
                   }
                 """
@@ -186,10 +207,10 @@ object ActionExpander {
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-              ..${expandHeaders(hasBody = false, "String")}
+              ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
 
           }
-       """)
+         """)
       }
 
     }
@@ -202,28 +223,28 @@ object ActionExpander {
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
 
-            ..${expandHeaders(hasBody = false, "String")}
+            ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
 
           }
        """)
     }
 
-    def expandHeaders(hasBody: Boolean, bodyClassName: String): List[c.universe.Tree] = {
+    def expandHeadersAndExecution(hasBody: Boolean, bodyClassRep: ClassRep): List[c.universe.Tree] = {
       List(
         q"""
            def headers(headers: (String, String)*) = new HeaderSegment(
              headers = headers.toMap,
              req = requestBuilder
            ) {
-             ..${expandExecution(hasBody,bodyClassName)}
+             ..${expandExecution(hasBody, bodyClassRep)}
            }
          """
-      ) ++ expandExecution(hasBody,bodyClassName)
+      ) ++ expandExecution(hasBody, bodyClassRep)
     }
 
-    def expandExecution(hasBody: Boolean, bodyClassName: String): List[c.universe.Tree] = {
-      val bodyTypeName = TypeName(bodyClassName)
-      val responseTypeName = TypeName(responseClassName)
+    def expandExecution(hasBody: Boolean, bodyClassRep: ClassRep): List[c.universe.Tree] = {
+      val bodyTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
+      val responseTypeName = TypeNameExpander.expand(responseClassRep, c) // TypeName(responseClassRep.name)
       val executeSegment =
         if (hasBody) {
           q"""
@@ -265,12 +286,12 @@ object ActionExpander {
 
       val nameTermName = TermName(queryParameterName)
       val typeTypeName = parameter.parameterType match {
-        case StringType => TypeName("String")
+        case StringType  => TypeName("String")
         case IntegerType => TypeName("Int")
-        case NumberType => TypeName("Double")
+        case NumberType  => TypeName("Double")
         case BooleanType => TypeName("Boolean")
-        case FileType => sys.error(s"RAML type 'FileType' is not yet supported.")
-        case DateType => sys.error(s"RAML type 'DateType' is not yet supported.")
+        case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
+        case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
       }
 
       if (parameter.required) {
@@ -284,17 +305,17 @@ object ActionExpander {
       val (queryParameterName, parameter) = qParam
       val nameTermName = TermName(queryParameterName)
       parameter match {
-        case Parameter(_, true) => q"""$queryParameterName -> Option($nameTermName).map(_.toString)"""
+        case Parameter(_, true)  => q"""$queryParameterName -> Option($nameTermName).map(_.toString)"""
         case Parameter(_, false) => q"""$queryParameterName -> $nameTermName.map(_.toString)"""
       }
     }
 
 
     action.actionType match {
-      case Get => expandGetAction()
-      case Put => expandPutAction()
-      case Post => expandPostAction()
-      case Delete => expandDeleteAction()
+      case Get           => expandGetAction()
+      case Put           => expandPutAction()
+      case Post          => expandPostAction()
+      case Delete        => expandDeleteAction()
       case unknownAction => sys.error(s"$unknownAction actions are not supported yet.")
     }
 

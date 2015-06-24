@@ -18,7 +18,7 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
-import io.atomicbits.scraml.jsonschemaparser.model.{FragmentedSchema, EnumEl, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.model._
 
 import scala.annotation.tailrec
 
@@ -37,7 +37,8 @@ import scala.annotation.tailrec
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
                         objectMap: Map[AbsoluteId, ObjectEl] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
-                        canonicalNames: Map[AbsoluteId, String] = Map.empty,
+                        arrayMap: Map[AbsoluteId, ArrayEl] = Map.empty,
+                        canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
   def map(f: SchemaLookup => SchemaLookup): SchemaLookup = f(this)

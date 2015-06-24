@@ -43,7 +43,7 @@ object CaseClassGenerator {
 
     val caseClasses = schemaLookup.objectMap.keys.toList.map { key =>
       generateCaseClassWithCompanionObject(
-        schemaLookup.canonicalNames(key),
+        schemaLookup.canonicalNames(key).name,
         schemaLookup.objectMap(key),
         schemaLookup,
         c
@@ -66,10 +66,6 @@ object CaseClassGenerator {
     def expandFieldName(fieldName: TermName,
                         typeName: Tree,
                         required: Boolean): Tree = {
-
-//      val nameTermName = TermName(fieldName)
-//      val typeTypeName = TypeName(typeName)
-
       if (required) {
         q"val $fieldName: $typeName"
       } else {
@@ -87,12 +83,12 @@ object CaseClassGenerator {
 
       schema match {
         case objEl: ObjectEl =>
-          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId))
+          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId).name)
           val q"val foo: $objectType" = q"val foo: $typeName"
           objectType
         case arrEl: ArrayEl =>
           val q"val foo: $listType" = q"val foo: List[${fetchTypeNameFor(arrEl.items, schemaLookup)}]"
-          listType //TypeName(s"List[${fetchTypeNameFor(arrEl.items, schemaLookup)}]")
+          listType
         case stringEl: StringEl =>
           val q"val foo: $stringType" = q"val foo: String"
           stringType
@@ -103,11 +99,11 @@ object CaseClassGenerator {
           val q"val foo: $intType" = q"val foo: Int"
           intType
         case booleanEl: BooleanEl =>
-          val q"val foo: $intType" = q"val foo: Boolean"
-          intType
+          val q"val foo: $booleanType" = q"val foo: Boolean"
+          booleanType
         case schemaRef: SchemaReference => fetchTypeNameFor(schemaLookup.lookupSchema(schemaRef.refersTo), schemaLookup)
         case enumEl: EnumEl =>
-          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId))
+          val typeName = TypeName(schemaLookup.canonicalNames(absoluteId).name)
           val q"val foo: $enumType" = q"val foo: $typeName"
           enumType
         case otherSchema => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a List type parameter.")
