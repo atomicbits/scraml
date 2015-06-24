@@ -18,7 +18,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.jsonschemaparser.SchemaLookup
+import io.atomicbits.scraml.jsonschemaparser.{PlainClassRep, SchemaLookup}
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox
@@ -49,12 +49,12 @@ object ActionExpander {
 
     val (hasJsonDtoBody, bodyClassName) = maybeBodyClassName match {
       case Some(bdClass) => (true, bdClass)
-      case None => (false, "String")
+      case None => (false, PlainClassRep("String"))
     }
 
     val (hasJsonDtoResponse, responseClassName) = maybeResponseClassName match {
       case Some(rsClass) => (true, rsClass)
-      case None => (false, "String")
+      case None => (false, PlainClassRep("String"))
     }
 
 
@@ -139,7 +139,7 @@ object ActionExpander {
 
         val additionalAction =
           if (hasJsonDtoBody) {
-            val typeTypeName = TypeName(bodyClassName)
+            val typeTypeName = TypeName(bodyClassName.name)
             val bodyParam = List(q"val body: $typeTypeName")
             List(
               q"""
@@ -149,7 +149,7 @@ object ActionExpander {
                     validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                     req = requestBuilder) {
 
-                      ..${expandHeaders(hasBody = true, bodyClassName)}
+                      ..${expandHeaders(hasBody = true, bodyClassName.name)}
 
                   }
                 """
@@ -223,7 +223,7 @@ object ActionExpander {
 
     def expandExecution(hasBody: Boolean, bodyClassName: String): List[c.universe.Tree] = {
       val bodyTypeName = TypeName(bodyClassName)
-      val responseTypeName = TypeName(responseClassName)
+      val responseTypeName = TypeName(responseClassName.name)
       val executeSegment =
         if (hasBody) {
           q"""

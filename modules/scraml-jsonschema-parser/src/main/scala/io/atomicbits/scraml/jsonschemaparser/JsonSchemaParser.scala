@@ -61,6 +61,7 @@ object JsonSchemaParser {
       .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
       .foldLeft(SchemaLookup())(updateLookupTableAndObjectMap)
       .map(CanonicalNameGenerator.deduceCanonicalNames)
+      .map(CanonicalNameGenerator.addListTypesToCanonicalNames)
   }
 
 
