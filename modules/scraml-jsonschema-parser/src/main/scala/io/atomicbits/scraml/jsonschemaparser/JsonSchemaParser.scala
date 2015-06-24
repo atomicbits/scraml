@@ -175,7 +175,4 @@ object JsonSchemaParser {
   }
 
 
-  def simplify(schemas: List[Schema], lookup: SchemaLookup): List[Schema] = ???
-
-
 }

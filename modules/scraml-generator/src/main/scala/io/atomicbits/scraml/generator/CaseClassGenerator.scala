@@ -66,10 +66,6 @@ object CaseClassGenerator {
     def expandFieldName(fieldName: TermName,
                         typeName: Tree,
                         required: Boolean): Tree = {
-
-//      val nameTermName = TermName(fieldName)
-//      val typeTypeName = TypeName(typeName)
-
       if (required) {
         q"val $fieldName: $typeName"
       } else {

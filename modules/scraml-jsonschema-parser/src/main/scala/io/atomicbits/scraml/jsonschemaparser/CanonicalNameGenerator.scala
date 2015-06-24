@@ -25,6 +25,13 @@ import io.atomicbits.scraml.jsonschemaparser.model._
  */
 object CanonicalNameGenerator {
 
+  /**
+   * Deduce the canonical names from the schema ids. Currently, only PlainClassReps are created. Later, when supporting typed
+   * classes, we'll have to add a second run that upgrades the PlainClassReps to TypeClassReps where necessary.
+   *
+   * @param schemaLookup The schema lookup.
+   * @return The updated schema lookup.
+   */
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
     val schemaPaths: List[SchemaPath] =
@@ -33,9 +40,6 @@ object CanonicalNameGenerator {
       } ++ schemaLookup.enumMap.toList.collect {
         case (absId, _) => SchemaPath(absId)
       }
-
-    // ToDo: schemalookup.arrayMap met ArrayEl omzetten naar de juiste ClassRep en linken in de canonical map
-    // ToDo: de ActionExpander zal dan overweg moeten leren kunnen met de verschillende ClassRep's
 
     val (groupedByEmptyFragment, groupedByNonEmptyFragment) = schemaPaths.partition(_.reverseFragment.isEmpty)
 
@@ -118,12 +122,13 @@ object CanonicalNameGenerator {
 
     def expandArrayEl(lookup: SchemaLookup, arrayEl: ArrayEl): ClassRep = {
 
-      val itemsAbsoluteId = arrayEl.items.id match {
-        case absId: AbsoluteId => absId
-        case _                 => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
-      }
-
       def arrayItemsToClassRef(schema: Schema): ClassRep = {
+
+        val itemsAbsoluteId = schema.id match {
+          case absId: AbsoluteId => absId
+          case _                 => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
+        }
+
         schema match {
           case objEl: ObjectEl      =>
             val classRep: ClassRep = lookup.canonicalNames(itemsAbsoluteId)
