@@ -36,6 +36,7 @@ object ActionExpander {
 
     // We currently only support the first context-type mimeType that we see. We should extend this later on.
     val bodyMimeType = action.body.values.toList.headOption
+    val hasBody = bodyMimeType.isDefined
     val maybeBodyRootId = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
     val maybeBodyClassRep = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
 
@@ -45,6 +46,7 @@ object ActionExpander {
     val response = action.responses.values.toList.headOption
     // We currently only support the first response body mimeType that we see. We should extend this later on.
     val responseMimeType = response.flatMap(_.body.values.toList.headOption)
+    val hasResponse = responseMimeType.isDefined
     val maybeResponseRootId = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
     val maybeResponseClassRep = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
 
@@ -84,28 +86,42 @@ object ActionExpander {
 
     def expandPutAction(): List[c.universe.Tree] = {
       val defaultActions =
-        List(
-          q"""
-          def put(body: String) = new PutSegment(
-            validAcceptHeaders = List(..${validAcceptHeaders()}),
-            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
-            req = requestBuilder) {
+        if (hasBody)
+          List(
+            q"""
+            def put(body: String) = new PutSegment(
+              validAcceptHeaders = List(..${validAcceptHeaders()}),
+              validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+              req = requestBuilder) {
 
-            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
+              ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
 
-          }
-       """,
-          q"""
-          def put(body: JsValue) = new PutSegment(
-            validAcceptHeaders = List(..${validAcceptHeaders()}),
-            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
-            req = requestBuilder) {
+            }
+            """,
+            q"""
+            def put(body: JsValue) = new PutSegment(
+              validAcceptHeaders = List(..${validAcceptHeaders()}),
+              validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+              req = requestBuilder) {
 
-            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
+              ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
 
-          }
-       """
-        )
+            }
+            """
+          )
+        else
+          List(
+            q"""
+            def put() = new PutSegment(
+              validAcceptHeaders = List(..${validAcceptHeaders()}),
+              validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+              req = requestBuilder) {
+
+              ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
+
+            }
+            """
+          )
 
       val additionalAction =
         if (hasJsonDtoBody) {
@@ -133,30 +149,45 @@ object ActionExpander {
       if (formParameters.isEmpty) {
         // We support a custom body instead.
         val defaultActions =
-          List(
-            q"""
-          def post(body: String) = new PostSegment(
-            formParams = Map.empty,
-            validAcceptHeaders = List(..${validAcceptHeaders()}),
-            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
-            req = requestBuilder) {
+          if (hasBody)
+            List(
+              q"""
+              def post(body: String) = new PostSegment(
+                formParams = Map.empty,
+                validAcceptHeaders = List(..${validAcceptHeaders()}),
+                validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+                req = requestBuilder) {
 
-            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
+                ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("String"))}
 
-          }
-       """,
-            q"""
-          def post(body: JsValue) = new PostSegment(
-            formParams = Map.empty,
-            validAcceptHeaders = List(..${validAcceptHeaders()}),
-            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
-            req = requestBuilder) {
+              }
+              """,
+              q"""
+              def post(body: JsValue) = new PostSegment(
+                formParams = Map.empty,
+                validAcceptHeaders = List(..${validAcceptHeaders()}),
+                validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+                req = requestBuilder) {
 
-            ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
+                ..${expandHeadersAndExecution(hasBody = true, PlainClassRep("JsValue"))}
 
-          }
-       """
-          )
+              }
+              """
+            )
+          else
+            List(
+              q"""
+              def post() = new PostSegment(
+                formParams = Map.empty,
+                validAcceptHeaders = List(..${validAcceptHeaders()}),
+                validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+                req = requestBuilder) {
+
+                ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
+
+              }
+              """
+            )
 
         val additionalAction =
           if (hasJsonDtoBody) {
@@ -255,15 +286,17 @@ object ActionExpander {
            private val executeSegment = new ExecuteSegment[$bodyTypeName, $responseTypeName](requestBuilder, None)
          """
         }
+      val jsonExecutor =
+        if (hasResponse) List( q""" def executeToJson() = executeSegment.executeToJson() """)
+        else Nil
       val jsonDtoExecutor =
         if (hasJsonDtoResponse) List( q""" def executeToJsonDto() = executeSegment.executeToJsonDto() """)
         else Nil
       List(
         executeSegment,
         q""" def execute() = executeSegment.execute() """,
-        q""" def executeToResponse() = executeSegment.executeToResponse() """,
-        q""" def executeToJson() = executeSegment.executeToJson() """
-      ) ++ jsonDtoExecutor
+        q""" def executeToResponse() = executeSegment.executeToResponse() """
+      ) ++ jsonExecutor ++ jsonDtoExecutor
     }
 
     def needsAcceptHeader: Boolean = {
