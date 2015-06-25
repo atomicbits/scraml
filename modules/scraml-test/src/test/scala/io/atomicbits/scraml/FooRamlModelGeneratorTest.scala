@@ -75,7 +75,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a GET request")
 
-      val eventualUserResponse: Future[Response[User]] =
+      val eventualUserResponse: Future[User] =
         userFoobarResource
           .get(age = Some(51), firstName = Some("John"), lastName = None)
           .executeToJsonDto()
@@ -92,8 +92,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
         id = "1"
       )
       val userResponse = Await.result(eventualUserResponse, 2 seconds)
-      assertResult(Response(200, user))(userResponse)
-
+      assertResult(user)(userResponse)
 
     }
 
@@ -118,7 +117,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a form POST request")
 
-      val eventualPostResponse: Future[Response[String]] =
+      val eventualPostResponse: Future[String] =
         userFoobarResource
           .post(text = "Hello Foobar", value = None).execute()
 
@@ -127,7 +126,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       Then("we should get the correct response")
 
       val postResponse = Await.result(eventualPostResponse, 2 seconds)
-      assertResult(Response(200, "Post OK"))(postResponse)
+      assertResult("Post OK")(postResponse)
 
     }
 
@@ -173,7 +172,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a PUT request")
 
-      val eventualPutResponse: Future[Response[Link]] =
+      val eventualPutResponse: Future[Link] =
         userFoobarResource
           .put(user)
           .headers(
@@ -186,8 +185,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       Then("we should get the correct response")
 
       val putResponse = Await.result(eventualPutResponse, 2 seconds)
-      assertResult(Response(200, link))(putResponse)
-
+      assertResult(link)(putResponse)
 
     }
 
@@ -209,13 +207,13 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a DELETE request")
 
-      val eventualPutResponse: Future[Response[String]] = userFoobarResource.delete().execute()
+      val eventualPutResponse: Future[String] = userFoobarResource.delete().execute()
 
 
       Then("we should get the correct response")
 
       val putResponse = Await.result(eventualPutResponse, 2 seconds)
-      assertResult(Response(200, "Delete OK"))(putResponse)
+      assertResult("Delete OK")(putResponse)
 
 
     }

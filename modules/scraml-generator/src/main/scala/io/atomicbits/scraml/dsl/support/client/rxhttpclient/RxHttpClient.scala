@@ -48,7 +48,12 @@ case class RxHttpClient(protocol: String,
 
 
   override def execute[B](requesBuilder: RequestBuilder, body: Option[B])
-                         (implicit bodyFormat: Format[B]): Future[Response[String]] = {
+                         (implicit bodyFormat: Format[B]): Future[String] = {
+    executeToResponse(requesBuilder, body).map(_.body)
+  }
+
+  override def executeToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
+                                   (implicit bodyFormat: Format[B]): Future[Response[String]] = {
 
     val clientWithResourcePathAndMethod = {
       client
@@ -90,16 +95,21 @@ case class RxHttpClient(protocol: String,
 
 
   override def executeToJson[B](request: RequestBuilder, body: Option[B])
-                               (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
-    execute(request, body).map(res => res.map(Json.parse))
+                               (implicit bodyFormat: Format[B]): Future[JsValue] =
+    executeToResponse(request, body).map(res => Json.parse(res.body))
+
+
+  def executeToJsonResponse[B](request: RequestBuilder, body: Option[B])
+                      (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
+    executeToResponse(request, body).map(res => res.map(Json.parse))
 
 
   override def executeToJsonDto[B, R](request: RequestBuilder, body: Option[B])
                                      (implicit bodyFormat: Format[B],
-                                      responseFormat: Format[R]): Future[Response[R]] = {
-    executeToJson(request, body) map (res => res.map(responseFormat.reads)) flatMap {
-      case Response(status, JsSuccess(t, path)) => Future.successful(Response(status, t))
-      case Response(status, JsError(e)) =>
+                                      responseFormat: Format[R]): Future[R] = {
+    executeToJsonResponse(request, body) map (res => res.map(responseFormat.reads)) flatMap {
+      case Response(status, JsSuccess(t, path)) => Future.successful(t)
+      case Response(status, JsError(e))         =>
         val validationMessages: Seq[String] = {
           e flatMap {
             errorsByPath =>

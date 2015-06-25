@@ -18,7 +18,10 @@
 
 package io.atomicbits.scraml.dsl.support
 
-import play.api.libs.json.{Format, Reads}
+import io.atomicbits.scraml.dsl.Response
+import play.api.libs.json.{JsValue, Format, Reads}
+
+import scala.concurrent.Future
 
 
 /**
@@ -42,7 +45,9 @@ case class RequestBuilder(client: Client,
 
   def execute[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.execute(this, body)
 
-  def executeToJson[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.executeToJson(this, body)
+  def executeToResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] = client.executeToResponse(this, body)
+
+  def executeToJson[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[JsValue] = client.executeToJson(this, body)
 
   def executeToJsonDto[B, R](body: Option[B])
                             (implicit bodyFormat: Format[B], responseFormat: Format[R]) =

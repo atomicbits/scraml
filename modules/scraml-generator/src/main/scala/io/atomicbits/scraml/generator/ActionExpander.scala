@@ -261,6 +261,7 @@ object ActionExpander {
       List(
         executeSegment,
         q""" def execute() = executeSegment.execute() """,
+        q""" def executeToResponse() = executeSegment.executeToResponse() """,
         q""" def executeToJson() = executeSegment.executeToJson() """
       ) ++ jsonDtoExecutor
     }

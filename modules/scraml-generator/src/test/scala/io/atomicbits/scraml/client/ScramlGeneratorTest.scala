@@ -231,7 +231,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       When("we execute some restful requests using the DSL")
 
-      val futureResultGet: Future[Response[User]] =
+      val futureResultGet: Future[User] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
@@ -239,7 +239,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           .executeToJsonDto()
 
 
-      val futureResultPut: Future[Response[Address]] =
+      val futureResultPut: Future[Address] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .put(User("John", "Doe", 21))
@@ -252,10 +252,10 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       Then("we should see the expected response values")
 
       val resultGet = Await.result(futureResultGet, 2 seconds)
-      assertResult(Response(200, User("John", "Doe", 21)))(resultGet)
+      assertResult(User("John", "Doe", 21))(resultGet)
 
       val resultPut = Await.result(futureResultPut, 2 seconds)
-      assertResult(Response(200, Address("Mulholland Drive", "LA", "90210", 105)))(resultPut)
+      assertResult(Address("Mulholland Drive", "LA", "90210", 105))(resultPut)
 
     }
   }

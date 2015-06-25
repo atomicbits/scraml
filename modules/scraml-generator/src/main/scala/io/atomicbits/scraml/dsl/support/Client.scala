@@ -29,12 +29,15 @@ import scala.concurrent.Future
 trait Client {
 
   def execute[B](request: RequestBuilder, body: Option[B])
-                (implicit bodyFormat: Format[B]): Future[Response[String]]
+                (implicit bodyFormat: Format[B]): Future[String]
+
+  def executeToResponse[B](request: RequestBuilder, body: Option[B])
+                          (implicit bodyFormat: Format[B]): Future[Response[String]]
 
   def executeToJson[B](request: RequestBuilder, body: Option[B])
-                      (implicit bodyFormat: Format[B]): Future[Response[JsValue]]
+                      (implicit bodyFormat: Format[B]): Future[JsValue]
 
   def executeToJsonDto[B, R](request: RequestBuilder, body: Option[B])
-                            (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]]
+                            (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[R]
 
 }
