@@ -39,7 +39,8 @@ object SchemaReference {
     val ref = schema match {
       case RefExtractor(refId) => refId
     }
-    SchemaReference(id, ref)
+    val required = (schema \ "required").asOpt[Boolean]
+    SchemaReference(id, ref, required.getOrElse(false))
   }
 
 }
