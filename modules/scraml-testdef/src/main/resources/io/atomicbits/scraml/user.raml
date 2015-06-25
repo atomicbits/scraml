@@ -58,20 +58,9 @@
   put:
     body:
       application/json:
+        schema: user
     responses:
       200:
         body:
           application/json:
-            schema: |
-              {
-                "$schema": "http://json-schema.org/draft-03/schema",
-                "id": "http://atomicbits.io/schema/result-object.json#",
-                "type": "object",
-                "description": "A result object.",
-                "properties": {
-                  "result": {
-                    "required": true,
-                    "type": "string"
-                  }
-                }
-              }
+            schema: link

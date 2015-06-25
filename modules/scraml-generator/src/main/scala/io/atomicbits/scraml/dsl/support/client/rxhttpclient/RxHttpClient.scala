@@ -101,11 +101,11 @@ case class RxHttpClient(protocol: String,
       case Response(status, JsSuccess(t, path)) => Future.successful(Response(status, t))
       case Response(status, JsError(e)) =>
         val validationMessages: Seq[String] = {
-          e map {
+          e flatMap {
             errorsByPath =>
               val (path, errors) = errorsByPath
               errors map (_.message)
-          } flatten
+          }
         }
         Future.failed(new IllegalArgumentException(validationMessages mkString ", "))
     }

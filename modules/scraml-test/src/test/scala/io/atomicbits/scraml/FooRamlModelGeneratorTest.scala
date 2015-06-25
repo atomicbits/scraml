@@ -26,6 +26,8 @@ import io.atomicbits.scraml.dsl.Response
 import io.atomicbits.scraml.examples.TestClient01
 import io.atomicbits.scraml.examples.TestClient01._
 import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
+import play.api.libs.json.Format
+import play.libs.Json
 
 import scala.concurrent.{Await, Future}
 import scala.language.{postfixOps, reflectiveCalls}
@@ -134,14 +136,36 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       Given("a matching web service")
 
+      val user = User(
+        homePage = Some(Link("http://foo.bar", "GET", None)),
+        address = Some(Address("Mulholland Drive", "LA", "California")),
+        age = 21,
+        firstName = "John",
+        lastName = "Doe",
+        id = "1"
+      )
+
+      val link = Link("http://foo.bar", "GET", None)
+
+      import User._
+      import Link._
+
+      def userToJson()(implicit formatter: Format[User]) = {
+        formatter.writes(user).toString()
+      }
+
+      def linkToJson()(implicit formatter: Format[Link]) = {
+        formatter.writes(link).toString()
+      }
+
       stubFor(
         put(urlEqualTo(s"/rest/user/foobar"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
-          .withRequestBody(equalTo( """"OK""""))
+          .withRequestBody(equalTo(userToJson()))
           .willReturn(
             aResponse()
-              .withBody("Put OK")
+              .withBody(linkToJson())
               .withStatus(200)
           )
       )
@@ -149,20 +173,20 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a PUT request")
 
-      val eventualPutResponse: Future[Response[String]] =
+      val eventualPutResponse: Future[Response[Link]] =
         userFoobarResource
-          .put("OK")
+          .put(user)
           .headers(
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
-          .execute()
+          .executeToJsonDto()
 
 
       Then("we should get the correct response")
 
       val putResponse = Await.result(eventualPutResponse, 2 seconds)
-      assertResult(Response(200, "Put OK"))(putResponse)
+      assertResult(Response(200, link))(putResponse)
 
 
     }
