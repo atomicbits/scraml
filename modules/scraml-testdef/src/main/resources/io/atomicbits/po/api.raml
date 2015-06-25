@@ -13,8 +13,12 @@ schemas:
   - organisatie:                        !include schemas/organisatie.schema
   - toelating:                          !include schemas/toelating.schema
   - toepassing:                         !include schemas/toepassing.schema
-  - rol:                                !include schemas/rol.schema
+  - toepassingen:                       !include schemas/toepassingen.schema
   - toepassing-basis:                   !include schemas/toepassing-basis.schema
+  - toepassing-wijzig:                  !include schemas/toepassing-wijzig.schema
+  - rol:                                !include schemas/rol.schema
+  - taak-links:                         !include schemas/taak-links.schema
+  - field-validation-error:             !include schemas/field-validation-error.schema
 
 traits:
   - acceptjson:                         !include traits/acceptjson.yaml

@@ -47,7 +47,18 @@ object Resource {
     val (emptySubResources, nonEmptySubResources) = allSubResources.partition(_.urlSegment.isEmpty)
 
     val actionList = newActionList ++ emptySubResources.flatMap(_.actions)
-    val subResources = nonEmptySubResources
+
+    // Group all subresources with the same urlSegment and urlParameter
+    val groupedSubResources: List[List[Resource]] =
+      nonEmptySubResources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
+
+    // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
+    def mergeResources(resources: List[Resource]): Resource = {
+      resources.reduce { (resourceA, resourceB) =>
+        resourceA.copy(actions = resourceA.actions ++ resourceB.actions, resources = resourceA.resources ++ resourceB.resources)
+      }
+    }
+    val subResources = groupedSubResources.map(mergeResources)
 
     /**
      * Resources in the Java RAML model can have relative URLs that consist of multiple segments,
@@ -74,9 +85,9 @@ object Resource {
       }
 
       urlSegments match {
-        case segment :: Nil => buildResourceSegment(segment).copy(actions = actionList, resources = subResources)
+        case segment :: Nil  => buildResourceSegment(segment).copy(actions = actionList, resources = subResources)
         case segment :: segs => buildResourceSegment(segment).copy(resources = List(breakdownResourceUrl(segs)))
-          // Todo: handle the case Nil without introducing an extra 'root' path
+        // Todo: handle the case Nil without introducing an extra 'root' path
         case Nil => buildResourceSegment("").copy(actions = actionList, resources = subResources)
       }
     }

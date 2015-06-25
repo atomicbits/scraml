@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://wegenenverkeer.be/po/schema/taak-links.json",
+  "description": "De links die de CRUD operaties op een taak bevatten.",
+  "type": "object",
+  "properties": {
+    "self": {
+      "$ref": "link.json",
+      "required": true
+    },
+    "bewaar": {
+      "description": "Wijzigen van de taak.",
+      "$ref": "link.json",
+      "required": true
+    },
+    "bevestig": {
+      "description": "Bevestig het uitvoeren van de taak.",
+      "$ref": "link.json",
+      "required": false
+    },
+    "annuleer": {
+      "description": "Annuleer de taak. De taak resource zal verwijderd worden.",
+      "$ref": "link.json",
+      "required": true
+    }
+  }
+}

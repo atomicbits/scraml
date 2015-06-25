@@ -5,24 +5,24 @@
   "description": "Gebruiker (enkel basis-info)",
   "properties": {
     "voId": {
-      "required": true,
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "voornaam": {
-      "required": true,
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "naam": {
-      "required": true,
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "organisatie": {
-      "required": false,
-      "$ref": "organisatie.json"
+      "$ref": "organisatie.json",
+      "required": false
     },
     "functie": {
-      "required": false,
-      "type": "string"
+      "type": "string",
+      "required": false
     }
   }
 }
