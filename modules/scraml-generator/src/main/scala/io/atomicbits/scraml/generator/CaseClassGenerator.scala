@@ -115,7 +115,7 @@ object CaseClassGenerator {
       import c.universe._
 
       val (propertyName, schema) = property
-      val cleanName = cleanFieldName(propertyName)
+      val cleanName = propertyName //  cleanFieldName(propertyName)
 
       val absoluteId = schema.id match {
         case absId: AbsoluteId => absId
@@ -168,7 +168,7 @@ object CaseClassGenerator {
 
     // capitalize after special characters and drop those characters along the way
     val capitalizedAfterDropChars =
-      List('-', '_', '+', ' ').foldLeft(propertyName) { (cleaned, dropChar) =>
+      List('-', '+', ' ').foldLeft(propertyName) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
       }
     // capitalize after numbers 0 to 9, but keep the numbers

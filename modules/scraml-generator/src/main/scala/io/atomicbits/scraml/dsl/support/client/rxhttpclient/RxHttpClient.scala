@@ -121,10 +121,10 @@ case class RxHttpClient(protocol: String,
           e flatMap {
             errorsByPath =>
               val (path, errors) = errorsByPath
-              errors map (_.message)
+              errors map (error => s"$path -> ${error.message}")
           }
         }
-        Future.failed(new IllegalArgumentException(validationMessages mkString ", "))
+        Future.failed(new IllegalArgumentException(s"JSON validation error in the response from ${request.summary}: ${validationMessages mkString ", "}"))
     }
   }
 

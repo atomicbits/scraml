@@ -54,4 +54,6 @@ case class RequestBuilder(client: Client,
                             (implicit bodyFormat: Format[B], responseFormat: Format[R]) =
     client.execToDto[B, R](this, body)
 
+  def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
+
 }
