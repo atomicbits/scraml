@@ -43,14 +43,14 @@ case class RequestBuilder(client: Client,
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 
-  def execute[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.execute(this, body)
+  def exec[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.exec(this, body)
 
-  def executeToResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] = client.executeToResponse(this, body)
+  def execToResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] = client.execToResponse(this, body)
 
-  def executeToJson[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[JsValue] = client.executeToJson(this, body)
+  def execToJson[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[JsValue] = client.execToJson(this, body)
 
-  def executeToJsonDto[B, R](body: Option[B])
+  def execToDto[B, R](body: Option[B])
                             (implicit bodyFormat: Format[B], responseFormat: Format[R]) =
-    client.executeToJsonDto[B, R](this, body)
+    client.execToDto[B, R](this, body)
 
 }

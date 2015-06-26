@@ -134,15 +134,15 @@ class DeleteSegment(validAcceptHeaders: List[String],
 
 class ExecuteSegment[B, R](req: RequestBuilder, body: Option[B]) {
 
-  def execute()(implicit bodyFormat: Format[B]) = {
-    req.execute(body)
+  def exec()(implicit bodyFormat: Format[B]) = {
+    req.exec(body)
   }
 
-  def executeToResponse()(implicit bodyFormat: Format[B]) = req.executeToResponse[B](body)
+  def execToResponse()(implicit bodyFormat: Format[B]) = req.execToResponse[B](body)
 
-  def executeToJson()(implicit bodyFormat: Format[B]) = req.executeToJson[B](body)
+  def execToJson()(implicit bodyFormat: Format[B]) = req.execToJson[B](body)
 
-  def executeToJsonDto()(implicit bodyFormat: Format[B], responseFormat: Format[R]) =
-    req.executeToJsonDto[B, R](body)
+  def execToDto()(implicit bodyFormat: Format[B], responseFormat: Format[R]) =
+    req.execToDto[B, R](body)
 
 }

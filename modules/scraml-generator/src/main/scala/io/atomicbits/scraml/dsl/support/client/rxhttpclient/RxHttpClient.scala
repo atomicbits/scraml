@@ -47,12 +47,12 @@ case class RxHttpClient(protocol: String,
       .build.asScala
 
 
-  override def execute[B](requesBuilder: RequestBuilder, body: Option[B])
+  override def exec[B](requesBuilder: RequestBuilder, body: Option[B])
                          (implicit bodyFormat: Format[B]): Future[String] = {
-    executeToResponse(requesBuilder, body).map(_.body)
+    execToResponse(requesBuilder, body).map(_.body)
   }
 
-  override def executeToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
+  override def execToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
                                    (implicit bodyFormat: Format[B]): Future[Response[String]] = {
 
     val clientWithResourcePathAndMethod = {
@@ -94,20 +94,20 @@ case class RxHttpClient(protocol: String,
   }
 
 
-  override def executeToJson[B](request: RequestBuilder, body: Option[B])
+  override def execToJson[B](request: RequestBuilder, body: Option[B])
                                (implicit bodyFormat: Format[B]): Future[JsValue] =
-    executeToResponse(request, body).map(res => Json.parse(res.body))
+    execToResponse(request, body).map(res => Json.parse(res.body))
 
 
-  def executeToJsonResponse[B](request: RequestBuilder, body: Option[B])
+  def execToJsonResponse[B](request: RequestBuilder, body: Option[B])
                       (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
-    executeToResponse(request, body).map(res => res.map(Json.parse))
+    execToResponse(request, body).map(res => res.map(Json.parse))
 
 
-  override def executeToJsonDto[B, R](request: RequestBuilder, body: Option[B])
+  override def execToDto[B, R](request: RequestBuilder, body: Option[B])
                                      (implicit bodyFormat: Format[B],
                                       responseFormat: Format[R]): Future[R] = {
-    executeToJsonResponse(request, body) map (res => res.map(responseFormat.reads)) flatMap {
+    execToJsonResponse(request, body) map (res => res.map(responseFormat.reads)) flatMap {
       case Response(status, JsSuccess(t, path)) => Future.successful(t)
       case Response(status, JsError(e))         =>
         val validationMessages: Seq[String] = {

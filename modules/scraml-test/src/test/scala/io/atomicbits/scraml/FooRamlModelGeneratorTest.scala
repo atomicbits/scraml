@@ -78,7 +78,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       val eventualUserResponse: Future[User] =
         userFoobarResource
           .get(age = Some(51), firstName = Some("John"), lastName = None)
-          .executeToJsonDto()
+          .execToDto()
 
 
       Then("we should get the correct user object")
@@ -119,7 +119,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val eventualPostResponse: Future[String] =
         userFoobarResource
-          .post(text = "Hello Foobar", value = None).execute()
+          .post(text = "Hello Foobar", value = None).exec()
 
 
 
@@ -179,7 +179,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
-          .executeToJsonDto()
+          .execToDto()
 
 
       Then("we should get the correct response")
@@ -207,7 +207,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a DELETE request")
 
-      val eventualPutResponse: Future[String] = userFoobarResource.delete().execute()
+      val eventualPutResponse: Future[String] = userFoobarResource.delete().exec()
 
 
       Then("we should get the correct response")

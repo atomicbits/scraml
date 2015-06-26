@@ -287,15 +287,15 @@ object ActionExpander {
          """
         }
       val jsonExecutor =
-        if (hasResponse) List( q""" def executeToJson() = executeSegment.executeToJson() """)
+        if (hasResponse) List( q""" def execToJson() = executeSegment.execToJson() """)
         else Nil
       val jsonDtoExecutor =
-        if (hasJsonDtoResponse) List( q""" def executeToJsonDto() = executeSegment.executeToJsonDto() """)
+        if (hasJsonDtoResponse) List( q""" def execToDto() = executeSegment.execToDto() """)
         else Nil
       List(
         executeSegment,
-        q""" def execute() = executeSegment.execute() """,
-        q""" def executeToResponse() = executeSegment.executeToResponse() """
+        q""" def exec() = executeSegment.exec() """,
+        q""" def execToResponse() = executeSegment.execToResponse() """
       ) ++ jsonExecutor ++ jsonDtoExecutor
     }
 

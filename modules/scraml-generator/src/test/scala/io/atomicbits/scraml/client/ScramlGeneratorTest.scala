@@ -77,11 +77,11 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
 
-                def execute() = executeSegment.execute()
+                def execute() = executeSegment.exec()
 
-                def executeToJson() = executeSegment.executeToJson()
+                def executeToJson() = executeSegment.execToJson()
 
-                def executeToJsonDto() = executeSegment.executeToJsonDto()
+                def executeToJsonDto() = executeSegment.execToDto()
 
               }
 
@@ -99,11 +99,11 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, Address](requestBuilder, Some(body))
 
-                def execute() = executeSegment.execute()
+                def execute() = executeSegment.exec()
 
-                def executeToJson() = executeSegment.executeToJson()
+                def executeToJson() = executeSegment.execToJson()
 
-                def executeToJsonDto() = executeSegment.executeToJsonDto()
+                def executeToJsonDto() = executeSegment.execToDto()
 
               }
 
@@ -121,11 +121,11 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[User, Address](requestBuilder, Some(body))
 
-                def execute() = executeSegment.execute()
+                def execute() = executeSegment.exec()
 
-                def executeToJson() = executeSegment.executeToJson()
+                def executeToJson() = executeSegment.execToJson()
 
-                def executeToJsonDto() = executeSegment.executeToJsonDto()
+                def executeToJsonDto() = executeSegment.execToDto()
 
               }
 
@@ -149,9 +149,9 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
 
-                def execute() = executeSegment.execute()
+                def execute() = executeSegment.exec()
 
-                def executeToJson() = executeSegment.executeToJson()
+                def executeToJson() = executeSegment.execToJson()
 
                 //                def executeToJsonDto() = executeSegment.executeToJsonDto()
 
