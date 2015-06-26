@@ -36,15 +36,21 @@ import scala.language.postfixOps
 case class RxHttpClient(protocol: String,
                         host: String,
                         port: Int,
+                        prefix: Option[String],
                         requestTimeout: Int,
                         maxConnections: Int,
                         defaultHeaders: Map[String, String]) extends Client {
+
+  val cleanPrefix = prefix.map { pref =>
+    val strippedPref = pref.stripPrefix("/").stripSuffix("/")
+    s"/$strippedPref"
+  } getOrElse ""
 
   private lazy val client =
     new be.wegenenverkeer.rxhttp.RxHttpClient.Builder()
       .setRequestTimeout(requestTimeout)
       .setMaxConnections(maxConnections)
-      .setBaseUrl(s"$protocol://$host:$port")
+      .setBaseUrl(s"$protocol://$host:$port$cleanPrefix")
       .build.asScala
 
 

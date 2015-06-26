@@ -96,6 +96,7 @@ object ScRamlGenerator {
         case class $className(host: String,
                               port: Int = 80,
                               protocol: String = "http",
+                              prefix: Option[String] = None,
                               requestTimeout: Int = 5000,
                               maxConnections: Int = 2,
                               defaultHeaders: Map[String, String] = Map.empty) {
@@ -107,7 +108,7 @@ object ScRamlGenerator {
 
           import $classAsTermName._
 
-          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections, defaultHeaders))
+          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, prefix, requestTimeout, maxConnections, defaultHeaders))
 
           ..$resources
 
