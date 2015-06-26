@@ -69,7 +69,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
           .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .willReturn(
             aResponse()
-              .withBody( """{"homePage":{"href":"http://foo.bar","method":"GET"}, "address": {"streetAddress": "Mulholland Drive", "city": "LA", "state": "California"}, "firstName":"John", "lastName": "Doe", "age": 21, "id": "1"}""")
+              .withBody( """{"address": {"streetAddress": "Mulholland Drive", "city": "LA", "state": "California"}, "firstName":"John", "lastName": "Doe", "age": 21, "id": "1"}""")
               .withStatus(200)))
 
 
@@ -84,7 +84,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       Then("we should get the correct user object")
 
       val user = User(
-        homePage = Some(Link("http://foo.bar", "GET", None)),
+        homePage = None,
         address = Some(Address("Mulholland Drive", "LA", "California")),
         age = 21,
         firstName = "John",

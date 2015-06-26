@@ -119,6 +119,10 @@ object ScRamlGenerator {
 
          import play.api.libs.json._
 
+         implicit def OptionReads[T](implicit fmt: Reads[T]): Reads[Option[T]] = new Reads[Option[T]] {
+           def reads(json: JsValue) = JsSuccess(json.asOpt[T])
+         }
+
          ..$caseClasses
 
        }

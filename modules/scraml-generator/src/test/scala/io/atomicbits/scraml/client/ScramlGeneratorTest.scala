@@ -26,7 +26,6 @@ import io.atomicbits.scraml.client.XoClient.{Address, User}
 
 import io.atomicbits.scraml.dsl.Response
 import org.scalatest.concurrent.ScalaFutures
-import play.api.libs.json.{Json, Format, JsValue}
 
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.concurrent._
@@ -47,6 +46,7 @@ case class XoClient(host: String,
 
   import io.atomicbits.scraml.dsl.support._
   import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+  import play.api.libs.json._
 
   import XoClient._
 
@@ -169,6 +169,13 @@ case class XoClient(host: String,
 
 object XoClient {
 
+  import play.api.libs.json._
+
+  implicit def OptionReads[T](implicit fmt: Reads[T]): Reads[Option[T]] = new Reads[Option[T]] {
+    // See: https://www.playframework.com/documentation/2.4.x/Migration24
+    def reads(json: JsValue) = JsSuccess(json.asOpt[T])
+  }
+
   case class User(firstName: String, lastName: String, age: Int)
 
   object User {
@@ -222,7 +229,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
         put(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
-          .withRequestBody(equalTo("""{"firstName":"John","lastName":"Doe","age":21}"""))
+          .withRequestBody(equalTo( """{"firstName":"John","lastName":"Doe","age":21}"""))
           .willReturn(
             aResponse()
               .withBody( """{"street":"Mulholland Drive", "city": "LA", "zip": "90210", "number": 105}""")
