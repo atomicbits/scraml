@@ -52,7 +52,7 @@ case class XoClient(host: String,
 
   // ToDo generate import.
 
-  val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+  val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections, Map.empty))
 
 
   def rest = new PlainSegment("rest", requestBuilder) {

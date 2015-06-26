@@ -107,7 +107,7 @@ object ScRamlGenerator {
 
           import $classAsTermName._
 
-          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections))
+          protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, requestTimeout, maxConnections, defaultHeaders))
 
           ..$resources
 

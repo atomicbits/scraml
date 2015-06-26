@@ -28,6 +28,8 @@ import scala.concurrent.Future
  */
 trait Client {
 
+  def defaultHeaders: Map[String, String]
+
   def exec[B](request: RequestBuilder, body: Option[B])
                 (implicit bodyFormat: Format[B]): Future[String]
 

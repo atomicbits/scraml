@@ -14,7 +14,7 @@
     responses:
       200:
         body:
-          application/json:
+          application/vnd-v1.0+json:
             schema: user
 
 /{userid}:
@@ -37,7 +37,7 @@
     responses:
       200:
         body:
-          application/json:
+          application/vnd-v1.0+json:
             schema: user
   post:
     body:
@@ -57,10 +57,10 @@
   delete:
   put:
     body:
-      application/json:
+      application/vnd-v1.0+json:
         schema: user
     responses:
       200:
         body:
-          application/json:
+          application/vnd-v1.0+json:
             schema: link

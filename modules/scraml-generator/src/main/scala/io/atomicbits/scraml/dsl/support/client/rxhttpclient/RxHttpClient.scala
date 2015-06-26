@@ -37,7 +37,8 @@ case class RxHttpClient(protocol: String,
                         host: String,
                         port: Int,
                         requestTimeout: Int,
-                        maxConnections: Int) extends Client {
+                        maxConnections: Int,
+                        defaultHeaders: Map[String, String]) extends Client {
 
   private lazy val client =
     new be.wegenenverkeer.rxhttp.RxHttpClient.Builder()
@@ -48,12 +49,12 @@ case class RxHttpClient(protocol: String,
 
 
   override def exec[B](requesBuilder: RequestBuilder, body: Option[B])
-                         (implicit bodyFormat: Format[B]): Future[String] = {
+                      (implicit bodyFormat: Format[B]): Future[String] = {
     execToResponse(requesBuilder, body).map(_.body)
   }
 
   override def execToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
-                                   (implicit bodyFormat: Format[B]): Future[Response[String]] = {
+                                (implicit bodyFormat: Format[B]): Future[Response[String]] = {
 
     val clientWithResourcePathAndMethod = {
       client
@@ -62,7 +63,7 @@ case class RxHttpClient(protocol: String,
         .setMethod(requesBuilder.method.toString)
     }
 
-    requesBuilder.allHeaders.foreach { element =>
+    (defaultHeaders ++ requesBuilder.headers).foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addHeader(key, value)
     }
@@ -95,18 +96,18 @@ case class RxHttpClient(protocol: String,
 
 
   override def execToJson[B](request: RequestBuilder, body: Option[B])
-                               (implicit bodyFormat: Format[B]): Future[JsValue] =
+                            (implicit bodyFormat: Format[B]): Future[JsValue] =
     execToResponse(request, body).map(res => Json.parse(res.body))
 
 
   def execToJsonResponse[B](request: RequestBuilder, body: Option[B])
-                      (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
+                           (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
     execToResponse(request, body).map(res => res.map(Json.parse))
 
 
   override def execToDto[B, R](request: RequestBuilder, body: Option[B])
-                                     (implicit bodyFormat: Format[B],
-                                      responseFormat: Format[R]): Future[R] = {
+                              (implicit bodyFormat: Format[B],
+                               responseFormat: Format[R]): Future[R] = {
     execToJsonResponse(request, body) map (res => res.map(responseFormat.reads)) flatMap {
       case Response(status, JsSuccess(t, path)) => Future.successful(t)
       case Response(status, JsError(e))         =>

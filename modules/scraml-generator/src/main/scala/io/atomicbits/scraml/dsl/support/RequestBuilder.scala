@@ -34,10 +34,11 @@ case class RequestBuilder(client: Client,
                           formParameters: Map[String, String] = Map.empty,
                           validAcceptHeaders: List[String] = Nil,
                           validContentTypeHeaders: List[String] = Nil,
-                          headers: Map[String, String] = Map(),
-                          defaultHeaders: Map[String, String] = Map.empty) {
+                          headers: Map[String, String] = Map()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
+
+  def defaultHeaders = client.defaultHeaders
 
   def allHeaders = defaultHeaders ++ headers
 

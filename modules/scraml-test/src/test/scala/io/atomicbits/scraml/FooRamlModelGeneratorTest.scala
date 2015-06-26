@@ -56,7 +56,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
   feature("Use the DSL based on a RAML specification") {
 
     val client = TestClient01(host = host, port = port,
-      defaultHeaders = Map("Accept" -> "application/json"))
+      defaultHeaders = Map("Accept" -> "application/vnd-v1.0+json"))
 
     val userFoobarResource = client.rest.user.userid("foobar")
 
@@ -66,7 +66,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       stubFor(
         get(urlEqualTo(s"/rest/user/foobar?age=51.0&firstName=John"))
-          .withHeader("Accept", equalTo("application/json"))
+          .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .willReturn(
             aResponse()
               .withBody( """{"homePage":{"href":"http://foo.bar","method":"GET"}, "address": {"streetAddress": "Mulholland Drive", "city": "LA", "state": "California"}, "firstName":"John", "lastName": "Doe", "age": 21, "id": "1"}""")
@@ -104,7 +104,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       stubFor(
         post(urlEqualTo(s"/rest/user/foobar"))
           .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded"))
-          .withHeader("Accept", equalTo("application/json"))
+          .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .withRequestBody(equalTo( """text=Hello%20Foobar"""))
           .willReturn(
             aResponse()
@@ -159,8 +159,8 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       stubFor(
         put(urlEqualTo(s"/rest/user/foobar"))
-          .withHeader("Content-Type", equalTo("application/json"))
-          .withHeader("Accept", equalTo("application/json"))
+          .withHeader("Content-Type", equalTo("application/vnd-v1.0+json"))
+          .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .withRequestBody(equalTo(userToJson()))
           .willReturn(
             aResponse()
@@ -176,8 +176,8 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
         userFoobarResource
           .put(user)
           .headers(
-            "Content-Type" -> "application/json",
-            "Accept" -> "application/json"
+            "Content-Type" -> "application/vnd-v1.0+json",
+            "Accept" -> "application/vnd-v1.0+json"
           )
           .execToDto()
 
@@ -196,7 +196,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       stubFor(
         delete(urlEqualTo(s"/rest/user/foobar"))
-          .withHeader("Accept", equalTo("application/json"))
+          .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .willReturn(
             aResponse()
               .withBody("Delete OK")
