@@ -18,6 +18,8 @@
 
 package io.atomicbits.scraml.generator
 
+import java.nio.file.Path
+
 import io.atomicbits.scraml.jsonschemaparser.{SchemaLookup, JsonSchemaParser}
 import org.raml.parser.rule.ValidationResult
 
@@ -129,9 +131,11 @@ object ScRamlGenerator {
 
     // I'm not happy yet with the ad hoc approach to find the path to the project's base dir.
     val pid = c.enclosingPackage.pid
-    val baseDir = c.enclosingPosition.source.path.split("src/main/scala").toList.head
-    writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, baseDir, showCode(fullTree))
-
+    val sourcePath = c.enclosingPosition.source.path
+    if (sourcePath.contains("src/main/scala")) { // This is a very naive way to do this, I know.
+      val baseDir = sourcePath.split("src/main/scala").toList.head
+      writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, baseDir, showCode(fullTree))
+    }
     c.Expr(fullTree)
 
   }
