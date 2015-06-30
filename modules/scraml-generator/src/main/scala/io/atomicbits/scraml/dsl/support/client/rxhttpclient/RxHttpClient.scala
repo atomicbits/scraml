@@ -18,6 +18,7 @@
 
 package io.atomicbits.scraml.dsl.support.client.rxhttpclient
 
+import be.wegenenverkeer.rxhttp.{HttpClientError, HttpServerError}
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
 import io.atomicbits.scraml.dsl.Response
 import io.atomicbits.scraml.dsl.support.{Client, RequestBuilder}
@@ -59,9 +60,8 @@ case class RxHttpClient(protocol: String,
     execToResponse(requesBuilder, body).map(_.body)
   }
 
-  override def execToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
-                                (implicit bodyFormat: Format[B]): Future[Response[String]] = {
-
+  def execTo200Response[B](requesBuilder: RequestBuilder, body: Option[B])
+                          (implicit bodyFormat: Format[B]): Future[Response[String]] = {
     val clientWithResourcePathAndMethod = {
       client
         .requestBuilder()
@@ -101,20 +101,33 @@ case class RxHttpClient(protocol: String,
   }
 
 
+  override def execToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
+                                (implicit bodyFormat: Format[B]): Future[Response[String]] = {
+    execTo200Response[B](requesBuilder, body).recover {
+      case httpClientError: HttpClientError if httpClientError.getResponse.isPresent =>
+        Response(httpClientError.getResponse.get().getStatusCode, httpClientError.getResponse.get().getResponseBody)
+      case httpServerError: HttpServerError if httpServerError.getResponse.isPresent =>
+        Response(httpServerError.getResponse.get().getStatusCode, httpServerError.getResponse.get().getResponseBody)
+    }
+  }
+
+
   override def execToJson[B](request: RequestBuilder, body: Option[B])
                             (implicit bodyFormat: Format[B]): Future[JsValue] =
-    execToResponse(request, body).map(res => Json.parse(res.body))
+    execTo200Response(request, body).map(res => Json.parse(res.body))
 
 
-  def execToJsonResponse[B](request: RequestBuilder, body: Option[B])
-                           (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
-    execToResponse(request, body).map(res => res.map(Json.parse))
+
+  def execToJson200Response[B](request: RequestBuilder, body: Option[B])
+                              (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
+    execTo200Response(request, body).map(res => res.map(Json.parse))
+
 
 
   override def execToDto[B, R](request: RequestBuilder, body: Option[B])
                               (implicit bodyFormat: Format[B],
                                responseFormat: Format[R]): Future[R] = {
-    execToJsonResponse(request, body) map (res => res.map(responseFormat.reads)) flatMap {
+    execToJson200Response(request, body) map (res => res.map(responseFormat.reads)) flatMap {
       case Response(status, JsSuccess(t, path)) => Future.successful(t)
       case Response(status, JsError(e))         =>
         val validationMessages: Seq[String] = {
@@ -124,7 +137,8 @@ case class RxHttpClient(protocol: String,
               errors map (error => s"$path -> ${error.message}")
           }
         }
-        Future.failed(new IllegalArgumentException(s"JSON validation error in the response from ${request.summary}: ${validationMessages mkString ", "}"))
+        Future.failed(new
+            IllegalArgumentException(s"JSON validation error in the response from ${request.summary}: ${validationMessages mkString ", "}"))
     }
   }
 
