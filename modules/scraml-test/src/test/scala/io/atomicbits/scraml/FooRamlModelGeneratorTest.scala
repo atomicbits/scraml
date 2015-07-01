@@ -23,6 +23,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.Response
+import io.atomicbits.scraml.dsl.support.StringPart
 import io.atomicbits.scraml.examples.TestClient01
 import io.atomicbits.scraml.examples.TestClient01._
 import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
@@ -214,6 +215,28 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val putResponse = Await.result(eventualPutResponse, 2 seconds)
       assertResult("Delete OK")(putResponse)
+
+
+    }
+
+    scenario("test a multipart/form-data POST request") {
+
+      Given("a form upload web service")
+      stubFor(
+        post(urlEqualTo(s"/rest/user/upload"))
+          .withHeader("Content-Type", equalTo("multipart/form-data"))
+          .willReturn(
+            aResponse()
+              .withBody("Post OK")
+              .withStatus(200)
+          )
+      )
+
+      When("a multipart/form-data POST request happens")
+      val multipartFormPostResponse =
+        client.rest.user.upload.post(List(StringPart(name = "test", value = "string part value"))).execToResponse()
+
+      Then("we should get the correct response")
 
 
     }

@@ -32,6 +32,7 @@ case class RequestBuilder(client: Client,
                           method: Method = Get,
                           queryParameters: Map[String, String] = Map.empty,
                           formParameters: Map[String, String] = Map.empty,
+                          multipartParams: List[BodyPart] = List.empty,
                           validAcceptHeaders: List[String] = Nil,
                           validContentTypeHeaders: List[String] = Nil,
                           headers: Map[String, String] = Map()) {
@@ -43,6 +44,8 @@ case class RequestBuilder(client: Client,
   def allHeaders = defaultHeaders ++ headers
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
+
+  def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").contains("multipart/form-data")
 
   def exec[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.exec(this, body)
 

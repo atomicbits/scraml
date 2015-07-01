@@ -103,6 +103,7 @@ class PutSegment(validAcceptHeaders: List[String],
 
 
 class PostSegment(formParams: Map[String, Option[String]],
+                  multipartParams: List[BodyPart],
                   validAcceptHeaders: List[String],
                   validContentTypeHeaders: List[String],
                   req: RequestBuilder) extends MethodSegment {
@@ -112,6 +113,7 @@ class PostSegment(formParams: Map[String, Option[String]],
   protected val requestBuilder = req.copy(
     method = Post,
     formParameters = formParameterMap,
+    multipartParams = multipartParams,
     validAcceptHeaders = validAcceptHeaders,
     validContentTypeHeaders = validContentTypeHeaders
   )

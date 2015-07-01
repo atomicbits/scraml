@@ -17,6 +17,15 @@
           application/vnd-v1.0+json:
             schema: user
 
+/upload:
+  post:
+    body:
+      multipart/form-data:
+    responses:
+      200:
+        body:
+
+
 /{userid}:
   uriParameters:
     userid:

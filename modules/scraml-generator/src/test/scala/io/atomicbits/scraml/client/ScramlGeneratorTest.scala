@@ -137,6 +137,7 @@ case class XoClient(host: String,
                 "formParY" -> Option(formParY).map(_.toString),
                 "formParZ" -> formParZ.map(_.toString)
               ),
+              multipartParams = List.empty,
               validAcceptHeaders = List("application/json"),
               validContentTypeHeaders = List("application/json"),
               req = requestBuilder

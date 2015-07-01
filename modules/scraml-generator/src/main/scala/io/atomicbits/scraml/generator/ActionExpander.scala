@@ -41,6 +41,7 @@ object ActionExpander {
     val maybeBodyClassRep = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
 
     val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
+    val isMultipartFormUpload = bodyMimeType.map(_.mimeType).contains("multipart/form-data")
 
     // We currently only support the first response mimeType that we see. We should extend this later on.
     val response = action.responses.values.toList.headOption
@@ -144,9 +145,10 @@ object ActionExpander {
       defaultActions ++ additionalAction
     }
 
+
     def expandPostAction(): List[c.universe.Tree] = {
 
-      if (formParameters.isEmpty) {
+      def expandRegularPostAction(): List[c.universe.Tree] = {
         // We support a custom body instead.
         val defaultActions =
           if (hasBody)
@@ -154,6 +156,7 @@ object ActionExpander {
               q"""
               def post(body: String) = new PostSegment(
                 formParams = Map.empty,
+                multipartParams = List.empty,
                 validAcceptHeaders = List(..${validAcceptHeaders()}),
                 validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                 req = requestBuilder) {
@@ -165,6 +168,7 @@ object ActionExpander {
               q"""
               def post(body: JsValue) = new PostSegment(
                 formParams = Map.empty,
+                multipartParams = List.empty,
                 validAcceptHeaders = List(..${validAcceptHeaders()}),
                 validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                 req = requestBuilder) {
@@ -179,6 +183,7 @@ object ActionExpander {
               q"""
               def post() = new PostSegment(
                 formParams = Map.empty,
+                multipartParams = List.empty,
                 validAcceptHeaders = List(..${validAcceptHeaders()}),
                 validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                 req = requestBuilder) {
@@ -197,6 +202,7 @@ object ActionExpander {
               q"""
                   def post(..$bodyParam) = new PostSegment(
                     formParams = Map.empty,
+                    multipartParams = List.empty,
                     validAcceptHeaders = List(..${validAcceptHeaders()}),
                     validContentTypeHeaders = List(..${validContentTypeHeaders()}),
                     req = requestBuilder) {
@@ -210,7 +216,9 @@ object ActionExpander {
 
         defaultActions ++ additionalAction
 
-      } else {
+      }
+
+      def expandFormPostAction(): List[c.universe.Tree] = {
         // We support the given form parameters.
         val formParameterMethodParameters =
           formParameters.toList.map { paramPair =>
@@ -234,6 +242,7 @@ object ActionExpander {
             formParams = Map(
               ..$formParameterMapEntries
             ),
+            multipartParams = List.empty,
             validAcceptHeaders = List(..${validAcceptHeaders()}),
             validContentTypeHeaders = List(..${validContentTypeHeaders()}),
             req = requestBuilder) {
@@ -242,6 +251,30 @@ object ActionExpander {
 
           }
          """)
+      }
+
+      def expandMultipartFormPostAction(): List[c.universe.Tree] = {
+        List(
+          q"""
+          def post(parts: List[BodyPart]) = new PostSegment(
+            formParams = Map.empty,
+            multipartParams = parts,
+            validAcceptHeaders = List(..${validAcceptHeaders()}),
+            validContentTypeHeaders = List(..${validContentTypeHeaders()}),
+            req = requestBuilder) {
+
+              ..${expandHeadersAndExecution(hasBody = false, PlainClassRep("String"))}
+
+          }
+         """)
+      }
+
+      if (formParameters.nonEmpty) {
+        expandFormPostAction()
+      } else if (isMultipartFormUpload) {
+        expandMultipartFormPostAction()
+      } else {
+        expandRegularPostAction()
       }
 
     }

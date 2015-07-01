@@ -21,7 +21,7 @@ package io.atomicbits.scraml.dsl.support.client.rxhttpclient
 import be.wegenenverkeer.rxhttp.{HttpClientError, HttpServerError}
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
 import io.atomicbits.scraml.dsl.Response
-import io.atomicbits.scraml.dsl.support.{Client, RequestBuilder}
+import io.atomicbits.scraml.dsl.support._
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,26 +55,26 @@ case class RxHttpClient(protocol: String,
       .build.asScala
 
 
-  override def exec[B](requesBuilder: RequestBuilder, body: Option[B])
+  override def exec[B](requestBuilder: RequestBuilder, body: Option[B])
                       (implicit bodyFormat: Format[B]): Future[String] = {
-    execToResponse(requesBuilder, body).map(_.body)
+    execToResponse(requestBuilder, body).map(_.body)
   }
 
-  def execTo200Response[B](requesBuilder: RequestBuilder, body: Option[B])
+  def execTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])
                           (implicit bodyFormat: Format[B]): Future[Response[String]] = {
     val clientWithResourcePathAndMethod = {
       client
         .requestBuilder()
-        .setUrlRelativetoBase(requesBuilder.relativePath)
-        .setMethod(requesBuilder.method.toString)
+        .setUrlRelativetoBase(requestBuilder.relativePath)
+        .setMethod(requestBuilder.method.toString)
     }
 
-    (defaultHeaders ++ requesBuilder.headers).foreach { element =>
+    (defaultHeaders ++ requestBuilder.headers).foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addHeader(key, value)
     }
 
-    requesBuilder.queryParameters.foreach { element =>
+    requestBuilder.queryParameters.foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addQueryParam(key, value)
     }
@@ -85,9 +85,43 @@ case class RxHttpClient(protocol: String,
       clientWithResourcePathAndMethod.setBody(bodyFormat.writes(body).toString())
     }
 
-    requesBuilder.formParameters.foreach { element =>
+    requestBuilder.formParameters.foreach { element =>
       val (key, value) = element
       clientWithResourcePathAndMethod.addFormParam(key, value)
+    }
+
+    requestBuilder.multipartParams.foreach {
+      case part: ByteArrayPart =>
+        clientWithResourcePathAndMethod
+          .addByteArrayBodyPart(
+            part.name,
+            part.bytes,
+            part.contentType.orNull,
+            part.charset.orNull,
+            part.contentId.orNull,
+            part.transferEncoding.orNull
+          )
+      case part: FilePart      =>
+        clientWithResourcePathAndMethod
+          .addFileBodyPart(
+            part.name,
+            part.file,
+            part.contentType.orNull,
+            part.charset.orNull,
+            part.fileName.orNull,
+            part.contentId.orNull,
+            part.transferEncoding.orNull
+          )
+      case part: StringPart    =>
+        clientWithResourcePathAndMethod
+          .addStringBodyPart(
+            part.name,
+            part.value,
+            part.contentType.orNull,
+            part.charset.orNull,
+            part.contentId.orNull,
+            part.transferEncoding.orNull
+          )
     }
 
     val clientRequest = clientWithResourcePathAndMethod.build()
@@ -99,9 +133,9 @@ case class RxHttpClient(protocol: String,
   }
 
 
-  override def execToResponse[B](requesBuilder: RequestBuilder, body: Option[B])
+  override def execToResponse[B](requestBuilder: RequestBuilder, body: Option[B])
                                 (implicit bodyFormat: Format[B]): Future[Response[String]] = {
-    execTo200Response[B](requesBuilder, body).recover {
+    execTo200Response[B](requestBuilder, body).recover {
       case httpClientError: HttpClientError if httpClientError.getResponse.isPresent =>
         Response(httpClientError.getResponse.get().getStatusCode, httpClientError.getResponse.get().getResponseBody)
       case httpServerError: HttpServerError if httpServerError.getResponse.isPresent =>
@@ -115,11 +149,9 @@ case class RxHttpClient(protocol: String,
     execTo200Response(request, body).map(res => Json.parse(res.body))
 
 
-
   def execToJson200Response[B](request: RequestBuilder, body: Option[B])
                               (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
     execTo200Response(request, body).map(res => res.map(Json.parse))
-
 
 
   override def execToDto[B, R](request: RequestBuilder, body: Option[B])
