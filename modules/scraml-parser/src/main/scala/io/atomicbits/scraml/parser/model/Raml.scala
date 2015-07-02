@@ -30,7 +30,11 @@ object Raml {
 
   def apply(raml: org.raml.model.Raml): Raml = {
 
-    val resources: List[Resource] = raml.getResources.values().asScala.toList.map(Resource(_))
+    val parallelResources: List[Resource] = raml.getResources.values().asScala.toList.map(Resource(_))
+
+    // Now, we can still have parallel resources that have overlapping paths because they could result
+    // from inclusions in a main raml definition file. We have to merge those parallel resource paths first at all depths.
+    val resources: List[Resource] = unparallellizeResources(parallelResources)
 
     val linkedSchemas: Map[String, String] = {
       Option(raml.getSchemas) map { schema =>
@@ -141,7 +145,31 @@ object Raml {
       case linkOpt@Some(link) =>
         val updatedMImeType = mimeType.copy(schema = linkOpt)
         (updatedBody + (mime -> updatedMImeType), updatedLinkedSchemas)
-      case None => (updatedBody + bodyPart, linkedSchemas)
+      case None               => (updatedBody + bodyPart, linkedSchemas)
+    }
+
+  }
+
+
+  /**
+   * Unparallellize the given resources at all levels. This must be done top-down!
+   */
+  private def unparallellizeResources(resources: List[Resource]): List[Resource] = {
+
+    // Group all resources at this level with the same urlSegment and urlParameter
+    val groupedResources: List[List[Resource]] =
+      resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
+
+    // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
+    def mergeResources(resources: List[Resource]): Resource = {
+      resources.reduce { (resourceA, resourceB) =>
+        resourceA.copy(actions = resourceA.actions ++ resourceB.actions, resources = resourceA.resources ++ resourceB.resources)
+      }
+    }
+    val mergedResources: List[Resource] = groupedResources.map(mergeResources)
+
+    mergedResources.map { mergedResource =>
+      mergedResource.copy(resources = unparallellizeResources(mergedResource.resources))
     }
 
   }

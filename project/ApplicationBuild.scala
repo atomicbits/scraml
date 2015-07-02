@@ -83,6 +83,6 @@ with Dependencies {
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator) //  , scramlTest, scramlTestDef)
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator) //   , scramlTest, scramlTestDef)
 
 }
