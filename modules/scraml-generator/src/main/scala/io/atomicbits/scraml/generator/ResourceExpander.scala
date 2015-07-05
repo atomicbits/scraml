@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
 import scala.reflect.macros.whitebox

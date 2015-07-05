@@ -17,10 +17,12 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, JsonSchemaParseException, RootId}
 import io.atomicbits.scraml.jsonschemaparser.model._
+import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, JsonSchemaParseException, RootId}
+
+import scala.annotation.tailrec
 
 
 object SchemaLookupParser {
@@ -29,6 +31,8 @@ object SchemaLookupParser {
     schemas
       .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
       .foldLeft(SchemaLookup())(updateLookupTableAndObjectMap)
+      .map(updateObjectHierarchy)
+      .map(updateTypeDiscriminatorFields)
       .map(CanonicalNameGenerator.deduceCanonicalNames)
   }
 
@@ -121,15 +125,12 @@ object SchemaLookupParser {
               select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapInternal)
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
-            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> objEl))
+            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectElExt(objEl)))
         case fragment: Fragment =>
           fragment.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
         case enumEl: EnumEl     =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumEl))
-        //        case arr: ArrayEl       =>
-        //          val schemaLookupWithArrays = updatedSchemaLookup.copy(arrayMap = updatedSchemaLookup.arrayMap + (absoluteId -> arr))
-        //          updateLookupAndObjectMapInternal(schemaLookupWithArrays, ("", arr.items))
-        case _ => updatedSchemaLookup
+        case _                  => updatedSchemaLookup
       }
 
     }
@@ -144,6 +145,73 @@ object SchemaLookupParser {
     }
 
     updateLookupAndObjectMapInternal(schemaLookupWithUpdatedExternalLinks, ("", schema))
+
+  }
+
+  /**
+   * For each unprocessed object, lookup the selection references and collect al selection objects recursively and
+   * fill in the parent-child relations.
+   */
+  def updateObjectHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
+
+    @tailrec
+    def lookupObjEl(schema: Schema): Option[ObjectElExt] = {
+      schema match {
+        case obj: ObjectElExt     => Some(obj)
+        case ref: SchemaReference => lookupObjEl(schemaLookup.lookupSchema(ref.refersTo))
+        case _                    => None
+      }
+    }
+
+    schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
+      val (absId, obj) = objPair
+      val children: List[ObjectElExt] = obj.selection.map { sel =>
+        sel.selection.flatMap(lookupObjEl)
+      } getOrElse List.empty
+      val childrenWithParent = children.map(_.copy(parent = Some(obj)))
+
+      val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, obj) =>
+        val absoluteId = obj.id match {
+          case absId: AbsoluteId => absId
+          case _                 => sys.error(s"We expect ${obj.id} to be an absolute id by now.")
+        }
+        lkup.copy(objectMap = lkup.objectMap + (absoluteId -> obj))
+      }
+
+      val updatedObj = obj.copy(children = childrenWithParent)
+      updatedLookup.copy(objectMap = lookup.objectMap + (absId -> updatedObj))
+    }
+
+  }
+
+
+  /**
+   * Check if there is a type field present in each leaf-object that is an EnumEl with one element and fill in the
+   * typeDiscriminatorValue field in each of them.
+   */
+  def updateTypeDiscriminatorFields(schemaLookup: SchemaLookup): SchemaLookup = {
+
+    schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
+      val (absId, obj) = objPair
+      if (obj.hasParent && !obj.hasChildren) {
+        val discriminator = obj.properties.get("type") collect {
+          case enumEl: EnumEl if enumEl.choices.length == 1 => enumEl.choices.head
+        }
+
+        if (discriminator.isEmpty)
+          println(s"In order to support class hierarchies, we expect objects inside the 'oneOf' part of an object to have a " +
+            s"'type' field pointing to an enum element that contains one string element that serves as a discrimitator value for " +
+            s"the type serialization.")
+
+        discriminator.map { disc =>
+          val updatedObj = obj.copy(typeDiscriminatorValue = Some(disc))
+          lookup.copy(objectMap = lookup.objectMap + (absId -> updatedObj))
+        } getOrElse lookup
+
+      } else {
+        lookup
+      }
+    }
 
   }
 

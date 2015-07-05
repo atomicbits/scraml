@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.lookup
 
 import io.atomicbits.scraml.jsonschemaparser._
 

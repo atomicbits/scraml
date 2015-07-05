@@ -21,6 +21,7 @@ package io.atomicbits.scraml.generator
 
 import java.nio.file.Path
 
+import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult

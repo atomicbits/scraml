@@ -17,10 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.{Id, ClassRep, AbsoluteId, RootId}
-import io.atomicbits.scraml.jsonschemaparser.model.{FragmentedSchema, EnumEl, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, FragmentedSchema, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, ClassRep, Id, RootId}
 
 import scala.annotation.tailrec
 
@@ -37,7 +37,7 @@ import scala.annotation.tailrec
  *                            List[string], List[boolean], List[object], or even nested lists).
  */
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
-                        objectMap: Map[AbsoluteId, ObjectEl] = Map.empty,
+                        objectMap: Map[AbsoluteId, ObjectElExt] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
                         canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {

@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.generator.lookup.{ObjectElExt, SchemaLookup}
 import io.atomicbits.scraml.jsonschemaparser.AbsoluteId
 import io.atomicbits.scraml.jsonschemaparser.model._
 
-import scala.reflect.macros.whitebox
 import scala.language.experimental.macros
+import scala.reflect.macros.whitebox
 
 
 /**
@@ -56,7 +57,7 @@ object CaseClassGenerator {
   }
 
   def generateCaseClassWithCompanionObject(canonicalName: String,
-                                           objectEl: ObjectEl,
+                                           objectEl: ObjectElExt,
                                            schemaLookup: SchemaLookup,
                                            c: whitebox.Context): List[c.universe.Tree] = {
 
