@@ -18,9 +18,7 @@
 
 package io.atomicbits.scraml.jsonschemaparser
 
-import io.atomicbits.scraml.jsonschemaparser.model._
 import org.scalatest._
-import org.scalatest.Matchers._
 
 /**
  * Created by peter on 27/05/15, Atomic BITS (http://atomicbits.io). 
@@ -156,8 +154,6 @@ class JsonSchemaParserTest extends FeatureSpec with GivenWhenThen {
 
       When("the definition is parsed to the raw schema model 2")
       val parsedSchema2 = JsonSchemaParser.parse(Map("link2" -> source))
-
-      println(s"Parsed schema 2: ${parsedSchema2.canonicalNames}")
 
 
       Then("the raw schema adheres to the expected model 2")
