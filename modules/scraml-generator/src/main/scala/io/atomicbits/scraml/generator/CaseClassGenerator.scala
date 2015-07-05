@@ -115,7 +115,6 @@ object CaseClassGenerator {
       import c.universe._
 
       val (propertyName, schema) = property
-      val cleanName = propertyName //  cleanFieldName(propertyName)
 
       val absoluteId = schema.id match {
         case absId: AbsoluteId => absId
@@ -126,7 +125,7 @@ object CaseClassGenerator {
         schema match {
           case objField: AllowedAsObjectField =>
             val required = requiredFields.contains(propertyName) || objField.required
-            expandFieldName(TermName(cleanName), fetchTypeNameFor(objField, schemaLookup), required)
+            expandFieldName(TermName(propertyName), fetchTypeNameFor(objField, schemaLookup), required)
           case noObjectField =>
             sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
         }
@@ -150,37 +149,6 @@ object CaseClassGenerator {
        }
      """)
 
-  }
-
-
-
-
-  private def cleanFieldName(propertyName: String): String = {
-
-    def unCapitalize(name: String): String =
-      if (name.length == 0) ""
-      else if (name.charAt(0).isLower) name
-      else {
-        val chars = name.toCharArray
-        chars(0) = chars(0).toLower
-        new String(chars)
-      }
-
-    // capitalize after special characters and drop those characters along the way
-    val capitalizedAfterDropChars =
-      List('-', '+', ' ').foldLeft(propertyName) { (cleaned, dropChar) =>
-        cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
-      }
-    // capitalize after numbers 0 to 9, but keep the numbers
-    val capitalized =
-      (0 to 9).map(_.toString.head).toList.foldLeft(capitalizedAfterDropChars) { (cleaned, numberChar) =>
-        // Make sure we don't drop the occurrences of numberChar at the end by adding a space and removing it later.
-        val cleanedWorker = s"$cleaned "
-        cleanedWorker.split(numberChar).map(_.capitalize).mkString(numberChar.toString).stripSuffix(" ")
-      }
-    // Make the first charachter a lower case to get a camel case name and do some
-    // final cleanup of all strange characters
-    unCapitalize(capitalized).replaceAll("[^A-Za-z0-9]", "")
   }
 
 }

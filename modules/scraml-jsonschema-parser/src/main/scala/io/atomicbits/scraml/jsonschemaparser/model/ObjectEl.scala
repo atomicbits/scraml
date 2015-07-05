@@ -19,6 +19,7 @@
 package io.atomicbits.scraml.jsonschemaparser.model
 
 import io.atomicbits.scraml.jsonschemaparser._
+import io.atomicbits.scraml.jsonschemaparser.model.OneOf
 import play.api.libs.json._
 
 import scala.language.postfixOps
@@ -30,7 +31,7 @@ case class ObjectEl(id: Id,
                     properties: Map[String, Schema],
                     required: Boolean,
                     requiredFields: List[String] = List.empty,
-                    oneOfSelection: List[Selection] = List.empty,
+                    selection: Option[Selection] = None,
                     fragments: Map[String, Schema] = Map.empty,
                     name: Option[String] = None,
                     canonicalName: Option[String] = None) extends FragmentedSchema with AllowedAsObjectField {
@@ -39,7 +40,7 @@ case class ObjectEl(id: Id,
 
 }
 
-// ToDo: handle the oneOf field
+// ToDo: handle the oneOf, anyOf and allOf fields
 object ObjectEl {
 
   def apply(schema: JsObject): ObjectEl = {
@@ -56,7 +57,7 @@ object ObjectEl {
           Some(props.value.toSeq collect {
             case (fieldName, fragment: JsObject) => (fieldName, Schema(fragment))
           } toMap)
-        case _ => None
+        case _                     => None
       }
 
     // Process the fragments
@@ -77,16 +78,47 @@ object ObjectEl {
             case JsString(value) => value
           }))
         case Some(JsBoolean(b)) => (Some(b), None)
-        case _ => (None, None)
+        case _                  => (None, None)
       }
 
-    // Process the named field
+    // Process the name field
     val name = (schema \ "name").asOpt[String]
+
+
+    val oneOf =
+      (schema \ "oneOf").toOption collect {
+        case selections: JsArray =>
+          val selectionSchemas = selections.value collect {
+            case jsObj: JsObject => jsObj
+          } map (Schema(_))
+          OneOf(selectionSchemas.toList)
+      }
+
+    val anyOf =
+      (schema \ "anyOf").toOption collect {
+        case selections: JsArray =>
+          val selectionSchemas = selections.value collect {
+            case jsObj: JsObject => jsObj
+          } map (Schema(_))
+          AnyOf(selectionSchemas.toList)
+      }
+
+    val allOf =
+      (schema \ "allOf").toOption collect {
+        case selections: JsArray =>
+          val selectionSchemas = selections.value collect {
+            case jsObj: JsObject => jsObj
+          } map (Schema(_))
+          AllOf(selectionSchemas.toList)
+      }
+
+    val selection = List(oneOf, anyOf, allOf).flatten.headOption
 
     ObjectEl(
       id = id,
       required = required.getOrElse(false),
       requiredFields = requiredFields.getOrElse(List.empty[String]),
+      selection = selection,
       properties = properties.getOrElse(Map.empty[String, Schema]),
       fragments = fragments.toMap,
       name = name

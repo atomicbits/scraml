@@ -23,24 +23,27 @@ import io.atomicbits.scraml.jsonschemaparser.Id
 /**
  * Created by peter on 7/06/15. 
  */
-trait Selection extends Schema
+trait Selection {
 
-case class OneOf(id: Id,
-                 selection: List[Schema],
-                 discriminatorField: Option[String] = None) extends Selection {
+  def selection: List[Schema]
 
-  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+  def map(f: Schema => Schema): Selection
 
 }
 
-case class AnyOf(id: Id, selection: List[Schema]) extends Selection {
+case class OneOf(selection: List[Schema]) extends Selection {
 
-  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+  override def map(f: (Schema) => Schema): Selection = copy(selection = selection.map(f))
+}
+
+case class AnyOf(selection: List[Schema]) extends Selection {
+
+  override def map(f: (Schema) => Schema): Selection = copy(selection = selection.map(f))
 
 }
 
-case class AllOf(id: Id, selection: List[Schema]) extends Selection {
+case class AllOf(selection: List[Schema]) extends Selection {
 
-  override def updated(updatedId: Id): Schema = copy(id = updatedId)
+  override def map(f: (Schema) => Schema): Selection = copy(selection = selection.map(f))
 
 }

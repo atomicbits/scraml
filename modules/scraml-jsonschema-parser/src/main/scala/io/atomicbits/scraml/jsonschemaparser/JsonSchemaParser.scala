@@ -61,7 +61,6 @@ object JsonSchemaParser {
       .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
       .foldLeft(SchemaLookup())(updateLookupTableAndObjectMap)
       .map(CanonicalNameGenerator.deduceCanonicalNames)
-      .map(CanonicalNameGenerator.addListTypesToCanonicalNames)
   }
 
 
@@ -88,7 +87,8 @@ object JsonSchemaParser {
           case objEl: ObjectEl      =>
             objEl.copy(
               fragments = objEl.fragments.map(expandFragment),
-              properties = objEl.properties.map(expandFragment)
+              properties = objEl.properties.map(expandFragment),
+              selection = objEl.selection.map(select => select.map(schema => expandWithRootAndPath(schema, root, path)))
             )
           case frag: Fragment       => frag.copy(fragments = frag.fragments.map(expandFragment))
           case arr: ArrayEl         =>
@@ -147,15 +147,19 @@ object JsonSchemaParser {
             objEl.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
           val schemaLookupWithObjectProperties =
             objEl.properties.foldLeft(schemaLookupWithObjectFragments)(updateLookupAndObjectMapInternal)
-          schemaLookupWithObjectProperties
-            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> objEl))
+          val schemaLookupWithSelectionObjects =
+            objEl.selection.map {
+              select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapInternal)
+            } getOrElse schemaLookupWithObjectProperties
+          schemaLookupWithSelectionObjects
+            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> objEl))
         case fragment: Fragment =>
           fragment.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
         case enumEl: EnumEl     =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumEl))
-        case arr: ArrayEl       =>
-          val schemaLookupWithArrays = updatedSchemaLookup.copy(arrayMap = updatedSchemaLookup.arrayMap + (absoluteId -> arr))
-          updateLookupAndObjectMapInternal(schemaLookupWithArrays, ("", arr.items))
+//        case arr: ArrayEl       =>
+//          val schemaLookupWithArrays = updatedSchemaLookup.copy(arrayMap = updatedSchemaLookup.arrayMap + (absoluteId -> arr))
+//          updateLookupAndObjectMapInternal(schemaLookupWithArrays, ("", arr.items))
         case _                  => updatedSchemaLookup
       }
 

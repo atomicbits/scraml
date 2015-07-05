@@ -37,7 +37,7 @@ import scala.annotation.tailrec
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
                         objectMap: Map[AbsoluteId, ObjectEl] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
-                        arrayMap: Map[AbsoluteId, ArrayEl] = Map.empty,
+//                        arrayMap: Map[AbsoluteId, ArrayEl] = Map.empty,
                         canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 

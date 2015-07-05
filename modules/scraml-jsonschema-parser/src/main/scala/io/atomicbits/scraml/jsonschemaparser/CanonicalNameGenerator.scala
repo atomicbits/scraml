@@ -106,58 +106,6 @@ object CanonicalNameGenerator {
     schemaLookup.copy(canonicalNames = canonicals)
   }
 
-
-  /**
-   * Add all the List[T] references that occur in the schemas to the list of canonical names so that they can be found by the DSL
-   * generator.
-   *
-   * We assume that the actual type parameters are already present in the canonicalNames map in the given schema lookup. We also allow
-   * lists to be nested, e.g.: List[ List[User] ].
-   *
-   * @param schemaLookup The schema lookup.
-   * @return The updated schema lookup.
-   */
-  def addListTypesToCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
-    val arrMap: Map[AbsoluteId, ArrayEl] = schemaLookup.arrayMap
-
-    def expandArrayEl(lookup: SchemaLookup, arrayEl: ArrayEl): ClassRep = {
-
-      def arrayItemsToClassRef(schema: Schema): ClassRep = {
-
-        val itemsAbsoluteId = schema.id match {
-          case absId: AbsoluteId => absId
-          case _                 => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
-        }
-
-        schema match {
-          case objEl: ObjectEl      =>
-            val classRep: ClassRep = lookup.canonicalNames(itemsAbsoluteId)
-            TypeClassRep(name = "List", types = List(classRep))
-          case arr: ArrayEl         => TypeClassRep(name = "List", types = List(expandArrayEl(lookup, arr)))
-          case ref: SchemaReference =>
-            val schema = lookup.lookupSchema(ref.refersTo)
-            arrayItemsToClassRef(schema)
-          case enumEl: EnumEl       =>
-            val classRep: ClassRep = lookup.canonicalNames(itemsAbsoluteId)
-            TypeClassRep(name = "List", types = List(classRep))
-          case x                    => sys.error(s"We do not support arrays of ${x.id}")
-        }
-      }
-
-      arrayItemsToClassRef(arrayEl.items)
-    }
-
-    arrMap.foldLeft(schemaLookup) { (lookup, arrayMapEl) =>
-      val (absId, arrayEl) = arrayMapEl
-
-      val classRep = expandArrayEl(lookup, arrayEl)
-
-      lookup.copy(canonicalNames = lookup.canonicalNames + (absId -> classRep))
-    }
-
-  }
-
-
 }
 
 /**
