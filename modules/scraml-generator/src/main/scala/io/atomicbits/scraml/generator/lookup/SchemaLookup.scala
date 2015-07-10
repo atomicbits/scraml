@@ -1,24 +1,26 @@
 /*
- * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Affero General Public License
- * (AGPL) version 3.0 which accompanies this distribution, and is available in
- * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Affero General Public License for more details.
+ *  All rights reserved. This program and the accompanying materials
+ *  are made available under the terms of the GNU Affero General Public License
+ *  (AGPL) version 3.0 which accompanies this distribution, and is available in
+ *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
  *
- * Contributors:
- *     Peter Rigole
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  Affero General Public License for more details.
+ *
+ *  Contributors:
+ *      Peter Rigole
  *
  */
 
-package io.atomicbits.scraml.jsonschemaparser
+package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.model._
+import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, FragmentedSchema, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, ClassRep, Id, RootId}
 
 import scala.annotation.tailrec
 
@@ -35,9 +37,8 @@ import scala.annotation.tailrec
  *                            List[string], List[boolean], List[object], or even nested lists).
  */
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
-                        objectMap: Map[AbsoluteId, ObjectEl] = Map.empty,
+                        objectMap: Map[AbsoluteId, ObjectElExt] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
-//                        arrayMap: Map[AbsoluteId, ArrayEl] = Map.empty,
                         canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
@@ -53,17 +54,17 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
     // ToDo: this code to get the absolute id appears everywhere, we must find a way to refactor this!
     val absoluteId = id match {
       case absId: AbsoluteId => absId
-      case _ => sys.error("Only absolute IDs can be used to do a schema lookup.")
+      case _                 => sys.error("Only absolute IDs can be used to do a schema lookup.")
     }
 
     @tailrec
     def fragmentSearch(schema: Schema, fragmentPath: List[String]): Schema = {
       fragmentPath match {
-        case Nil => schema
+        case Nil       => schema
         case fr :: frs =>
           schema match {
             case fragmentedSchema: FragmentedSchema => fragmentSearch(fragmentedSchema.fragments(fr), frs)
-            case _ => sys.error(s"Cannot follow the following fragment path: ${absoluteId.id}")
+            case _                                  => sys.error(s"Cannot follow the following fragment path: ${absoluteId.id}")
           }
       }
     }

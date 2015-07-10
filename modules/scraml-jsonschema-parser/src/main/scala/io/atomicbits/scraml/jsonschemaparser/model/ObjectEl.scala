@@ -33,8 +33,7 @@ case class ObjectEl(id: Id,
                     requiredFields: List[String] = List.empty,
                     selection: Option[Selection] = None,
                     fragments: Map[String, Schema] = Map.empty,
-                    name: Option[String] = None,
-                    canonicalName: Option[String] = None) extends FragmentedSchema with AllowedAsObjectField {
+                    name: Option[String] = None) extends FragmentedSchema with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Schema = copy(id = updatedId)
 
