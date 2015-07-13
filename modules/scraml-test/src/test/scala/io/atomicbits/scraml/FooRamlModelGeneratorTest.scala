@@ -79,7 +79,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       val eventualUserResponse: Future[User] =
         userFoobarResource
           .get(age = Some(51), firstName = Some("John"), lastName = None)
-          .execToDto()
+          .call().asType
 
 
       Then("we should get the correct user object")
@@ -120,7 +120,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val eventualPostResponse: Future[String] =
         userFoobarResource
-          .post(text = "Hello Foobar", value = None).exec()
+          .post(text = "Hello Foobar", value = None).call().asString
 
 
 
@@ -180,7 +180,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
             "Content-Type" -> "application/vnd-v1.0+json",
             "Accept" -> "application/vnd-v1.0+json"
           )
-          .execToDto()
+          .call().asType
 
 
       Then("we should get the correct response")
@@ -208,7 +208,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("execute a DELETE request")
 
-      val eventualPutResponse: Future[String] = userFoobarResource.delete().exec()
+      val eventualPutResponse: Future[String] = userFoobarResource.delete().call().asString
 
 
       Then("we should get the correct response")
@@ -234,7 +234,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       When("a multipart/form-data POST request happens")
       val multipartFormPostResponse =
-        client.rest.user.upload.post(List(StringPart(name = "test", value = "string part value"))).execToResponse()
+        client.rest.user.upload.post(List(StringPart(name = "test", value = "string part value"))).call().asType
 
       Then("we should get the correct response")
 

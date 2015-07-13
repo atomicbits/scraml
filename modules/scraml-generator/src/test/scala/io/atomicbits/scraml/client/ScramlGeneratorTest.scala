@@ -23,7 +23,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import io.atomicbits.scraml.client.XoClient.{Address, User}
+import io.atomicbits.scraml.client.XoClient._
 
 import io.atomicbits.scraml.dsl.Response
 import org.scalatest.concurrent.ScalaFutures
@@ -51,7 +51,6 @@ case class XoClient(host: String,
 
   import XoClient._
 
-  // ToDo generate import.
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
 
@@ -78,11 +77,7 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
 
-                def execute() = executeSegment.exec()
-
-                def executeToJson() = executeSegment.execToJson()
-
-                def executeToJsonDto() = executeSegment.execToDto()
+                def call() = executeSegment.callToTypeResponse()
 
               }
 
@@ -100,11 +95,7 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, Address](requestBuilder, Some(body))
 
-                def execute() = executeSegment.exec()
-
-                def executeToJson() = executeSegment.execToJson()
-
-                def executeToJsonDto() = executeSegment.execToDto()
+                def call() = executeSegment.callToTypeResponse()
 
               }
 
@@ -122,11 +113,7 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[User, Address](requestBuilder, Some(body))
 
-                def execute() = executeSegment.exec()
-
-                def executeToJson() = executeSegment.execToJson()
-
-                def executeToJsonDto() = executeSegment.execToDto()
+                def call() = executeSegment.callToTypeResponse()
 
               }
 
@@ -151,11 +138,7 @@ case class XoClient(host: String,
 
                 private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
 
-                def execute() = executeSegment.exec()
-
-                def executeToJson() = executeSegment.execToJson()
-
-                //                def executeToJsonDto() = executeSegment.executeToJsonDto()
+                def call() = executeSegment.callToTypeResponse()
 
               }
 
@@ -172,11 +155,41 @@ case class XoClient(host: String,
 object XoClient {
 
   import play.api.libs.json._
+  import scala.concurrent.Future
+  import io.atomicbits.scraml.dsl.Response
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit def OptionReads[T](implicit fmt: Reads[T]): Reads[Option[T]] = new Reads[Option[T]] {
-    // See: https://www.playframework.com/documentation/2.4.x/Migration24
-    def reads(json: JsValue) = JsSuccess(json.asOpt[T])
+  implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
+
+    def asString: Future[String] = futureResponse.map(_.stringBody)
+
+    def asJson: Future[JsValue] =
+      futureResponse.map { resp =>
+        resp.jsonBody.getOrElse {
+          val message =
+            if (resp.status != 200) s"The response has no JSON body because the request was not successful (status = ${resp.status})."
+            else "The response has no JSON body despite status 200."
+          throw new IllegalArgumentException(message)
+        }
+      }
+
+    def asType: Future[T] =
+      futureResponse.map { resp =>
+        resp.body.getOrElse {
+          val message =
+            if (resp.status != 200) s"The response has no typed body because the request was not successful (status = ${resp.status})."
+            else "The response has no typed body despite status 200."
+          throw new IllegalArgumentException(message)
+        }
+      }
+
   }
+
+  //  implicit def OptionReads[T](implicit fmt: Reads[T]): Reads[Option[T]] = new Reads[Option[T]] {
+  // See: https://www.playframework.com/documentation/2.4.x/Migration24
+  //    def reads(json: JsValue) = JsSuccess(json.asOpt[T])
+  //  }
+
 
   case class User(firstName: String, lastName: String, age: Int)
 
@@ -245,7 +258,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
           .rest.some.smart.webservice.pathparam("pathparamvalue")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .headers("Accept" -> "application/json")
-          .executeToJsonDto()
+          .call().asType
 
 
       val futureResultPut: Future[Address] =
@@ -256,7 +269,7 @@ class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
-          .executeToJsonDto()
+          .call().asType
 
       Then("we should see the expected response values")
 

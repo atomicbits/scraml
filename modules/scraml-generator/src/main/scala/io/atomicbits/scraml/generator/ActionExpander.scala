@@ -50,6 +50,7 @@ object ActionExpander {
     // We currently only support the first response body mimeType that we see. We should extend this later on.
     val responseMimeType = response.flatMap(_.body.values.toList.headOption)
     val hasResponse = responseMimeType.isDefined
+    val hasJsonResponse = responseMimeType.exists(_.mimeType.toLowerCase.contains("json"))
     val maybeResponseRootId = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
     val maybeResponseClassRep = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
 
@@ -313,25 +314,20 @@ object ActionExpander {
       val responseTypeName = TypeNameExpander.expand(responseClassRep, c) // TypeName(responseClassRep.name)
       val executeSegment =
         if (hasBody) {
-          q"""
+          List(q"""
            private val executeSegment = new ExecuteSegment[$bodyTypeName, $responseTypeName](requestBuilder, Some(body))
-         """
+         """)
         } else {
-          q"""
+          List(q"""
            private val executeSegment = new ExecuteSegment[$bodyTypeName, $responseTypeName](requestBuilder, None)
-         """
+         """)
         }
-      val jsonExecutor =
-        if (hasResponse) List( q""" def execToJson() = executeSegment.execToJson() """)
-        else Nil
-      val jsonDtoExecutor =
-        if (hasJsonDtoResponse) List( q""" def execToDto() = executeSegment.execToDto() """)
-        else Nil
-      List(
-        executeSegment,
-        q""" def exec() = executeSegment.exec() """,
-        q""" def execToResponse() = executeSegment.execToResponse() """
-      ) ++ jsonExecutor ++ jsonDtoExecutor
+      val stringExecutor = List( q""" def call() = executeSegment.callToStringResponse() """)
+      val jsonExecutor = List( q""" def call() = executeSegment.callToJsonResponse() """)
+      val jsonDtoExecutor = List( q""" def call() = executeSegment.callToTypeResponse() """)
+      if (hasJsonDtoResponse) executeSegment ++ jsonDtoExecutor
+      else if(hasJsonResponse) executeSegment ++ jsonExecutor
+      else executeSegment ++ stringExecutor
     }
 
     def needsAcceptHeader: Boolean = {

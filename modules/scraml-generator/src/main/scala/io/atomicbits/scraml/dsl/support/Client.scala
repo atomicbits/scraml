@@ -31,16 +31,16 @@ trait Client {
 
   def defaultHeaders: Map[String, String]
 
-  def exec[B](request: RequestBuilder, body: Option[B])
-                (implicit bodyFormat: Format[B]): Future[String]
+  //  def exec[B](request: RequestBuilder, body: Option[B])
+  //                (implicit bodyFormat: Format[B]): Future[String]
 
-  def execToResponse[B](request: RequestBuilder, body: Option[B])
-                          (implicit bodyFormat: Format[B]): Future[Response[String]]
+  def callToStringResponse[B](request: RequestBuilder, body: Option[B])
+                             (implicit bodyFormat: Format[B]): Future[Response[String]]
 
-  def execToJson[B](request: RequestBuilder, body: Option[B])
-                      (implicit bodyFormat: Format[B]): Future[JsValue]
+  def callToJsonResponse[B](requestBuilder: RequestBuilder, body: Option[B])
+                           (implicit bodyFormat: Format[B]): Future[Response[JsValue]]
 
-  def execToDto[B, R](request: RequestBuilder, body: Option[B])
-                            (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[R]
+  def callToTypeResponse[B, R](request: RequestBuilder, body: Option[B])
+                              (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]]
 
 }

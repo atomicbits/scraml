@@ -48,15 +48,14 @@ case class RequestBuilder(client: Client,
 
   def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").contains("multipart/form-data")
 
-  def exec[B](body: Option[B])(implicit bodyFormat: Format[B]) = client.exec(this, body)
+  def callToStringResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] =
+    client.callToStringResponse(this, body)
 
-  def execToResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] = client.execToResponse(this, body)
+  def callToJsonResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
+    client.callToJsonResponse(this, body)
 
-  def execToJson[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[JsValue] = client.execToJson(this, body)
-
-  def execToDto[B, R](body: Option[B])
-                            (implicit bodyFormat: Format[B], responseFormat: Format[R]) =
-    client.execToDto[B, R](this, body)
+  def callToTypeResponse[B, R](body: Option[B])(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
+    client.callToTypeResponse(this, body)
 
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 

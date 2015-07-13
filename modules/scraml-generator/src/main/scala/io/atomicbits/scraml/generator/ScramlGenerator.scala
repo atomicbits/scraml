@@ -122,6 +122,36 @@ object ScRamlGenerator {
        object $classAsTermName {
 
          import play.api.libs.json._
+         import scala.concurrent.Future
+         import io.atomicbits.scraml.dsl.Response
+         import scala.concurrent.ExecutionContext.Implicits.global
+
+         implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
+
+           def asString: Future[String] = futureResponse.map(_.stringBody)
+
+           def asJson: Future[JsValue] =
+             futureResponse.map { resp =>
+               resp.jsonBody.getOrElse {
+                 val message =
+                   if (resp.status != 200)
+                     "The response has no JSON body because the request was not successful (status = " + resp.status + ")."
+                   else "The response has no JSON body despite status 200."
+                 throw new IllegalArgumentException(message)
+               }
+             }
+
+           def asType: Future[T] =
+             futureResponse.map { resp =>
+               resp.body.getOrElse {
+                 val message =
+                   if (resp.status != 200)
+                     "The response has no typed body because the request was not successful (status = " + resp.status + ")."
+                   else "The response has no typed body despite status 200."
+                 throw new IllegalArgumentException(message)
+               }
+             }
+         }
 
          ..$caseClasses
 
@@ -137,7 +167,8 @@ object ScRamlGenerator {
     // I'm not happy yet with the ad hoc approach to find the path to the project's base dir.
     val pid = c.enclosingPackage.pid
     val sourcePath = c.enclosingPosition.source.path
-    if (sourcePath.contains("src/main/scala")) { // This is a very naive way to do this, I know.
+    if (sourcePath.contains("src/main/scala")) {
+      // This is a very naive way to do this, I know.
       val baseDir = sourcePath.split("src/main/scala").toList.head
       writeSourceCode(s"${className.toString}.scala", pid.toString().split('.').toList, baseDir, showCode(fullTree))
     }

@@ -19,13 +19,19 @@
 
 package io.atomicbits.scraml.dsl
 
+import play.api.libs.json.JsValue
+
 /**
  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
  */
-case class Response[T](status: Int, body: T) {
+case class Response[T](status: Int,
+                       stringBody: String,
+                       jsonBody: Option[JsValue] = None,
+                       body: Option[T] = None,
+                       headers: Map[String, List[String]] = Map.empty) {
 
   def map[S](f: T => S) = {
-    Response(status, f(body))
+    this.copy(body = body.map(f))
   }
 
 }

@@ -28,6 +28,7 @@ import play.api.libs.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
+import scala.collection.JavaConverters._
 
 /**
  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
@@ -56,12 +57,7 @@ case class RxHttpClient(protocol: String,
       .build.asScala
 
 
-  override def exec[B](requestBuilder: RequestBuilder, body: Option[B])
-                      (implicit bodyFormat: Format[B]): Future[String] = {
-    execToResponse(requestBuilder, body).map(_.body)
-  }
-
-  def execTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])
+  def callTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])
                           (implicit bodyFormat: Format[B]): Future[Response[String]] = {
     val clientWithResourcePathAndMethod = {
       client
@@ -129,14 +125,26 @@ case class RxHttpClient(protocol: String,
 
     client.execute[Response[String]](
       clientRequest,
-      serverResponse => Response(serverResponse.getStatusCode, serverResponse.getResponseBody)
+      serverResponse =>
+        Response(
+          status = serverResponse.getStatusCode,
+          stringBody = serverResponse.getResponseBody,
+          jsonBody = None,
+          body = Some(serverResponse.getResponseBody),
+          headers = serverResponse.getHeaders.asScala.foldLeft(Map.empty[String, List[String]]) { (map, el) =>
+            val (key, value) = el
+            map + (key -> value.asScala.toList)
+          }
+        )
     )
   }
 
 
-  override def execToResponse[B](requestBuilder: RequestBuilder, body: Option[B])
-                                (implicit bodyFormat: Format[B]): Future[Response[String]] = {
-    execTo200Response[B](requestBuilder, body).recover {
+  override def callToStringResponse[B](requestBuilder: RequestBuilder, body: Option[B])
+                                      (implicit bodyFormat: Format[B]): Future[Response[String]] = {
+    // The RxHttpClient returns a failed future on client or server errors (status >= 400).
+    // We recover these failres into a successful future so that we are able to report on the status more directly.
+    callTo200Response[B](requestBuilder, body).recover {
       case httpClientError: HttpClientError if httpClientError.getResponse.isPresent =>
         Response(httpClientError.getResponse.get().getStatusCode, httpClientError.getResponse.get().getResponseBody)
       case httpServerError: HttpServerError if httpServerError.getResponse.isPresent =>
@@ -144,23 +152,36 @@ case class RxHttpClient(protocol: String,
     }
   }
 
+  override def callToJsonResponse[B](requestBuilder: RequestBuilder, body: Option[B])
+                                    (implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
+    // In case of a non-200 or non-204 response, we set the JSON body to None and keep the future successful and return the
+    // Response object.
+    callToStringResponse[B](requestBuilder, body).map { response =>
+      if (response.status == 200) {
+        val respJson = response.map(Json.parse)
+        respJson.copy(jsonBody = respJson.body)
+      } else {
+        response.map(_ => JsNull).copy(body = None)
+      }
+    }
+  }
 
-  override def execToJson[B](request: RequestBuilder, body: Option[B])
-                            (implicit bodyFormat: Format[B]): Future[JsValue] =
-    execTo200Response(request, body).map(res => Json.parse(res.body))
-
-
-  def execToJson200Response[B](request: RequestBuilder, body: Option[B])
-                              (implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
-    execTo200Response(request, body).map(res => res.map(Json.parse))
-
-
-  override def execToDto[B, R](request: RequestBuilder, body: Option[B])
-                              (implicit bodyFormat: Format[B],
-                               responseFormat: Format[R]): Future[R] = {
-    execToJson200Response(request, body) map (res => res.map(responseFormat.reads)) flatMap {
-      case Response(status, JsSuccess(t, path)) => Future.successful(t)
-      case Response(status, JsError(e))         =>
+  override def callToTypeResponse[B, R](requestBuilder: RequestBuilder, body: Option[B])
+                                       (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = {
+    // In case of a non-200 or non-204 response, we set the typed body to None and keep the future successful and return the
+    // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
+    // in that case we violate the RAML specs.
+    callToJsonResponse[B](requestBuilder, body) map { response =>
+      if (response.status == 200) {
+        response.map(responseFormat.reads)
+      } else {
+        // We hijack the 'JsError(Nil)' type here to mark the non-200 case that has to result in a successful future with empty body.
+        response.map(_ => JsError(Nil))
+      }
+    } flatMap {
+      case response@Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
+      case response@Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
+      case Response(_, _, _, Some(JsError(e)), _)                  =>
         val validationMessages: Seq[String] = {
           e flatMap {
             errorsByPath =>
@@ -168,8 +189,9 @@ case class RxHttpClient(protocol: String,
               errors map (error => s"$path -> ${error.message}")
           }
         }
-        Future.failed(new
-            IllegalArgumentException(s"JSON validation error in the response from ${request.summary}: ${validationMessages mkString ", "}"))
+        Future.failed(
+          new IllegalArgumentException(
+            s"JSON validation error in the response from ${requestBuilder.summary}: ${validationMessages mkString ", "}"))
     }
   }
 
