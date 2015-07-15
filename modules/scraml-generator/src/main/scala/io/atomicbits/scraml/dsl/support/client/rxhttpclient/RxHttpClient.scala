@@ -196,4 +196,6 @@ case class RxHttpClient(protocol: String,
     }
   }
 
+  override def close(): Unit = client.close()
+
 }

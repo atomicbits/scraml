@@ -54,6 +54,7 @@ case class XoClient(host: String,
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
 
+  def close() = requestBuilder.client.close()
 
   def rest = new PlainSegment("rest", requestBuilder) {
     def some = new PlainSegment("some", requestBuilder) {

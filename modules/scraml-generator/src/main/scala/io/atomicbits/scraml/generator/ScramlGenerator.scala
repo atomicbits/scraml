@@ -114,6 +114,8 @@ object ScRamlGenerator {
 
           protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, prefix, requestTimeout, maxConnections, defaultHeaders))
 
+          def close() = requestBuilder.client.close()
+
           ..$resources
 
         }

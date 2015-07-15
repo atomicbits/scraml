@@ -43,4 +43,6 @@ trait Client {
   def callToTypeResponse[B, R](request: RequestBuilder, body: Option[B])
                               (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]]
 
+  def close(): Unit
+
 }
