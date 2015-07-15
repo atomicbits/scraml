@@ -181,6 +181,7 @@ case class RxHttpClient(protocol: String,
     } flatMap {
       case response@Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
       case response@Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
+      case response@Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
       case Response(_, _, _, Some(JsError(e)), _)                  =>
         val validationMessages: Seq[String] = {
           e flatMap {
