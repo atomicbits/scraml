@@ -43,7 +43,7 @@ object ResourceExpander {
 
     val urlSegment = resource.urlSegment
     val segmentAsString = q""" $urlSegment """
-    val segmentAsDefName = TermName(resource.urlSegment)
+    val segmentAsDefName = TermName(cleanupUrlSegment(urlSegment))
 
     val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup, c))
     val expandedActions = resource.actions.flatMap(action => ActionExpander.expandAction(action, schemaLookup, c))
@@ -112,6 +112,11 @@ object ResourceExpander {
         case Some(x) => sys.error(s"Unknown URL parameter type $x")
       }
 
+  }
+
+  private def cleanupUrlSegment(segment: String): String = {
+    // cleanup all strange characters
+    segment.trim.replaceAll("[-]", "")
   }
 
 }
