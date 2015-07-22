@@ -37,7 +37,7 @@ trait Dependencies { this:Build =>
   val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
 
-  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.0-SNAPSHOT"
+  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.1-SNAPSHOT"
 
 
 
