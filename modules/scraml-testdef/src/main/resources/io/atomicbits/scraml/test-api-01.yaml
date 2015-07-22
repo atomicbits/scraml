@@ -10,4 +10,3 @@ schemas:
 
 /rest/user:
   !include user.raml
-

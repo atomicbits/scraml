@@ -39,8 +39,8 @@ object ActionExpander {
     // We currently only support the first context-type mimeType that we see. We should extend this later on.
     val bodyMimeType = action.body.values.toList.headOption
     val hasBody = bodyMimeType.isDefined
-    val maybeBodyRootId = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
-    val maybeBodyClassRep = maybeBodyRootId.flatMap(schemaLookup.canonicalNames.get)
+    val maybeBodySchema = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.lookupSchema)
+    val maybeBodyClassRep = maybeBodySchema.flatMap(TypeGenerator.schemaAsClassRep(_, schemaLookup))
 
     val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
     val isMultipartFormUpload = bodyMimeType.map(_.mimeType).contains("multipart/form-data")
@@ -51,15 +51,15 @@ object ActionExpander {
     val responseMimeType = response.flatMap(_.body.values.toList.headOption)
     val hasResponse = responseMimeType.isDefined
     val hasJsonResponse = responseMimeType.exists(_.mimeType.toLowerCase.contains("json"))
-    val maybeResponseRootId = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get)
-    val maybeResponseClassRep = maybeResponseRootId.flatMap(schemaLookup.canonicalNames.get)
+    val maybeResponseSchema = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.lookupSchema)
+    val maybeResponseClassRep = maybeResponseSchema.flatMap(TypeGenerator.schemaAsClassRep(_, schemaLookup))
 
-    val (hasJsonDtoBody, bodyClassRep) = maybeBodyClassRep match {
+    val (hasTypedBody, bodyClassRep) = maybeBodyClassRep match {
       case Some(bdClass) => (true, bdClass)
       case None          => (false, PlainClassRep("String"))
     }
 
-    val (hasJsonDtoResponse, responseClassRep) = maybeResponseClassRep match {
+    val (hasTypedResponse, responseClassRep) = maybeResponseClassRep match {
       case Some(rsClass) => (true, rsClass)
       case None          => (false, PlainClassRep("String"))
     }
@@ -128,8 +128,8 @@ object ActionExpander {
           )
 
       val additionalAction =
-        if (hasJsonDtoBody) {
-          val typeTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
+        if (hasTypedBody) {
+          val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep, c) // TypeName(bodyClassRep.name)
           val bodyParam = List(q"val body: $typeTypeName")
           List(
             q"""
@@ -198,8 +198,8 @@ object ActionExpander {
             )
 
         val additionalAction =
-          if (hasJsonDtoBody) {
-            val typeTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
+          if (hasTypedBody) {
+            val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep, c) // TypeName(bodyClassRep.name)
             val bodyParam = List(q"val body: $typeTypeName")
             List(
               q"""
@@ -310,8 +310,8 @@ object ActionExpander {
     }
 
     def expandExecution(hasBody: Boolean, bodyClassRep: ClassRep): List[c.universe.Tree] = {
-      val bodyTypeName = TypeNameExpander.expand(bodyClassRep, c) // TypeName(bodyClassRep.name)
-      val responseTypeName = TypeNameExpander.expand(responseClassRep, c) // TypeName(responseClassRep.name)
+      val bodyTypeName = TypeGenerator.classRepAsType(bodyClassRep, c)
+      val responseTypeName = TypeGenerator.classRepAsType(responseClassRep, c)
       val executeSegment =
         if (hasBody) {
           List(q"""
@@ -325,7 +325,7 @@ object ActionExpander {
       val stringExecutor = List( q""" def call() = executeSegment.callToStringResponse() """)
       val jsonExecutor = List( q""" def call() = executeSegment.callToJsonResponse() """)
       val jsonDtoExecutor = List( q""" def call() = executeSegment.callToTypeResponse() """)
-      if (hasJsonDtoResponse) executeSegment ++ jsonDtoExecutor
+      if (hasTypedResponse) executeSegment ++ jsonDtoExecutor
       else if(hasJsonResponse) executeSegment ++ jsonExecutor
       else executeSegment ++ stringExecutor
     }

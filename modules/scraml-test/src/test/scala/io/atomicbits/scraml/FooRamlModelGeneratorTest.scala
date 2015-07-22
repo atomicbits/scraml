@@ -241,6 +241,53 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
     }
 
+    scenario("test Lists as request and response body") {
+
+      Given("a form upload web service")
+
+      val user = User(
+        homePage = Some(Link("http://foo.bar", "GET", None)),
+        address = Some(Address("Mulholland Drive", "LA", "California")),
+        age = 21,
+        firstName = "John",
+        lastName = "Doe",
+        id = "1"
+      )
+
+      // Imports needed to get the implicit JSON formatters for both types.
+      import User._
+
+      def userToJson()(implicit formatter: Format[List[User]]) = {
+        formatter.writes(List(user)).toString()
+      }
+
+      println(s"user: ${userToJson()}")
+
+      stubFor(
+        put(urlEqualTo(s"/rest/user/activate"))
+          .withHeader("Content-Type", equalTo("application/vnd-v1.0+json"))
+          .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
+          .withRequestBody(equalTo(userToJson()))
+          .willReturn(
+            aResponse()
+              .withBody(userToJson())
+              .withStatus(200)
+          )
+      )
+
+      When("a request with list body happens")
+      val listBodyResponse =
+        client.rest.user.activate
+          .put(List(user))
+          .headers("Content-Type" -> "application/vnd-v1.0+json")
+          .call().asType
+
+      Then("we should get the correct response")
+      val listBody = Await.result(listBodyResponse, 2 seconds)
+      assertResult(List(user))(listBody)
+
+    }
+
 
   }
 
