@@ -73,7 +73,11 @@ case class RxHttpClient(protocol: String,
 
     requestBuilder.queryParameters.foreach { element =>
       val (key, value) = element
-      clientWithResourcePathAndMethod.addQueryParam(key, value)
+      value match {
+        case SingleHttpParam(parameter)    => clientWithResourcePathAndMethod.addQueryParam(key, parameter)
+        case RepeatedHttpParam(parameters) =>
+          parameters.foreach(parameter => clientWithResourcePathAndMethod.addQueryParam(key, parameter))
+      }
     }
 
     // ToDo: support for form parameters, different body types (Array[Byte]), streaming,
@@ -84,7 +88,11 @@ case class RxHttpClient(protocol: String,
 
     requestBuilder.formParameters.foreach { element =>
       val (key, value) = element
-      clientWithResourcePathAndMethod.addFormParam(key, value)
+      value match {
+        case SingleHttpParam(parameter)    => clientWithResourcePathAndMethod.addFormParam(key, parameter)
+        case RepeatedHttpParam(parameters) =>
+          parameters.foreach(parameter => clientWithResourcePathAndMethod.addFormParam(key, parameter))
+      }
     }
 
     requestBuilder.multipartParams.foreach {
@@ -122,6 +130,8 @@ case class RxHttpClient(protocol: String,
     }
 
     val clientRequest = clientWithResourcePathAndMethod.build()
+
+    println(s"client request: $clientRequest")
 
     client.execute[Response[String]](
       clientRequest,

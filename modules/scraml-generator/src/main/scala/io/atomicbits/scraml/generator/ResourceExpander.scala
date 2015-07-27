@@ -105,10 +105,10 @@ object ResourceExpander {
     } else
       resource.urlParameter match {
         case None => plainSegment
-        case Some(Parameter(StringType, _)) => stringSegment
-        case Some(Parameter(IntegerType, _)) => intSegment
-        case Some(Parameter(NumberType, _)) => doubleSegment
-        case Some(Parameter(BooleanType, _)) => booleanSegment
+        case Some(Parameter(StringType, _, _)) => stringSegment
+        case Some(Parameter(IntegerType, _, _)) => intSegment
+        case Some(Parameter(NumberType, _, _)) => doubleSegment
+        case Some(Parameter(BooleanType, _, _)) => booleanSegment
         case Some(x) => sys.error(s"Unknown URL parameter type $x")
       }
 

@@ -63,9 +63,9 @@ case class XoClient(host: String,
           def pathparam(value: String) = new ParamSegment[String](value, requestBuilder) {
             def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetSegment(
               queryParams = Map(
-                "queryparX" -> Option(queryparX).map(_.toString),
-                "queryparY" -> Option(queryparY).map(_.toString),
-                "queryParZ" -> queryParZ.map(_.toString)
+                "queryparX" -> Option(queryparX).map(HttpParam(_)),
+                "queryparY" -> Option(queryparY).map(HttpParam(_)),
+                "queryParZ" -> queryParZ.map(HttpParam(_))
               ),
               validAcceptHeaders = List("application/json"),
               req = requestBuilder
@@ -122,9 +122,9 @@ case class XoClient(host: String,
 
             def post(formparX: Int, formParY: Double, formParZ: Option[String]) = new PostSegment(
               formParams = Map(
-                "formparX" -> Option(formparX).map(_.toString),
-                "formParY" -> Option(formParY).map(_.toString),
-                "formParZ" -> formParZ.map(_.toString)
+                "formparX" -> Option(formparX).map(HttpParam(_)),
+                "formParY" -> Option(formParY).map(HttpParam(_)),
+                "formParZ" -> formParZ.map(HttpParam(_))
               ),
               multipartParams = List.empty,
               validAcceptHeaders = List("application/json"),

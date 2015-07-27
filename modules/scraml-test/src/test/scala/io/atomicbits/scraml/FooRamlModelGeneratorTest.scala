@@ -59,14 +59,15 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
     val client = TestClient01(host = host, port = port,
       defaultHeaders = Map("Accept" -> "application/vnd-v1.0+json"))
 
-    val userFoobarResource = client.rest.user.userid("foobar")
+    val userResource = client.rest.user
+    val userFoobarResource = userResource.userid("foobar")
 
     scenario("test a GET request") {
 
       Given("a matching web service")
 
       stubFor(
-        get(urlEqualTo(s"/rest/user/foobar?age=51.0&firstName=John"))
+        get(urlEqualTo(s"/rest/user?age=51.0&firstName=John&organization=ESA&organization=NASA"))
           .withHeader("Accept", equalTo("application/vnd-v1.0+json"))
           .willReturn(
             aResponse()
@@ -77,8 +78,8 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       When("execute a GET request")
 
       val eventualUserResponse: Future[User] =
-        userFoobarResource
-          .get(age = Some(51), firstName = Some("John"), lastName = None)
+        userResource
+          .get(age = Some(51), firstName = Some("John"), lastName = None, organization = List("ESA", "NASA"))
           .call().asType
 
 

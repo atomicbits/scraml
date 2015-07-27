@@ -75,7 +75,7 @@ class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends S
 sealed trait MethodSegment extends Segment
 
 
-class GetSegment(queryParams: Map[String, Option[String]],
+class GetSegment(queryParams: Map[String, Option[HttpParam]],
                  validAcceptHeaders: List[String],
                  req: RequestBuilder) extends MethodSegment {
 
@@ -103,7 +103,7 @@ class PutSegment(validAcceptHeaders: List[String],
 }
 
 
-class PostSegment(formParams: Map[String, Option[String]],
+class PostSegment(formParams: Map[String, Option[HttpParam]],
                   multipartParams: List[BodyPart],
                   validAcceptHeaders: List[String],
                   validContentTypeHeaders: List[String],

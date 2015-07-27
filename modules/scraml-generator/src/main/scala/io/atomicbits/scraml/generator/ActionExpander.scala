@@ -359,10 +359,14 @@ object ActionExpander {
         case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
       }
 
-      if (parameter.required) {
-        q"val $nameTermName: $typeTypeName"
+      if (parameter.repeated) {
+        q"val $nameTermName: List[$typeTypeName]"
       } else {
-        q"val $nameTermName: Option[$typeTypeName]"
+        if (parameter.required) {
+          q"val $nameTermName: $typeTypeName"
+        } else {
+          q"val $nameTermName: Option[$typeTypeName]"
+        }
       }
     }
 
@@ -370,8 +374,9 @@ object ActionExpander {
       val (queryParameterName, parameter) = qParam
       val nameTermName = TermName(queryParameterName)
       parameter match {
-        case Parameter(_, true)  => q"""$queryParameterName -> Option($nameTermName).map(_.toString)"""
-        case Parameter(_, false) => q"""$queryParameterName -> $nameTermName.map(_.toString)"""
+        case Parameter(_, _, true)  => q"""$queryParameterName -> Option($nameTermName).map(HttpParam(_))"""
+        case Parameter(_, true, false)  => q"""$queryParameterName -> Option($nameTermName).map(HttpParam(_))"""
+        case Parameter(_, false, false) => q"""$queryParameterName -> $nameTermName.map(HttpParam(_))"""
       }
     }
 
