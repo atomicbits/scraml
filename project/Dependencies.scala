@@ -30,7 +30,8 @@ trait Dependencies { this:Build =>
 
   val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"       % "2.11.6"
 
-  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
+//  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
+  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
 
   // test dependencies
