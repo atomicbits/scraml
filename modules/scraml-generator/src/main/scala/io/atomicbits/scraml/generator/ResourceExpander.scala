@@ -37,7 +37,7 @@ object ResourceExpander {
    * 1. expand the current path segment (possibly a path parameter) if it is non-empty and expand it into the DSL
    * 2. expand the resource's actions and sub-resources recursively
    */
-  def expandResource(resource: Resource, schemaLookup: SchemaLookup, c: whitebox.Context): c.universe.Tree = {
+  def expandResource(resource: Resource, schemaLookup: SchemaLookup): String = {
 
     import c.universe._
 

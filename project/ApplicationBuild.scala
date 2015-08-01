@@ -67,11 +67,11 @@ with Dependencies {
     // publish(Local) step need to be executed separately: ;compile;publishLocal
     // If you rely on publish(Local) to do both steps at once, the mappings below will
     // be set *before* compilation, and thus before code generation! The source artifact will be empty in that case.
-    mappings in (Compile, packageSrc) := {
+    mappings in(Compile, packageSrc) := {
       // Recursively add the necessary file mappings, see https://github.com/sbt/sbt-native-packager/issues/69
       val codegenDir = target.value / "codegen"
       for {
-        (file, relativePath) <-  (codegenDir.*** --- codegenDir) x relativeTo(codegenDir)
+        (file, relativePath) <- (codegenDir.*** --- codegenDir) x relativeTo(codegenDir)
       } yield file -> s"$relativePath"
     }
     ) dependsOn scramlGenerator
@@ -83,6 +83,6 @@ with Dependencies {
   ) settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator  , scramlTest, scramlTestDef)
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlGenerator, scramlTest, scramlTestDef)
 
 }

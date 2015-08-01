@@ -37,7 +37,7 @@ import scala.reflect.macros.whitebox
  */
 object CaseClassGenerator {
 
-  def generateCaseClasses(schemaLookup: SchemaLookup, c: whitebox.Context) = {
+  def generateCaseClasses(schemaLookup: SchemaLookup): List[String] = {
 
     // Expand all canonical names into their case class definitions.
 

@@ -211,7 +211,7 @@ object XoClient {
 }
 
 
-class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   val port = 8181
   val host = "localhost"
