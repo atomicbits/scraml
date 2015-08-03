@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, FragmentedSchema, ObjectEl, Schema}
+import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, FragmentedSchema, Schema}
 import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, ClassRep, Id, RootId}
 
 import scala.annotation.tailrec

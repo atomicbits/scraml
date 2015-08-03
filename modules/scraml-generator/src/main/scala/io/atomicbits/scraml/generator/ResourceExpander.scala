@@ -22,9 +22,6 @@ package io.atomicbits.scraml.generator
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
-import scala.reflect.macros.whitebox
-import scala.language.experimental.macros
-
 
 /**
  * Created by peter on 24/05/15, Atomic BITS (http://atomicbits.io). 
@@ -39,78 +36,76 @@ object ResourceExpander {
    */
   def expandResource(resource: Resource, schemaLookup: SchemaLookup): String = {
 
-    import c.universe._
+    val segmentAsString = resource.urlSegment
+    val segmentAsDefName = cleanupUrlSegment(resource.urlSegment)
 
-    val urlSegment = resource.urlSegment
-    val segmentAsString = q""" $urlSegment """
-    val segmentAsDefName = TermName(cleanupUrlSegment(urlSegment))
-
-    val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup, c))
-    val expandedActions = resource.actions.flatMap(action => ActionExpander.expandAction(action, schemaLookup, c))
+    val expandedSubResources = resource.resources.map(resource => expandResource(resource, schemaLookup))
+    val expandedActions = resource.actions.flatMap(action => ActionExpander.expandAction(action, schemaLookup))
 
     def noSegment = {
-      q"""
-              ..$expandedActions
-              ..$expandedSubResources
-           """
+      s"""
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
+        """
     }
 
     def plainSegment = {
-      q"""
+      s"""
             def $segmentAsDefName = new PlainSegment($segmentAsString, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
             }
-           """
+      """
     }
 
     def stringSegment = {
-      q"""
+      s"""
             def $segmentAsDefName(value: String) = new ParamSegment[String](value, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
             }
-           """
+      """
     }
 
     def intSegment = {
-      q"""
+      s"""
             def $segmentAsDefName(value: Int) = new ParamSegment[Int](value, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
             }
-           """
+      """
     }
 
     def doubleSegment = {
-      q"""
+      s"""
             def $segmentAsDefName(value: Double) = new ParamSegment[Double](value, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
             }
-           """
+      """
     }
 
     def booleanSegment = {
-      q"""
+      s"""
             def $segmentAsDefName(value: Boolean) = new ParamSegment[Boolean](value, requestBuilder) {
-              ..$expandedActions
-              ..$expandedSubResources
+              ${expandedActions.mkString("\n")}
+              ${expandedSubResources.mkString("\n")}
             }
-           """
+      """
     }
 
     if (resource.urlSegment.isEmpty) {
       noSegment
-    } else
+    } else {
       resource.urlParameter match {
-        case None => plainSegment
-        case Some(Parameter(StringType, _, _)) => stringSegment
+        case None                               => plainSegment
+        case Some(Parameter(StringType, _, _))  => stringSegment
         case Some(Parameter(IntegerType, _, _)) => intSegment
-        case Some(Parameter(NumberType, _, _)) => doubleSegment
+        case Some(Parameter(NumberType, _, _))  => doubleSegment
         case Some(Parameter(BooleanType, _, _)) => booleanSegment
-        case Some(x) => sys.error(s"Unknown URL parameter type $x")
+        case Some(x)                            => sys.error(s"Unknown URL parameter type $x")
       }
+    }
 
   }
 

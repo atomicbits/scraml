@@ -28,8 +28,6 @@ trait Dependencies { this:Build =>
   val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0-SNAPSHOT"
   val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.4.0"
 
-  val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"       % "2.11.6"
-
 //  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
   val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
@@ -44,14 +42,12 @@ trait Dependencies { this:Build =>
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    scalaReflect,
     rxHttpClient,
     playJson,
     wiremock
   )
 
   val scramlGeneratorTestDefDeps = Seq (
-    scalaReflect,
     rxHttpClient,
     playJson,
     wiremock
