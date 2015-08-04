@@ -25,7 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.client.XoClient._
 
-import io.atomicbits.scraml.dsl.Response
+import io.atomicbits.scraml.dsl._
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.language.{postfixOps, reflectiveCalls}

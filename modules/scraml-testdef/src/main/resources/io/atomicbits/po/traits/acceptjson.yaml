@@ -1,5 +1,0 @@
-displayName: acceptjson
-headers:
-  accept:
-    displayName: Accept
-    enum: ["application/vnd.awv.po-v3.0+json"]

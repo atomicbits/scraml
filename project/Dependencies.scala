@@ -28,16 +28,11 @@ trait Dependencies { this:Build =>
   val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0-SNAPSHOT"
   val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.4.0"
 
-//  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
   val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
-
 
   // test dependencies
   val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
-
-  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.1-SNAPSHOT"
-
 
 
   // inclusion of the above dependencies in the modules
@@ -53,10 +48,6 @@ trait Dependencies { this:Build =>
     wiremock
   )
 
-  val scramlTestDeps = Seq (
-    scramlgenTestCode
-  )
-
   val scramlParserDeps = Seq(
     ramlJavaParser
   )
@@ -65,6 +56,13 @@ trait Dependencies { this:Build =>
     scalaLogging,
     logback,
     playJson
+  )
+
+  val scramlDslDeps = Seq(
+    scalaLogging,
+    logback,
+    playJson,
+    rxHttpClient
   )
 
   val mainDeps = Seq(
