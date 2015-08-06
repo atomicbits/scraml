@@ -4,8 +4,9 @@ title: test01
 version: v1
 
 schemas:
-  - link:     !include schemas/link.scheme
-  - user:     !include schemas/user.scheme
+  - link:                 !include schemas/link.scheme
+  - user:                 !include schemas/user.scheme
+  - user-alternative:     !include schemas/user-alternative.scheme
 
 
 /rest/user:

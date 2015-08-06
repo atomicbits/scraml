@@ -86,18 +86,19 @@ object CanonicalNameGenerator {
         val basePath = schemaPath.origin.rootPart
         val canonicalBase =
           canMap.getOrElse(
-            basePath,
-            throw new IllegalArgumentException(s"Base path $basePath not found for ${schemaPath.origin}.")
+            basePath, // key to get
+            throw new IllegalArgumentException(s"Base path $basePath not found for ${schemaPath.origin}.") // exception if key not present
           )
 
         def deduce(reverseFragment: List[String], suffix: String = ""): CanonicalMap = {
           reverseFragment match {
             case f :: fs =>
-              val canonicalProposal = s"${f.capitalize}$suffix"
-              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> PlainClassRep(canonicalProposal))
-              else if (!taken.contains(s"$canonicalBase$canonicalProposal"))
-                canMap + (schemaPath.origin -> PlainClassRep(s"$canonicalBase$canonicalProposal"))
-              else deduce(fs, canonicalProposal)
+              val canonicalProposal = PlainClassRep(s"${f.capitalize}$suffix")
+              val canonicalAlternativeProposal = PlainClassRep(s"${canonicalBase.name}${canonicalProposal.name}")
+              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> canonicalProposal)
+              else if (!taken.contains(canonicalAlternativeProposal))
+                canMap + (schemaPath.origin -> canonicalAlternativeProposal)
+              else deduce(fs, canonicalProposal.name)
             case Nil     =>
               throw new IllegalArgumentException(s"Cannot deduce a canonical name for schema ${schemaPath.origin}")
           }

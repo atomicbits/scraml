@@ -87,7 +87,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val user = User(
         homePage = None,
-        address = Some(Address("Mulholland Drive", "LA", "California")),
+        address = Some(UserAddress("Mulholland Drive", "LA", "California")),
         age = 21,
         firstName = "John",
         lastName = "Doe",
@@ -139,7 +139,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val user = User(
         homePage = Some(Link("http://foo.bar", "GET", None)),
-        address = Some(Address("Mulholland Drive", "LA", "California")),
+        address = Some(UserAddress("Mulholland Drive", "LA", "California")),
         age = 21,
         firstName = "John",
         lastName = "Doe",
@@ -248,7 +248,7 @@ class FooRamlModelGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       val user = User(
         homePage = Some(Link("http://foo.bar", "GET", None)),
-        address = Some(Address("Mulholland Drive", "LA", "California")),
+        address = Some(UserAddress("Mulholland Drive", "LA", "California")),
         age = 21,
         firstName = "John",
         lastName = "Doe",

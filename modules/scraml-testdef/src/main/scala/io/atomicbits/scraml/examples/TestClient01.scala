@@ -26,4 +26,3 @@ import io.atomicbits.scraml.generator.ScRaml
 
 @ScRaml("io/atomicbits/scraml/test-api-01.yaml") class TestClient01
 //@ScRaml("io/atomicbits/po/api.raml") class TestClient01
-
