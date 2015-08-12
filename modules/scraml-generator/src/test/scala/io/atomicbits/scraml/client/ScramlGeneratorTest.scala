@@ -45,8 +45,8 @@ case class XoClient(host: String,
                     defaultHeaders: Map[String, String] = Map()) {
 
 
-  import io.atomicbits.scraml.dsl.support._
-  import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+  import io.atomicbits.scraml.dsl._
+  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
   import play.api.libs.json._
 
   import XoClient._
