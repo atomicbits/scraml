@@ -39,7 +39,7 @@ object ActionExpander {
     val maybeBodyClassRep = maybeBodySchema.flatMap(TypeGenerator.schemaAsClassRep(_, schemaLookup))
 
     val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
-    val isMultipartFormUpload = bodyMimeType.map(_.mimeType).contains("multipart/form-data")
+    val isMultipartFormUpload = bodyMimeType.map(_.mimeType).exists(_ == "multipart/form-data")
 
     // We currently only support the first response mimeType that we see. We should extend this later on.
     val response = action.responses.values.toList.headOption
@@ -126,7 +126,7 @@ object ActionExpander {
       val additionalAction =
         if (hasTypedBody) {
           val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep)
-          val bodyParam = List(s"val body: $typeTypeName")
+          val bodyParam = List(s"body: $typeTypeName")
           List(
             s"""
               def put(${bodyParam.mkString(",")}) = new PutSegment(
@@ -331,7 +331,7 @@ object ActionExpander {
     }
 
     def validAcceptHeaders(): List[String] = {
-      action.responses.values.toList.flatMap(response => response.headers.keys)
+      action.responses.values.toList.flatMap(response => response.headers.keys).map(quoteString)
     }
 
     def needsContentTypeHeader: Boolean = {
@@ -339,7 +339,7 @@ object ActionExpander {
     }
 
     def validContentTypeHeaders(): List[String] = {
-      action.body.keys.toList
+      action.body.keys.toList.map(quoteString)
     }
 
     def expandParameterAsMethodParameter(qParam: (String, Parameter)): String = {
@@ -356,12 +356,12 @@ object ActionExpander {
       }
 
       if (parameter.repeated) {
-        s"val $nameTermName: List[$typeTypeName]"
+        s"$nameTermName: List[$typeTypeName]"
       } else {
         if (parameter.required) {
-          s"val $nameTermName: $typeTypeName"
+          s"$nameTermName: $typeTypeName"
         } else {
-          s"val $nameTermName: Option[$typeTypeName]"
+          s"$nameTermName: Option[$typeTypeName]"
         }
       }
     }
@@ -370,9 +370,9 @@ object ActionExpander {
       val (queryParameterName, parameter) = qParam
       val nameTermName = queryParameterName
       parameter match {
-        case Parameter(_, _, true)  => s"""$queryParameterName -> Option($nameTermName).map(HttpParam(_))"""
-        case Parameter(_, true, false)  => s"""$queryParameterName -> Option($nameTermName).map(HttpParam(_))"""
-        case Parameter(_, false, false) => s"""$queryParameterName -> $nameTermName.map(HttpParam(_))"""
+        case Parameter(_, _, true)  => s"""${quoteString(queryParameterName)} -> Option($nameTermName).map(HttpParam(_))"""
+        case Parameter(_, true, false)  => s"""${quoteString(queryParameterName)} -> Option($nameTermName).map(HttpParam(_))"""
+        case Parameter(_, false, false) => s"""${quoteString(queryParameterName)} -> $nameTermName.map(HttpParam(_))"""
       }
     }
 
@@ -386,5 +386,7 @@ object ActionExpander {
     }
 
   }
+
+  private def quoteString(text: String): String = s""""$text""""
 
 }

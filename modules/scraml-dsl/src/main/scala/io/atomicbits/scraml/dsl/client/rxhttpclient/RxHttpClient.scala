@@ -17,13 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.support.client.rxhttpclient
+package io.atomicbits.scraml.dsl.client.rxhttpclient
 
 import be.wegenenverkeer.rxhttp.{HttpClientError, HttpServerError}
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
 import io.atomicbits.scraml.dsl._
-import io.atomicbits.scraml.dsl.support._
-import io.atomicbits.scraml.dsl.support.client
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global

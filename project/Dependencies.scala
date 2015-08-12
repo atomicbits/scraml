@@ -22,7 +22,7 @@ import sbt._
 trait Dependencies { this:Build =>
 
   // main dependencies
-  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
+//  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
   val logback         =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
 
   val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0-SNAPSHOT"
@@ -53,20 +53,16 @@ trait Dependencies { this:Build =>
   )
 
   val scramlJsonSchemaParserDeps = Seq(
-    scalaLogging,
     logback,
     playJson
   )
 
   val scramlDslDeps = Seq(
-    scalaLogging,
-    logback,
     playJson,
     rxHttpClient
   )
 
   val mainDeps = Seq(
-    scalaLogging,
     logback
   )
 

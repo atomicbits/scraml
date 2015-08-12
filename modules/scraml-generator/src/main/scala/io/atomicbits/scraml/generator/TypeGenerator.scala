@@ -88,9 +88,9 @@ object TypeGenerator {
 
     def expandFieldName(fieldName: String, typeName: String, required: Boolean): String = {
       if (required) {
-        s"val $fieldName: $typeName"
+        s"$fieldName: $typeName"
       } else {
-        s"val $fieldName: Option[$typeName]"
+        s"$fieldName: Option[$typeName]"
       }
     }
 

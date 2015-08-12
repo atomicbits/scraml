@@ -29,6 +29,8 @@ import org.raml.parser.rule.ValidationResult
 import io.atomicbits.scraml.parser._
 import io.atomicbits.scraml.parser.model._
 
+import scala.util.{Failure, Success, Try}
+
 // What we need is:
 // http://stackoverflow.com/questions/21515325/add-a-compile-time-only-dependency-in-sbt
 
@@ -36,11 +38,17 @@ object ScramlGenerator {
 
   // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
   // See: http://docs.scala-lang.org/overviews/macros/annotations.html
-  def generate(ramlSpecPath: String, packageName: String, apiClassName: String): Seq[(File, String)] = {
+  def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[(File, String)] = {
 
     // Validate RAML spec
-    println(s"Running RAML validation on $ramlSpecPath: ")
-    val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlSpecPath)
+    println(s"Running RAML validation on $ramlApiPath: ")
+    val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlApiPath)
+//      Try(RamlParser.validateRaml(ramlApiPath)) match {
+//        case Success(validResults) => validResults
+//        case Failure(e: NullPointerException) =>
+//          throw new IllegalArgumentException(s"RAML validation failed, likely because the api path '$ramlApiPath' could not be not found.", e)
+//        case Failure(e) => throw e
+//      }
     if (validationResults.nonEmpty) {
       sys.error(
         s"""
@@ -55,7 +63,7 @@ object ScramlGenerator {
 
     // Generate the RAML model
     println("Running RAML model generation")
-    val raml: Raml = RamlParser.buildRaml(ramlSpecPath).asScala
+    val raml: Raml = RamlParser.buildRaml(ramlApiPath).asScala
     println(s"RAML model generated")
 
     val schemas: Map[String, Schema] = JsonSchemaParser.parse(raml.schemas)
@@ -75,7 +83,7 @@ object ScramlGenerator {
 
     val classDefinition =
       s"""
-         |package $packageName
+         |package $apiPackageName
          |
          |case class $apiClassName(host: String,
          |                         port: Int = 80,
@@ -85,8 +93,8 @@ object ScramlGenerator {
          |                         maxConnections: Int = 2,
          |                         defaultHeaders: Map[String, String] = Map.empty) {
          |
-         |  import io.atomicbits.scraml.dsl.support._
-         |  import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+         |  import io.atomicbits.scraml.dsl._
+         |  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
          |
          |  import play.api.libs.json._
          |
@@ -139,7 +147,7 @@ object ScramlGenerator {
          |}
      """.stripMargin
 
-    val pathParts: Array[String] = packageName.split('.')
+    val pathParts: Array[String] = apiPackageName.split('.')
     val dir = pathParts.foldLeft(new File(""))((file, pathPart) => new File(file, pathPart))
     val file = new File(dir, s"$apiClassName.scala")
 

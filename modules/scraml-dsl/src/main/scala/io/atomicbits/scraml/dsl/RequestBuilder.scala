@@ -45,7 +45,7 @@ case class RequestBuilder(client: Client,
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 
-  def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").contains("multipart/form-data")
+  def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").exists(_ == "multipart/form-data")
 
   def callToStringResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] =
     client.callToStringResponse(this, body)

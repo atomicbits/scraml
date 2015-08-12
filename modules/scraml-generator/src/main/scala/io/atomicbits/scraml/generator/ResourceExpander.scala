@@ -51,7 +51,7 @@ object ResourceExpander {
 
     def plainSegment = {
       s"""
-            def $segmentAsDefName = new PlainSegment($segmentAsString, requestBuilder) {
+            def $segmentAsDefName = new PlainSegment("$segmentAsString", requestBuilder) {
               ${expandedActions.mkString("\n")}
               ${expandedSubResources.mkString("\n")}
             }

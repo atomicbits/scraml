@@ -29,7 +29,7 @@ trait BuildSettings {
   val snapshotSuffix = "-SNAPSHOT"
   val Version = "0.2.0" + snapshotSuffix
 
-  val ScalaVersion = "2.11.6"
+  val ScalaVersion = "2.10.5"
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
@@ -38,6 +38,7 @@ trait BuildSettings {
     version := Version,
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
+    crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions := scalacBuildOptions,
     parallelExecution := false,
     // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
@@ -58,7 +59,7 @@ trait BuildSettings {
 
   val publishSettings = Seq(
     publishMavenStyle := true,
-    pomIncludeRepository := { _ => false},
+    pomIncludeRepository := { _ => false },
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)
