@@ -17,12 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.support
+package io.atomicbits.scraml.dsl
 
-import io.atomicbits.scraml.dsl.Response
-import play.api.libs.json.{Format, JsValue, Reads}
+import play.api.libs.json.Format
 
-import scala.concurrent.Future
 import scala.language.reflectiveCalls
 
 

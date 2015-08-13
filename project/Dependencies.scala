@@ -22,42 +22,30 @@ import sbt._
 trait Dependencies { this:Build =>
 
   // main dependencies
-  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
+//  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
   val logback         =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
 
-  val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0-SNAPSHOT"
+  val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
   val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.4.0"
 
-  val scalaReflect    =   "org.scala-lang"              %     "scala-reflect"       % "2.11.6"
-
-  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.9-SNAPSHOT"
-
+  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
   // test dependencies
   val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
 
-  val scramlgenTestCode = "io.atomicbits"               %%    "scraml-testdef"      % "0.1.1-SNAPSHOT"
-
-
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    scalaReflect,
     rxHttpClient,
     playJson,
     wiremock
   )
 
   val scramlGeneratorTestDefDeps = Seq (
-    scalaReflect,
     rxHttpClient,
     playJson,
     wiremock
-  )
-
-  val scramlTestDeps = Seq (
-    scramlgenTestCode
   )
 
   val scramlParserDeps = Seq(
@@ -65,13 +53,16 @@ trait Dependencies { this:Build =>
   )
 
   val scramlJsonSchemaParserDeps = Seq(
-    scalaLogging,
     logback,
     playJson
   )
 
+  val scramlDslDeps = Seq(
+    playJson,
+    rxHttpClient
+  )
+
   val mainDeps = Seq(
-    scalaLogging,
     logback
   )
 

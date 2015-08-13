@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.support
+package io.atomicbits.scraml.dsl
 
 /**
  * Created by peter on 27/07/15. 

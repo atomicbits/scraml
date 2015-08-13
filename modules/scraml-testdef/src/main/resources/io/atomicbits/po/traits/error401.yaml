@@ -1,7 +1,0 @@
-displayName: error401
-responses:
-  401:
-    description: Unauthorized - De gebruiker is niet ingelogd of heeft onvoldoende machtigingen om deze resource te gebruiken.
-    body:
-      application/vnd.awv.po-v3.0+json:
-        schema: !include ../schemas/error.schema

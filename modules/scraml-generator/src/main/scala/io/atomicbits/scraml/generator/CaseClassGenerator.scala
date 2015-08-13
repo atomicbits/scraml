@@ -21,9 +21,6 @@ package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.lookup.{ObjectElExt, SchemaLookup}
 
-import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
-
 
 /**
  * Created by peter on 4/06/15, Atomic BITS (http://atomicbits.io).
@@ -37,42 +34,36 @@ import scala.reflect.macros.whitebox
  */
 object CaseClassGenerator {
 
-  def generateCaseClasses(schemaLookup: SchemaLookup, c: whitebox.Context) = {
+  def generateCaseClasses(schemaLookup: SchemaLookup): List[String] = {
 
     // Expand all canonical names into their case class definitions.
 
-    val caseClasses = schemaLookup.objectMap.keys.toList.map { key =>
+    schemaLookup.objectMap.keys.toList.flatMap { key =>
       generateCaseClassWithCompanionObject(
         schemaLookup.canonicalNames(key).name,
         schemaLookup.objectMap(key),
-        schemaLookup,
-        c
+        schemaLookup
       )
     }
-
-    caseClasses.flatten
 
   }
 
   def generateCaseClassWithCompanionObject(canonicalName: String,
-                                           objectEl: ObjectElExt, schemaLookup: SchemaLookup, c: whitebox.Context): List[c.universe.Tree] = {
+                                           objectEl: ObjectElExt,
+                                           schemaLookup: SchemaLookup): List[String] = {
 
     println(s"Generating case class for: $canonicalName")
 
-    import c.universe._
-
-    val className = TypeName(canonicalName)
-    val classAsTermName = TermName(canonicalName)
-    val caseClassFields = objectEl.properties.toList.map(TypeGenerator.schemaAsField(_, objectEl.requiredFields, schemaLookup, c))
+    val caseClassFields = objectEl.properties.toList.map(TypeGenerator.schemaAsField(_, objectEl.requiredFields, schemaLookup))
 
     List(
-      q"""
-       case class $className(..$caseClassFields)
+      s"""
+       case class $canonicalName(${caseClassFields.mkString(",")})
      """,
-      q"""
-       object $classAsTermName {
+      s"""
+       object $canonicalName {
 
-         implicit val jsonFormatter: Format[$className] = Json.format[$className]
+         implicit val jsonFormatter: Format[$canonicalName] = Json.format[$canonicalName]
 
        }
      """)

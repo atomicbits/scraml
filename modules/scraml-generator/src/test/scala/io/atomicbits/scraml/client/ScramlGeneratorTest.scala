@@ -25,7 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.client.XoClient._
 
-import io.atomicbits.scraml.dsl.Response
+import io.atomicbits.scraml.dsl._
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.language.{postfixOps, reflectiveCalls}
@@ -45,8 +45,8 @@ case class XoClient(host: String,
                     defaultHeaders: Map[String, String] = Map()) {
 
 
-  import io.atomicbits.scraml.dsl.support._
-  import io.atomicbits.scraml.dsl.support.client.rxhttpclient.RxHttpClient
+  import io.atomicbits.scraml.dsl._
+  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
   import play.api.libs.json._
 
   import XoClient._
@@ -211,7 +211,7 @@ object XoClient {
 }
 
 
-class ScRamlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   val port = 8181
   val host = "localhost"

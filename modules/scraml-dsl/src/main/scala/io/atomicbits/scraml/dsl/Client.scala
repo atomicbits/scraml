@@ -17,9 +17,8 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.support
+package io.atomicbits.scraml.dsl
 
-import io.atomicbits.scraml.dsl.Response
 import play.api.libs.json._
 
 import scala.concurrent.Future

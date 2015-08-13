@@ -23,8 +23,6 @@ import io.atomicbits.scraml.generator.lookup.{SchemaUtil, SchemaLookup}
 import io.atomicbits.scraml.jsonschemaparser.{TypeClassRep, PlainClassRep, ClassRep, AbsoluteId}
 import io.atomicbits.scraml.jsonschemaparser.model._
 
-import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
 
 /**
  * Created by peter on 21/07/15. 
@@ -55,31 +53,28 @@ object TypeGenerator {
   }
 
 
-  def schemaAsType(schema: Schema, schemaLookup: SchemaLookup, c: whitebox.Context): c.universe.Tree = {
+  def schemaAsType(schema: Schema, schemaLookup: SchemaLookup): String = {
 
-    import c.universe._
-
-    def schemaAsTypeHelper(schema: Schema): Tree = {
+    def schemaAsTypeHelper(schema: Schema): String = {
 
       schema match {
         case objEl: ObjectEl            =>
           val absoluteId = SchemaUtil.asAbsoluteId(schema.id)
-          classRepAsType(schemaLookup.canonicalNames(absoluteId), c)
+          classRepAsType(schemaLookup.canonicalNames(absoluteId))
         case arrEl: ArrayEl             =>
-          val q"val foo: $listType" = q"val foo: List[${schemaAsTypeHelper(arrEl.items)}]"
-          listType
+          s"List[${schemaAsTypeHelper(arrEl.items)}]"
         case stringEl: StringEl         =>
-          classRepAsType(PlainClassRep("String"), c)
+          classRepAsType(PlainClassRep("String"))
         case numberEl: NumberEl         =>
-          classRepAsType(PlainClassRep("Double"), c)
+          classRepAsType(PlainClassRep("Double"))
         case integerEl: IntegerEl       =>
-          classRepAsType(PlainClassRep("Int"), c)
+          classRepAsType(PlainClassRep("Int"))
         case booleanEl: BooleanEl       =>
-          classRepAsType(PlainClassRep("Boolean"), c)
+          classRepAsType(PlainClassRep("Boolean"))
         case schemaRef: SchemaReference => schemaAsTypeHelper(schemaLookup.lookupSchema(schemaRef.refersTo))
         case enumEl: EnumEl             =>
           val absoluteId = SchemaUtil.asAbsoluteId(schema.id)
-          classRepAsType(schemaLookup.canonicalNames(absoluteId), c)
+          classRepAsType(schemaLookup.canonicalNames(absoluteId))
         case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a List type parameter.")
       }
     }
@@ -89,15 +84,13 @@ object TypeGenerator {
   }
 
 
-  def schemaAsField(property: (String, Schema), requiredFields: List[String], schemaLookup: SchemaLookup, c: whitebox.Context) = {
+  def schemaAsField(property: (String, Schema), requiredFields: List[String], schemaLookup: SchemaLookup): String = {
 
-    import c.universe._
-
-    def expandFieldName(fieldName: TermName, typeName: c.universe.Tree, required: Boolean): Tree = {
+    def expandFieldName(fieldName: String, typeName: String, required: Boolean): String = {
       if (required) {
-        q"val $fieldName: $typeName"
+        s"$fieldName: $typeName"
       } else {
-        q"val $fieldName: Option[$typeName]"
+        s"$fieldName: Option[$typeName]"
       }
     }
 
@@ -112,7 +105,7 @@ object TypeGenerator {
       schema match {
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.required
-          expandFieldName(TermName(propertyName), schemaAsType(objField, schemaLookup, c), required)
+          expandFieldName(propertyName, schemaAsType(objField, schemaLookup), required)
         case noObjectField                  =>
           sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
       }
@@ -121,20 +114,14 @@ object TypeGenerator {
   }
 
 
-  def classRepAsType(classRep: ClassRep, c: whitebox.Context): c.universe.Tree = {
-
-    import c.universe._
+  def classRepAsType(classRep: ClassRep): String = {
 
     classRep match {
-      case plainClassRep: PlainClassRep =>
-        // Don't ask my why we have to do it this way to get a TypeName into a Tree without ending up with strings later on.
-        val className = TypeName(plainClassRep.name)
-        val q"val foo: $classType" = q"val foo: $className"
-        classType
+      case plainClassRep: PlainClassRep => plainClassRep.name
       case typeClassRep: TypeClassRep   =>
-        val className = TypeName(typeClassRep.name)
-        val q"val foo: $typedClassType" = q"val foo: ${className}[..${typeClassRep.types.map(classRepAsType(_, c))}]"
-        typedClassType
+        val className = typeClassRep.name
+        val types = typeClassRep.types.map(classRepAsType)
+        s"$className[${types.mkString(",")}]"
     }
 
   }

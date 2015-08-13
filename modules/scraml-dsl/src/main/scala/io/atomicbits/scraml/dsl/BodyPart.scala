@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.support
+package io.atomicbits.scraml.dsl
 
 import java.io.File
 import java.nio.charset.Charset

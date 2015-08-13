@@ -87,7 +87,7 @@ object IdAnalyser {
 
   def isModelObject(schema: JsObject): Boolean = {
 
-    (schema \ "type").asOpt[String].contains("object")
+    (schema \ "type").asOpt[String].exists(_ == "object")
 
   }
 

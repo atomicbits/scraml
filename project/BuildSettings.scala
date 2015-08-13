@@ -27,9 +27,9 @@ trait BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-  val Version = "0.1.1" + snapshotSuffix
+  val Version = "0.2.0" + snapshotSuffix
 
-  val ScalaVersion = "2.11.6"
+  val ScalaVersion = "2.10.5"
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
@@ -38,10 +38,11 @@ trait BuildSettings {
     version := Version,
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
+    crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions := scalacBuildOptions,
     parallelExecution := false,
-    // Sonatype snapshot resolver is needed to fetch raml-java-parser 0.9-SNAPSHOT.
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
+//    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= extraDependencies
   )
 
@@ -58,7 +59,7 @@ trait BuildSettings {
 
   val publishSettings = Seq(
     publishMavenStyle := true,
-    pomIncludeRepository := { _ => false},
+    pomIncludeRepository := { _ => false },
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)

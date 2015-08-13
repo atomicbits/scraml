@@ -19,7 +19,6 @@
 package io.atomicbits.scraml.jsonschemaparser.model
 
 import io.atomicbits.scraml.jsonschemaparser._
-import io.atomicbits.scraml.jsonschemaparser.model.OneOf
 import play.api.libs.json._
 
 import scala.language.postfixOps
