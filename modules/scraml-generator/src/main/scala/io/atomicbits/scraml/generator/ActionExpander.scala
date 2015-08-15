@@ -196,7 +196,7 @@ object ActionExpander {
         val additionalAction =
           if (hasTypedBody) {
             val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep) // TypeName(bodyClassRep.name)
-            val bodyParam = List(s"val body: $typeTypeName")
+            val bodyParam = List(s"body: $typeTypeName") // todo generalize
             List(
               s"""
                   def post(${bodyParam.mkString(",")}) = new PostSegment(
