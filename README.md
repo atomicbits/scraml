@@ -1,9 +1,7 @@
 Scala RAML client generator
 ===========================
 
-This is a Scala client library generator based on RAML definition files. This version supports 
-DSL code generation with automated JSON to case class transformations. Enable code generation with scraml in your project with the  
-scraml-sbt-plugin. Have a look at the scraml-test-scala project for an example of how to do it (look at plugin.sbt and build.sbt). 
+This is a Scala client library generator based on RAML definition files. This version supports DSL code generation with automated JSON to case class transformations. Enable code generation with scraml in your project with the scraml-sbt-plugin. Have a look at the scraml-test-scala project for an example of how to do it (look at plugin.sbt and build.sbt). 
 
 The code contains the following modules:
 
