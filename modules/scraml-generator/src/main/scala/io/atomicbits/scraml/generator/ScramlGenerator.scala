@@ -148,7 +148,7 @@ object ScramlGenerator {
      """.stripMargin
 
     val pathParts: Array[String] = apiPackageName.split('.')
-    val dir = pathParts.foldLeft(new File(""))((file, pathPart) => new File(file, pathPart))
+    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
     val file = new File(dir, s"$apiClassName.scala")
 
     Seq((file, classDefinition))
