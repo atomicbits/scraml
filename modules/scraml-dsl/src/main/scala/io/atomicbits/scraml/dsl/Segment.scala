@@ -133,6 +133,7 @@ class DeleteSegment(validAcceptHeaders: List[String],
 }
 
 
+// The ExecuteSegment is necessary because the RequestBuilder is untyped and cannot hold the typed body.
 class ExecuteSegment[B, R](req: RequestBuilder, body: Option[B]) {
 
   def callToStringResponse()(implicit bodyFormat: Format[B]) = req.callToStringResponse[B](body)

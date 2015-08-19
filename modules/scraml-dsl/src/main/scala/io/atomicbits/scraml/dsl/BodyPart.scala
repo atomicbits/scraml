@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.dsl
 
-import java.io.File
-import java.nio.charset.Charset
+import _root_.java.nio.charset.Charset
+import _root_.java.io.File
 
 /**
  * Created by peter on 1/07/15. 

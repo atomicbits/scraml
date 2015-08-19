@@ -278,7 +278,7 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       XoClient(protocol = "http", host = host, port = port)
         .rest.some.webservice.pathparam("foo")
         .withHeaders("Cookie" -> "mjam")
-        .put(User("John", "Doe", 21)) // >asType >asJson >asString print
+        .put(User("John", "Doe", 21)) // > >asType >asJson >asString print
         .call().asType
 
       Then("we should see the expected response values")

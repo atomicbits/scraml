@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.client
 
-import io.atomicbits.scraml.client.XoClient._
+import XoClient._
 import io.atomicbits.scraml.dsl._
 
 /**
