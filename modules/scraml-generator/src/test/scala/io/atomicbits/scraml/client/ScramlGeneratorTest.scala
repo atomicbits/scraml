@@ -56,7 +56,9 @@ case class XoClient(host: String,
 
   def close() = requestBuilder.client.close()
 
-  def rest = new PlainSegment("rest", requestBuilder) {
+  def rest = new RestResource(requestBuilder)
+
+  def restOld = new PlainSegment("rest", requestBuilder) {
     def some = new PlainSegment("some", requestBuilder) {
       def smart = new PlainSegment("smart", requestBuilder) {
         def webservice = new PlainSegment("webservice", requestBuilder) {
@@ -256,7 +258,7 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       val futureResultGet: Future[User] =
         XoClient(protocol = "http", host = host, port = port)
-          .rest.some.smart.webservice.pathparam("pathparamvalue")
+          .restOld.some.smart.webservice.pathparam("pathparamvalue")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .headers("Accept" -> "application/json")
           .call().asType
@@ -264,13 +266,20 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       val futureResultPut: Future[Address] =
         XoClient(protocol = "http", host = host, port = port)
-          .rest.some.smart.webservice.pathparam("pathparamvalue")
+          .restOld.some.smart.webservice.pathparam("pathparamvalue")
           .put(User("John", "Doe", 21))
           .headers(
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
           .call().asType
+
+      // New approach:
+      XoClient(protocol = "http", host = host, port = port)
+        .rest.some.webservice.pathparam("foo")
+        .withHeaders("Cookie" -> "mjam")
+        .put(User("John", "Doe", 21)) // >asType >asJson >asString print
+        .call().asType
 
       Then("we should see the expected response values")
 
