@@ -17,22 +17,19 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import io.atomicbits.scraml.client.XoClient._
-
-import io.atomicbits.scraml.dsl._
+import io.atomicbits.scraml.client.manual.User
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
-import scala.language.{postfixOps, reflectiveCalls}
 import scala.concurrent._
 import scala.concurrent.duration._
-
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import scala.language.{postfixOps, reflectiveCalls}
 
 /**
  * The client in this test is manually written to understand what kind of code we need to generate to support the DSL.
@@ -44,6 +41,7 @@ case class XoClient(host: String,
                     maxConnections: Int = 5,
                     defaultHeaders: Map[String, String] = Map()) {
 
+  import io.atomicbits.scraml.dsl._
   import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
@@ -56,10 +54,11 @@ case class XoClient(host: String,
 
 object XoClient {
 
-  import play.api.libs.json._
-  import scala.concurrent.Future
   import io.atomicbits.scraml.dsl.Response
+  import play.api.libs.json._
+
   import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.Future
 
   implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
 
@@ -90,8 +89,10 @@ object XoClient {
 }
 
 
-class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
+  import XoClient._
+  
   val port = 8181
   val host = "localhost"
 

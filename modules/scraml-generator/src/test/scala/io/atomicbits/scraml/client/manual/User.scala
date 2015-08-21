@@ -17,15 +17,17 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl.{RequestBuilder, PlainSegment}
+import play.api.libs.json.{Format, Json}
 
 /**
- * Created by peter on 17/08/15. 
+ * Created by peter on 21/08/15. 
  */
-class WebserviceResource(req: RequestBuilder) extends PlainSegment("webservice", req) {
+case class User(firstName: String, lastName: String, age: Int)
 
-  def pathparam(value: String) = new PathparamResource(value, requestBuilder.withAddedPathSegment(value))
+object User {
+
+  implicit val jsonFormatter: Format[User] = Json.format[User]
 
 }

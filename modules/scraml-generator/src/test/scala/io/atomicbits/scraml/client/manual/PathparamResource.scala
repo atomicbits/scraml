@@ -17,8 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
+import io.atomicbits.scraml.client.manual.User
 import io.atomicbits.scraml.dsl._
 import play.api.libs.json.JsValue
 

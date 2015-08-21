@@ -17,15 +17,16 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
+import io.atomicbits.scraml.client.manual.SomeResource
 import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
 
 /**
  * Created by peter on 17/08/15. 
  */
-class SomeResource(req: RequestBuilder) extends PlainSegment("some", req) {
+class RestResource(req: RequestBuilder) extends PlainSegment("rest", req) {
 
-  def webservice = new WebserviceResource(requestBuilder.withAddedPathSegment("webservice"))
+  def some = new SomeResource(requestBuilder.withAddedPathSegment("some"))
 
 }

@@ -17,15 +17,15 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl.{RequestBuilder, PlainSegment}
+import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
 
 /**
  * Created by peter on 17/08/15. 
  */
-class RestResource(req: RequestBuilder) extends PlainSegment("rest", req) {
+class WebserviceResource(req: RequestBuilder) extends PlainSegment("webservice", req) {
 
-  def some = new SomeResource(requestBuilder.withAddedPathSegment("some"))
+  def pathparam(value: String) = new PathparamResource(value, requestBuilder.withAddedPathSegment(value))
 
 }

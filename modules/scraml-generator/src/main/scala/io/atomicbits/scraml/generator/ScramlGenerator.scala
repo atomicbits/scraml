@@ -29,26 +29,16 @@ import org.raml.parser.rule.ValidationResult
 import io.atomicbits.scraml.parser._
 import io.atomicbits.scraml.parser.model._
 
-import scala.util.{Failure, Success, Try}
-
-// What we need is:
-// http://stackoverflow.com/questions/21515325/add-a-compile-time-only-dependency-in-sbt
 
 object ScramlGenerator {
 
-  // Macro annotations must be whitebox. If you declare a macro annotation as blackbox, it will not work.
-  // See: http://docs.scala-lang.org/overviews/macros/annotations.html
+
   def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[(File, String)] = {
 
     // Validate RAML spec
     println(s"Running RAML validation on $ramlApiPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlApiPath)
-//      Try(RamlParser.validateRaml(ramlApiPath)) match {
-//        case Success(validResults) => validResults
-//        case Failure(e: NullPointerException) =>
-//          throw new IllegalArgumentException(s"RAML validation failed, likely because the api path '$ramlApiPath' could not be not found.", e)
-//        case Failure(e) => throw e
-//      }
+
     if (validationResults.nonEmpty) {
       sys.error(
         s"""
@@ -98,8 +88,6 @@ object ScramlGenerator {
          |
          |  import play.api.libs.json._
          |
-         |  import $apiClassName._
-         |
          |  protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, prefix, requestTimeout, maxConnections, defaultHeaders))
          |
          |  def close() = requestBuilder.client.close()
@@ -142,13 +130,13 @@ object ScramlGenerator {
          |      }
          |  }
          |
-         |  ${caseClasses.mkString("\n")}
-         |
          |}
      """.stripMargin
 
     val pathParts: Array[String] = apiPackageName.split('.')
-    val dir = pathParts.foldLeft(new File(""))((file, pathPart) => new File(file, pathPart))
+    // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
+    // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
+    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
     val file = new File(dir, s"$apiClassName.scala")
 
     Seq((file, classDefinition))

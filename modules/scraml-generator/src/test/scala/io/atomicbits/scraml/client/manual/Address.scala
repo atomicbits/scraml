@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.client
+package io.atomicbits.scraml.client.manual
 
-import play.api.libs.json.{Json, Format}
+import play.api.libs.json.{Format, Json}
 
 /**
  * Created by peter on 21/08/15. 
