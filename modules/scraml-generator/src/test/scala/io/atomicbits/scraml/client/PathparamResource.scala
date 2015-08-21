@@ -21,19 +21,20 @@ package io.atomicbits.scraml.client
 
 import XoClient._
 import io.atomicbits.scraml.dsl._
+import play.api.libs.json.JsValue
 
 /**
  * Created by peter on 17/08/15. 
  */
 class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment[String](value, req) {
 
-  def withHeader(headerKey: String, headerValue: String) =
-    new PathparamResource(value, requestBuilder.copy(headers = requestBuilder.headers + (headerKey -> headerValue)))
+  def withHeader(header: (String, String)) =
+    new PathparamResource(value, requestBuilder.withAddedHeaders(header))
 
   def withHeaders(newHeaders: (String, String)*) =
-    new PathparamResource(value, requestBuilder.copy(headers = requestBuilder.headers ++ newHeaders))
+    new PathparamResource(value, requestBuilder.withAddedHeaders(newHeaders: _*))
 
-  def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetSegment(
+  def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new TypeGetSegment[User](
     queryParams = Map(
       "queryparX" -> Option(queryparX).map(HttpParam(_)),
       "queryparY" -> Option(queryparY).map(HttpParam(_)),
@@ -41,52 +42,41 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
     ),
     validAcceptHeaders = List("application/json"),
     req = requestBuilder
-  ) {
+  )
 
-    private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
+  def put(body: String) =
+    new TypePutSegment[String, Address](
+      Some(body),
+      validAcceptHeaders = List("application/json"),
+      validContentTypeHeaders = List("application/json"),
+      req = requestBuilder)
 
-    def call() = executeSegment.callToTypeResponse()
+  def put(body: JsValue) =
+    new TypePutSegment[JsValue, Address](
+      Some(body),
+      validAcceptHeaders = List("application/json"),
+      validContentTypeHeaders = List("application/json"),
+      req = requestBuilder)
 
-  }
+  def put(body: User) =
+    new TypePutSegment[User, Address](
+      Some(body),
+      validAcceptHeaders = List("application/json"),
+      validContentTypeHeaders = List("application/json"),
+      req = requestBuilder)
 
-  def put(body: String) = new PutSegment(
-    validAcceptHeaders = List("application/json"),
-    validContentTypeHeaders = List("application/json"),
-    req = requestBuilder) {
-
-    private val executeSegment = new ExecuteSegment[String, Address](requestBuilder, Some(body))
-
-    def call() = executeSegment.callToTypeResponse()
-
-  }
-
-  def put(body: User) = new PutSegment(
-    validAcceptHeaders = List("application/json"),
-    validContentTypeHeaders = List("application/json"),
-    req = requestBuilder) {
-
-    private val executeSegment = new ExecuteSegment[User, Address](requestBuilder, Some(body))
-
-    def call() = executeSegment.callToTypeResponse()
-
-  }
-
-  def post(formparX: Int, formParY: Double, formParZ: Option[String]) = new PostSegment(
-    formParams = Map(
-      "formparX" -> Option(formparX).map(HttpParam(_)),
-      "formParY" -> Option(formParY).map(HttpParam(_)),
-      "formParZ" -> formParZ.map(HttpParam(_))
-    ),
-    multipartParams = List.empty,
-    validAcceptHeaders = List("application/json"),
-    validContentTypeHeaders = List("application/json"),
-    req = requestBuilder
-  ) {
-
-    private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
-
-    def call() = executeSegment.callToTypeResponse()
-
-  }
+  def post(formparX: Int, formParY: Double, formParZ: Option[String]) =
+    new TypePostSegment(
+      theBody = None,
+      formParams = Map(
+        "formparX" -> Option(formparX).map(HttpParam(_)),
+        "formParY" -> Option(formParY).map(HttpParam(_)),
+        "formParZ" -> formParZ.map(HttpParam(_))
+      ),
+      multipartParams = List.empty,
+      validAcceptHeaders = List("application/json"),
+      validContentTypeHeaders = List("application/json"),
+      req = requestBuilder
+    )
 
 }

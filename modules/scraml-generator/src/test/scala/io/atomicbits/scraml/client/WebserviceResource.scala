@@ -26,6 +26,6 @@ import io.atomicbits.scraml.dsl.{RequestBuilder, PlainSegment}
  */
 class WebserviceResource(req: RequestBuilder) extends PlainSegment("webservice", req) {
 
-  def pathparam(value: String) = new PathparamResource(value, requestBuilder)
+  def pathparam(value: String) = new PathparamResource(value, requestBuilder.withAddedPathSegment(value))
 
 }

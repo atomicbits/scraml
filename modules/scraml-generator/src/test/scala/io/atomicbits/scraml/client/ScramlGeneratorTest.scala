@@ -56,102 +56,7 @@ case class XoClient(host: String,
 
   def close() = requestBuilder.client.close()
 
-  def rest = new RestResource(requestBuilder)
-
-  def restOld = new PlainSegment("rest", requestBuilder) {
-    def some = new PlainSegment("some", requestBuilder) {
-      def smart = new PlainSegment("smart", requestBuilder) {
-        def webservice = new PlainSegment("webservice", requestBuilder) {
-          def pathparam(value: String) = new ParamSegment[String](value, requestBuilder) {
-            def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new GetSegment(
-              queryParams = Map(
-                "queryparX" -> Option(queryparX).map(HttpParam(_)),
-                "queryparY" -> Option(queryparY).map(HttpParam(_)),
-                "queryParZ" -> queryParZ.map(HttpParam(_))
-              ),
-              validAcceptHeaders = List("application/json"),
-              req = requestBuilder
-            ) {
-
-              def headers(headers: (String, String)*) = new HeaderSegment(
-                headers = headers.toMap,
-                req = requestBuilder
-              ) {
-
-                private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
-
-                def call() = executeSegment.callToTypeResponse()
-
-              }
-
-            }
-
-            def put(body: String) = new PutSegment(
-              validAcceptHeaders = List("application/json"),
-              validContentTypeHeaders = List("application/json"),
-              req = requestBuilder) {
-
-              def headers(headers: (String, String)*) = new HeaderSegment(
-                headers = headers.toMap,
-                req = requestBuilder
-              ) {
-
-                private val executeSegment = new ExecuteSegment[String, Address](requestBuilder, Some(body))
-
-                def call() = executeSegment.callToTypeResponse()
-
-              }
-
-            }
-
-            def put(body: User) = new PutSegment(
-              validAcceptHeaders = List("application/json"),
-              validContentTypeHeaders = List("application/json"),
-              req = requestBuilder) {
-
-              def headers(headers: (String, String)*) = new HeaderSegment(
-                headers = headers.toMap,
-                req = requestBuilder
-              ) {
-
-                private val executeSegment = new ExecuteSegment[User, Address](requestBuilder, Some(body))
-
-                def call() = executeSegment.callToTypeResponse()
-
-              }
-
-            }
-
-            def post(formparX: Int, formParY: Double, formParZ: Option[String]) = new PostSegment(
-              formParams = Map(
-                "formparX" -> Option(formparX).map(HttpParam(_)),
-                "formParY" -> Option(formParY).map(HttpParam(_)),
-                "formParZ" -> formParZ.map(HttpParam(_))
-              ),
-              multipartParams = List.empty,
-              validAcceptHeaders = List("application/json"),
-              validContentTypeHeaders = List("application/json"),
-              req = requestBuilder
-            ) {
-
-              def headers(headers: (String, String)*) = new HeaderSegment(
-                headers = headers.toMap,
-                req = requestBuilder
-              ) {
-
-                private val executeSegment = new ExecuteSegment[String, User](requestBuilder, None)
-
-                def call() = executeSegment.callToTypeResponse()
-
-              }
-
-            }
-
-          }
-        }
-      }
-    }
-  }
+  def rest = new RestResource(requestBuilder.withAddedPathSegment("rest"))
 
 }
 
@@ -236,7 +141,7 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       Given("some manually written DSL code and a mock service that listens for client calls")
 
       stubFor(
-        get(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue?queryparX=2.0&queryparY=50&queryParZ=123"))
+        get(urlEqualTo(s"/rest/some/webservice/pathparamvalue?queryparX=2.0&queryparY=50&queryParZ=123"))
           .withHeader("Accept", equalTo("application/json"))
           .willReturn(
             aResponse()
@@ -244,7 +149,7 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
               .withStatus(200)))
 
       stubFor(
-        put(urlEqualTo(s"/rest/some/smart/webservice/pathparamvalue"))
+        put(urlEqualTo(s"/rest/some/webservice/pathparamvalue"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Accept", equalTo("application/json"))
           .withRequestBody(equalTo( """{"firstName":"John","lastName":"Doe","age":21}"""))
@@ -258,28 +163,20 @@ class ScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       val futureResultGet: Future[User] =
         XoClient(protocol = "http", host = host, port = port)
-          .restOld.some.smart.webservice.pathparam("pathparamvalue")
+          .rest.some.webservice.pathparam("pathparamvalue")
+          .withHeader("Accept" -> "application/json")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
-          .headers("Accept" -> "application/json")
           .call().asType
-
 
       val futureResultPut: Future[Address] =
         XoClient(protocol = "http", host = host, port = port)
-          .restOld.some.smart.webservice.pathparam("pathparamvalue")
-          .put(User("John", "Doe", 21))
-          .headers(
+          .rest.some.webservice.pathparam("pathparamvalue")
+          .withHeaders(
             "Content-Type" -> "application/json",
             "Accept" -> "application/json"
           )
+          .put(User("John", "Doe", 21))
           .call().asType
-
-      // New approach:
-      XoClient(protocol = "http", host = host, port = port)
-        .rest.some.webservice.pathparam("foo")
-        .withHeaders("Cookie" -> "mjam")
-        .put(User("John", "Doe", 21)) // > >asType >asJson >asString print
-        .call().asType
 
       Then("we should see the expected response values")
 

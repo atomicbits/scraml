@@ -26,6 +26,6 @@ import io.atomicbits.scraml.dsl.{RequestBuilder, PlainSegment}
  */
 class RestResource(req: RequestBuilder) extends PlainSegment("rest", req) {
 
-  def some = new SomeResource(requestBuilder)
+  def some = new SomeResource(requestBuilder.withAddedPathSegment("some"))
 
 }

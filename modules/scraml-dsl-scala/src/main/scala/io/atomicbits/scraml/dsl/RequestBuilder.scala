@@ -58,4 +58,12 @@ case class RequestBuilder(client: Client,
 
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 
+  def withAddedHeaders(additionalHeaders: (String, String)*): RequestBuilder = {
+    this.copy(headers = this.headers ++ additionalHeaders)
+  }
+
+  def withAddedPathSegment(additionalPathSegment: Any): RequestBuilder = {
+    this.copy(reversePath = additionalPathSegment.toString :: this.reversePath)
+  }
+
 }
