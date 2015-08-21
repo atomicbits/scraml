@@ -44,13 +44,7 @@ case class XoClient(host: String,
                     maxConnections: Int = 5,
                     defaultHeaders: Map[String, String] = Map()) {
 
-
-  import io.atomicbits.scraml.dsl._
   import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
-  import play.api.libs.json._
-
-  import XoClient._
-
 
   val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
 
@@ -90,28 +84,6 @@ object XoClient {
           throw new IllegalArgumentException(message)
         }
       }
-
-  }
-
-  //  implicit def OptionReads[T](implicit fmt: Reads[T]): Reads[Option[T]] = new Reads[Option[T]] {
-  // See: https://www.playframework.com/documentation/2.4.x/Migration24
-  //    def reads(json: JsValue) = JsSuccess(json.asOpt[T])
-  //  }
-
-
-  case class User(firstName: String, lastName: String, age: Int)
-
-  object User {
-
-    implicit val jsonFormatter: Format[User] = Json.format[User]
-
-  }
-
-  case class Address(street: String, city: String, zip: String, number: Int)
-
-  object Address {
-
-    implicit val jsonFormatter: Format[Address] = Json.format[Address]
 
   }
 

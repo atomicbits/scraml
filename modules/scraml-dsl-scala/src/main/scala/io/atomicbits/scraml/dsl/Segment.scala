@@ -47,35 +47,6 @@ class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
 
 }
 
-class HeaderSegment(headers: Map[String, String], req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = {
-
-    if (req.isFormPost && (req.defaultHeaders ++ headers).get("Content-Type").isEmpty) {
-      val headersWithAddedContentType = headers.updated("Content-Type", "application/x-www-form-urlencoded")
-      req.copy(headers = headersWithAddedContentType)
-    } else {
-      req.copy(headers = headers)
-    }
-  }
-
-  assert(
-    req.validAcceptHeaders.isEmpty ||
-      requestBuilder.allHeaders.get("Accept").exists(req.validAcceptHeaders.contains(_)),
-    s"""no valid Accept header is given for this resource:
-       |valid Accept headers are: ${req.validAcceptHeaders.mkString(", ")}
-     """.stripMargin
-  )
-
-  assert(
-    req.validContentTypeHeaders.isEmpty ||
-      requestBuilder.allHeaders.get("Content-Type").exists(req.validContentTypeHeaders.contains(_)),
-    s"""no valid Content-Type header is given for this resource:
-       |valid Content-Type headers are: ${req.validContentTypeHeaders.mkString(", ")}
-     """.stripMargin
-  )
-
-}
 
 sealed trait MethodSegment[B, R] extends Segment {
 
@@ -115,6 +86,7 @@ trait TypeResponseSegment[B, R] {
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = callToTypeResponse()
 
 }
+
 
 abstract class GetSegment[R](queryParams: Map[String, Option[HttpParam]],
                              validAcceptHeaders: List[String],

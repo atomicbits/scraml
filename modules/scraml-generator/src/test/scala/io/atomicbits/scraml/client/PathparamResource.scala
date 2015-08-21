@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.client
 
-import XoClient._
 import io.atomicbits.scraml.dsl._
 import play.api.libs.json.JsValue
 
