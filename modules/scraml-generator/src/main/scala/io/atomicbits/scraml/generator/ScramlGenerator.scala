@@ -22,6 +22,7 @@ package io.atomicbits.scraml.generator
 import java.io.File
 
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
+import io.atomicbits.scraml.generator.model.RichResource
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
@@ -63,7 +64,10 @@ object ScramlGenerator {
     val caseClasses: List[ClassRep] = CaseClassGenerator.generateCaseClasses(schemaLookup)
     println(s"Case classes generated")
 
-    val resources: List[String] = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup))
+    val packageBasePath = ramlApiPath.split(".").toList
+
+    val resources: List[ClassRep] =
+      ResourceClassGenerator.generateResourceClasses(raml.resources.map(RichResource(_, packageBasePath)), schemaLookup)
     println(s"Resources DSL generated")
 
     // ToDo: process enumerations

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.lookup.{ObjectElExt, SchemaLookup}
+import io.atomicbits.scraml.generator.lookup.SchemaLookup
 
 
 /**

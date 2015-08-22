@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator.{ClassAsFieldRep, ClassRep}
+import io.atomicbits.scraml.generator.{CleanNameUtil, ClassAsFieldRep, ClassRep}
 import io.atomicbits.scraml.jsonschemaparser._
 import io.atomicbits.scraml.jsonschemaparser.model.{AllowedAsObjectField, Schema}
 
@@ -56,7 +56,7 @@ object ClassRepAssembler {
     def schemaReferenceToCanonicalName(canonicalMap: CanonicalMap, schemaReference: SchemaClassReference): CanonicalMap = {
 
       val className = schemaReference.fragment.foldLeft(schemaReference.className) { (classNm, fragmentPart) =>
-        s"$classNm${SchemaClassReference.cleanClassName(fragmentPart)}"
+        s"$classNm${CleanNameUtil.cleanClassName(fragmentPart)}"
       }
 
       val classRep = ClassRep(name = className, packageParts = schemaReference.path)
@@ -131,34 +131,11 @@ object SchemaClassReference {
     // fragmentPath = List("definitions", "schema2")
 
     SchemaClassReference(
-      className = cleanFileName(originalFileName),
+      className = CleanNameUtil.cleanClassNameFromFileName(originalFileName),
       path = hostPathReversed ++ relativePath,
       fragment = fragmentPath,
       origin = origin
     )
-  }
-
-
-  def cleanFileName(fileName: String): String = {
-    val withOutExtension = fileName.split('.').filter(_.nonEmpty).head
-    cleanClassName(withOutExtension)
-  }
-
-  def cleanClassName(className: String): String = {
-    // capitalize after special characters and drop those characters along the way
-    val capitalizedAfterDropChars =
-      List('-', '_', '+', ' ').foldLeft(className) { (cleaned, dropChar) =>
-        cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
-      }
-    // capitalize after numbers 0 to 9, but keep the numbers
-    val capitalized =
-      (0 to 9).map(_.toString.head).toList.foldLeft(capitalizedAfterDropChars) { (cleaned, numberChar) =>
-        // Make sure we don't drop the occurrences of numberChar at the end by adding a space and removing it later.
-        val cleanedWorker = s"$cleaned "
-        cleanedWorker.split(numberChar).map(_.capitalize).mkString(numberChar.toString).stripSuffix(" ")
-      }
-    // final cleanup of all strange characters
-    capitalized.replaceAll("[^A-Za-z0-9]", "")
   }
 
 }
