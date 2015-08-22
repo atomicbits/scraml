@@ -34,39 +34,68 @@ import io.atomicbits.scraml.generator.lookup.{ObjectElExt, SchemaLookup}
  */
 object CaseClassGenerator {
 
+
   def generateCaseClasses(schemaLookup: SchemaLookup): List[ClassRep] = {
 
     // Expand all canonical names into their case class definitions.
 
-    schemaLookup.objectMap.keys.toList.flatMap { key =>
-      generateCaseClassWithCompanionObject(
-        schemaLookup.canonicalNames(key).name,
-        schemaLookup.objectMap(key),
-        schemaLookup
-      )
+    schemaLookup.objectMap.keys.toList.map { key =>
+      generateCaseClassWithCompanionObject(schemaLookup.classReps(key), schemaLookup)
     }
 
   }
 
-  def generateCaseClassWithCompanionObject(canonicalName: String,
-                                           objectEl: ObjectElExt,
-                                           schemaLookup: SchemaLookup): List[String] = {
 
-    println(s"Generating case class for: $canonicalName")
+  def generateCaseClassWithCompanionObject(classRep: ClassRep,
+                                           schemaLookup: SchemaLookup): ClassRep = {
 
-    val caseClassFields = objectEl.properties.toList.map(schemaLookup.schemaAsField(_, objectEl.requiredFields))
+    println(s"Generating case class for: ${classRep.classDefinition}")
 
-    List(
+    def collectImports(): Set[String] = {
+
+      val ownPackage = classRep.packageName
+
+      /**
+       * Collect the type imports for the given class rep without recursing into the field types.
+       */
+      def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
+
+        val collectedWithClassRep =
+          if (classRp.packageName != ownPackage) collected + s"import ${classRp.fullyQualifiedName}"
+          else collected
+
+        classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
+
+      }
+
+      val ownTypeImports: Set[String] = collectTypeImports(Set.empty, classRep)
+
+      classRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
+
+    }
+
+    val imports: Set[String] = collectImports()
+
+    val fieldExpressions = classRep.fields.map(_.fieldExpression)
+
+    val caseClassSource =
       s"""
-       case class $canonicalName(${caseClassFields.mkString(",")})
-     """,
-      s"""
-       object $canonicalName {
+        package ${classRep.packageName}
 
-         implicit val jsonFormatter: Format[$canonicalName] = Json.format[$canonicalName]
+        import play.api.libs.json.{Format, Json}
 
-       }
-     """)
+        ${imports.mkString("\n")}
+
+        case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")})
+
+        object ${classRep.name} {
+
+          implicit val jsonFormatter: Format[${classRep.classDefinition}] = Json.format[${classRep.classDefinition}]
+
+        }
+    """
+
+    classRep.copy(content = Some(caseClassSource))
 
   }
 

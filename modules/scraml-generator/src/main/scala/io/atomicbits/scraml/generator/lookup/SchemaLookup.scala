@@ -40,7 +40,7 @@ import scala.annotation.tailrec
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
                         objectMap: Map[AbsoluteId, ObjectElExt] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
-                        canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
+                        classReps: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
   def map(f: SchemaLookup => SchemaLookup): SchemaLookup = f(this)
@@ -69,14 +69,14 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
   def schemaAsClassRep(schema: Schema): ClassRep = {
 
     schema match {
-      case objEl: ObjectEl            => canonicalNames(SchemaUtil.asAbsoluteId(schema.id))
+      case objEl: ObjectEl            => classReps(SchemaUtil.asAbsoluteId(schema.id))
       case arrEl: ArrayEl             => ListClassRep(schemaAsClassRep(arrEl.items))
       case stringEl: StringEl         => StringClassRep
       case numberEl: NumberEl         => DoubleClassRep
       case integerEl: IntegerEl       => LongClassRep
       case booleanEl: BooleanEl       => BooleanClassRep
       case schemaRef: SchemaReference => schemaAsClassRep(lookupSchema(schemaRef.refersTo))
-      case enumEl: EnumEl             => canonicalNames(SchemaUtil.asAbsoluteId(schema.id))
+      case enumEl: EnumEl             => classReps(SchemaUtil.asAbsoluteId(schema.id))
       case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a class representation.")
     }
 
@@ -85,29 +85,5 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
 
   def schemaAsType(schema: Schema): String = schemaAsClassRep(schema).classDefinition
 
-
-  def schemaAsField(property: (String, Schema), requiredFields: List[String]): String = {
-
-    def expandFieldName(fieldName: String, typeName: String, required: Boolean): String = {
-      if (required) {
-        s"$fieldName: $typeName"
-      } else {
-        s"$fieldName: Option[$typeName]"
-      }
-    }
-
-    val (propertyName, schema) = property
-
-    val field =
-      schema match {
-        case objField: AllowedAsObjectField =>
-          val required = requiredFields.contains(propertyName) || objField.required
-          expandFieldName(propertyName, schemaAsType(objField), required)
-        case noObjectField                  =>
-          sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
-      }
-
-    field
-  }
 
 }

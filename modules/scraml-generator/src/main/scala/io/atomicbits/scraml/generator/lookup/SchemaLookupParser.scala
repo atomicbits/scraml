@@ -33,7 +33,7 @@ object SchemaLookupParser {
       .foldLeft(SchemaLookup())(updateLookupTableAndObjectMap)
       .map(updateObjectHierarchy)
       .map(updateTypeDiscriminatorFields)
-      .map(CanonicalNameGenerator.deduceCanonicalNames)
+      .map(ClassRepAssembler.deduceClassReps)
   }
 
 

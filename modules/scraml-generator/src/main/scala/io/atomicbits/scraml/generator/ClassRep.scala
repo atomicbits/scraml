@@ -29,7 +29,8 @@ package io.atomicbits.scraml.generator
  *             E.g. "ClassRep" for this class.
  * @param packageParts The package of this class, separated in its composing parts in ascending order.
  *                     E.g. List("io", "atomicbits", "scraml", "generator") for this class.
- * @param types The generic types of this class representation
+ * @param types The generic types of this class representation.
+ * @param fields The public fields for this class rep (to become a scala case class or java pojo).
  * @param parentClass The class rep of the parent class of this class rep.
  * @param subClasses The class reps of the children of this class rep.
  * @param predef Indicates whether this class representation is a predefined type or not.
@@ -41,6 +42,7 @@ package io.atomicbits.scraml.generator
 case class ClassRep(name: String,
                     packageParts: List[String] = List.empty,
                     types: List[ClassRep] = List.empty,
+                    fields: List[ClassAsFieldRep] = List.empty,
                     parentClass: Option[ClassRep] = None,
                     subClasses: List[ClassRep] = List.empty,
                     predef: Boolean = false,
@@ -57,11 +59,14 @@ case class ClassRep(name: String,
    * "List[List[Address]]"
    *
    */
-  def classDefinition: String =
+  val classDefinition: String =
     if (types.isEmpty) name
     else s"$name[${types.map(_.classDefinition).mkString(",")}]"
 
-  def packageName: String = packageParts.mkString(".")
+
+  val packageName: String = packageParts.mkString(".")
+
+  val fullyQualifiedName: String = s"$packageName.$name"
 
 }
 
@@ -81,5 +86,13 @@ object ListClassRep {
   def apply(listType: ClassRep): ClassRep = {
     ClassRep(name = "List", types = List(listType), predef = true)
   }
+
+}
+
+case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Boolean) {
+
+  val fieldExpression: String =
+    if (required) s"$fieldName: ${classRep.classDefinition}"
+    else s"$fieldName: Option[${classRep.classDefinition}]"
 
 }

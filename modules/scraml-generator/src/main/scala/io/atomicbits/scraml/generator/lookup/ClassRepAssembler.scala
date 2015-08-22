@@ -19,29 +19,33 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator.ClassRep
+import io.atomicbits.scraml.generator.{ClassAsFieldRep, ClassRep}
 import io.atomicbits.scraml.jsonschemaparser._
+import io.atomicbits.scraml.jsonschemaparser.model.{AllowedAsObjectField, Schema}
 
 /**
 *  Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
 */
-object CanonicalNameGenerator {
+object ClassRepAssembler {
 
   type CanonicalMap = Map[AbsoluteId, ClassRep]
 
-  def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val canonicalMap: CanonicalMap = deduceCanonicalNamesHelper(schemaLookup.objectMap.keys.toList)
+  def deduceClassReps(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    schemaLookup.copy(canonicalNames = canonicalMap)
+    val canonicalMap: CanonicalMap = deduceCanonicalNames(schemaLookup.objectMap.keys.toList)
+
+    val canonicalMapWithFields: CanonicalMap = addFields(canonicalMap, schemaLookup)
+
+    schemaLookup.copy(classReps = canonicalMapWithFields)
   }
-  
+
   /**
    *
    * @param ids: The absolute IDs for which to generate class representations.
    * @return A map containing the class representation for each absolute ID.
    */
-  def deduceCanonicalNamesHelper(ids: List[AbsoluteId]): CanonicalMap = {
+  def deduceCanonicalNames(ids: List[AbsoluteId]): CanonicalMap = {
 
     val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
 
@@ -66,6 +70,36 @@ object CanonicalNameGenerator {
     val canonicalMap: CanonicalMap = Map.empty
 
     packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
+  }
+
+  def addFields(canonicalMap: CanonicalMap, schemaLookup: SchemaLookup): CanonicalMap = {
+
+    def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassAsFieldRep = {
+
+      val (propertyName, schema) = property
+
+      schema match {
+        case objField: AllowedAsObjectField =>
+          val required = requiredFields.contains(propertyName) || objField.required
+          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(objField), required)
+        case noObjectField                  =>
+          sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
+      }
+
+    }
+
+    canonicalMap map { idAndClassRep =>
+      val (id, classRep) = idAndClassRep
+
+      val objectEl = schemaLookup.objectMap(id)
+
+      val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
+
+      val classRepWithFields = classRep.copy(fields = fields)
+
+      (id, classRepWithFields)
+    }
+
   }
 
 }
