@@ -19,96 +19,53 @@
 
 package io.atomicbits.scraml.generator.lookup
 
+import io.atomicbits.scraml.generator.ClassRep
 import io.atomicbits.scraml.jsonschemaparser._
 
 /**
- * Created by peter on 5/07/15. 
- */
-/**
- * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
- */
+*  Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
+*/
 object CanonicalNameGenerator {
 
-  /**
-   * Deduce the canonical names from the schema ids. Currently, only PlainClassReps are created. Later, when supporting typed
-   * classes, we'll have to add a second run that upgrades the PlainClassReps to TypeClassReps where necessary.
-   *
-   * @param schemaLookup The schema lookup.
-   * @return The updated schema lookup.
-   */
+  type CanonicalMap = Map[AbsoluteId, ClassRep]
+
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val schemaPaths: List[SchemaPath] =
-      schemaLookup.objectMap.toList.collect {
-        case (absId, _) => SchemaPath(absId)
-      } ++ schemaLookup.enumMap.toList.collect {
-        case (absId, _) => SchemaPath(absId)
+    val canonicalMap: CanonicalMap = deduceCanonicalNamesHelper(schemaLookup.objectMap.keys.toList)
+
+    schemaLookup.copy(canonicalNames = canonicalMap)
+  }
+  
+  /**
+   *
+   * @param ids: The absolute IDs for which to generate class representations.
+   * @return A map containing the class representation for each absolute ID.
+   */
+  def deduceCanonicalNamesHelper(ids: List[AbsoluteId]): CanonicalMap = {
+
+    val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
+
+    // Group all schema references by their paths. These paths are going to define the package structure,
+    // so each class name will need to be unique within its package.
+    val packageGroups: List[List[SchemaClassReference]] = schemaPaths.groupBy(_.path).values.toList
+
+    def schemaReferenceToCanonicalName(canonicalMap: CanonicalMap, schemaReference: SchemaClassReference): CanonicalMap = {
+
+      val className = schemaReference.fragment.foldLeft(schemaReference.className) { (classNm, fragmentPart) =>
+        s"$classNm${SchemaClassReference.cleanClassName(fragmentPart)}"
       }
 
-    val (groupedByEmptyFragment, groupedByNonEmptyFragment) = schemaPaths.partition(_.reverseFragment.isEmpty)
+      val classRep = ClassRep(name = className, packageParts = schemaReference.path)
 
-    val schemaPathsWithoutFragment = groupedByEmptyFragment.sortBy(_.reversePath.length)
-    val schemaPathsWithFragment = groupedByNonEmptyFragment.sortBy(_.reverseFragment.length)
+      canonicalMap + (schemaReference.origin -> classRep)
+    }
 
-    // First find canonical names for schema paths without their fragments.
-
-    // Map from schema origins to their canonical names
-    type CanonicalMap = Map[AbsoluteId, ClassRep]
+    def packageGroupToCanonicalNames(canonicalMap: CanonicalMap, packageGroup: List[SchemaClassReference]): CanonicalMap =
+      packageGroup.foldLeft(canonicalMap)(schemaReferenceToCanonicalName)
 
     val canonicalMap: CanonicalMap = Map.empty
 
-    val canonicalBasePaths =
-      schemaPathsWithoutFragment.foldLeft(canonicalMap) { (canMap, schemaPath) =>
-
-        val taken = canMap.values.toList
-
-        def deduce(reversePath: List[String], suffix: String = ""): CanonicalMap = {
-          reversePath match {
-            case p :: ps =>
-              val canonicalProposal = s"${p.capitalize}$suffix"
-              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> PlainClassRep(canonicalProposal))
-              else deduce(ps, canonicalProposal)
-            case Nil     =>
-              throw new IllegalArgumentException(s"Cannot deduce a canonical name for schema ${schemaPath.origin}")
-          }
-        }
-
-        deduce(schemaPath.reversePath)
-      }
-
-    // Then deduce the canonical names for the schema paths with fragments, using their base path canonical
-    // name when necessary.
-
-    val canonicals =
-      schemaPathsWithFragment.foldLeft(canonicalBasePaths) { (canMap, schemaPath) =>
-
-        val taken = canMap.values.toList
-        val basePath = schemaPath.origin.rootPart
-        val canonicalBase =
-          canMap.getOrElse(
-            basePath, // key to get
-            throw new IllegalArgumentException(s"Base path $basePath not found for ${schemaPath.origin}.") // exception if key not present
-          )
-
-        def deduce(reverseFragment: List[String], suffix: String = ""): CanonicalMap = {
-          reverseFragment match {
-            case f :: fs =>
-              val canonicalProposal = PlainClassRep(s"${f.capitalize}$suffix")
-              val canonicalAlternativeProposal = PlainClassRep(s"${canonicalBase.name}${canonicalProposal.name}")
-              if (!taken.contains(canonicalProposal)) canMap + (schemaPath.origin -> canonicalProposal)
-              else if (!taken.contains(canonicalAlternativeProposal))
-                canMap + (schemaPath.origin -> canonicalAlternativeProposal)
-              else deduce(fs, canonicalProposal.name)
-            case Nil     =>
-              throw new IllegalArgumentException(s"Cannot deduce a canonical name for schema ${schemaPath.origin}")
-          }
-        }
-
-        deduce(schemaPath.reverseFragment)
-
-      }
-
-    schemaLookup.copy(canonicalNames = canonicals)
+    packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
   }
 
 }
@@ -116,38 +73,47 @@ object CanonicalNameGenerator {
 /**
  * Helper case class for the canonical name generator.
  *
- * @param reversePath The relative path of the schema ID reversed.
- * @param reverseFragment The fragment path of the schema ID reversed.
+ * @param className The file name in the schema path that is cleaned up to be used as a class name.
+ * @param path The relative path of the schema ID, without the file name itself.
+ * @param fragment The fragment path of the schema ID.
  * @param origin The original schema ID.
  */
-case class SchemaPath(reversePath: List[String], reverseFragment: List[String], origin: AbsoluteId)
+case class SchemaClassReference(className: String, path: List[String], fragment: List[String], origin: AbsoluteId)
 
-object SchemaPath {
+object SchemaClassReference {
 
-  def apply(origin: AbsoluteId): SchemaPath = {
+  def apply(origin: AbsoluteId): SchemaClassReference = {
 
-    val reverseRelativePath = origin.rootPath.reverse
-    val reverseFragmentPath = origin.fragments.reverse
+    val hostPathReversed = origin.hostPath.reverse
+    val relativePath = origin.rootPath.dropRight(1)
+    val originalFileName = origin.rootPath.takeRight(1).head
+    val fragmentPath = origin.fragments
 
-    // E.g. when the origin is: http://my.site/schemas/myschema.json#/definitions/schema2
+    // E.g. when the origin is: http://atomicbits.io/api/schemas/myschema.json#/definitions/schema2
     // then:
-    // reverseRelativePath = List("myschema.json", "schemas")
-    // reverseFragmentPath = List("schema2", "definitions")
+    // hostPathReversed = List("io", "atomicbits")
+    // relativePath = List("api", "schemas")
+    // originalFileName = "myschema.json"
+    // fragmentPath = List("definitions", "schema2")
 
-    // cleanup of the head of reverseRelativePath
-    val cleanReverseRelativePath = reverseRelativePath match {
-      case fileName :: path => cleanFileName(fileName) :: path
-      case Nil              => sys.error("A relative path must have a path and file name.")
-    }
-
-    SchemaPath(reversePath = cleanReverseRelativePath, reverseFragment = reverseFragmentPath, origin = origin)
+    SchemaClassReference(
+      className = cleanFileName(originalFileName),
+      path = hostPathReversed ++ relativePath,
+      fragment = fragmentPath,
+      origin = origin
+    )
   }
 
-  private def cleanFileName(fileName: String): String = {
+
+  def cleanFileName(fileName: String): String = {
     val withOutExtension = fileName.split('.').filter(_.nonEmpty).head
+    cleanClassName(withOutExtension)
+  }
+
+  def cleanClassName(className: String): String = {
     // capitalize after special characters and drop those characters along the way
     val capitalizedAfterDropChars =
-      List('-', '_', '+', ' ').foldLeft(withOutExtension) { (cleaned, dropChar) =>
+      List('-', '_', '+', ' ').foldLeft(className) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
       }
     // capitalize after numbers 0 to 9, but keep the numbers

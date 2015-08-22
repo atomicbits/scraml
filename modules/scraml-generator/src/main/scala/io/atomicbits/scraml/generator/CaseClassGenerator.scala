@@ -34,7 +34,7 @@ import io.atomicbits.scraml.generator.lookup.{ObjectElExt, SchemaLookup}
  */
 object CaseClassGenerator {
 
-  def generateCaseClasses(schemaLookup: SchemaLookup): List[String] = {
+  def generateCaseClasses(schemaLookup: SchemaLookup): List[ClassRep] = {
 
     // Expand all canonical names into their case class definitions.
 
@@ -54,7 +54,7 @@ object CaseClassGenerator {
 
     println(s"Generating case class for: $canonicalName")
 
-    val caseClassFields = objectEl.properties.toList.map(TypeGenerator.schemaAsField(_, objectEl.requiredFields, schemaLookup))
+    val caseClassFields = objectEl.properties.toList.map(schemaLookup.schemaAsField(_, objectEl.requiredFields))
 
     List(
       s"""

@@ -23,7 +23,6 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import io.atomicbits.scraml.client.manual.User
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
@@ -92,7 +91,7 @@ object XoClient {
 class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   import XoClient._
-  
+
   val port = 8181
   val host = "localhost"
 

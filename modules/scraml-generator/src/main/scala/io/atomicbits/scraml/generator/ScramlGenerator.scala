@@ -60,7 +60,7 @@ object ScramlGenerator {
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
 
-    val caseClasses: List[String] = CaseClassGenerator.generateCaseClasses(schemaLookup)
+    val caseClasses: List[ClassRep] = CaseClassGenerator.generateCaseClasses(schemaLookup)
     println(s"Case classes generated")
 
     val resources: List[String] = raml.resources.map(resource => ResourceExpander.expandResource(resource, schemaLookup))

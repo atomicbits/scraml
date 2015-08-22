@@ -20,7 +20,6 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
-import io.atomicbits.scraml.jsonschemaparser.{ClassRep, PlainClassRep}
 import io.atomicbits.scraml.parser.model._
 
 /**
@@ -36,7 +35,7 @@ object ActionExpander {
     val bodyMimeType = action.body.values.toList.headOption
     val hasBody = bodyMimeType.isDefined
     val maybeBodySchema = bodyMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.lookupSchema)
-    val maybeBodyClassRep = maybeBodySchema.flatMap(TypeGenerator.schemaAsClassRep(_, schemaLookup))
+    val maybeBodyClassRep = maybeBodySchema.map(schemaLookup.schemaAsClassRep)
 
     val formParameters: Map[String, List[Parameter]] = bodyMimeType.map(_.formParameters).getOrElse(Map.empty)
     val isMultipartFormUpload = bodyMimeType.map(_.mimeType).exists(_ == "multipart/form-data")
@@ -48,16 +47,16 @@ object ActionExpander {
     val hasResponse = responseMimeType.isDefined
     val hasJsonResponse = responseMimeType.exists(_.mimeType.toLowerCase.contains("json"))
     val maybeResponseSchema = responseMimeType.flatMap(_.schema).flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.lookupSchema)
-    val maybeResponseClassRep = maybeResponseSchema.flatMap(TypeGenerator.schemaAsClassRep(_, schemaLookup))
+    val maybeResponseClassRep = maybeResponseSchema.map(schemaLookup.schemaAsClassRep)
 
     val (hasTypedBody, bodyClassRep) = maybeBodyClassRep match {
       case Some(bdClass) => (true, bdClass)
-      case None          => (false, PlainClassRep("String"))
+      case None          => (false, StringClassRep)
     }
 
     val (hasTypedResponse, responseClassRep) = maybeResponseClassRep match {
       case Some(rsClass) => (true, rsClass)
-      case None          => (false, PlainClassRep("String"))
+      case None          => (false, StringClassRep)
     }
 
 
@@ -125,7 +124,7 @@ object ActionExpander {
 
       val additionalAction =
         if (hasTypedBody) {
-          val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep)
+          val typeTypeName = bodyClassRep.classDefinition
           val bodyParam = List(s"body: $typeTypeName")
           List(
             s"""
@@ -195,7 +194,7 @@ object ActionExpander {
 
         val additionalAction =
           if (hasTypedBody) {
-            val typeTypeName = TypeGenerator.classRepAsType(bodyClassRep) // TypeName(bodyClassRep.name)
+            val typeTypeName = bodyClassRep.classDefinition
             val bodyParam = List(s"body: $typeTypeName") // todo generalize
             List(
               s"""
@@ -306,8 +305,8 @@ object ActionExpander {
     }
 
     def expandExecution(hasBody: Boolean, bodyClassRep: ClassRep): List[String] = {
-      val bodyTypeName = TypeGenerator.classRepAsType(bodyClassRep)
-      val responseTypeName = TypeGenerator.classRepAsType(responseClassRep)
+      val bodyTypeName = bodyClassRep.classDefinition
+      val responseTypeName = responseClassRep.classDefinition
       val executeSegment =
         if (hasBody) {
           List(s"""
