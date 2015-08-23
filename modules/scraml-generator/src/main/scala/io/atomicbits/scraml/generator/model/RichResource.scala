@@ -28,14 +28,18 @@ import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 case class RichResource(urlSegment: String,
                         urlParameter: Option[Parameter] = None,
                         packageParts: List[String],
+                        resourceClassName: String,
                         actions: List[RichAction] = List.empty,
                         resources: List[RichResource] = List.empty)
+
 
 object RichResource {
 
   def apply(resource: Resource, packageBasePath: List[String]): RichResource = {
 
     def createRichResource(resource: Resource, actualPackagePath: List[String]): RichResource = {
+
+      val resourceClassName = s"${CleanNameUtil.cleanClassName(resource.urlSegment)}Resource"
 
       val nextPackagePart = CleanNameUtil.cleanPackageName(resource.urlSegment)
 
@@ -47,6 +51,7 @@ object RichResource {
         urlSegment = resource.urlSegment,
         urlParameter = resource.urlParameter,
         packageParts = actualPackagePath,
+        resourceClassName = resourceClassName,
         actions = richActions,
         resources = richChildResources
       )

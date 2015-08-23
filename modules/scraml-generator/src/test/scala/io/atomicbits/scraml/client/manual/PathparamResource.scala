@@ -24,6 +24,7 @@ import io.atomicbits.scraml.client.manual.Address
 import io.atomicbits.scraml.dsl._
 import play.api.libs.json.JsValue
 
+
 /**
  * Created by peter on 17/08/15. 
  */

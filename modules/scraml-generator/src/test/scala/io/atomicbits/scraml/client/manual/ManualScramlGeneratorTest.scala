@@ -43,7 +43,7 @@ case class XoClient(host: String,
   import io.atomicbits.scraml.dsl._
   import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
 
-  val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
+  private val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
 
   def close() = requestBuilder.client.close()
 
