@@ -329,7 +329,7 @@ object ActionExpander {
       action.responses.values.toList.flatMap(_.headers).nonEmpty
     }
 
-    def validAcceptHeaders(): List[String] = {
+    def validAcceptHeaders(): List[String] = {        // response.body.keys ?
       action.responses.values.toList.flatMap(response => response.headers.keys).map(quoteString)
     }
 

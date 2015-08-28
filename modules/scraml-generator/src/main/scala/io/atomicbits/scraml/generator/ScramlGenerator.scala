@@ -46,8 +46,8 @@ object ScramlGenerator {
            |Invalid RAML specification:
            |
            |${RamlParser.printValidations(validationResults)}
-           |
-           |""".stripMargin
+            |
+            |""".stripMargin
       )
     }
     println("RAML model is valid")
@@ -67,7 +67,11 @@ object ScramlGenerator {
     val packageBasePath = ramlApiPath.split(".").toList
 
     val resources: List[ClassRep] =
-      ResourceClassGenerator.generateResourceClasses(raml.resources.map(RichResource(_, packageBasePath)), schemaLookup)
+      ResourceClassGenerator.generateResourceClasses(
+        apiClassName,
+        apiPackageName.split(".").toList,
+        raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
+      )
     println(s"Resources DSL generated")
 
     // ToDo: process enumerations
@@ -78,63 +82,63 @@ object ScramlGenerator {
     val classDefinition =
       s"""
          |package $apiPackageName
-         |
-         |case class $apiClassName(host: String,
-         |                         port: Int = 80,
-         |                         protocol: String = "http",
-         |                         prefix: Option[String] = None,
-         |                         requestTimeout: Int = 5000,
-         |                         maxConnections: Int = 2,
-         |                         defaultHeaders: Map[String, String] = Map.empty) {
-         |
-         |  import io.atomicbits.scraml.dsl._
-         |  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
-         |
-         |  import play.api.libs.json._
-         |
-         |  protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, prefix, requestTimeout, maxConnections, defaultHeaders))
-         |
-         |  def close() = requestBuilder.client.close()
-         |
-         |  ${resources.mkString("\n")}
-         |
-         |}
-         |
-         |object $apiClassName {
-         |
-         |  import play.api.libs.json._
-         |  import scala.concurrent.Future
-         |  import io.atomicbits.scraml.dsl.Response
-         |  import scala.concurrent.ExecutionContext.Implicits.global
-         |
-         |  implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
-         |
-         |    def asString: Future[String] = futureResponse.map(_.stringBody)
-         |
-         |    def asJson: Future[JsValue] =
-         |      futureResponse.map { resp =>
-         |        resp.jsonBody.getOrElse {
-         |          val message =
-         |            if (resp.status != 200)
-         |              "The response has no JSON body because the request was not successful (status = " + resp.status + ")."
-         |            else "The response has no JSON body despite status 200."
-         |          throw new IllegalArgumentException(message)
-         |        }
-         |      }
-         |
-         |    def asType: Future[T] =
-         |      futureResponse.map { resp =>
-         |        resp.body.getOrElse {
-         |          val message =
-         |            if (resp.status != 200)
-         |              "The response has no typed body because the request was not successful (status = " + resp.status + ")."
-         |            else "The response has no typed body despite status 200."
-         |          throw new IllegalArgumentException(message)
-         |        }
-         |      }
-         |  }
-         |
-         |}
+          |
+          |case class $apiClassName(host: String,
+                                     |                        port: Int = 80,
+                                     |                        protocol: String = "http",
+                                     |                        prefix: Option[String] = None,
+                                     |                        requestTimeout: Int = 5000,
+                                     |                        maxConnections: Int = 2,
+                                     |                        defaultHeaders: Map[String, String] = Map.empty) {
+                                     |
+                                     | import io.atomicbits.scraml.dsl._
+                                     | import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
+                                     |
+                                     | import play.api.libs.json._
+                                     |
+                                     | protected val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, prefix, requestTimeout, maxConnections, defaultHeaders))
+                                     |
+                                     | def close() = requestBuilder.client.close()
+                                     |
+                                     | ${resources.mkString("\n")}
+          |
+          |}
+          |
+          |object $apiClassName {
+                                 |
+                                 | import play.api.libs.json._
+                                 | import scala.concurrent.Future
+                                 | import io.atomicbits.scraml.dsl.Response
+                                 | import scala.concurrent.ExecutionContext.Implicits.global
+                                 |
+                                 | implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
+                                 |
+                                 |   def asString: Future[String] = futureResponse.map(_.stringBody)
+                                 |
+                                 |   def asJson: Future[JsValue] =
+                                 |     futureResponse.map { resp =>
+                                 |       resp.jsonBody.getOrElse {
+                                 |         val message =
+                                 |           if (resp.status != 200)
+                                 |             "The response has no JSON body because the request was not successful (status = " + resp.status + ")."
+                                 |           else "The response has no JSON body despite status 200."
+                                 |         throw new IllegalArgumentException(message)
+                                 |       }
+                                 |     }
+                                 |
+                                 |   def asType: Future[T] =
+                                 |     futureResponse.map { resp =>
+                                 |       resp.body.getOrElse {
+                                 |         val message =
+                                 |           if (resp.status != 200)
+                                 |             "The response has no typed body because the request was not successful (status = " + resp.status + ")."
+                                 |           else "The response has no typed body despite status 200."
+                                 |         throw new IllegalArgumentException(message)
+                                 |       }
+                                 |     }
+                                 | }
+                                 |
+                                 |}
      """.stripMargin
 
     val pathParts: Array[String] = apiPackageName.split('.')

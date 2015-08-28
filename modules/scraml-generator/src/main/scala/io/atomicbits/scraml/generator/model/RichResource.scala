@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.CleanNameUtil
+import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 
 /**
@@ -35,7 +36,7 @@ case class RichResource(urlSegment: String,
 
 object RichResource {
 
-  def apply(resource: Resource, packageBasePath: List[String]): RichResource = {
+  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: SchemaLookup): RichResource = {
 
     def createRichResource(resource: Resource, actualPackagePath: List[String]): RichResource = {
 
@@ -45,7 +46,7 @@ object RichResource {
 
       val richChildResources = resource.resources.map(createRichResource(_, actualPackagePath :+ nextPackagePart))
 
-      val richActions = resource.actions.map(RichAction(_))
+      val richActions = resource.actions.map(RichAction(_, schemaLookup))
 
       RichResource(
         urlSegment = resource.urlSegment,

@@ -25,6 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import io.atomicbits.scraml.dsl.client.ClientConfig
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -36,14 +37,14 @@ import scala.language.{postfixOps, reflectiveCalls}
 case class XoClient(host: String,
                     port: Int = 80,
                     protocol: String = "http",
-                    requestTimeout: Int = 5000,
-                    maxConnections: Int = 5,
+                    prefix: Option[String] = None,
+                    config: ClientConfig = ClientConfig(),
                     defaultHeaders: Map[String, String] = Map()) {
 
   import io.atomicbits.scraml.dsl._
-  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClient
+  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClientSupport
 
-  private val requestBuilder = RequestBuilder(new RxHttpClient(protocol, host, port, None, requestTimeout, maxConnections, Map.empty))
+  private val requestBuilder = RequestBuilder(new RxHttpClientSupport(protocol, host, port, prefix, config, defaultHeaders))
 
   def close() = requestBuilder.client.close()
 

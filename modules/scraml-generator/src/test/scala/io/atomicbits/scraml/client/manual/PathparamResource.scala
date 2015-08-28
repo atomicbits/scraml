@@ -51,14 +51,16 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       Some(body),
       validAcceptHeaders = List("application/json"),
       validContentTypeHeaders = List("application/json"),
-      req = requestBuilder)
+      req = requestBuilder
+    )
 
   def put(body: JsValue) =
     new TypePutSegment[JsValue, Address](
       Some(body),
       validAcceptHeaders = List("application/json"),
       validContentTypeHeaders = List("application/json"),
-      req = requestBuilder)
+      req = requestBuilder
+    )
 
   def put(body: User) =
     new TypePutSegment[User, Address](

@@ -19,9 +19,10 @@
 
 package io.atomicbits.scraml.dsl.client.rxhttpclient
 
-import be.wegenenverkeer.rxhttp.{HttpClientError, HttpServerError}
+import be.wegenenverkeer.rxhttp.{RxHttpClient, HttpClientError, HttpServerError}
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
 import io.atomicbits.scraml.dsl._
+import io.atomicbits.scraml.dsl.client.ClientConfig
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,26 +36,28 @@ import scala.collection.JavaConverters._
  * The only supported client at this time is the RxHttpClient.
  *
  */
-case class RxHttpClient(protocol: String,
-                        host: String,
-                        port: Int,
-                        prefix: Option[String],
-                        requestTimeout: Int,
-                        maxConnections: Int,
-                        defaultHeaders: Map[String, String]) extends Client {
+case class RxHttpClientSupport(protocol: String,
+                               host: String,
+                               port: Int,
+                               prefix: Option[String],
+                               config: ClientConfig,
+                               defaultHeaders: Map[String, String]) extends Client {
 
   val cleanPrefix = prefix.map { pref =>
     val strippedPref = pref.stripPrefix("/").stripSuffix("/")
     s"/$strippedPref"
   } getOrElse ""
 
-  private lazy val client =
-    new be.wegenenverkeer.rxhttp.RxHttpClient.Builder()
-      .setRequestTimeout(requestTimeout)
-      .setMaxConnections(maxConnections)
-      .setBaseUrl(s"$protocol://$host:$port$cleanPrefix")
-      .build.asScala
+  private lazy val client = {
+    val builder = new RxHttpClient.Builder().setBaseUrl(s"$protocol://$host:$port$cleanPrefix")
+    applyConfiguration(builder).build.asScala
+  }
 
+  private def applyConfiguration(builder: RxHttpClient.Builder): RxHttpClient.Builder = {
+    // todo: add more timeouts & other configuration parameters from the ClientConfig
+    config.requestTimeout.map(requestTimeout => builder.setReadTimeout(requestTimeout)).getOrElse(builder)
+    config.maxConnections.map(maxConnections => builder.setMaxConnections(maxConnections)).getOrElse(builder)
+  }
 
   def callTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])
                           (implicit bodyFormat: Format[B]): Future[Response[String]] = {
