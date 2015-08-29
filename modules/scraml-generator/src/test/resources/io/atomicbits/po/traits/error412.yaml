@@ -1,0 +1,7 @@
+displayName: error412
+responses:
+  412:
+    description: PreCondition Failed - Er zijn parameters die niet voldoen aan de vormvereisten.
+    body:
+      application/vnd.awv.po-v3.0+json:
+        schema: !include ../schemas/error.schema

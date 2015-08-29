@@ -68,14 +68,14 @@ case class RootId(id: String) extends AbsoluteId {
 
   val rootPath: List[String] = {
     val withoutProtocol = id.split("://").takeRight(1).head
-    val withoutHost = withoutProtocol.split("/").drop(1).toList
+    val withoutHost = withoutProtocol.split('/').drop(1).toList
     withoutHost
   }
 
   val hostPath: List[String] = {
     val withoutProtocol = id.split("://").takeRight(1).head
-    val host = withoutProtocol.split("/").take(1).head
-    host.split(".").toList
+    val host = withoutProtocol.split('/').take(1).head
+    host.split('.').toList
   }
 
 }
@@ -117,9 +117,9 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
 
   val rootPart: RootId = root
 
-  val rootPath = rootPart.rootPath
+  val rootPath = root.rootPath
 
-  val hostPath = rootPart.hostPath
+  val hostPath = root.hostPath
 
 }
 

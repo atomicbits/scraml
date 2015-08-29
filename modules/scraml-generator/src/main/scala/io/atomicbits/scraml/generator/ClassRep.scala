@@ -58,14 +58,14 @@ trait ClassRep {
    * "List[List[Address]]"
    *
    */
-  val classDefinition: String =
+  def classDefinition: String =
     if (types.isEmpty) name
     else s"$name[${types.map(_.classDefinition).mkString(",")}]"
 
 
-  val packageName: String = packageParts.mkString(".")
+  def packageName: String = packageParts.mkString(".")
 
-  val fullyQualifiedName: String = s"$packageName.$name"
+  def fullyQualifiedName: String = s"$packageName.$name"
 
 }
 
@@ -177,7 +177,7 @@ case class CustomClassRep(name: String,
 
 case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Boolean) {
 
-  val fieldExpression: String =
+  def fieldExpression: String =
     if (required) s"$fieldName: ${classRep.classDefinition}"
     else s"$fieldName: Option[${classRep.classDefinition}]"
 

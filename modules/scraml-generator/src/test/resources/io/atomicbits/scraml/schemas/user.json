@@ -1,8 +1,21 @@
 {
   "$schema": "http://json-schema.org/draft-03/schema",
-  "id": "http://atomicbits.io/schema/user-alternative.json#",
+  "id": "http://atomicbits.io/schema/user.json#",
   "type": "object",
+  "javaType": "",
   "description": "A user object.",
+  "definitions": {
+    "address": {
+      "id": "#/definitions/address",
+      "type": "object",
+      "properties": {
+        "streetAddress": { "type": "string" },
+        "city":          { "type": "string" },
+        "state":         { "type": "string" }
+      },
+      "required": ["streetAddress", "city", "state"]
+    }
+  },
   "properties": {
     "id": {
       "required": true,
@@ -25,12 +38,7 @@
       "$ref": "http://atomicbits.io/schema/link.json#"
     },
     "address": {
-      "type": "object",
-      "properties": {
-        "streetAddress": { "type": "string" },
-        "city":          { "type": "string" }
-      },
-      "required": true
+      "$ref": "#/definitions/address"
     }
   }
 }

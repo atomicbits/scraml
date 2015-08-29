@@ -64,12 +64,12 @@ object ScramlGenerator {
     val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(schemaLookup)
     println(s"Case classes generated")
 
-    val packageBasePath = ramlApiPath.split(".").toList
+    val packageBasePath = apiPackageName.split('.').toList
 
     val resources: Seq[ClassRep] =
       ResourceClassGenerator.generateResourceClasses(
         apiClassName,
-        apiPackageName.split(".").toList,
+        packageBasePath,
         raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
       )
     println(s"Resources DSL generated")

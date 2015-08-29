@@ -35,7 +35,9 @@ object ClassRepAssembler {
 
     val canonicalMap: CanonicalMap = deduceCanonicalNames(schemaLookup.objectMap.keys.toList)
 
-    val canonicalMapWithFields: CanonicalMap = addFields(canonicalMap, schemaLookup)
+    val intermediarySchemaLookup = schemaLookup.copy(classReps = canonicalMap)
+
+    val canonicalMapWithFields: CanonicalMap = addFields(canonicalMap, intermediarySchemaLookup)
 
     schemaLookup.copy(classReps = canonicalMapWithFields)
   }
