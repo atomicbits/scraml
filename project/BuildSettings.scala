@@ -38,11 +38,11 @@ trait BuildSettings {
     version := Version,
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
-    crossScalaVersions := Seq("2.10.5", "2.11.6"),
+    // crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions := scalacBuildOptions,
     parallelExecution := false,
     // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
-//    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    // resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= extraDependencies
   )
 
