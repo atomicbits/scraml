@@ -26,38 +26,7 @@ import io.atomicbits.scraml.parser.model._
  */
 trait ActionParameterSupport {
 
-  def expandParameterAsMethodParameter(qParam: (String, Parameter)): String = {
-    val (queryParameterName, parameter) = qParam
 
-    val nameTermName = queryParameterName
-    val typeTypeName = parameter.parameterType match {
-      case StringType  => "String"
-      case IntegerType => "Long"
-      case NumberType  => "Double"
-      case BooleanType => "Boolean"
-      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
-    }
-
-    if (parameter.repeated) {
-      s"$nameTermName: List[$typeTypeName]"
-    } else {
-      if (parameter.required) {
-        s"$nameTermName: $typeTypeName"
-      } else {
-        s"$nameTermName: Option[$typeTypeName]"
-      }
-    }
-  }
-
-  def expandParameterAsMapEntry(qParam: (String, Parameter)): String = {
-    val (queryParameterName, parameter) = qParam
-    parameter match {
-      case Parameter(_, _, true)  => s""""$queryParameterName" -> Option($queryParameterName).map(HttpParam(_))"""
-      case Parameter(_, true, false)  => s""""$queryParameterName" -> Option($queryParameterName).map(HttpParam(_))"""
-      case Parameter(_, false, false) => s""""$queryParameterName" -> $queryParameterName.map(HttpParam(_))"""
-    }
-  }
 
 
 }

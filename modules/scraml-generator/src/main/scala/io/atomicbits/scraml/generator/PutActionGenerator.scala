@@ -24,53 +24,39 @@ import io.atomicbits.scraml.generator.model._
 /**
  * Created by peter on 28/08/15. 
  */
-object PutActionGenerator {
+object PutActionGenerator extends ActionGeneratorSupport {
 
   def generate(action: RichAction): List[String] = {
-
-    val putBodyTypes: List[String] =
-      action.contentTypes.headOption map {
-        case StringContentType(contentTypeHeader)          => List("String")
-        case JsonContentType(contentTypeHeader)            => List("String", "JsValue")
-        case TypedContentType(contentTypeHeader, classRep) => List("String", "JsValue", classRep.classDefinition)
-        case x                                             => sys.error(s"We don't expect a $x content type on a put action.")
-      } getOrElse List("String")
 
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val putSegmentTypeFactory = createPutSegmentType(action.responseTypes.headOption) _
+    val putSegmentTypeFactory = createSegmentType(action.actionType, action.responseTypes.headOption) _
 
-    putBodyTypes.map { putBodyType =>
+    bodyTypes(action).map { putBodyType =>
       generatePutAction(putBodyType, putSegmentTypeFactory(putBodyType), validAcceptHeaders, validContentTypeHeaders)
     }
 
   }
 
-  private def generatePutAction(putBodyType: String,
-                                putSegmentType: String,
+  private def generatePutAction(bodyType: Option[String],
+                                segmentType: String,
                                 validAcceptHeaders: List[String],
                                 validContentTypeHeaders: List[String]): String = {
 
+    val (actionBodyParameter, bodyField) = bodyType.map(bdType => (s"body: $bdType", "Some(body)")).getOrElse("", "None")
+
     s"""
-       def put(body: $putBodyType) =
-         new $putSegmentType(
-           Some(body),
-           validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
-           validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
+       def put($actionBodyParameter) =
+         new $segmentType(
+           $bodyField,
+           validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
+           validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
            req = requestBuilder
          )
      """
 
   }
 
-  private def createPutSegmentType(responseType: Option[ResponseType])(putBodyType: String): String = {
-    responseType map {
-      case StringResponseType(acceptHeader)          => s"StringPutSegment[$putBodyType]"
-      case JsonResponseType(acceptHeader)            => s"JsonPutSegment[$putBodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"TypePutSegment[$putBodyType, ${classRep.classDefinition}}]"
-      case x                                         => sys.error(s"We don't expect a $x content type on a put action.")
-    } getOrElse s"StringPutSegment[$putBodyType]"
-  }
 
 }

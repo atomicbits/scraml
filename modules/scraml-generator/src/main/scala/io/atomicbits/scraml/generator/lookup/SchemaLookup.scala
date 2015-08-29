@@ -66,6 +66,10 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
 
   }
 
+
+  def rootIdAsClassRep(rootId: RootId): ClassRep = schemaAsClassRep(lookupSchema(rootId))
+
+
   def schemaAsClassRep(schema: Schema): ClassRep = {
 
     schema match {

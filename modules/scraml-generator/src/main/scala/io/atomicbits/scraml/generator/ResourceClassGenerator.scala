@@ -137,12 +137,14 @@ object ResourceClassGenerator {
 
       val imports = fieldImports ++ actionImports
 
+      val (oneAddedHeaderConstructorArgs, manyAddedHeaderConstructorArgs) = generateConstructorArguments(resource)
+
       // ToDo: add copyright statement and license.
       val sourcecode =
         s"""
            package ${resource.packageParts.mkString(".")}
 
-           import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
+           import io.atomicbits.scraml.dsl._
 
            import play.api.libs.json._
 
@@ -151,10 +153,10 @@ object ResourceClassGenerator {
            $classDefinition
 
              def withHeader(header: (String, String)) =
-               new ${resource.resourceClassName}(value, requestBuilder.withAddedHeaders(header))
+               new ${resource.resourceClassName}$oneAddedHeaderConstructorArgs
 
              def withHeaders(newHeaders: (String, String)*) =
-               new ${resource.resourceClassName}(value, requestBuilder.withAddedHeaders(newHeaders: _*))
+               new ${resource.resourceClassName}$manyAddedHeaderConstructorArgs
 
            ${dslFields.mkString("\n\n")}
 
@@ -183,6 +185,15 @@ object ResourceClassGenerator {
           s"""class ${resource.resourceClassName}(req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", req) { """
       }
 
+    def generateConstructorArguments(resource: RichResource): (String, String) =
+      resource.urlParameter match {
+        case Some(parameter) =>
+          val paramType = generateParameterType(parameter.parameterType)
+          ("(value, requestBuilder.withAddedHeaders(header))", "(value, requestBuilder.withAddedHeaders(newHeaders: _*))")
+        case None            =>
+          ("(requestBuilder.withAddedHeaders(header))", "(requestBuilder.withAddedHeaders(newHeaders: _*))")
+    }
+
     def generateParameterType(parameterType: ParameterType): String = {
       parameterType match {
         case StringType  => "String"
@@ -198,7 +209,14 @@ object ResourceClassGenerator {
     }
 
     def generateResourceDslField(resource: RichResource): String =
-      s"""def ${resource.urlSegment} = new ${resource.resourceClassName}(requestBuilder.withAddedPathSegment("${resource.urlSegment}"))"""
+      resource.urlParameter match {
+        case Some(parameter) =>
+          val paramType = generateParameterType(parameter.parameterType)
+          s"""def ${resource.urlSegment}(value: $paramType) = new ${resource.resourceClassName}(value, requestBuilder.withAddedPathSegment(value))"""
+        case None =>
+          s"""def ${resource.urlSegment} = new ${resource.resourceClassName}(requestBuilder.withAddedPathSegment("${resource.urlSegment}"))"""
+      }
+
 
 
     generateClientClass(resources) :: resources.flatMap(generateResourceClassesHelper)

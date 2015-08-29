@@ -24,7 +24,7 @@ import io.atomicbits.scraml.generator.model._
 /**
  * Created by peter on 28/08/15. 
  */
-object PostActionGenerator extends ActionParameterSupport {
+object PostActionGenerator extends ActionGeneratorSupport {
 
   def generate(action: RichAction): List[String] = {
 
@@ -60,7 +60,7 @@ object PostActionGenerator extends ActionParameterSupport {
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val postResponseType = createPostSegmentType(action.responseTypes.headOption)("String")
+    val postResponseType = createSegmentType(action.actionType, action.responseTypes.headOption)(Some("String"))
 
     List(
       s"""
@@ -71,8 +71,8 @@ object PostActionGenerator extends ActionParameterSupport {
                ${formParameterMapEntries.mkString(",")}
              ),
              multipartParams = List.empty,
-             validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
-             validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
+             validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
+             validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
              req = requestBuilder
            )
        """
@@ -84,7 +84,7 @@ object PostActionGenerator extends ActionParameterSupport {
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val postResponseType = createPostSegmentType(action.responseTypes.headOption)("String")
+    val postResponseType = createSegmentType(action.actionType, action.responseTypes.headOption)(Some("String"))
 
     List(
       s"""
@@ -93,8 +93,8 @@ object PostActionGenerator extends ActionParameterSupport {
              theBody = None,
              formParams = Map.empty,
              multipartParams = parts,
-             validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
-             validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
+             validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
+             validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
              req = requestBuilder
            )
        """
@@ -102,49 +102,35 @@ object PostActionGenerator extends ActionParameterSupport {
   }
 
   def generatePostAction(action: RichAction): List[String] = {
-    val postBodyTypes: List[String] =
-      action.contentTypes.headOption map {
-        case StringContentType(contentTypeHeader)          => List("String")
-        case JsonContentType(contentTypeHeader)            => List("String", "JsValue")
-        case TypedContentType(contentTypeHeader, classRep) => List("String", "JsValue", classRep.classDefinition)
-        case x                                             => sys.error(s"We don't expect a $x content type on a post action.")
-      } getOrElse List("String")
 
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val postSegmentTypeFactory = createPostSegmentType(action.responseTypes.headOption) _
+    val postSegmentTypeFactory = createSegmentType(action.actionType, action.responseTypes.headOption) _
 
-    postBodyTypes.map { postBodyType =>
+    bodyTypes(action).map { postBodyType =>
       generatePostAction(postBodyType, postSegmentTypeFactory(postBodyType), validAcceptHeaders, validContentTypeHeaders)
     }
 
   }
 
-  private def generatePostAction(postBodyType: String,
-                                 postSegmentType: String,
+  private def generatePostAction(bodyType: Option[String],
+                                 segmentType: String,
                                  validAcceptHeaders: List[String],
                                  validContentTypeHeaders: List[String]): String = {
 
+    val (actionBodyParameter, bodyField) = bodyType.map(bdType => (s"body: $bdType", "Some(body)")).getOrElse("", "None")
+
     s"""
-       def post(body: $postBodyType) =
-         new $postSegmentType(
-           Some(body),
-           validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
-           validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
+       def post($actionBodyParameter) =
+         new $segmentType(
+           $bodyField,
+           validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
+           validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
            req = requestBuilder
          )
      """
 
-  }
-
-  private def createPostSegmentType(responseType: Option[ResponseType])(postBodyType: String): String = {
-    responseType map {
-      case StringResponseType(acceptHeader)          => s"StringPostSegment[$postBodyType]"
-      case JsonResponseType(acceptHeader)            => s"JsonPostSegment[$postBodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"TypePostSegment[$postBodyType, ${classRep.classDefinition}}]"
-      case x                                         => sys.error(s"We don't expect a $x content type on a post action.")
-    } getOrElse s"StringPostSegment[$postBodyType]"
   }
 
 }

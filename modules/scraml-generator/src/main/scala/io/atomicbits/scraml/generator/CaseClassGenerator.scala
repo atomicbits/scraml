@@ -61,7 +61,7 @@ object CaseClassGenerator {
       def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
 
         val collectedWithClassRep =
-          if (classRp.packageName != ownPackage) collected + s"import ${classRp.fullyQualifiedName}"
+          if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
           else collected
 
         classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)

@@ -24,7 +24,7 @@ import io.atomicbits.scraml.generator.model.{StringResponseType, TypedResponseTy
 /**
  * Created by peter on 28/08/15. 
  */
-object GetActionGenerator extends ActionParameterSupport {
+object GetActionGenerator extends ActionGeneratorSupport {
 
   def generate(action: RichAction): List[String] = {
 
@@ -40,7 +40,7 @@ object GetActionGenerator extends ActionParameterSupport {
       action.responseTypes.headOption map {
         case StringResponseType(acceptHeader)          => "StringGetSegment"
         case JsonResponseType(acceptHeader)            => "JsonGetSegment"
-        case TypedResponseType(acceptHeader, classRep) => s"TypeGetSegment[${classRep.classDefinition}}]"
+        case TypedResponseType(acceptHeader, classRep) => s"TypeGetSegment[${classRep.classDefinition}]"
         case x                                         => sys.error(s"We don't expect a $x content type on a get action.")
       } getOrElse "StringGetSegment"
 
@@ -50,7 +50,7 @@ object GetActionGenerator extends ActionParameterSupport {
            queryParams = Map(
              ${queryParameterMapEntries.mkString(",")}
            ),
-           validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
+           validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
            req = requestBuilder
          )
        """

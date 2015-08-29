@@ -24,53 +24,38 @@ import io.atomicbits.scraml.generator.model._
 /**
  * Created by peter on 28/08/15. 
  */
-object DeleteActionGenerator {
+object DeleteActionGenerator extends ActionGeneratorSupport {
 
   def generate(action: RichAction): List[String] = {
-
-    val deleteBodyTypes: List[String] =
-      action.contentTypes.headOption map {
-        case StringContentType(contentTypeHeader)          => List("String")
-        case JsonContentType(contentTypeHeader)            => List("String", "JsValue")
-        case TypedContentType(contentTypeHeader, classRep) => List("String", "JsValue", classRep.classDefinition)
-        case x                                             => sys.error(s"We don't expect a $x content type on a delete action.")
-      } getOrElse List("String")
 
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val deleteSegmentTypeFactory = createDeleteSegmentType(action.responseTypes.headOption) _
+    val deleteSegmentTypeFactory = createSegmentType(action.actionType, action.responseTypes.headOption) _
 
-    deleteBodyTypes.map { deleteBodyType =>
+    bodyTypes(action).map { deleteBodyType =>
       generateDeleteAction(deleteBodyType, deleteSegmentTypeFactory(deleteBodyType), validAcceptHeaders, validContentTypeHeaders)
     }
 
   }
 
-  private def generateDeleteAction(deleteBodyType: String,
-                                   deleteSegmentType: String,
+  private def generateDeleteAction(bodyType: Option[String],
+                                   segmentType: String,
                                    validAcceptHeaders: List[String],
                                    validContentTypeHeaders: List[String]): String = {
 
+    val (actionBodyParameter, bodyField) = bodyType.map(bdType => (s"body: $bdType", "Some(body)")).getOrElse("", "None")
+
     s"""
-       def delete(body: $deleteBodyType) =
-         new $deleteSegmentType(
-           Some(body),
-           validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
-           validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
+       def delete($actionBodyParameter) =
+         new $segmentType(
+           $bodyField,
+           validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
+           validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
            req = requestBuilder
          )
      """
 
-  }
-
-  private def createDeleteSegmentType(responseType: Option[ResponseType])(deleteBodyType: String): String = {
-    responseType map {
-      case StringResponseType(acceptHeader)          => s"StringDeleteSegment[$deleteBodyType]"
-      case JsonResponseType(acceptHeader)            => s"JsonDeleteSegment[$deleteBodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"TypeDeleteSegment[$deleteBodyType, ${classRep.classDefinition}}]"
-      case x                                         => sys.error(s"We don't expect a $x content type on a delete action.")
-    } getOrElse s"StringDeleteSegment[$deleteBodyType]"
   }
 
 }

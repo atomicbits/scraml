@@ -37,7 +37,7 @@ object RichAction {
   def apply(action: Action, schemaLookup: SchemaLookup): RichAction = {
 
     def mimeTypeToClassRep(mimeType: MimeType): Option[ClassRep] = {
-      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).flatMap(schemaLookup.classReps.get)
+      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsClassRep)
     }
 
     val contentTypes = action.body.values.toList map { mimeType =>
