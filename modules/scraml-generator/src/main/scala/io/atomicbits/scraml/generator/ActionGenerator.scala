@@ -84,7 +84,7 @@ object ActionGenerator {
       case Get           => GetActionGenerator.generate(action)
       case Put           => PutActionGenerator.generate(action)
       case Post          => PostActionGenerator.generate(action)
-      case Delete        => ???
+      case Delete        => DeleteActionGenerator.generate(action)
       case unknownAction => sys.error(s"$unknownAction actions are not supported yet.")
     }
 

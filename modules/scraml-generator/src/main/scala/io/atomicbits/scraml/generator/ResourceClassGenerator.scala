@@ -185,11 +185,11 @@ object ResourceClassGenerator {
 
     def generateParameterType(parameterType: ParameterType): String = {
       parameterType match {
-        case Parameter(StringType, _, _)  => "String"
-        case Parameter(IntegerType, _, _) => "Long"
-        case Parameter(NumberType, _, _)  => "Double"
-        case Parameter(BooleanType, _, _) => "Boolean"
-        case x                            => sys.error(s"Unknown URL parameter type $x")
+        case StringType  => "String"
+        case IntegerType => "Long"
+        case NumberType  => "Double"
+        case BooleanType => "Boolean"
+        case x           => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

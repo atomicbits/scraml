@@ -34,6 +34,7 @@ object PostActionGenerator extends ActionParameterSupport {
       case _: TypedContentType         => generatePostAction(action)
       case x: FormPostContentType      => generateFormPostAction(action, x)
       case _: MultipartFormContentType => generateMultipartFormPostAction(action)
+      case x                           => sys.error(s"We don't expect a $x content type on a post action.")
     } getOrElse generatePostAction(action)
 
   }
@@ -106,6 +107,7 @@ object PostActionGenerator extends ActionParameterSupport {
         case StringContentType(contentTypeHeader)          => List("String")
         case JsonContentType(contentTypeHeader)            => List("String", "JsValue")
         case TypedContentType(contentTypeHeader, classRep) => List("String", "JsValue", classRep.classDefinition)
+        case x                                             => sys.error(s"We don't expect a $x content type on a post action.")
       } getOrElse List("String")
 
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
@@ -141,6 +143,7 @@ object PostActionGenerator extends ActionParameterSupport {
       case StringResponseType(acceptHeader)          => s"StringPostSegment[$postBodyType]"
       case JsonResponseType(acceptHeader)            => s"JsonPostSegment[$postBodyType]"
       case TypedResponseType(acceptHeader, classRep) => s"TypePostSegment[$postBodyType, ${classRep.classDefinition}}]"
+      case x                                         => sys.error(s"We don't expect a $x content type on a post action.")
     } getOrElse s"StringPostSegment[$postBodyType]"
   }
 

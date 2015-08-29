@@ -41,6 +41,7 @@ object GetActionGenerator extends ActionParameterSupport {
         case StringResponseType(acceptHeader)          => "StringGetSegment"
         case JsonResponseType(acceptHeader)            => "JsonGetSegment"
         case TypedResponseType(acceptHeader, classRep) => s"TypeGetSegment[${classRep.classDefinition}}]"
+        case x                                         => sys.error(s"We don't expect a $x content type on a get action.")
       } getOrElse "StringGetSegment"
 
     List(

@@ -95,7 +95,7 @@ object ClassRepAssembler {
 
       val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
 
-      val classRepWithFields = classRep.copy(fields = fields)
+      val classRepWithFields = classRep.withFields(fields)
 
       (id, classRepWithFields)
     }

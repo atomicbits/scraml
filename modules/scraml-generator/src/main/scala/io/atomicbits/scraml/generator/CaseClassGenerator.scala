@@ -95,7 +95,7 @@ object CaseClassGenerator {
         }
     """
 
-    classRep.copy(content = Some(caseClassSource))
+    classRep.withContent(content = caseClassSource)
 
   }
 

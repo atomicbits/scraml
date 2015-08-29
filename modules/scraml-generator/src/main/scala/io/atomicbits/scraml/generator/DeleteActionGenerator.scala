@@ -24,37 +24,37 @@ import io.atomicbits.scraml.generator.model._
 /**
  * Created by peter on 28/08/15. 
  */
-object PutActionGenerator {
+object DeleteActionGenerator {
 
   def generate(action: RichAction): List[String] = {
 
-    val putBodyTypes: List[String] =
+    val deleteBodyTypes: List[String] =
       action.contentTypes.headOption map {
         case StringContentType(contentTypeHeader)          => List("String")
         case JsonContentType(contentTypeHeader)            => List("String", "JsValue")
         case TypedContentType(contentTypeHeader, classRep) => List("String", "JsValue", classRep.classDefinition)
-        case x                                             => sys.error(s"We don't expect a $x content type on a put action.")
+        case x                                             => sys.error(s"We don't expect a $x content type on a delete action.")
       } getOrElse List("String")
 
     val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
     val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
 
-    val putSegmentTypeFactory = createPutSegmentType(action.responseTypes.headOption) _
+    val deleteSegmentTypeFactory = createDeleteSegmentType(action.responseTypes.headOption) _
 
-    putBodyTypes.map { putBodyType =>
-      generatePutAction(putBodyType, putSegmentTypeFactory(putBodyType), validAcceptHeaders, validContentTypeHeaders)
+    deleteBodyTypes.map { deleteBodyType =>
+      generateDeleteAction(deleteBodyType, deleteSegmentTypeFactory(deleteBodyType), validAcceptHeaders, validContentTypeHeaders)
     }
 
   }
 
-  private def generatePutAction(putBodyType: String,
-                                putSegmentType: String,
-                                validAcceptHeaders: List[String],
-                                validContentTypeHeaders: List[String]): String = {
+  private def generateDeleteAction(deleteBodyType: String,
+                                   deleteSegmentType: String,
+                                   validAcceptHeaders: List[String],
+                                   validContentTypeHeaders: List[String]): String = {
 
     s"""
-       def put(body: $putBodyType) =
-         new $putSegmentType(
+       def delete(body: $deleteBodyType) =
+         new $deleteSegmentType(
            Some(body),
            validAcceptHeaders = List(${validAcceptHeaders.mkString(",")}),
            validContentTypeHeaders = List(${validContentTypeHeaders.mkString(",")}),
@@ -64,13 +64,13 @@ object PutActionGenerator {
 
   }
 
-  private def createPutSegmentType(responseType: Option[ResponseType])(putBodyType: String): String = {
+  private def createDeleteSegmentType(responseType: Option[ResponseType])(deleteBodyType: String): String = {
     responseType map {
-      case StringResponseType(acceptHeader)          => s"StringPutSegment[$putBodyType]"
-      case JsonResponseType(acceptHeader)            => s"JsonPutSegment[$putBodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"TypePutSegment[$putBodyType, ${classRep.classDefinition}}]"
-      case x                                         => sys.error(s"We don't expect a $x content type on a put action.")
-    } getOrElse s"StringPutSegment[$putBodyType]"
+      case StringResponseType(acceptHeader)          => s"StringDeleteSegment[$deleteBodyType]"
+      case JsonResponseType(acceptHeader)            => s"JsonDeleteSegment[$deleteBodyType]"
+      case TypedResponseType(acceptHeader, classRep) => s"TypeDeleteSegment[$deleteBodyType, ${classRep.classDefinition}}]"
+      case x                                         => sys.error(s"We don't expect a $x content type on a delete action.")
+    } getOrElse s"StringDeleteSegment[$deleteBodyType]"
   }
 
 }
