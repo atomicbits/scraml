@@ -29,7 +29,7 @@ trait BuildSettings {
   val snapshotSuffix = "-SNAPSHOT"
   val Version = "0.3.0" + snapshotSuffix
 
-  val ScalaVersion = "2.11.7"
+  val ScalaVersion = "2.10.5"
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
