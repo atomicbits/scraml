@@ -19,8 +19,9 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.model.{EnumEl, FragmentedSchema, Schema}
-import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, ClassRep, Id, RootId}
+import io.atomicbits.scraml.generator._
+import io.atomicbits.scraml.jsonschemaparser.model._
+import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, Id, RootId}
 
 import scala.annotation.tailrec
 
@@ -39,23 +40,15 @@ import scala.annotation.tailrec
 case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
                         objectMap: Map[AbsoluteId, ObjectElExt] = Map.empty,
                         enumMap: Map[AbsoluteId, EnumEl] = Map.empty,
-                        canonicalNames: Map[AbsoluteId, ClassRep] = Map.empty,
+                        classReps: Map[AbsoluteId, ClassRep] = Map.empty,
                         externalSchemaLinks: Map[String, RootId] = Map.empty) {
 
   def map(f: SchemaLookup => SchemaLookup): SchemaLookup = f(this)
 
-  /**
-   *
-   * @param id
-   * @return
-   */
+
   def lookupSchema(id: Id): Schema = {
 
-    // ToDo: this code to get the absolute id appears everywhere, we must find a way to refactor this!
-    val absoluteId = id match {
-      case absId: AbsoluteId => absId
-      case _                 => sys.error("Only absolute IDs can be used to do a schema lookup.")
-    }
+    val absoluteId = SchemaUtil.asAbsoluteId(id)
 
     @tailrec
     def fragmentSearch(schema: Schema, fragmentPath: List[String]): Schema = {
@@ -72,5 +65,29 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
     fragmentSearch(lookupTable(absoluteId.rootPart), absoluteId.fragments)
 
   }
+
+
+  def rootIdAsClassRep(rootId: RootId): ClassRep = schemaAsClassRep(lookupSchema(rootId))
+
+
+  def schemaAsClassRep(schema: Schema): ClassRep = {
+
+    schema match {
+      case objEl: ObjectEl            => classReps(SchemaUtil.asAbsoluteId(schema.id))
+      case arrEl: ArrayEl             => ListClassRep(schemaAsClassRep(arrEl.items))
+      case stringEl: StringEl         => StringClassRep
+      case numberEl: NumberEl         => DoubleClassRep
+      case integerEl: IntegerEl       => LongClassRep
+      case booleanEl: BooleanEl       => BooleanClassRep
+      case schemaRef: SchemaReference => schemaAsClassRep(lookupSchema(schemaRef.refersTo))
+      case enumEl: EnumEl             => classReps(SchemaUtil.asAbsoluteId(schema.id))
+      case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a class representation.")
+    }
+
+  }
+
+
+  def schemaAsType(schema: Schema): String = schemaAsClassRep(schema).classDefinition
+
 
 }

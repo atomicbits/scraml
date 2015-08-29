@@ -27,7 +27,7 @@ trait BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-  val Version = "0.2.1" + snapshotSuffix
+  val Version = "0.3.0" + snapshotSuffix
 
   val ScalaVersion = "2.10.5"
 
@@ -38,11 +38,11 @@ trait BuildSettings {
     version := Version,
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
-    crossScalaVersions := Seq("2.10.5", "2.11.6"),
+     crossScalaVersions := Seq("2.10.5", "2.11.7"),
     scalacOptions := scalacBuildOptions,
     parallelExecution := false,
     // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
-//    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    // resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= extraDependencies
   )
 

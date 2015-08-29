@@ -24,10 +24,10 @@ import scala.collection.JavaConverters._
  * Created by peter on 17/05/15, Atomic BITS bvba (http://atomicbits.io). 
  */
 case class Resource(urlSegment: String,
-                    urlParameter: Option[Parameter],
-                    actions: List[Action],
-                    resources: List[Resource]
-                     )
+                    urlParameter: Option[Parameter] = None,
+                    actions: List[Action] = List.empty,
+                    resources: List[Resource] = List.empty,
+                    parent: Option[Resource] = None)
 
 object Resource {
 
@@ -61,7 +61,7 @@ object Resource {
     val subResources = groupedSubResources.map(mergeResources)
 
     /**
-     * Resources in the Java RAML model can have relative URLs that consist of multiple segments,
+     * Resources in the Java RAML model can have relative URLs that consist of multiple segments in a single Resource,
      * e.g.: /rest/some/path/to/{param}/a/resource
      * Our DSL generation would benefit form a breakdown of this path into nested resources. The all resulting
      * resources would just be path elements to the last resource, which then contains the actions and sub
@@ -78,17 +78,30 @@ object Resource {
         if (segment.startsWith("{") && segment.endsWith("}")) {
           val pathParameterName = segment.stripPrefix("{").stripSuffix("}")
           val pathParameterMeta = uriParameters.get(pathParameterName)
-          Resource(pathParameterName, pathParameterMeta, Nil, Nil)
+          Resource(pathParameterName, pathParameterMeta)
         } else {
-          Resource(segment, None, Nil, Nil)
+          Resource(segment)
         }
       }
 
+      def connectParentChildren(parent: Resource, children: List[Resource]): Resource = {
+        val childrenWithUpdatedParent = children.map(_.copy(parent = Some(parent)))
+        parent.copy(resources = childrenWithUpdatedParent)
+      }
+
       urlSegments match {
-        case segment :: Nil  => buildResourceSegment(segment).copy(actions = actionList, resources = subResources)
-        case segment :: segs => buildResourceSegment(segment).copy(resources = List(breakdownResourceUrl(segs)))
+        case segment :: Nil  =>
+          val resource: Resource = buildResourceSegment(segment)
+          val connectedResource: Resource = connectParentChildren(resource, subResources)
+          connectedResource.copy(actions = actionList)
+        case segment :: segs =>
+          val resource: Resource = buildResourceSegment(segment)
+          connectParentChildren(resource, List(breakdownResourceUrl(segs)))
         // Todo: handle the case Nil without introducing an extra 'root' path
-        case Nil => buildResourceSegment("").copy(actions = actionList, resources = subResources)
+        case Nil =>
+          val resource: Resource = buildResourceSegment("")
+          val connectedResource: Resource = connectParentChildren(resource, subResources)
+          connectedResource.copy(actions = actionList)
       }
     }
 

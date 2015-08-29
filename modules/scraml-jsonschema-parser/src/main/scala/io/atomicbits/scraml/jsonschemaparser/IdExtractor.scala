@@ -68,17 +68,17 @@ object IdAnalyser {
   }
 
   def idFromFragment(id: String): FragmentId = {
-    FragmentId(id.trim.stripPrefix("#").stripPrefix("/").split("/").toList)
+    FragmentId(id.trim.stripPrefix("#").stripPrefix("/").split('/').toList)
   }
 
   def isAbsoluteFragment(id: String): Boolean = {
-    val parts = id.trim.split("#")
+    val parts = id.trim.split('#')
     parts.length == 2 && parts(0).contains("://")
   }
 
   def idFromAbsoluteFragment(id: String): AbsoluteFragmentId = {
-    val parts = id.trim.split("#")
-    AbsoluteFragmentId(RootId(parts(0)), parts(1).split("/").toList.collect { case part if part.nonEmpty => part })
+    val parts = id.trim.split('#')
+    AbsoluteFragmentId(RootId(parts(0)), parts(1).split('/').toList.collect { case part if part.nonEmpty => part })
   }
 
   def cleanRoot(root: String): String = {

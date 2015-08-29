@@ -1,6 +1,6 @@
 language: scala
 scala:
-- 2.11.6
+- 2.10.5
 script: sbt clean test
 jdk:
 - oraclejdk8
@@ -9,7 +9,7 @@ notifications:
     recipients:
     - peter.rigole@atomicbits.io
 after_success:
-- '[[ $TRAVIS_BRANCH == "develop" ]] && { sbt "+ publish" ; };'
+- '[[ $TRAVIS_BRANCH == "develop" ]] && { sbt publish ; };'
 
 env:
   global:

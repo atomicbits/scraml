@@ -1,0 +1,60 @@
+# /rest/toepassing
+
+/:
+  description: Vraag alle toepassingen op.
+  get:
+    is: [acceptjson]
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+            schema: toepassingen
+
+/nieuw:
+  description: Aanmaken van een nieuwe taak om een toepassing aan te maken.
+  post:
+    is: [acceptjson, error401]
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+            schema: toepassing-wijzig
+
+/nieuw/{taakid}:
+  uriParameters:
+    taakid:
+      description: De ID van de taak waarin bewerkingen uitgevoerd worden.
+      type: string
+  description: Bewerk de basisgegevens van een nieuwe toepassing.
+  put:
+    is: [acceptjson, error401, error404]
+    body:
+      application/vnd.awv.po-v3.0+json:
+         schema: toepassing-wijzig
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+             schema: toepassing-wijzig
+  get:
+    is: [acceptjson, error401, error404]
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+            schema: toepassing-wijzig
+  delete:
+    is: [acceptjson, error401, error404]
+    description: Annuleer het bewerken van de basis-info van een toepassing.
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+  post:
+    is: [acceptjson, error401, error404]
+    description: Bevestig de bewerkte basis-info van een toepassing.
+    responses:
+      200:
+        body:
+          application/vnd.awv.po-v3.0+json:
+

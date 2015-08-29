@@ -1,0 +1,13 @@
+#%RAML 0.8
+---
+title: test01
+version: v1
+
+schemas:
+  - link:     !include schemas/link.json
+  - user:     !include schemas/user.json
+
+
+/rest/user:
+  !include user.raml
+

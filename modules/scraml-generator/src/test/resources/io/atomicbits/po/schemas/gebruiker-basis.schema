@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://wegenenverkeer.be/po/schema/gebruiker-basis.json",
+  "type": "object",
+  "description": "Gebruiker (enkel basis-info)",
+  "properties": {
+    "voId": {
+      "type": "string",
+      "required": true
+    },
+    "voornaam": {
+      "type": "string",
+      "required": true
+    },
+    "naam": {
+      "type": "string",
+      "required": true
+    },
+    "organisatie": {
+      "$ref": "organisatie.json",
+      "required": false
+    },
+    "functie": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

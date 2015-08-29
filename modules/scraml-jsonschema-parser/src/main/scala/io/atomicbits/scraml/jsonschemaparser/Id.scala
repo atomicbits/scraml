@@ -36,6 +36,8 @@ trait AbsoluteId extends Id {
 
   def rootPath: List[String]
 
+  def hostPath: List[String]
+
   def fragments: List[String] = List.empty
 
 }
@@ -62,12 +64,18 @@ case class RootId(id: String) extends AbsoluteId {
     }
   }
 
-  override def rootPart: RootId = this
+  val rootPart: RootId = this
 
-  override def rootPath: List[String] = {
-    val withoutProtocol = id.split("://").drop(1).head
-    val withoutHost = withoutProtocol.split("/").drop(1).toList
+  val rootPath: List[String] = {
+    val withoutProtocol = id.split("://").takeRight(1).head
+    val withoutHost = withoutProtocol.split('/').drop(1).toList
     withoutHost
+  }
+
+  val hostPath: List[String] = {
+    val withoutProtocol = id.split("://").takeRight(1).head
+    val host = withoutProtocol.split('/').take(1).head
+    host.split('.').toList
   }
 
 }
@@ -107,9 +115,11 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
 
   def id: String = s"${root.id}#/${fragments.mkString("/")}"
 
-  override def rootPart: RootId = root
+  val rootPart: RootId = root
 
-  override def rootPath = rootPart.rootPath
+  val rootPath = root.rootPath
+
+  val hostPath = root.hostPath
 
 }
 
