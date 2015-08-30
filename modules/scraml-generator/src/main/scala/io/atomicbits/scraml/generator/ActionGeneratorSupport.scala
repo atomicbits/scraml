@@ -84,6 +84,6 @@ trait ActionGeneratorSupport {
   }
 
 
-  def quoteString(text: String): String = s""""text""""
+  def quoteString(text: String): String = s""""$text""""
 
 }

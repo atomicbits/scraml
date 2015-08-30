@@ -55,8 +55,8 @@ case class RxHttpClientSupport(protocol: String,
 
   private def applyConfiguration(builder: RxHttpClient.Builder): RxHttpClient.Builder = {
     // todo: add more timeouts & other configuration parameters from the ClientConfig
-    config.requestTimeout.map(requestTimeout => builder.setReadTimeout(requestTimeout)).getOrElse(builder)
-    config.maxConnections.map(maxConnections => builder.setMaxConnections(maxConnections)).getOrElse(builder)
+    builder.setReadTimeout(config.requestTimeout)
+    builder.setMaxConnections(config.maxConnections)
   }
 
   def callTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])

@@ -42,15 +42,14 @@ object ResourceClassGenerator {
       val (imports, dslFields, actionFunctions) =
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
-            val imports =
-              oneRoot.resources.map(generateResourceFieldImports).toSet ++
-                oneRoot.actions.flatMap(ActionGenerator.generateActionImports).toSet
-            val dslFields = oneRoot.resources.map(generateResourceFieldImports)
+            val imports = oneRoot.actions.flatMap(ActionGenerator.generateActionImports).toSet
+            // oneRoot.resources.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet ++
+            val dslFields = oneRoot.resources.map(generateResourceDslField)
             val actionFunctions = ActionGenerator.generateActionFunctions(oneRoot.actions)
             (imports, dslFields, actionFunctions)
           case manyRoots                                    =>
-            val imports = manyRoots.map(generateResourceFieldImports).toSet
-            val dslFields = manyRoots.map(generateResourceDslField)
+            val imports = Set.empty[String] // manyRoots.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet
+          val dslFields = manyRoots.map(generateResourceDslField)
             val actionFunctions = List.empty[String]
             (imports, dslFields, actionFunctions)
         }
@@ -81,6 +80,8 @@ object ResourceClassGenerator {
            ${dslFields.mkString("\n\n")}
 
            ${actionFunctions.mkString("\n\n")}
+
+           def close() = requestBuilder.client.close()
 
          }
 
@@ -129,20 +130,20 @@ object ResourceClassGenerator {
 
       val classDefinition = generateClassDefinition(resource)
 
-      val fieldImports = resource.resources.map(generateResourceFieldImports).toSet
+      // val fieldImports = resource.resources.flatMap(generateResourceFieldImports(_, resource.classRep.packageParts)).toSet
       val dslFields = resource.resources.map(generateResourceDslField)
 
       val actionImports = resource.actions.flatMap(ActionGenerator.generateActionImports).toSet
       val actionFunctions = ActionGenerator.generateActionFunctions(resource.actions)
 
-      val imports = fieldImports ++ actionImports
+      val imports = actionImports // fieldImports ++
 
       val (oneAddedHeaderConstructorArgs, manyAddedHeaderConstructorArgs) = generateConstructorArguments(resource)
 
       // ToDo: add copyright statement and license.
       val sourcecode =
         s"""
-           package ${resource.packageParts.mkString(".")}
+           package ${resource.classRep.packageName}
 
            import io.atomicbits.scraml.dsl._
 
@@ -153,10 +154,10 @@ object ResourceClassGenerator {
            $classDefinition
 
              def withHeader(header: (String, String)) =
-               new ${resource.resourceClassName}$oneAddedHeaderConstructorArgs
+               new ${resource.classRep.name}$oneAddedHeaderConstructorArgs
 
              def withHeaders(newHeaders: (String, String)*) =
-               new ${resource.resourceClassName}$manyAddedHeaderConstructorArgs
+               new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
 
            ${dslFields.mkString("\n\n")}
 
@@ -165,12 +166,7 @@ object ResourceClassGenerator {
            }
        """
 
-      val resourceClassRep =
-        ClassRep(
-          name = resource.resourceClassName,
-          packageParts = resource.packageParts,
-          content = Some(sourcecode)
-        )
+      val resourceClassRep = resource.classRep.withContent(sourcecode)
 
       resourceClassRep :: resource.resources.flatMap(generateResourceClassesHelper)
 
@@ -180,9 +176,9 @@ object ResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""class ${resource.resourceClassName}(value: $paramType, req: RequestBuilder) extends ParamSegment[$paramType](value, req) { """
+          s"""class ${resource.classRep.name}(value: $paramType, req: RequestBuilder) extends ParamSegment[$paramType](value, req) { """
         case None            =>
-          s"""class ${resource.resourceClassName}(req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", req) { """
+          s"""class ${resource.classRep.name}(req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", req) { """
       }
 
     def generateConstructorArguments(resource: RichResource): (String, String) =
@@ -192,29 +188,34 @@ object ResourceClassGenerator {
           ("(value, requestBuilder.withAddedHeaders(header))", "(value, requestBuilder.withAddedHeaders(newHeaders: _*))")
         case None            =>
           ("(requestBuilder.withAddedHeaders(header))", "(requestBuilder.withAddedHeaders(newHeaders: _*))")
-    }
+      }
 
     def generateParameterType(parameterType: ParameterType): String = {
       parameterType match {
-        case StringType  => "String"
+        case StringType => "String"
         case IntegerType => "Long"
-        case NumberType  => "Double"
+        case NumberType => "Double"
         case BooleanType => "Boolean"
-        case x           => sys.error(s"Unknown URL parameter type $x")
+        case x => sys.error(s"Unknown URL parameter type $x")
       }
     }
 
-    def generateResourceFieldImports(resource: RichResource): String = {
-      s"import ${resource.packageParts.mkString(".")}.${resource.resourceClassName}"
+    def generateResourceFieldImports(resource: RichResource, excludePackage: List[String]): Option[String] = {
+      if (excludePackage != resource.classRep.packageParts) Some(s"import ${resource.classRep.fullyQualifiedName}")
+      else None
     }
 
     def generateResourceDslField(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""def ${resource.urlSegment}(value: $paramType) = new ${resource.resourceClassName}(value, requestBuilder.withAddedPathSegment(value))"""
-        case None =>
-          s"""def ${resource.urlSegment} = new ${resource.resourceClassName}(requestBuilder.withAddedPathSegment("${resource.urlSegment}"))"""
+          s"""def ${resource.urlSegment}(value: $paramType) = new ${
+            resource.classRep.fullyQualifiedName
+          }(value, requestBuilder.withAddedPathSegment(value))"""
+        case None            =>
+          s"""def ${resource.urlSegment} = new ${resource.classRep.fullyQualifiedName}(requestBuilder.withAddedPathSegment("${
+            resource.urlSegment
+          }"))"""
       }
 
 

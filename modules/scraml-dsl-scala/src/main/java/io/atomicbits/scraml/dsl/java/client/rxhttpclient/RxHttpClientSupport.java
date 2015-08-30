@@ -29,7 +29,7 @@ import java.util.concurrent.Future;
 /**
  * Created by peter on 19/08/15.
  */
-public class RxHttpClient implements Client {
+public class RxHttpClientSupport implements Client {
 
     private String protocol;
     private String host;
@@ -39,7 +39,7 @@ public class RxHttpClient implements Client {
     private int maxConnections;
     private Map<String, String> defaultHeaders;
 
-    public RxHttpClient(String protocol, String host, int port, String prefix, int requestTimeout, int maxConnections, Map<String, String> defaultHeaders) {
+    public RxHttpClientSupport(String protocol, String host, int port, String prefix, int requestTimeout, int maxConnections, Map<String, String> defaultHeaders) {
         this.defaultHeaders = defaultHeaders;
         this.host = host;
         this.maxConnections = maxConnections;

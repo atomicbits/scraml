@@ -19,22 +19,24 @@
 
 package io.atomicbits.scraml.dsl.client
 
+import com.ning.http.client.AsyncHttpClientConfigDefaults
+
 /**
  * Created by peter on 24/08/15. 
  */
-case class ClientConfig(requestTimeout: Option[Int] = None,
-                        maxRequestRetry: Option[Int] = None,
-                        connectTimeout: Option[Int] = None,
-                        connectionTTL: Option[Int] = None,
-                        readTimeout: Option[Int] = None,
-                        webSocketTimeout: Option[Int] = None,
-                        maxConnections: Option[Int] = None,
-                        maxConnectionsPerHost: Option[Int] = None,
-                        allowPoolingConnections: Option[Boolean] = None,
-                        allowPoolingSslConnections: Option[Boolean] = None,
-                        pooledConnectionIdleTimeout: Option[Int] = None,
-                        acceptAnyCertificate: Option[Boolean] = None,
-                        followRedirect: Option[Boolean] = None,
-                        maxRedirects: Option[Int] = None,
-                        removeQueryParamOnRedirect: Option[Boolean] = None,
-                        strict302Handling: Option[Boolean] = None)
+case class ClientConfig(requestTimeout: Int = AsyncHttpClientConfigDefaults.defaultRequestTimeout(),
+                        maxRequestRetry: Int = AsyncHttpClientConfigDefaults.defaultMaxRequestRetry(),
+                        connectTimeout: Int = AsyncHttpClientConfigDefaults.defaultConnectTimeout(),
+                        connectionTTL: Int = AsyncHttpClientConfigDefaults.defaultConnectionTTL(),
+                        readTimeout: Int = AsyncHttpClientConfigDefaults.defaultReadTimeout(),
+                        webSocketTimeout: Int = AsyncHttpClientConfigDefaults.defaultWebSocketTimeout(),
+                        maxConnections: Int = AsyncHttpClientConfigDefaults.defaultMaxConnections(),
+                        maxConnectionsPerHost: Int = AsyncHttpClientConfigDefaults.defaultMaxConnectionsPerHost(),
+                        allowPoolingConnections: Boolean = AsyncHttpClientConfigDefaults.defaultAllowPoolingConnections(),
+                        allowPoolingSslConnections: Boolean = AsyncHttpClientConfigDefaults.defaultAllowPoolingSslConnections(),
+                        pooledConnectionIdleTimeout: Int = AsyncHttpClientConfigDefaults.defaultPooledConnectionIdleTimeout(),
+                        acceptAnyCertificate: Boolean = AsyncHttpClientConfigDefaults.defaultAcceptAnyCertificate(),
+                        followRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultFollowRedirect(),
+                        maxRedirects: Int = AsyncHttpClientConfigDefaults.defaultMaxRedirects(),
+                        removeQueryParamOnRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultRemoveQueryParamOnRedirect(),
+                        strict302Handling: Boolean = AsyncHttpClientConfigDefaults.defaultStrict302Handling())

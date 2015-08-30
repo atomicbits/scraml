@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.CleanNameUtil
+import io.atomicbits.scraml.generator.{ClassRep, CleanNameUtil}
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 
@@ -28,8 +28,7 @@ import io.atomicbits.scraml.parser.model.{Parameter, Resource}
  */
 case class RichResource(urlSegment: String,
                         urlParameter: Option[Parameter] = None,
-                        packageParts: List[String],
-                        resourceClassName: String,
+                        classRep: ClassRep,
                         actions: List[RichAction] = List.empty,
                         resources: List[RichResource] = List.empty)
 
@@ -38,21 +37,25 @@ object RichResource {
 
   def apply(resource: Resource, packageBasePath: List[String], schemaLookup: SchemaLookup): RichResource = {
 
-    def createRichResource(resource: Resource, actualPackagePath: List[String]): RichResource = {
+    def createRichResource(resource: Resource, actualPackageBasePath: List[String]): RichResource = {
 
       val resourceClassName = s"${CleanNameUtil.cleanClassName(resource.urlSegment)}Resource"
 
       val nextPackagePart = CleanNameUtil.cleanPackageName(resource.urlSegment)
 
-      val richChildResources = resource.resources.map(createRichResource(_, actualPackagePath :+ nextPackagePart))
+      val nextPackageBasePath = actualPackageBasePath :+ nextPackagePart
+
+      val richChildResources = resource.resources.map(createRichResource(_, nextPackageBasePath))
 
       val richActions = resource.actions.map(RichAction(_, schemaLookup))
 
       RichResource(
         urlSegment = resource.urlSegment,
         urlParameter = resource.urlParameter,
-        packageParts = actualPackagePath,
-        resourceClassName = resourceClassName,
+        classRep = ClassRep(
+          name = resourceClassName,
+          packageParts = nextPackageBasePath
+        ),
         actions = richActions,
         resources = richChildResources
       )

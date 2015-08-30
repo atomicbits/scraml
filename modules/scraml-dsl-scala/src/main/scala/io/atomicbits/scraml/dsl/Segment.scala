@@ -182,8 +182,8 @@ abstract class PostSegment[B, R](theBody: Option[B],
 }
 
 class StringPostSegment[B](theBody: Option[B],
-                           formParams: Map[String, Option[HttpParam]],
-                           multipartParams: List[BodyPart],
+                           formParams: Map[String, Option[HttpParam]] = Map.empty,
+                           multipartParams: List[BodyPart] = List.empty,
                            validAcceptHeaders: List[String],
                            validContentTypeHeaders: List[String],
                            req: RequestBuilder)
@@ -191,8 +191,8 @@ class StringPostSegment[B](theBody: Option[B],
   with StringResponseSegment[B]
 
 class JsonPostSegment[B](theBody: Option[B],
-                         formParams: Map[String, Option[HttpParam]],
-                         multipartParams: List[BodyPart],
+                         formParams: Map[String, Option[HttpParam]] = Map.empty,
+                         multipartParams: List[BodyPart] = List.empty,
                          validAcceptHeaders: List[String],
                          validContentTypeHeaders: List[String],
                          req: RequestBuilder)
@@ -200,8 +200,8 @@ class JsonPostSegment[B](theBody: Option[B],
   with JsonResponseSegment[B]
 
 class TypePostSegment[B, R](theBody: Option[B],
-                            formParams: Map[String, Option[HttpParam]],
-                            multipartParams: List[BodyPart],
+                            formParams: Map[String, Option[HttpParam]] = Map.empty,
+                            multipartParams: List[BodyPart] = List.empty,
                             validAcceptHeaders: List[String],
                             validContentTypeHeaders: List[String],
                             req: RequestBuilder)

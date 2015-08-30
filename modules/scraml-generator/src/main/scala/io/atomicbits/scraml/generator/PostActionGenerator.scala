@@ -124,7 +124,7 @@ object PostActionGenerator extends ActionGeneratorSupport {
     s"""
        def post($actionBodyParameter) =
          new $segmentType(
-           $bodyField,
+           theBody = $bodyField,
            validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
            validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
            req = requestBuilder

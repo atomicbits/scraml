@@ -76,7 +76,7 @@ object ScramlGenerator {
 
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
-    
+
     (caseClasses ++ resources) map classRepToFileAndContent
   }
 
