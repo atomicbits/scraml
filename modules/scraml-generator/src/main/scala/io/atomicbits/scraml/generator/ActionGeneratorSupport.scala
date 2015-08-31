@@ -68,7 +68,7 @@ trait ActionGeneratorSupport {
       if (parameter.required) {
         s"$nameTermName: $typeTypeName"
       } else {
-        s"$nameTermName: Option[$typeTypeName]"
+        s"$nameTermName: Option[$typeTypeName] = None"
       }
     }
   }

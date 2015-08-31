@@ -153,9 +153,6 @@ object ResourceClassGenerator {
 
            $classDefinition
 
-             def withHeader(header: (String, String)) =
-               new ${resource.classRep.name}$oneAddedHeaderConstructorArgs
-
              def withHeaders(newHeaders: (String, String)*) =
                new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
 

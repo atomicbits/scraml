@@ -133,7 +133,7 @@ case class RxHttpClientSupport(protocol: String,
 
     val clientRequest = clientWithResourcePathAndMethod.build()
 
-    // ToDo: logging println(s"client request: $clientRequest")
+    // ToDo: logging s"client request: $clientRequest"
 
     client.execute[Response[String]](
       clientRequest,

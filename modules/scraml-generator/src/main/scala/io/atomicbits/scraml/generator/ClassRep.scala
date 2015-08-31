@@ -179,7 +179,7 @@ case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Bool
 
   def fieldExpression: String =
     if (required) s"$fieldName: ${classRep.classDefinition}"
-    else s"$fieldName: Option[${classRep.classDefinition}]"
+    else s"$fieldName: Option[${classRep.classDefinition}] = None"
 
 }
 
