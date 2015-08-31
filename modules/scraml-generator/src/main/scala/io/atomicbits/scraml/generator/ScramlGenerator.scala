@@ -30,11 +30,16 @@ import org.raml.parser.rule.ValidationResult
 import io.atomicbits.scraml.parser._
 import io.atomicbits.scraml.parser.model._
 
+import scala.collection.JavaConversions.mapAsJavaMap
+import scala.language.postfixOps
+
+import java.util.{Map => JMap}
+
 
 object ScramlGenerator {
 
 
-  def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[(File, String)] = {
+  def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] = {
 
     // Validate RAML spec
     println(s"Running RAML validation on $ramlApiPath: ")
@@ -77,18 +82,21 @@ object ScramlGenerator {
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
-    (caseClasses ++ resources) map classRepToFileAndContent
+    val tupleList = (caseClasses ++ resources) map classRepToFilePathAndContent
+    mapAsJavaMap[String, String](tupleList.toMap)
   }
 
-  private def classRepToFileAndContent(classRep: ClassRep): (File, String) = {
+  private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
 
     val pathParts = classRep.packageParts
     // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
     // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
-    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
-    val file = new File(dir, s"${classRep.name}.scala")
+    //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
+    //    val file = new File(dir, s"${classRep.name}.scala")
 
-    (file, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
+    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classRep.name}.scala"
+
+    (filePath, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
 
   }
 
