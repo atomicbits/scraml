@@ -39,46 +39,52 @@ object CaseClassGenerator {
 
     // Expand all canonical names into their case class definitions.
 
-    schemaLookup.objectMap.keys.toList.map { key =>
-      generateCaseClassWithCompanionObject(schemaLookup.classReps(key), schemaLookup)
+    val (classRepsInHierarcy, classRepsStandalone) = schemaLookup.classReps.values.toList.partition(_.isInHierarchy)
+
+    val classHierarchies = classRepsInHierarcy.groupBy(_.topLevelParent).collect { case (Some(classRep), reps) => (classRep, reps) }
+
+    classHierarchies.values.toList.map(generateHierarchicalClassReps(_, schemaLookup)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup))
+  }
+
+
+  /**
+   * Collect all type imports for a given class and its generic types, but not its parent or child classes.
+   */
+  def collectImports(collectClassRep: ClassRep): Set[String] = {
+
+    val ownPackage = collectClassRep.packageName
+
+    /**
+     * Collect the type imports for the given class rep without recursing into the field types.
+     */
+    def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
+
+      val collectedWithClassRep =
+        if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
+        else collected
+
+      classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
+
     }
+
+    val ownTypeImports: Set[String] = collectTypeImports(Set.empty, collectClassRep)
+
+    collectClassRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
 
   }
 
 
-  def generateCaseClassWithCompanionObject(classRep: ClassRep,
-                                           schemaLookup: SchemaLookup): ClassRep = {
+  def generateNonHierarchicalClassRep(classRep: ClassRep,
+                                      schemaLookup: SchemaLookup): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinition}")
 
-    def collectImports(): Set[String] = {
-
-      val ownPackage = classRep.packageName
-
-      /**
-       * Collect the type imports for the given class rep without recursing into the field types.
-       */
-      def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
-
-        val collectedWithClassRep =
-          if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
-          else collected
-
-        classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
-
-      }
-
-      val ownTypeImports: Set[String] = collectTypeImports(Set.empty, classRep)
-
-      classRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
-
-    }
-
-    val imports: Set[String] = collectImports()
+    val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(! _.required).map(_.fieldExpression)
 
-    val caseClassSource =
+    val source =
       s"""
         package ${classRep.packageName}
 
@@ -93,10 +99,16 @@ object CaseClassGenerator {
           implicit val jsonFormatter: Format[${classRep.classDefinition}] = Json.format[${classRep.classDefinition}]
 
         }
-    """
+     """
 
-    classRep.withContent(content = caseClassSource)
+    classRep.withContent(content = source)
+  }
 
+
+  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): ClassRep = {
+    val topLevelClass = hierarchyReps.head.topLevelParent.get
+    topLevelClass.jsonTypeInfo
+    
   }
 
 }

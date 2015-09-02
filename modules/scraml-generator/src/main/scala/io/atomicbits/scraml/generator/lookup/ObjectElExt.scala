@@ -31,14 +31,30 @@ case class ObjectElExt(id: Id,
                        requiredFields: List[String] = List.empty,
                        selection: Option[Selection] = None,
                        fragments: Map[String, Schema] = Map.empty,
-                       name: Option[String] = None,
                        parent: Option[ObjectElExt] = None,
                        children: List[ObjectElExt] = List.empty,
+                       typeVariables: List[String] = List.empty,
+                       typeDiscriminator: Option[String] = None,
                        typeDiscriminatorValue: Option[String] = None) {
 
   def hasChildren: Boolean = children.nonEmpty
 
   def hasParent: Boolean = parent.isDefined
+
+  def isInTypeHiearcy: Boolean = hasChildren || hasParent
+
+  def topLevelParent: Option[ObjectElExt] = {
+
+    def findTopLevelParent(objElExt: ObjectElExt): ObjectElExt = {
+      objElExt.parent match {
+        case Some(aParent) => findTopLevelParent(aParent)
+        case None => objElExt
+      }
+    }
+
+    parent.map(findTopLevelParent)
+
+  }
 
 }
 
@@ -53,7 +69,8 @@ object ObjectElExt {
       requiredFields = obj.requiredFields,
       selection = obj.selection,
       fragments = obj.fragments,
-      name = obj.name
+      typeVariables = obj.typeVariables,
+      typeDiscriminator = obj.typeDiscriminator
     )
 
 }

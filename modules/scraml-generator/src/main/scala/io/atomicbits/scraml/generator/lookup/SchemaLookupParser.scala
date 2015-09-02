@@ -109,10 +109,7 @@ object SchemaLookupParser {
           case _              => lookup
         }
 
-      val absoluteId = schema.id match {
-        case absId: AbsoluteId => absId
-        case _                 => throw JsonSchemaParseException("All IDs should have been expanded to absolute IDs.")
-      }
+      val absoluteId = SchemaUtil.asAbsoluteId(schema.id)
 
       schema match {
         case objEl: ObjectEl    =>
@@ -171,10 +168,7 @@ object SchemaLookupParser {
       val childrenWithParent = children.map(_.copy(parent = Some(obj)))
 
       val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, obj) =>
-        val absoluteId = obj.id match {
-          case absId: AbsoluteId => absId
-          case _                 => sys.error(s"We expect ${obj.id} to be an absolute id by now.")
-        }
+        val absoluteId = SchemaUtil.asAbsoluteId(obj.id)
         lkup.copy(objectMap = lkup.objectMap + (absoluteId -> obj))
       }
 
@@ -194,17 +188,24 @@ object SchemaLookupParser {
     schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
-        val discriminator = obj.properties.get("type") collect {
+        // The typeDiscriminator only has to be defined at the top-most parent.
+        val typeDiscriminator = obj.topLevelParent.flatMap(_.typeDiscriminator).getOrElse("type")
+        val discriminator = obj.properties.get(typeDiscriminator) collect {
           case enumEl: EnumEl if enumEl.choices.length == 1 => enumEl.choices.head
         }
 
         if (discriminator.isEmpty)
-          println(s"In order to support class hierarchies, we expect objects inside the 'oneOf' part of an object to have a " +
-            s"'type' field pointing to an enum element that contains one string element that serves as a discrimitator value for " +
-            s"the type serialization.")
+          println(
+            s"""
+               |In order to support class hierarchies, we expect objects inside the 'oneOf' part of an object to have a
+               |'type' field pointing to an enum element that contains one string element that serves as a discrimitator value for
+               |the type serialization.
+             """.stripMargin
+          )
 
+        // We copy the typeDiscriminator to the object as well for easy access later on.
         discriminator.map { disc =>
-          val updatedObj = obj.copy(typeDiscriminatorValue = Some(disc))
+          val updatedObj = obj.copy(typeDiscriminatorValue = Some(disc), typeDiscriminator = Some(typeDiscriminator))
           lookup.copy(objectMap = lookup.objectMap + (absId -> updatedObj))
         } getOrElse lookup
 

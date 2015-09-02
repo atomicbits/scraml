@@ -19,13 +19,13 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator.{CleanNameUtil, ClassAsFieldRep, ClassRep}
+import io.atomicbits.scraml.generator.{JsonTypeInfo, CleanNameUtil, ClassAsFieldRep, ClassRep}
 import io.atomicbits.scraml.jsonschemaparser._
-import io.atomicbits.scraml.jsonschemaparser.model.{AllowedAsObjectField, Schema}
+import io.atomicbits.scraml.jsonschemaparser.model._
 
 /**
-*  Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
-*/
+ * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
+ */
 object ClassRepAssembler {
 
   type CanonicalMap = Map[AbsoluteId, ClassRep]
@@ -33,21 +33,17 @@ object ClassRepAssembler {
 
   def deduceClassReps(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val canonicalMap: CanonicalMap = deduceCanonicalNames(schemaLookup.objectMap.keys.toList)
+    addClassHierarcy(addCaseClassFields(deduceCanonicalNames(schemaLookup)))
 
-    val intermediarySchemaLookup = schemaLookup.copy(classReps = canonicalMap)
-
-    val canonicalMapWithFields: CanonicalMap = addFields(canonicalMap, intermediarySchemaLookup)
-
-    schemaLookup.copy(classReps = canonicalMapWithFields)
   }
 
   /**
-   *
-   * @param ids: The absolute IDs for which to generate class representations.
+   * @param schemaLookup: The schema lookup
    * @return A map containing the class representation for each absolute ID.
    */
-  def deduceCanonicalNames(ids: List[AbsoluteId]): CanonicalMap = {
+  def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
+
+    val ids: List[AbsoluteId] = schemaLookup.objectMap.keys.toList
 
     val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
 
@@ -71,10 +67,12 @@ object ClassRepAssembler {
 
     val canonicalMap: CanonicalMap = Map.empty
 
-    packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
+    val canonicalMapWithNamesFilledIn = packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
+
+    schemaLookup.copy(classReps = canonicalMapWithNamesFilledIn)
   }
 
-  def addFields(canonicalMap: CanonicalMap, schemaLookup: SchemaLookup): CanonicalMap = {
+  def addCaseClassFields(schemaLookup: SchemaLookup): SchemaLookup = {
 
     def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassAsFieldRep = {
 
@@ -90,18 +88,66 @@ object ClassRepAssembler {
 
     }
 
-    canonicalMap map { idAndClassRep =>
-      val (id, classRep) = idAndClassRep
+    val canonicalMapWithCaseClassFields =
+      schemaLookup.classReps map { idAndClassRep =>
+        val (id, classRep) = idAndClassRep
 
-      val objectEl = schemaLookup.objectMap(id)
+        val objectEl = schemaLookup.objectMap(id)
 
-      val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
+        val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
 
-      val classRepWithFields = classRep.withFields(fields)
+        val classRepWithFields = classRep.withFields(fields)
 
-      (id, classRepWithFields)
+        (id, classRepWithFields)
+      }
+
+    schemaLookup.copy(classReps = canonicalMapWithCaseClassFields)
+
+  }
+
+  def addClassHierarcy(schemaLookup: SchemaLookup): SchemaLookup = {
+
+    def updateParentAndChildren(objectEl: ObjectElExt, classRp: ClassRep): ClassRep = {
+      val classRepWithParent =
+        objectEl.parent map { objEl =>
+          val parentId = SchemaUtil.asAbsoluteId(objEl.id)
+          classRp.withParent(schemaLookup.classReps(parentId))
+        } getOrElse classRp
+
+      val childClassReps =
+        objectEl.children map { objEl =>
+          val childId = SchemaUtil.asAbsoluteId(objEl.id)
+          schemaLookup.classReps(childId)
+        }
+
+      val classRepWithParentAndChildren = classRepWithParent.withChildren(childClassReps)
+
+      objectEl.typeDiscriminatorValue.map { typeDiscriminatorValue =>
+        val typeDiscriminator = objectEl.typeDiscriminator.getOrElse("type")
+        classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, typeDiscriminatorValue))
+      } getOrElse classRepWithParentAndChildren
+
     }
 
+    val canonicalMapWithHierarchy =
+      schemaLookup.classReps map { idAndClassRep =>
+
+        val (id, classRep) = idAndClassRep
+
+        val objectEl = schemaLookup.objectMap(id)
+
+        val classRepsWithParentAndChildren: ClassRep =
+          objectEl.selection match {
+            case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
+            case Some(AnyOf(selection)) => classRep // We only support OneOf for now.
+            case Some(AllOf(selection)) => classRep // We only support OneOf for now.
+            case _                      => classRep
+          }
+
+        (id, classRepsWithParentAndChildren)
+      }
+
+    schemaLookup.copy(classReps = canonicalMapWithHierarchy)
   }
 
 }

@@ -18,12 +18,10 @@
 
 package io.atomicbits.scraml.jsonschemaparser.model
 
-import io.atomicbits.scraml.jsonschemaparser.Id
-
 /**
  * Created by peter on 7/06/15. 
  */
-trait Selection {
+sealed trait Selection {
 
   def selection: List[Schema]
 
