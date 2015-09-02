@@ -76,7 +76,7 @@ object CaseClassGenerator {
 
     val imports: Set[String] = collectImports()
 
-    val fieldExpressions = classRep.fields.map(_.fieldExpression)
+    val fieldExpressions = classRep.fields.sortBy(! _.required).map(_.fieldExpression)
 
     val caseClassSource =
       s"""
