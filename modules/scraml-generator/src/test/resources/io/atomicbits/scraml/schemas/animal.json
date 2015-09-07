@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/animal.json#",
+  "type": "object",
+  "typeDiscriminator": "_type",
+  "description": "An animal object.",
+  "oneOf": [
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Cat"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        }
+      }
+    },
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Dog"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        },
+        "canBark": {
+          "required": true,
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Fish"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

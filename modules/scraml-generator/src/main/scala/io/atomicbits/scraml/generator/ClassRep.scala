@@ -19,6 +19,9 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.jsonschemaparser.AbsoluteId
+
 /**
  * Created by peter on 21/08/15. 
  */
@@ -34,9 +37,9 @@ trait ClassRep {
 
   def fields: List[ClassAsFieldRep]
 
-  def parentClass: Option[ClassRep]
+  def parentClass: Option[AbsoluteId]
 
-  def subClasses: List[ClassRep]
+  def subClasses: List[AbsoluteId]
 
   def predef: Boolean
 
@@ -44,9 +47,17 @@ trait ClassRep {
 
   def content: Option[String]
 
+  def jsonTypeInfo: Option[JsonTypeInfo]
+
   def withFields(fields: List[ClassAsFieldRep]): ClassRep
 
+  def withParent(parentId: AbsoluteId): ClassRep
+
+  def withChildren(childIds: List[AbsoluteId]): ClassRep
+
   def withContent(content: String): ClassRep
+
+  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep
 
   /**
    * The class definition as a string.
@@ -67,6 +78,22 @@ trait ClassRep {
 
   def fullyQualifiedName: String = s"$packageName.$name"
 
+  def isInHierarchy: Boolean = parentClass.isDefined || subClasses.nonEmpty
+
+  def topLevelParent(schemaLookup: SchemaLookup): Option[ClassRep] = {
+
+    def findTopLevelParent(parentId: AbsoluteId): ClassRep = {
+      val parentClass = schemaLookup.classReps(parentId)
+      parentClass.parentClass match {
+        case Some(prntId) => findTopLevelParent(prntId)
+        case None         => parentClass
+      }
+    }
+
+    parentClass.map(findTopLevelParent)
+
+  }
+
 }
 
 trait LibraryClassRep extends ClassRep {
@@ -75,9 +102,9 @@ trait LibraryClassRep extends ClassRep {
 
   def fields: List[ClassAsFieldRep] = List.empty
 
-  def parentClass: Option[ClassRep] = None
+  def parentClass: Option[AbsoluteId] = None
 
-  def subClasses: List[ClassRep] = List.empty
+  def subClasses: List[AbsoluteId] = List.empty
 
   def predef: Boolean = false
 
@@ -85,9 +112,17 @@ trait LibraryClassRep extends ClassRep {
 
   def content: Option[String] = None
 
+  def jsonTypeInfo: Option[JsonTypeInfo] = None
+
   def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("We shouldn't set the fields of a library class rep.")
 
   def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a library class rep.")
+
+  def withParent(parentId: AbsoluteId): ClassRep = sys.error("We shouldn't set the parent of a library class rep.")
+
+  def withChildren(childIds: List[AbsoluteId]): ClassRep = sys.error("We shouldn't set the children of a library class rep.")
+
+  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = sys.error("We shouldn't set JSON type info on a library class rep.")
 
 }
 
@@ -100,9 +135,9 @@ trait PredefinedClassRep extends ClassRep {
 
   def fields: List[ClassAsFieldRep] = List.empty
 
-  def parentClass: Option[ClassRep] = None
+  def parentClass: Option[AbsoluteId] = None
 
-  def subClasses: List[ClassRep] = List.empty
+  def subClasses: List[AbsoluteId] = List.empty
 
   def predef: Boolean = true
 
@@ -110,9 +145,18 @@ trait PredefinedClassRep extends ClassRep {
 
   def content: Option[String] = None
 
+  def jsonTypeInfo: Option[JsonTypeInfo] = None
+
   def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("We shouldn't set the fields of a predefined class rep.")
 
   def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a predefined class rep.")
+
+  def withParent(parentId: AbsoluteId): ClassRep = sys.error("We shouldn't set the parent of a predefined class rep.")
+
+  def withChildren(childIds: List[AbsoluteId]): ClassRep = sys.error("We shouldn't set the children of a predefined class rep.")
+
+  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep =
+    sys.error("We shouldn't set JSON type info on a predefined class rep.")
 
 }
 
@@ -162,15 +206,22 @@ case class CustomClassRep(name: String,
                           packageParts: List[String] = List.empty,
                           types: List[ClassRep] = List.empty,
                           fields: List[ClassAsFieldRep] = List.empty,
-                          parentClass: Option[ClassRep] = None,
-                          subClasses: List[ClassRep] = List.empty,
+                          parentClass: Option[AbsoluteId] = None,
+                          subClasses: List[AbsoluteId] = List.empty,
                           predef: Boolean = false,
                           library: Boolean = false,
-                          content: Option[String] = None) extends ClassRep {
+                          content: Option[String] = None,
+                          jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
   def withFields(fields: List[ClassAsFieldRep]): ClassRep = copy(fields = fields)
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
+
+  def withParent(parentId: AbsoluteId): ClassRep = copy(parentClass = Some(parentId))
+
+  def withChildren(childIds: List[AbsoluteId]): ClassRep = copy(subClasses = childIds)
+
+  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = copy(jsonTypeInfo = Some(jsonTypeInfo))
 
 }
 
@@ -182,6 +233,8 @@ case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Bool
     else s"$fieldName: Option[${classRep.classDefinition}] = None"
 
 }
+
+case class JsonTypeInfo(discriminator: String, discriminatorValue: Option[String])
 
 object ClassRep {
 
@@ -205,11 +258,12 @@ object ClassRep {
             packageParts: List[String] = List.empty,
             types: List[ClassRep] = List.empty,
             fields: List[ClassAsFieldRep] = List.empty,
-            parentClass: Option[ClassRep] = None,
-            subClasses: List[ClassRep] = List.empty,
+            parentClass: Option[AbsoluteId] = None,
+            subClasses: List[AbsoluteId] = List.empty,
             predef: Boolean = false,
             library: Boolean = false,
-            content: Option[String] = None): ClassRep = {
+            content: Option[String] = None,
+            jsonTypeInfo: Option[JsonTypeInfo] = None): ClassRep = {
 
     name match {
       case "String"  => StringClassRep
@@ -217,7 +271,7 @@ object ClassRep {
       case "Double"  => DoubleClassRep
       case "Long"    => LongClassRep
       case "JsValue" => JsValueClassRep
-      case _         => CustomClassRep(name, packageParts, types, fields, parentClass, subClasses, predef, library, content)
+      case _         => CustomClassRep(name, packageParts, types, fields, parentClass, subClasses, predef, library, content, jsonTypeInfo)
     }
 
   }

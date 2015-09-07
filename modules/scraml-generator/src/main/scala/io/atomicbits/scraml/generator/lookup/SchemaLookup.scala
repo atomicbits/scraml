@@ -80,7 +80,9 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
       case integerEl: IntegerEl       => LongClassRep
       case booleanEl: BooleanEl       => BooleanClassRep
       case schemaRef: SchemaReference => schemaAsClassRep(lookupSchema(schemaRef.refersTo))
-      case enumEl: EnumEl             => classReps(SchemaUtil.asAbsoluteId(schema.id))
+      case enumEl: EnumEl             =>
+        if (enumEl.choices.size == 1) StringClassRep // Probably a "type" discriminator field.
+        else classReps(SchemaUtil.asAbsoluteId(schema.id))
       case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a class representation.")
     }
 

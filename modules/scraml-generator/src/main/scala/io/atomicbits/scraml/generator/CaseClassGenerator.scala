@@ -39,46 +39,53 @@ object CaseClassGenerator {
 
     // Expand all canonical names into their case class definitions.
 
-    schemaLookup.objectMap.keys.toList.map { key =>
-      generateCaseClassWithCompanionObject(schemaLookup.classReps(key), schemaLookup)
+    val (classRepsInHierarcy, classRepsStandalone) = schemaLookup.classReps.values.toList.partition(_.isInHierarchy)
+
+    val classHierarchies = classRepsInHierarcy.groupBy(_.topLevelParent(schemaLookup))
+      .collect { case (Some(classRep), reps) => (classRep, reps) }
+
+    classHierarchies.values.toList.map(generateHierarchicalClassReps(_, schemaLookup)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup)) collect { case clRep if clRep.content.isDefined => clRep }
+  }
+
+
+  /**
+   * Collect all type imports for a given class and its generic types, but not its parent or child classes.
+   */
+  def collectImports(collectClassRep: ClassRep): Set[String] = {
+
+    val ownPackage = collectClassRep.packageName
+
+    /**
+     * Collect the type imports for the given class rep without recursing into the field types.
+     */
+    def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
+
+      val collectedWithClassRep =
+        if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
+        else collected
+
+      classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
+
     }
+
+    val ownTypeImports: Set[String] = collectTypeImports(Set.empty, collectClassRep)
+
+    collectClassRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
 
   }
 
 
-  def generateCaseClassWithCompanionObject(classRep: ClassRep,
-                                           schemaLookup: SchemaLookup): ClassRep = {
+  def generateNonHierarchicalClassRep(classRep: ClassRep,
+                                      schemaLookup: SchemaLookup): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinition}")
 
-    def collectImports(): Set[String] = {
+    val imports: Set[String] = collectImports(classRep)
 
-      val ownPackage = classRep.packageName
+    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpression)
 
-      /**
-       * Collect the type imports for the given class rep without recursing into the field types.
-       */
-      def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
-
-        val collectedWithClassRep =
-          if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
-          else collected
-
-        classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
-
-      }
-
-      val ownTypeImports: Set[String] = collectTypeImports(Set.empty, classRep)
-
-      classRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
-
-    }
-
-    val imports: Set[String] = collectImports()
-
-    val fieldExpressions = classRep.fields.sortBy(! _.required).map(_.fieldExpression)
-
-    val caseClassSource =
+    val source =
       s"""
         package ${classRep.packageName}
 
@@ -86,17 +93,109 @@ object CaseClassGenerator {
 
         ${imports.mkString("\n")}
 
-        case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")})
+        ${generateCaseClassWithCompanion(classRep)}
+     """
 
-        object ${classRep.name} {
+    classRep.withContent(content = source)
+  }
 
-          implicit val jsonFormatter: Format[${classRep.classDefinition}] = Json.format[${classRep.classDefinition}]
 
-        }
-    """
+  private def generateCaseClassWithCompanion(classRep: ClassRep,
+                                             parentClassRep: Option[ClassRep] = None,
+                                             skipFieldName: Option[String] = None): String = {
 
-    classRep.withContent(content = caseClassSource)
+    val selectedFields =
+      skipFieldName map { skipField =>
+        classRep.fields.filterNot(_.fieldName == skipField)
+      } getOrElse classRep.fields
 
+    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpression)
+
+    val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinition}").getOrElse("")
+
+    s"""
+      case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")}) $extendsClass
+
+      object ${classRep.name} {
+
+        implicit val jsonFormatter: Format[${classRep.classDefinition}] = Json.format[${classRep.classDefinition}]
+
+      }
+     """
+  }
+
+
+  private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], schemaLookup: SchemaLookup): String = {
+
+    println(s"Generating case class for: ${topLevelClassRep.classDefinition}")
+
+    def leafClassRepToWithTypeHintExpression(leafClassRep: ClassRep): String = {
+      s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue.get}")"""
+    }
+
+    val extendsClass = topLevelClassRep.parentClass.map { parentClass =>
+      s"extends ${schemaLookup.classReps(parentClass).classDefinition}"
+    } getOrElse ""
+
+    topLevelClassRep.jsonTypeInfo.collect {
+      case jsonTypeInfo if leafClassReps.forall(_.jsonTypeInfo.isDefined) =>
+        s"""
+          sealed trait ${topLevelClassRep.classDefinition} $extendsClass {
+
+          }
+
+          object ${topLevelClassRep.name} {
+
+            implicit val jsonFormat: Format[${topLevelClassRep.classDefinition}] =
+              TypeHintFormat(
+                "${jsonTypeInfo.discriminator}",
+                ${leafClassReps.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}
+              )
+
+          }
+         """
+    } getOrElse ""
+
+  }
+
+
+  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): ClassRep = {
+
+    val topLevelClass = hierarchyReps.head.topLevelParent(schemaLookup).get
+
+    val packages = hierarchyReps.groupBy(_.packageName)
+    assert(
+      packages.keys.size == 1,
+      s"""
+         |Classes in a class hierarchy must be defined in the same namespace/package. The classes
+         |${hierarchyReps.map(_.name).mkString("\n")}
+          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+                                                              |${packages.keys.mkString("\n")}
+       """.stripMargin)
+
+    val leafClasses = hierarchyReps.filter(_.subClasses.isEmpty)
+
+    val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
+      collectImports(classRp) ++ importsAggr
+    }
+
+    val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
+
+    val source =
+      s"""
+        package ${topLevelClass.packageName}
+
+        import play.api.libs.json.{Format, Json}
+        import io.atomicbits.scraml.dsl.json.TypedJson._
+
+        ${imports.mkString("\n")}
+
+        ${generateTraitWithCompanion(topLevelClass, leafClasses, schemaLookup)}
+
+        ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
+     """
+
+    topLevelClass.withContent(source)
   }
 
 }

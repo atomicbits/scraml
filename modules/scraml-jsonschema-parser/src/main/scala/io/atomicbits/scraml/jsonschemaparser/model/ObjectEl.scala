@@ -19,6 +19,7 @@
 package io.atomicbits.scraml.jsonschemaparser.model
 
 import io.atomicbits.scraml.jsonschemaparser._
+import play.api.libs.json
 import play.api.libs.json._
 
 import scala.language.postfixOps
@@ -32,7 +33,8 @@ case class ObjectEl(id: Id,
                     requiredFields: List[String] = List.empty,
                     selection: Option[Selection] = None,
                     fragments: Map[String, Schema] = Map.empty,
-                    name: Option[String] = None) extends FragmentedSchema with AllowedAsObjectField {
+                    typeVariables: List[String] = List.empty,
+                    typeDiscriminator: Option[String] = None) extends FragmentedSchema with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Schema = copy(id = updatedId)
 
@@ -41,10 +43,11 @@ case class ObjectEl(id: Id,
 // ToDo: handle the oneOf, anyOf and allOf fields
 object ObjectEl {
 
+
   def apply(schema: JsObject): ObjectEl = {
 
     // Process the id
-    val id = schema match {
+    val id: Id = schema match {
       case IdExtractor(schemaId) => schemaId
     }
 
@@ -58,8 +61,9 @@ object ObjectEl {
         case _                     => None
       }
 
-    // Process the fragments
-    val keysToExclude = Seq("id", "properties", "required", "oneOf", "anyOf", "allOf")
+    // Process the fragments and exclude the json-schema fields that we don't need to consider
+    // (should be only objects as other fields are ignored as fragmens) ToDo: check this
+    val keysToExclude = Seq("id", "type", "properties", "required", "oneOf", "anyOf", "allOf")
     val fragmentsToKeep =
       keysToExclude.foldLeft[Map[String, JsValue]](schema.value.toMap) { (schemaMap, excludeKey) =>
         schemaMap - excludeKey
@@ -79,16 +83,27 @@ object ObjectEl {
         case _                  => (None, None)
       }
 
-    // Process the name field
-    val name = (schema \ "name").asOpt[String]
 
+    // Process the typeVariables field
+    val typeVariables: List[String] =
+      schema \ "typeVariables" toOption match {
+        case Some(req: JsArray) => req.value.toList.collect { case JsString(value) => value }
+        case _                  => List.empty[String]
+      }
+
+    // Process the typeDiscriminator field
+    val typeDiscriminator: Option[String] =
+      schema \ "typeDiscriminator" toOption match {
+        case Some(JsString(value)) => Some(value)
+        case _                     => None
+      }
 
     val oneOf =
       (schema \ "oneOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
             case jsObj: JsObject => jsObj
-          } map (Schema(_))
+          } map (tryToInterpretOneOfSelectionAsObjectEl(_, id, typeDiscriminator.getOrElse("type")))
           OneOf(selectionSchemas.toList)
       }
 
@@ -112,6 +127,7 @@ object ObjectEl {
 
     val selection = List(oneOf, anyOf, allOf).flatten.headOption
 
+
     ObjectEl(
       id = id,
       required = required.getOrElse(false),
@@ -119,9 +135,46 @@ object ObjectEl {
       selection = selection,
       properties = properties.getOrElse(Map.empty[String, Schema]),
       fragments = fragments.toMap,
-      name = name
+      typeVariables = typeVariables,
+      typeDiscriminator = typeDiscriminator
     )
 
   }
+
+
+  def schemaToDiscriminatorValue(schema: Schema): Option[String] = {
+    Some(schema) collect {
+      case enumEl: EnumEl if enumEl.choices.length == 1 => enumEl.choices.head
+    }
+  }
+
+
+  private def tryToInterpretOneOfSelectionAsObjectEl(schema: JsObject, parentId: Id, typeDiscriminator: String): Schema = {
+
+    def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
+      oneOfFragment.fragments.get("properties") collect {
+        case propFrag: Fragment => propFrag.fragments.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
+      } getOrElse None
+    }
+
+    def fixId(id: Id, parentId: Id, discriminatorValue: String): Option[RelativeId] = {
+      id match {
+        case ImplicitId => // fix id based on the parentId if there isn't one
+          if (discriminatorValue.exists(_.isLower)) Some(RelativeId(id = discriminatorValue))
+          else Some(RelativeId(id = discriminatorValue.toLowerCase))
+        case _                                 => None
+      }
+    }
+
+    Schema(schema) match {
+      case objEl: ObjectEl => objEl
+      case frag: Fragment  =>
+        typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
+          Schema(schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)))
+        } getOrElse frag
+      case x               => x
+    }
+  }
+
 
 }

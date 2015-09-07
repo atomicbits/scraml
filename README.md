@@ -10,4 +10,9 @@ The code contains the following modules:
    * *scraml-dsl*: This is the code that supports the generated DSL and will be included in the resulting project by the scraml-sbt-plugin.
    * *scraml-generator*: The generator will generate a Scala DSL from a given RAML specification. 
 
+See the scraml SBT plugin project to enable scraml in your Scala project: https://github.com/atomicbits/scraml-sbt-plugin
+
+A Java DSL generator is on our backlog.  
+
 More detailed documentation is coming soon... 
+
