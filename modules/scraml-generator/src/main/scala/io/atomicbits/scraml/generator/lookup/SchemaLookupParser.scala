@@ -154,26 +154,29 @@ object SchemaLookupParser {
     @tailrec
     def lookupObjEl(schema: Schema): Option[ObjectElExt] = {
       schema match {
-        case obj: ObjectElExt     => Some(obj)
+        case obj: ObjectEl     => schemaLookup.objectMap.get(SchemaUtil.asAbsoluteId(obj.id))
         case ref: SchemaReference => lookupObjEl(schemaLookup.lookupSchema(ref.refersTo))
         case _                    => None
       }
     }
 
-    schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
-      val (absId, obj) = objPair
+    schemaLookup.objectMap.keys.foldLeft(schemaLookup) { (lookup, absId) =>
+
+      val obj = lookup.objectMap(absId)
+
       val children: List[ObjectElExt] = obj.selection.map { sel =>
         sel.selection.flatMap(lookupObjEl)
       } getOrElse List.empty
-      val childrenWithParent = children.map(_.copy(parent = Some(obj)))
+
+      val childrenWithParent = children.map(_.copy(parent = Some(absId)))
 
       val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, obj) =>
-        val absoluteId = SchemaUtil.asAbsoluteId(obj.id)
-        lkup.copy(objectMap = lkup.objectMap + (absoluteId -> obj))
+        lkup.copy(objectMap = lkup.objectMap + (obj.id -> obj))
       }
 
-      val updatedObj = obj.copy(children = childrenWithParent)
-      updatedLookup.copy(objectMap = lookup.objectMap + (absId -> updatedObj))
+      val updatedObj = obj.copy(children = childrenWithParent.map(_.id))
+      val result = updatedLookup.copy(objectMap = updatedLookup.objectMap + (absId -> updatedObj))
+      result
     }
 
   }
@@ -188,8 +191,7 @@ object SchemaLookupParser {
     schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
-        // The typeDiscriminator only has to be defined at the top-most parent.
-        val typeDiscriminator = obj.topLevelParent.flatMap(_.typeDiscriminator).getOrElse("type")
+        val typeDiscriminator = obj.topLevelParent(schemaLookup).flatMap(_.typeDiscriminator).getOrElse("type")
         val discriminator = obj.properties.get(typeDiscriminator).flatMap(ObjectEl.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)

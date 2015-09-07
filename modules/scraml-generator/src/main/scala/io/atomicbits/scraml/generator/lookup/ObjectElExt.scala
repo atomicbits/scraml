@@ -19,20 +19,20 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.Id
-import io.atomicbits.scraml.jsonschemaparser.model.{ObjectEl, Selection, Schema}
+import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, Id}
+import io.atomicbits.scraml.jsonschemaparser.model.{OneOf, ObjectEl, Selection, Schema}
 
 /**
  * Created by peter on 5/07/15. 
  */
-case class ObjectElExt(id: Id,
+case class ObjectElExt(id: AbsoluteId,
                        properties: Map[String, Schema],
                        required: Boolean,
                        requiredFields: List[String] = List.empty,
                        selection: Option[Selection] = None,
                        fragments: Map[String, Schema] = Map.empty,
-                       parent: Option[ObjectElExt] = None,
-                       children: List[ObjectElExt] = List.empty,
+                       parent: Option[AbsoluteId] = None,
+                       children: List[AbsoluteId] = List.empty,
                        typeVariables: List[String] = List.empty,
                        typeDiscriminator: Option[String] = None,
                        typeDiscriminatorValue: Option[String] = None) {
@@ -41,14 +41,15 @@ case class ObjectElExt(id: Id,
 
   def hasParent: Boolean = parent.isDefined
 
-  def isInTypeHiearcy: Boolean = hasChildren || hasParent
+  def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
-  def topLevelParent: Option[ObjectElExt] = {
+  def topLevelParent(schemaLookup: SchemaLookup): Option[ObjectElExt] = {
 
-    def findTopLevelParent(objElExt: ObjectElExt): ObjectElExt = {
+    def findTopLevelParent(absoluteId: AbsoluteId): ObjectElExt = {
+      val objElExt = schemaLookup.objectMap(absoluteId)
       objElExt.parent match {
-        case Some(aParent) => findTopLevelParent(aParent)
-        case None => objElExt
+        case Some(parentId) => findTopLevelParent(parentId)
+        case None           => objElExt
       }
     }
 
@@ -63,7 +64,7 @@ object ObjectElExt {
 
   def apply(obj: ObjectEl): ObjectElExt =
     ObjectElExt(
-      id = obj.id,
+      id = SchemaUtil.asAbsoluteId(obj.id),
       properties = obj.properties,
       required = obj.required,
       requiredFields = obj.requiredFields,

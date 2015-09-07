@@ -4,26 +4,57 @@
   "type": "object",
   "typeDiscriminator": "_type",
   "description": "An animal object.",
-  "properties": {
-    "id": {
-      "required": true,
-      "type": "string"
+  "oneOf": [
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Cat"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        }
+      }
     },
-    "firstName": {
-      "required": true,
-      "type": "string"
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Dog"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        },
+        "canBark": {
+          "required": true,
+          "type": "boolean"
+        }
+      }
     },
-    "lastName": {
-      "required": true,
-      "type": "string"
-    },
-    "age": {
-      "required": true,
-      "type": "integer"
-    },
-    "homePage": {
-      "required": false,
-      "$ref": "http://atomicbits.io/schema/link.json#"
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Fish"
+          ]
+        },
+        "gender": {
+          "required": true,
+          "type": "string"
+        }
+      }
     }
-  }
+  ]
 }

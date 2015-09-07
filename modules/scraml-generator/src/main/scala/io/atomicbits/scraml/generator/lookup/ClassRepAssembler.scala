@@ -37,7 +37,7 @@ object ClassRepAssembler {
 
     val withCaseClassFields = addCaseClassFields(withCanonicals)
 
-    val withClassHierarchy = addClassHierarcy(withCaseClassFields)
+    val withClassHierarchy = addClassHierarchy(withCaseClassFields)
 
     withClassHierarchy
   }
@@ -114,49 +114,56 @@ object ClassRepAssembler {
 
   }
 
-  def addClassHierarcy(schemaLookup: SchemaLookup): SchemaLookup = {
+  def addClassHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    def updateParentAndChildren(objectEl: ObjectElExt, classRp: ClassRep): ClassRep = {
-      val classRepWithParent =
-        objectEl.parent map { objEl =>
-          val parentId = SchemaUtil.asAbsoluteId(objEl.id)
-          classRp.withParent(schemaLookup.classReps(parentId))
-        } getOrElse classRp
+    def updateParentAndChildren(objectEl: ObjectElExt, classRp: ClassRep): Map[AbsoluteId, ClassRep] = {
+
+      val typeDiscriminator = objectEl.typeDiscriminator.getOrElse("type")
 
       val childClassReps =
-        objectEl.children map { objEl =>
-          val childId = SchemaUtil.asAbsoluteId(objEl.id)
-          schemaLookup.classReps(childId)
+        objectEl.children map { childId =>
+
+          val childObjectEl = schemaLookup.objectMap(childId)
+          val childClassRepWithParent = schemaLookup.classReps(childId).withParent(objectEl.id)
+
+          val childClassRepWithParentAndJsonInfo =
+            childObjectEl.typeDiscriminatorValue.map { typeDiscriminatorValue =>
+              childClassRepWithParent.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, Some(typeDiscriminatorValue)))
+            } getOrElse childClassRepWithParent
+
+          (childId, childClassRepWithParentAndJsonInfo)
         }
 
-      val classRepWithParentAndChildren = classRepWithParent.withChildren(childClassReps)
+      val classRepWithParent =
+        objectEl.parent map { parentId =>
+          classRp.withParent(parentId)
+        } getOrElse classRp
 
-      objectEl.typeDiscriminatorValue.map { typeDiscriminatorValue =>
-        val typeDiscriminator = objectEl.typeDiscriminator.getOrElse("type")
-        classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, typeDiscriminatorValue))
-      } getOrElse classRepWithParentAndChildren
+      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectEl.children)
 
+      val classRepWithParentAndChildrenAndJsonTypeInfo =
+        classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
+
+      ((objectEl.id, classRepWithParentAndChildrenAndJsonTypeInfo) :: childClassReps) toMap
     }
 
-    val canonicalMapWithHierarchy =
-      schemaLookup.classReps map { idAndClassRep =>
 
-        val (id, classRep) = idAndClassRep
+    schemaLookup.classReps.foldLeft(schemaLookup) { (lookUp, idWithClassRep) =>
+      val (id, classRep) = idWithClassRep
 
-        val objectEl = schemaLookup.objectMap(id)
+      val objectEl = schemaLookup.objectMap(id)
 
-        val classRepsWithParentAndChildren: ClassRep =
-          objectEl.selection match {
-            case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
-            case Some(AnyOf(selection)) => classRep // We only support OneOf for now.
-            case Some(AllOf(selection)) => classRep // We only support OneOf for now.
-            case _                      => classRep
-          }
+      val classRepsWithParentAndChildren: Map[AbsoluteId, ClassRep] =
+        objectEl.selection match {
+          case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
+          case Some(AnyOf(selection)) => Map.empty // We only support OneOf for now.
+          case Some(AllOf(selection)) => Map.empty // We only support OneOf for now.
+          case _                      => Map.empty
+        }
 
-        (id, classRepsWithParentAndChildren)
-      }
+      lookUp.copy(classReps = lookUp.classReps ++ classRepsWithParentAndChildren)
+    }
 
-    schemaLookup.copy(classReps = canonicalMapWithHierarchy)
   }
 
 }

@@ -151,23 +151,27 @@ object ObjectEl {
 
   private def tryToInterpretOneOfSelectionAsObjectEl(schema: JsObject, parentId: Id, typeDiscriminator: String): Schema = {
 
-    def fixId(id: Id, parentId: Id, discriminatorValue: Option[String]): Option[RelativeId] = {
-      (id, discriminatorValue) match {
-        case (ImplicitId, Some(discrimiValue)) => // fix id based on the parentId if there isn't one
-          if (discrimiValue.exists(_.isLower)) Some(RelativeId(id = discrimiValue))
-          else Some(RelativeId(id = discrimiValue.toLowerCase))
+    def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
+      oneOfFragment.fragments.get("properties") collect {
+        case propFrag: Fragment => propFrag.fragments.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
+      } getOrElse None
+    }
+
+    def fixId(id: Id, parentId: Id, discriminatorValue: String): Option[RelativeId] = {
+      id match {
+        case ImplicitId => // fix id based on the parentId if there isn't one
+          if (discriminatorValue.exists(_.isLower)) Some(RelativeId(id = discriminatorValue))
+          else Some(RelativeId(id = discriminatorValue.toLowerCase))
         case _                                 => None
       }
     }
 
     Schema(schema) match {
       case objEl: ObjectEl => objEl
-      case frag: Fragment if frag.fragments.keys.exists(_ == "properties") && frag.fragments.keys.exists(_ == typeDiscriminator)
-                           =>
-        fixId(frag.id, parentId, schemaToDiscriminatorValue(frag.fragments(typeDiscriminator))) match {
-          case Some(relativeId) => Schema(schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)))
-          case None             => frag
-        }
+      case frag: Fragment  =>
+        typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
+          Schema(schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)))
+        } getOrElse frag
       case x               => x
     }
   }

@@ -41,7 +41,8 @@ object CaseClassGenerator {
 
     val (classRepsInHierarcy, classRepsStandalone) = schemaLookup.classReps.values.toList.partition(_.isInHierarchy)
 
-    val classHierarchies = classRepsInHierarcy.groupBy(_.topLevelParent).collect { case (Some(classRep), reps) => (classRep, reps) }
+    val classHierarchies = classRepsInHierarcy.groupBy(_.topLevelParent(schemaLookup))
+      .collect { case (Some(classRep), reps) => (classRep, reps) }
 
     classHierarchies.values.toList.map(generateHierarchicalClassReps(_, schemaLookup)) :::
       classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup)) collect { case clRep if clRep.content.isDefined => clRep }
@@ -99,12 +100,14 @@ object CaseClassGenerator {
   }
 
 
-  private def generateCaseClassWithCompanion(classRep: ClassRep): String = {
+  private def generateCaseClassWithCompanion(classRep: ClassRep, parentClassRep: Option[ClassRep] = None): String = {
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpression)
 
+    val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinition}").getOrElse("")
+
     s"""
-      case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")})
+      case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")}) $extendsClass
 
       object ${classRep.name} {
 
@@ -115,13 +118,17 @@ object CaseClassGenerator {
   }
 
 
-  private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep]): String = {
+  private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], schemaLookup: SchemaLookup): String = {
+
+    println(s"Generating case class for: ${topLevelClassRep.classDefinition}")
 
     def leafClassRepToWithTypeHintExpression(leafClassRep: ClassRep): String = {
-      s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue}")"""
+      s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue.get}")"""
     }
 
-    val extendsClass = topLevelClassRep.parentClass.map(parentClass => s"extends ${parentClass.classDefinition}").getOrElse("")
+    val extendsClass = topLevelClassRep.parentClass.map { parentClass =>
+      s"extends ${schemaLookup.classReps(parentClass).classDefinition}"
+    } getOrElse ""
 
     topLevelClassRep.jsonTypeInfo.collect {
       case jsonTypeInfo if leafClassReps.forall(_.jsonTypeInfo.isDefined) =>
@@ -134,7 +141,7 @@ object CaseClassGenerator {
 
             implicit val jsonFormat: Format[${topLevelClassRep.classDefinition}] =
               TypeHintFormat(
-                ${jsonTypeInfo.discriminator},
+                "${jsonTypeInfo.discriminator}",
                 ${leafClassReps.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}
               )
 
@@ -142,13 +149,12 @@ object CaseClassGenerator {
          """
     } getOrElse ""
 
-
   }
 
 
   def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): ClassRep = {
 
-    val topLevelClass = hierarchyReps.head.topLevelParent.get
+    val topLevelClass = hierarchyReps.head.topLevelParent(schemaLookup).get
 
     val packages = hierarchyReps.groupBy(_.packageName)
     assert(
@@ -175,9 +181,9 @@ object CaseClassGenerator {
 
         ${imports.mkString("\n")}
 
-        ${generateTraitWithCompanion(topLevelClass, leafClasses)}
+        ${generateTraitWithCompanion(topLevelClass, leafClasses, schemaLookup)}
 
-        ${leafClasses.map(generateCaseClassWithCompanion).mkString("\n\n")}
+        ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass))).mkString("\n\n")}
      """
 
     topLevelClass.withContent(source)
