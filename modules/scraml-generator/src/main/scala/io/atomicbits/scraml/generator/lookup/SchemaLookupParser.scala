@@ -190,9 +190,7 @@ object SchemaLookupParser {
       if (obj.hasParent && !obj.hasChildren) {
         // The typeDiscriminator only has to be defined at the top-most parent.
         val typeDiscriminator = obj.topLevelParent.flatMap(_.typeDiscriminator).getOrElse("type")
-        val discriminator = obj.properties.get(typeDiscriminator) collect {
-          case enumEl: EnumEl if enumEl.choices.length == 1 => enumEl.choices.head
-        }
+        val discriminator = obj.properties.get(typeDiscriminator).flatMap(ObjectEl.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)
           println(

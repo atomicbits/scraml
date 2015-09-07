@@ -33,23 +33,21 @@ object ClassRepAssembler {
 
   def deduceClassReps(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    addClassHierarcy(addCaseClassFields(deduceCanonicalNames(schemaLookup)))
+    val withCanonicals = deduceCanonicalNames(schemaLookup)
 
+    val withCaseClassFields = addCaseClassFields(withCanonicals)
+
+    val withClassHierarchy = addClassHierarcy(withCaseClassFields)
+
+    withClassHierarchy
   }
+
 
   /**
    * @param schemaLookup: The schema lookup
    * @return A map containing the class representation for each absolute ID.
    */
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
-
-    val ids: List[AbsoluteId] = schemaLookup.objectMap.keys.toList
-
-    val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
-
-    // Group all schema references by their paths. These paths are going to define the package structure,
-    // so each class name will need to be unique within its package.
-    val packageGroups: List[List[SchemaClassReference]] = schemaPaths.groupBy(_.path).values.toList
 
     def schemaReferenceToCanonicalName(canonicalMap: CanonicalMap, schemaReference: SchemaClassReference): CanonicalMap = {
 
@@ -62,15 +60,26 @@ object ClassRepAssembler {
       canonicalMap + (schemaReference.origin -> classRep)
     }
 
+
     def packageGroupToCanonicalNames(canonicalMap: CanonicalMap, packageGroup: List[SchemaClassReference]): CanonicalMap =
       packageGroup.foldLeft(canonicalMap)(schemaReferenceToCanonicalName)
 
+
+    val ids: List[AbsoluteId] = schemaLookup.objectMap.keys.toList
+
+    val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
+
+    // Group all schema references by their paths. These paths are going to define the package structure,
+    // so each class name will need to be unique within its package.
+    val packageGroups: List[List[SchemaClassReference]] = schemaPaths.groupBy(_.path).values.toList
+
     val canonicalMap: CanonicalMap = Map.empty
 
-    val canonicalMapWithNamesFilledIn = packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
+    val canonicalMapWithNamesFilledIn: CanonicalMap = packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
 
     schemaLookup.copy(classReps = canonicalMapWithNamesFilledIn)
   }
+
 
   def addCaseClassFields(schemaLookup: SchemaLookup): SchemaLookup = {
 

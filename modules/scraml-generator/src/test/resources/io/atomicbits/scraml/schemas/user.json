@@ -2,8 +2,6 @@
   "$schema": "http://json-schema.org/draft-03/schema",
   "id": "http://atomicbits.io/schema/user.json#",
   "type": "object",
-//  "typeVariables": ["T", "U"],
-//  "typeDiscriminator": "_type",
   "javaType": "",
   "description": "A user object.",
   "definitions": {
@@ -23,11 +21,6 @@
       "required": true,
       "type": "string"
     },
-//    "someField": {
-//      "required": true,
-//      "type": "object",
-//      "genericType": "T"
-//    },
     "firstName": {
       "required": true,
       "type": "string"

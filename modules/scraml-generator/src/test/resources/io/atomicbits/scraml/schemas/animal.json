@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/animal.json#",
+  "type": "object",
+  "typeDiscriminator": "_type",
+  "description": "An animal object.",
+  "properties": {
+    "id": {
+      "required": true,
+      "type": "string"
+    },
+    "firstName": {
+      "required": true,
+      "type": "string"
+    },
+    "lastName": {
+      "required": true,
+      "type": "string"
+    },
+    "age": {
+      "required": true,
+      "type": "integer"
+    },
+    "homePage": {
+      "required": false,
+      "$ref": "http://atomicbits.io/schema/link.json#"
+    }
+  }
+}

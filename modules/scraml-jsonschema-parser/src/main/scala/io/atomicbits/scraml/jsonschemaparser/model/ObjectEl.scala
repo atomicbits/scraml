@@ -19,6 +19,7 @@
 package io.atomicbits.scraml.jsonschemaparser.model
 
 import io.atomicbits.scraml.jsonschemaparser._
+import play.api.libs.json
 import play.api.libs.json._
 
 import scala.language.postfixOps
@@ -42,10 +43,11 @@ case class ObjectEl(id: Id,
 // ToDo: handle the oneOf, anyOf and allOf fields
 object ObjectEl {
 
+
   def apply(schema: JsObject): ObjectEl = {
 
     // Process the id
-    val id = schema match {
+    val id: Id = schema match {
       case IdExtractor(schemaId) => schemaId
     }
 
@@ -81,12 +83,27 @@ object ObjectEl {
         case _                  => (None, None)
       }
 
+
+    // Process the typeVariables field
+    val typeVariables: List[String] =
+      schema \ "typeVariables" toOption match {
+        case Some(req: JsArray) => req.value.toList.collect { case JsString(value) => value }
+        case _                  => List.empty[String]
+      }
+
+    // Process the typeDiscriminator field
+    val typeDiscriminator: Option[String] =
+      schema \ "typeDiscriminator" toOption match {
+        case Some(JsString(value)) => Some(value)
+        case _                     => None
+      }
+
     val oneOf =
       (schema \ "oneOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
             case jsObj: JsObject => jsObj
-          } map (Schema(_))
+          } map (tryToInterpretOneOfSelectionAsObjectEl(_, id, typeDiscriminator.getOrElse("type")))
           OneOf(selectionSchemas.toList)
       }
 
@@ -111,20 +128,6 @@ object ObjectEl {
     val selection = List(oneOf, anyOf, allOf).flatten.headOption
 
 
-    // Process the typeVariables field
-    val typeVariables: List[String] =
-      schema \ "typeVariables" toOption match {
-        case Some(req: JsArray) => req.value.toList.collect { case JsString(value) => value }
-        case _                  => List.empty[String]
-      }
-
-    // Process the typeDiscriminator field
-    val typeDiscriminator: Option[String] =
-      schema \ "typeDiscriminator" toOption match {
-        case Some(JsString(value)) => Some(value)
-        case _                     => None
-      }
-
     ObjectEl(
       id = id,
       required = required.getOrElse(false),
@@ -137,5 +140,37 @@ object ObjectEl {
     )
 
   }
+
+
+  def schemaToDiscriminatorValue(schema: Schema): Option[String] = {
+    Some(schema) collect {
+      case enumEl: EnumEl if enumEl.choices.length == 1 => enumEl.choices.head
+    }
+  }
+
+
+  private def tryToInterpretOneOfSelectionAsObjectEl(schema: JsObject, parentId: Id, typeDiscriminator: String): Schema = {
+
+    def fixId(id: Id, parentId: Id, discriminatorValue: Option[String]): Option[RelativeId] = {
+      (id, discriminatorValue) match {
+        case (ImplicitId, Some(discrimiValue)) => // fix id based on the parentId if there isn't one
+          if (discrimiValue.exists(_.isLower)) Some(RelativeId(id = discrimiValue))
+          else Some(RelativeId(id = discrimiValue.toLowerCase))
+        case _                                 => None
+      }
+    }
+
+    Schema(schema) match {
+      case objEl: ObjectEl => objEl
+      case frag: Fragment if frag.fragments.keys.exists(_ == "properties") && frag.fragments.keys.exists(_ == typeDiscriminator)
+                           =>
+        fixId(frag.id, parentId, schemaToDiscriminatorValue(frag.fragments(typeDiscriminator))) match {
+          case Some(relativeId) => Schema(schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)))
+          case None             => frag
+        }
+      case x               => x
+    }
+  }
+
 
 }
