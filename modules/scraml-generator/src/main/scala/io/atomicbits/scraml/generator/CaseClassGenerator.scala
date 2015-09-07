@@ -100,9 +100,16 @@ object CaseClassGenerator {
   }
 
 
-  private def generateCaseClassWithCompanion(classRep: ClassRep, parentClassRep: Option[ClassRep] = None): String = {
+  private def generateCaseClassWithCompanion(classRep: ClassRep,
+                                             parentClassRep: Option[ClassRep] = None,
+                                             skipFieldName: Option[String] = None): String = {
 
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpression)
+    val selectedFields =
+      skipFieldName map { skipField =>
+        classRep.fields.filterNot(_.fieldName == skipField)
+      } getOrElse classRep.fields
+
+    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpression)
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinition}").getOrElse("")
 
@@ -172,6 +179,8 @@ object CaseClassGenerator {
       collectImports(classRp) ++ importsAggr
     }
 
+    val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
+
     val source =
       s"""
         package ${topLevelClass.packageName}
@@ -183,7 +192,7 @@ object CaseClassGenerator {
 
         ${generateTraitWithCompanion(topLevelClass, leafClasses, schemaLookup)}
 
-        ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass))).mkString("\n\n")}
+        ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
      """
 
     topLevelClass.withContent(source)

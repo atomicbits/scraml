@@ -154,7 +154,7 @@ object SchemaLookupParser {
     @tailrec
     def lookupObjEl(schema: Schema): Option[ObjectElExt] = {
       schema match {
-        case obj: ObjectEl     => schemaLookup.objectMap.get(SchemaUtil.asAbsoluteId(obj.id))
+        case obj: ObjectEl        => schemaLookup.objectMap.get(SchemaUtil.asAbsoluteId(obj.id))
         case ref: SchemaReference => lookupObjEl(schemaLookup.lookupSchema(ref.refersTo))
         case _                    => None
       }
