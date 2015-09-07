@@ -59,18 +59,18 @@ object ResourceClassGenerator {
          package ${apiPackageName.mkString(".")}
 
          import io.atomicbits.scraml.dsl.client.ClientConfig
-
+         import java.net.URL
          import play.api.libs.json._
 
          ${imports.mkString("\n")}
 
 
          case class $apiClassName(host: String,
-                             port: Int = 80,
-                             protocol: String = "http",
-                             prefix: Option[String] = None,
-                             config: ClientConfig = ClientConfig(),
-                             defaultHeaders: Map[String, String] = Map()) {
+                             port: Int,
+                             protocol: String,
+                             prefix: Option[String],
+                             config: ClientConfig,
+                             defaultHeaders: Map[String, String]) {
 
            import io.atomicbits.scraml.dsl._
            import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClientSupport
@@ -92,6 +92,17 @@ object ResourceClassGenerator {
 
            import scala.concurrent.ExecutionContext.Implicits.global
            import scala.concurrent.Future
+
+           def apply(url:URL, config:ClientConfig=ClientConfig(), defaultHeaders:Map[String,String] = Map()) : $apiClassName = {
+             new $apiClassName(
+               host = url.getHost,
+               port = if(url.getPort == -1) url.getDefaultPort else url.getPort,
+               prefix = if(url.getPath.isEmpty) None else Some(url.getPath),
+               protocol = url.getProtocol,
+               config = config,
+               defaultHeaders = defaultHeaders
+             )
+           }
 
            implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
 
