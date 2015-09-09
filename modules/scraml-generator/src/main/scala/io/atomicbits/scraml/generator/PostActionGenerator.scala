@@ -42,7 +42,7 @@ object PostActionGenerator extends ActionGeneratorSupport {
   def generateFormPostAction(action: RichAction, formPostContentType: FormPostContentType): List[String] = {
 
     val formParameterMethodParameters =
-      formPostContentType.formParameters.toList.map { paramPair =>
+      formPostContentType.formParameters.toList.sortBy(_._2.head.required).map { paramPair =>
         val (name, paramList) = paramPair
         if (paramList.isEmpty) sys.error(s"Form parameter $name has no valid type definition.")
         expandParameterAsMethodParameter((name, paramList.head))
