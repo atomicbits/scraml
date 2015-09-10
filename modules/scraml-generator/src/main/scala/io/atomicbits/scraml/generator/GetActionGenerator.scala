@@ -28,8 +28,9 @@ object GetActionGenerator extends ActionGeneratorSupport {
 
   def generate(action: RichAction): List[String] = {
 
+    // pure optionals go last (not required, not repeated)
     val queryParameterMethodParameters =
-      action.queryParameters.toList.map(param => expandParameterAsMethodParameter(param))
+      action.queryParameters.toList.sortBy(t => (!t._2.required, !t._2.repeated)).map(param => expandParameterAsMethodParameter(param))
 
     val queryParameterMapEntries =
       action.queryParameters.toList.map(param => expandParameterAsMapEntry(param))
