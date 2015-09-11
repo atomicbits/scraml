@@ -17,9 +17,15 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.model
 
 /**
- * Created by peter on 21/08/15. 
+ * Created by peter on 11/09/15. 
  */
-case class GeneratedClass(className: String, packageParts: List[String], content: String)
+case class ClassReference(name: String, packageParts: List[String] = List.empty) {
+
+  def packageName: String = packageParts.mkString(".")
+
+  def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
+
+}

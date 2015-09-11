@@ -17,10 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.codegen.scala
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
-import io.atomicbits.scraml.generator.model.RichResource
+import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.parser.model._
 
 /**
@@ -133,7 +132,7 @@ object ResourceClassGenerator {
          }
        """
 
-      ClassRep(name = apiClassName, packageParts = apiPackageName, content = Some(sourcecode))
+      ClassRep(classReference = ClassReference(name = apiClassName, packageParts = apiPackageName), content = Some(sourcecode))
 
     }
 

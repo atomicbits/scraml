@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.{ClassRep, CleanNameUtil}
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 
 /**
@@ -53,8 +53,10 @@ object RichResource {
         urlSegment = resource.urlSegment,
         urlParameter = resource.urlParameter,
         classRep = ClassRep(
-          name = resourceClassName,
-          packageParts = nextPackageBasePath
+          classReference = ClassReference(
+            name = resourceClassName,
+            packageParts = nextPackageBasePath
+          )
         ),
         actions = richActions,
         resources = richChildResources

@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.client.manual.SomeResource
 import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
 
 /**

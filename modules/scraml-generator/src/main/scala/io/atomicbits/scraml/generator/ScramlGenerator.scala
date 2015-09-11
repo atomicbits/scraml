@@ -21,8 +21,11 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
+import io.atomicbits.scraml.generator.model.ClassRep
+import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
 import io.atomicbits.scraml.generator.model.RichResource
+import io.atomicbits.scraml.generator.codegen.scala.{ResourceClassGenerator, CaseClassGenerator}
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
@@ -40,7 +43,16 @@ object ScramlGenerator {
 
 
   def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] = {
+    val tupleList =
+      generateClassReps(ramlApiPath, apiPackageName, apiClassName)
+        .collect { case clRep if clRep.content.isDefined => clRep }
+        .map(classRepToFilePathAndContent)
 
+    mapAsJavaMap[String, String](tupleList.toMap)
+  }
+
+
+  private[generator] def generateClassReps(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[ClassRep] = {
     // Validate RAML spec
     println(s"Running RAML validation on $ramlApiPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlApiPath)
@@ -66,24 +78,21 @@ object ScramlGenerator {
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
 
-    val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(schemaLookup)
-    println(s"Case classes generated")
-
     val packageBasePath = apiPackageName.split('.').toList
 
-    val resources: Seq[ClassRep] =
-      ResourceClassGenerator.generateResourceClasses(
-        apiClassName,
-        packageBasePath,
-        raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
-      )
+    val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
+    val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
+
+    // Here's the actual code generation
+    val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
+    println(s"Case classes generated")
+    val resources: Seq[ClassRep] = ResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
     println(s"Resources DSL generated")
 
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
-    val tupleList = (caseClasses ++ resources) map classRepToFilePathAndContent
-    mapAsJavaMap[String, String](tupleList.toMap)
+    caseClasses ++ resources
   }
 
   private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
@@ -97,7 +106,6 @@ object ScramlGenerator {
     val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classRep.name}.scala"
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
-
   }
 
 }
