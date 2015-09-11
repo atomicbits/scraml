@@ -21,6 +21,7 @@ package io.atomicbits.scraml.generator.lookup
 
 import io.atomicbits.scraml.generator._
 import io.atomicbits.scraml.generator.model.{JsonTypeInfo, ClassAsFieldRep, ClassRep, ClassReference}
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.jsonschemaparser._
 import io.atomicbits.scraml.jsonschemaparser.model._
 

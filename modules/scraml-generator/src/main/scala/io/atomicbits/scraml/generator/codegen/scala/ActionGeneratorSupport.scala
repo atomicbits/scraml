@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.parser.model._
@@ -41,11 +41,11 @@ trait ActionGeneratorSupport {
   def createSegmentType(actionType: ActionType, responseType: Option[ResponseType])(optBodyType: Option[String]): String = {
     val bodyType = optBodyType.getOrElse("String")
     responseType map {
-      case StringResponseType(acceptHeader)          => s"String${actionType}Segment[$bodyType]"
-      case JsonResponseType(acceptHeader)            => s"Json${actionType}Segment[$bodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"Type${actionType}Segment[$bodyType, ${classRep.classDefinitionScala}]"
+      case StringResponseType(acceptHeader)          => s"StringMethodSegment[$bodyType]"
+      case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
+      case TypedResponseType(acceptHeader, classRep) => s"TypeMethodSegment[$bodyType, ${classRep.classDefinitionScala}]"
       case x                                         => sys.error(s"We don't expect a $x content type on a put action.")
-    } getOrElse s"String${actionType}Segment[$bodyType]"
+    } getOrElse s"StringMethodSegment[$bodyType]"
   }
 
 

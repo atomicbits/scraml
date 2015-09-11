@@ -17,10 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model.ClassRep
-import ClassRep.ClassMap
+import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
 
 
 /**

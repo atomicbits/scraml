@@ -17,10 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.parser.model.{Delete, Post, Put, Get}
+import io.atomicbits.scraml.parser.model.{Delete, Get, Post, Put}
 
 /**
  * Created by peter on 23/08/15. 
@@ -64,7 +64,7 @@ object ActionGenerator {
   def generateActionFunctions(actions: List[RichAction]): List[String] = {
 
     // For now, we generate them individually, assuming there is only one content type and one response type per action.
-    actions.flatMap(generateActionFunctions)
+    actions.flatMap(ActionFunctionGenerator.generate)
 
 
     //    val contentAcceptPaths: Map[ContentType, Map[ResponseType, Set[RichAction]]] = Map.empty
@@ -77,18 +77,5 @@ object ActionGenerator {
     //    }
 
   }
-
-  private def generateActionFunctions(action: RichAction): List[String] = {
-
-    action.actionType match {
-      case Get           => GetActionGenerator.generate(action)
-      case Put           => PutActionGenerator.generate(action)
-      case Post          => PostActionGenerator.generate(action)
-      case Delete        => DeleteActionGenerator.generate(action)
-      case unknownAction => sys.error(s"$unknownAction actions are not supported yet.")
-    }
-
-  }
-
 
 }

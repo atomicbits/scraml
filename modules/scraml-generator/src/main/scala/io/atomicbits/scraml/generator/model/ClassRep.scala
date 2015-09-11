@@ -64,6 +64,7 @@ trait ClassRep {
 
   /**
    * The class definition as a string.
+   * Todo: extract this Scala vs. Java code in the code generation
    *
    * E.g.:
    * "Boolean"
@@ -79,6 +80,7 @@ trait ClassRep {
 
   /**
    * The class definition as a string.
+   * Todo: extract this Scala vs. Java code in the code generation
    *
    * E.g.:
    * "Boolean"

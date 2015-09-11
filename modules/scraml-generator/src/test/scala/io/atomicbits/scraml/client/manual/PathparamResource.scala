@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.client.manual.User
-import io.atomicbits.scraml.client.manual.Address
 import io.atomicbits.scraml.dsl._
 import play.api.libs.json.JsValue
 
@@ -36,7 +34,8 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
   def withHeaders(newHeaders: (String, String)*) =
     new PathparamResource(value, requestBuilder.withAddedHeaders(newHeaders: _*))
 
-  def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new TypeGetSegment[User](
+  def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new TypeMethodSegment[String, User](
+    method = Get,
     queryParams = Map(
       "queryparX" -> Option(queryparX).map(HttpParam(_)),
       "queryparY" -> Option(queryparY).map(HttpParam(_)),
@@ -47,30 +46,34 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
   )
 
   def put(body: String) =
-    new TypePutSegment[String, Address](
-      Some(body),
+    new TypeMethodSegment[String, Address](
+      method = Put,
+      theBody = Some(body),
       validAcceptHeaders = List("application/json"),
       validContentTypeHeaders = List("application/json"),
       req = requestBuilder
     )
 
   def put(body: JsValue) =
-    new TypePutSegment[JsValue, Address](
-      Some(body),
+    new TypeMethodSegment[JsValue, Address](
+      method = Put,
+      theBody = Some(body),
       validAcceptHeaders = List("application/json"),
       validContentTypeHeaders = List("application/json"),
       req = requestBuilder
     )
 
   def put(body: User) =
-    new TypePutSegment[User, Address](
-      Some(body),
+    new TypeMethodSegment[User, Address](
+      method = Put,
+      theBody = Some(body),
       validAcceptHeaders = List("application/json"),
       validContentTypeHeaders = List("application/json"),
       req = requestBuilder)
 
   def post(formparX: Int, formParY: Double, formParZ: Option[String]) =
-    new TypePostSegment(
+    new TypeMethodSegment(
+      method = Post,
       theBody = None,
       formParams = Map(
         "formparX" -> Option(formparX).map(HttpParam(_)),

@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.CleanNameUtil
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 
 /**

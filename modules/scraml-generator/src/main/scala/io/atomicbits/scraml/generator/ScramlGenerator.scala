@@ -21,10 +21,11 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
-import io.atomicbits.scraml.generator.model.{ClassRep, RichResource}
+import io.atomicbits.scraml.generator.model.ClassRep
 import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
 import io.atomicbits.scraml.generator.model.RichResource
+import io.atomicbits.scraml.generator.codegen.scala.{ResourceClassGenerator, CaseClassGenerator}
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
@@ -49,6 +50,7 @@ object ScramlGenerator {
 
     mapAsJavaMap[String, String](tupleList.toMap)
   }
+
 
   private[generator] def generateClassReps(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[ClassRep] = {
     // Validate RAML spec
@@ -104,7 +106,6 @@ object ScramlGenerator {
     val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classRep.name}.scala"
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
-
   }
 
 }

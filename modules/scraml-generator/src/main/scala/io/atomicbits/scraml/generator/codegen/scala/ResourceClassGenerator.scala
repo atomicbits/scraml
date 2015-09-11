@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.codegen.scala
 
-import io.atomicbits.scraml.generator.model.{ClassRep, ClassReference, RichResource}
+import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.parser.model._
 
 /**
