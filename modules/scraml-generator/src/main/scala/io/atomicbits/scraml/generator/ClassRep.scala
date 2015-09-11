@@ -22,6 +22,8 @@ package io.atomicbits.scraml.generator
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.jsonschemaparser.AbsoluteId
 
+import scala.annotation.tailrec
+
 /**
  * Created by peter on 21/08/15. 
  */
@@ -76,12 +78,25 @@ trait ClassRep {
 
   def packageName: String = packageParts.mkString(".")
 
-  def fullyQualifiedName: String = s"$packageName.$name"
+  def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
 
   def isInHierarchy: Boolean = parentClass.isDefined || subClasses.nonEmpty
 
+  /**
+   * Gives the top level parent of the hierarchy this class rep takes part in if any. If this class rep is the top level class,
+   * it will be returned as the result (as opposed to the method topLevelParent).
+   */
+  def hierarchyParent(schemaLookup: SchemaLookup): Option[ClassRep] = {
+    if (parentClass.isEmpty && subClasses.nonEmpty) Some(this)
+    else topLevelParent(schemaLookup)
+  }
+
+  /**
+   * Gives the top level parent of this class rep. A top level parent class itself has no parent and thus no top level parent.
+   */
   def topLevelParent(schemaLookup: SchemaLookup): Option[ClassRep] = {
 
+    @tailrec
     def findTopLevelParent(parentId: AbsoluteId): ClassRep = {
       val parentClass = schemaLookup.classReps(parentId)
       parentClass.parentClass match {

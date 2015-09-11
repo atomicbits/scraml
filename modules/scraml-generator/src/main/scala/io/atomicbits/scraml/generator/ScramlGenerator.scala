@@ -40,7 +40,15 @@ object ScramlGenerator {
 
 
   def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] = {
+    val tupleList =
+      generateClassReps(ramlApiPath, apiPackageName, apiClassName)
+        .collect { case clRep if clRep.content.isDefined => clRep }
+        .map(classRepToFilePathAndContent)
 
+    mapAsJavaMap[String, String](tupleList.toMap)
+  }
+
+  private[generator] def generateClassReps(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[ClassRep] = {
     // Validate RAML spec
     println(s"Running RAML validation on $ramlApiPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlApiPath)
@@ -82,8 +90,7 @@ object ScramlGenerator {
     // ToDo: process enumerations
     //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
 
-    val tupleList = (caseClasses ++ resources) map classRepToFilePathAndContent
-    mapAsJavaMap[String, String](tupleList.toMap)
+    caseClasses ++ resources
   }
 
   private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {

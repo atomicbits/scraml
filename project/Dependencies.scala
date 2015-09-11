@@ -35,6 +35,7 @@ trait Dependencies { this:Build =>
   val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
 
 
+
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
     rxHttpClient,

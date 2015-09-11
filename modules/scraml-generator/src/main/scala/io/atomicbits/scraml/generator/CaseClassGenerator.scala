@@ -41,11 +41,11 @@ object CaseClassGenerator {
 
     val (classRepsInHierarcy, classRepsStandalone) = schemaLookup.classReps.values.toList.partition(_.isInHierarchy)
 
-    val classHierarchies = classRepsInHierarcy.groupBy(_.topLevelParent(schemaLookup))
+    val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(schemaLookup))
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
-    classHierarchies.values.toList.map(generateHierarchicalClassReps(_, schemaLookup)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup)) collect { case clRep if clRep.content.isDefined => clRep }
+    classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, schemaLookup)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup))
   }
 
 
@@ -159,9 +159,10 @@ object CaseClassGenerator {
   }
 
 
-  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): ClassRep = {
+  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): List[ClassRep] = {
 
-    val topLevelClass = hierarchyReps.head.topLevelParent(schemaLookup).get
+    val topLevelClass = hierarchyReps.find(_.parentClass.isEmpty).get
+    val childClasses = hierarchyReps.filter(_.parentClass.isDefined)
 
     val packages = hierarchyReps.groupBy(_.packageName)
     assert(
@@ -195,7 +196,7 @@ object CaseClassGenerator {
         ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
      """
 
-    topLevelClass.withContent(source)
+    topLevelClass.withContent(source) +: childClasses
   }
 
 }
