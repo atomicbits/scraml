@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.model
 
 /**
  * Created by peter on 11/09/15. 

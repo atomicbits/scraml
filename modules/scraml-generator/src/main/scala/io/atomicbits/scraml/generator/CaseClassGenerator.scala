@@ -19,7 +19,8 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.ClassRep.ClassMap
+import io.atomicbits.scraml.generator.model.ClassRep
+import ClassRep.ClassMap
 
 
 /**
@@ -78,11 +79,11 @@ object CaseClassGenerator {
 
   def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
-    println(s"Generating case class for: ${classRep.classDefinition}")
+    println(s"Generating case class for: ${classRep.classDefinitionScala}")
 
     val imports: Set[String] = collectImports(classRep)
 
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpression)
+    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
     val source =
       s"""
@@ -108,16 +109,16 @@ object CaseClassGenerator {
         classRep.fields.filterNot(_.fieldName == skipField)
       } getOrElse classRep.fields
 
-    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpression)
+    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpressionScala)
 
-    val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinition}").getOrElse("")
+    val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
 
     s"""
-      case class ${classRep.classDefinition}(${fieldExpressions.mkString(",")}) $extendsClass
+      case class ${classRep.classDefinitionScala}(${fieldExpressions.mkString(",")}) $extendsClass
 
       object ${classRep.name} {
 
-        implicit val jsonFormatter: Format[${classRep.classDefinition}] = Json.format[${classRep.classDefinition}]
+        implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]
 
       }
      """
@@ -126,26 +127,26 @@ object CaseClassGenerator {
 
   private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], classMap: ClassMap): String = {
 
-    println(s"Generating case class for: ${topLevelClassRep.classDefinition}")
+    println(s"Generating case class for: ${topLevelClassRep.classDefinitionScala}")
 
     def leafClassRepToWithTypeHintExpression(leafClassRep: ClassRep): String = {
       s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue.get}")"""
     }
 
     val extendsClass = topLevelClassRep.parentClass.map { parentClass =>
-      s"extends ${classMap(parentClass).classDefinition}"
+      s"extends ${classMap(parentClass).classDefinitionScala}"
     } getOrElse ""
 
     topLevelClassRep.jsonTypeInfo.collect {
       case jsonTypeInfo if leafClassReps.forall(_.jsonTypeInfo.isDefined) =>
         s"""
-          sealed trait ${topLevelClassRep.classDefinition} $extendsClass {
+          sealed trait ${topLevelClassRep.classDefinitionScala} $extendsClass {
 
           }
 
           object ${topLevelClassRep.name} {
 
-            implicit val jsonFormat: Format[${topLevelClassRep.classDefinition}] =
+            implicit val jsonFormat: Format[${topLevelClassRep.classDefinitionScala}] =
               TypeHintFormat(
                 "${jsonTypeInfo.discriminator}",
                 ${leafClassReps.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}

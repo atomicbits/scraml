@@ -17,10 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator
+package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.ClassRep.ClassMap
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
 
 import scala.annotation.tailrec
 
@@ -73,9 +72,24 @@ trait ClassRep {
    * "List[List[Address]]"
    *
    */
-  def classDefinition: String =
+  def classDefinitionScala: String =
     if (types.isEmpty) name
-    else s"$name[${types.map(_.classDefinition).mkString(",")}]"
+    else s"$name[${types.map(_.classDefinitionScala).mkString(",")}]"
+
+
+  /**
+   * The class definition as a string.
+   *
+   * E.g.:
+   * "Boolean"
+   * "User"
+   * "List<User>"
+   * "List<List<Address>>"
+   *
+   */
+  def classDefinitionJava: String =
+    if (types.isEmpty) name
+    else s"$name<${types.map(_.classDefinitionScala).mkString(",")}>"
 
 
   def packageName: String = packageParts.mkString(".")
@@ -245,18 +259,21 @@ case class CustomClassRep(name: String,
 
 case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Boolean) {
 
-  def fieldExpression: String =
-    if (required) s"$fieldName: ${classRep.classDefinition}"
-    else s"$fieldName: Option[${classRep.classDefinition}] = None"
+  def fieldExpressionScala: String =
+    if (required) s"$fieldName: ${classRep.classDefinitionScala}"
+    else s"$fieldName: Option[${classRep.classDefinitionScala}] = None"
+
+  def fieldExpressionJava: String = s"${classRep.classDefinitionJava} $fieldName"
 
 }
+
 
 case class JsonTypeInfo(discriminator: String, discriminatorValue: Option[String])
 
 object ClassRep {
 
   type ClassMap = Map[ClassReference, ClassRep]
-  
+
   /**
    *
    * @param classReference The class reference for the class representation.

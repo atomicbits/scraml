@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.ClassRep
 import io.atomicbits.scraml.parser.model.Parameter
 
 /**

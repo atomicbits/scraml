@@ -19,8 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
-import io.atomicbits.scraml.generator.model.RichResource
+import io.atomicbits.scraml.generator.model.{ClassRep, ClassReference, RichResource}
 import io.atomicbits.scraml.parser.model._
 
 /**

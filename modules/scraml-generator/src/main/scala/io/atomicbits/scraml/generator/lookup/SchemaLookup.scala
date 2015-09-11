@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.lookup
 
 import io.atomicbits.scraml.generator._
+import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.jsonschemaparser.model._
 import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, Id, RootId}
 
@@ -89,7 +90,7 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
   }
 
 
-  def schemaAsType(schema: Schema): String = schemaAsClassRep(schema).classDefinition
+  def schemaAsType(schema: Schema): String = schemaAsClassRep(schema).classDefinitionScala
 
 
 }

@@ -32,7 +32,7 @@ trait ActionGeneratorSupport {
     action.contentTypes.headOption map {
       case StringContentType(contentTypeHeader)          => List(Some("String"))
       case JsonContentType(contentTypeHeader)            => List(Some("String"), Some("JsValue"))
-      case TypedContentType(contentTypeHeader, classRep) => List(Some("String"), Some("JsValue"), Some(classRep.classDefinition))
+      case TypedContentType(contentTypeHeader, classRep) => List(Some("String"), Some("JsValue"), Some(classRep.classDefinitionScala))
       case x                                             => sys
         .error(s"We don't expect a $x content type on a ${action.actionType} action.")
     } getOrElse List(None)
@@ -43,7 +43,7 @@ trait ActionGeneratorSupport {
     responseType map {
       case StringResponseType(acceptHeader)          => s"String${actionType}Segment[$bodyType]"
       case JsonResponseType(acceptHeader)            => s"Json${actionType}Segment[$bodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"Type${actionType}Segment[$bodyType, ${classRep.classDefinition}]"
+      case TypedResponseType(acceptHeader, classRep) => s"Type${actionType}Segment[$bodyType, ${classRep.classDefinitionScala}]"
       case x                                         => sys.error(s"We don't expect a $x content type on a put action.")
     } getOrElse s"String${actionType}Segment[$bodyType]"
   }

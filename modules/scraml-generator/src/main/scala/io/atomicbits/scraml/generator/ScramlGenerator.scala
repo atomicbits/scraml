@@ -21,6 +21,8 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
+import io.atomicbits.scraml.generator.model.{ClassRep, RichResource}
+import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
 import io.atomicbits.scraml.generator.model.RichResource
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
@@ -74,19 +76,15 @@ object ScramlGenerator {
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
 
-    val caseClasses: Seq[ClassRep] =
-      CaseClassGenerator
-        .generateCaseClasses(schemaLookup.classReps.values.map(rep => rep.classRef -> rep).toMap)
-    println(s"Case classes generated")
-
     val packageBasePath = apiPackageName.split('.').toList
 
-    val resources: Seq[ClassRep] =
-      ResourceClassGenerator.generateResourceClasses(
-        apiClassName,
-        packageBasePath,
-        raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
-      )
+    val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
+    val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
+
+    // Here's the actual code generation
+    val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
+    println(s"Case classes generated")
+    val resources: Seq[ClassRep] = ResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
     println(s"Resources DSL generated")
 
     // ToDo: process enumerations

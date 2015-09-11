@@ -41,7 +41,7 @@ object GetActionGenerator extends ActionGeneratorSupport {
       action.responseTypes.headOption map {
         case StringResponseType(acceptHeader)          => "StringGetSegment"
         case JsonResponseType(acceptHeader)            => "JsonGetSegment"
-        case TypedResponseType(acceptHeader, classRep) => s"TypeGetSegment[${classRep.classDefinition}]"
+        case TypedResponseType(acceptHeader, classRep) => s"TypeGetSegment[${classRep.classDefinitionScala}]"
         case x                                         => sys.error(s"We don't expect a $x content type on a get action.")
       } getOrElse "StringGetSegment"
 

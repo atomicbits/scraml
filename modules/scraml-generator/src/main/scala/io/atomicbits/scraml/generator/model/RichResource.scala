@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.{ClassReference, ClassRep, CleanNameUtil}
+import io.atomicbits.scraml.generator.CleanNameUtil
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model.{Parameter, Resource}
 

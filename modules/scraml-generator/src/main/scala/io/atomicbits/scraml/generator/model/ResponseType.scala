@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.ClassRep
-
 /**
  * Created by peter on 26/08/15. 
  */
