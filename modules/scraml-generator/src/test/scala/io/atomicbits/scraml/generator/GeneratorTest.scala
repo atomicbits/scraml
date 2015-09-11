@@ -91,9 +91,9 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         List(),
         None,
         List(
-          RootId("http://atomicbits.io/schema/Cat"),
-          RootId("http://atomicbits.io/schema/Dog"),
-          RootId("http://atomicbits.io/schema/Fish")
+          ClassReference("Cat", List("io", "atomicbits", "schema")),
+          ClassReference("Dog", List("io", "atomicbits", "schema")),
+          ClassReference("Fish", List("io", "atomicbits", "schema"))
         ),
         false,
         false,

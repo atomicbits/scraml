@@ -133,7 +133,7 @@ object ResourceClassGenerator {
          }
        """
 
-      ClassRep(name = apiClassName, packageParts = apiPackageName, content = Some(sourcecode))
+      ClassRep(classReference = ClassReference(name = apiClassName, packageParts = apiPackageName), content = Some(sourcecode))
 
     }
 

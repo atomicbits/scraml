@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.ClassRep.ClassMap
 
 
 /**
@@ -35,17 +35,17 @@ import io.atomicbits.scraml.generator.lookup.SchemaLookup
 object CaseClassGenerator {
 
 
-  def generateCaseClasses(schemaLookup: SchemaLookup): List[ClassRep] = {
+  def generateCaseClasses(classMap: ClassMap): List[ClassRep] = {
 
     // Expand all canonical names into their case class definitions.
 
-    val (classRepsInHierarcy, classRepsStandalone) = schemaLookup.classReps.values.toList.partition(_.isInHierarchy)
+    val (classRepsInHierarcy, classRepsStandalone) = classMap.values.toList.partition(_.isInHierarchy)
 
-    val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(schemaLookup))
+    val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(classMap))
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
-    classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, schemaLookup)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassRep(_, schemaLookup))
+    classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, classMap)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassRep(_, classMap))
   }
 
 
@@ -76,8 +76,7 @@ object CaseClassGenerator {
   }
 
 
-  def generateNonHierarchicalClassRep(classRep: ClassRep,
-                                      schemaLookup: SchemaLookup): ClassRep = {
+  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinition}")
 
@@ -125,7 +124,7 @@ object CaseClassGenerator {
   }
 
 
-  private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], schemaLookup: SchemaLookup): String = {
+  private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], classMap: ClassMap): String = {
 
     println(s"Generating case class for: ${topLevelClassRep.classDefinition}")
 
@@ -134,7 +133,7 @@ object CaseClassGenerator {
     }
 
     val extendsClass = topLevelClassRep.parentClass.map { parentClass =>
-      s"extends ${schemaLookup.classReps(parentClass).classDefinition}"
+      s"extends ${classMap(parentClass).classDefinition}"
     } getOrElse ""
 
     topLevelClassRep.jsonTypeInfo.collect {
@@ -159,10 +158,13 @@ object CaseClassGenerator {
   }
 
 
-  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], schemaLookup: SchemaLookup): List[ClassRep] = {
+  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
 
     val topLevelClass = hierarchyReps.find(_.parentClass.isEmpty).get
+    // If there are no intermediary levels between the top level class and the children, then the
+    // childClasses and leafClasses will be identical sets.
     val childClasses = hierarchyReps.filter(_.parentClass.isDefined)
+    val leafClasses = hierarchyReps.filter(_.subClasses.isEmpty)
 
     val packages = hierarchyReps.groupBy(_.packageName)
     assert(
@@ -170,11 +172,9 @@ object CaseClassGenerator {
       s"""
          |Classes in a class hierarchy must be defined in the same namespace/package. The classes
          |${hierarchyReps.map(_.name).mkString("\n")}
-          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
-                                                              |${packages.keys.mkString("\n")}
+         |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+         |${packages.keys.mkString("\n")}
        """.stripMargin)
-
-    val leafClasses = hierarchyReps.filter(_.subClasses.isEmpty)
 
     val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
       collectImports(classRp) ++ importsAggr
@@ -191,7 +191,7 @@ object CaseClassGenerator {
 
         ${imports.mkString("\n")}
 
-        ${generateTraitWithCompanion(topLevelClass, leafClasses, schemaLookup)}
+        ${generateTraitWithCompanion(topLevelClass, leafClasses, classMap)}
 
         ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
      """

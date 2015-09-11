@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator.{JsonTypeInfo, CleanNameUtil, ClassAsFieldRep, ClassRep}
+import io.atomicbits.scraml.generator._
 import io.atomicbits.scraml.jsonschemaparser._
 import io.atomicbits.scraml.jsonschemaparser.model._
 
@@ -49,35 +49,11 @@ object ClassRepAssembler {
    */
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    def schemaReferenceToCanonicalName(canonicalMap: CanonicalMap, schemaReference: SchemaClassReference): CanonicalMap = {
-
-      val className = schemaReference.fragment.foldLeft(schemaReference.className) { (classNm, fragmentPart) =>
-        s"$classNm${CleanNameUtil.cleanClassName(fragmentPart)}"
-      }
-
-      val classRep = ClassRep(name = className, packageParts = schemaReference.path)
-
-      canonicalMap + (schemaReference.origin -> classRep)
-    }
-
-
-    def packageGroupToCanonicalNames(canonicalMap: CanonicalMap, packageGroup: List[SchemaClassReference]): CanonicalMap =
-      packageGroup.foldLeft(canonicalMap)(schemaReferenceToCanonicalName)
-
-
     val ids: List[AbsoluteId] = schemaLookup.objectMap.keys.toList
 
-    val schemaPaths: List[SchemaClassReference] = ids.map(SchemaClassReference(_))
+    val canonicalMap: CanonicalMap = ids.map(id => id -> ClassRep(ClassReferenceBuilder(id))).toMap
 
-    // Group all schema references by their paths. These paths are going to define the package structure,
-    // so each class name will need to be unique within its package.
-    val packageGroups: List[List[SchemaClassReference]] = schemaPaths.groupBy(_.path).values.toList
-
-    val canonicalMap: CanonicalMap = Map.empty
-
-    val canonicalMapWithNamesFilledIn: CanonicalMap = packageGroups.foldLeft(canonicalMap)(packageGroupToCanonicalNames)
-
-    schemaLookup.copy(classReps = canonicalMapWithNamesFilledIn)
+    schemaLookup.copy(classReps = canonicalMap)
   }
 
 
@@ -111,8 +87,8 @@ object ClassRepAssembler {
       }
 
     schemaLookup.copy(classReps = canonicalMapWithCaseClassFields)
-
   }
+
 
   def addClassHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
 
@@ -124,22 +100,23 @@ object ClassRepAssembler {
         objectEl.children map { childId =>
 
           val childObjectEl = schemaLookup.objectMap(childId)
-          val childClassRepWithParent = schemaLookup.classReps(childId).withParent(objectEl.id)
+          val childClassRepWithParent = schemaLookup.classReps(childId).withParent(classRp.classRef)
 
           val childClassRepWithParentAndJsonInfo =
             childObjectEl.typeDiscriminatorValue.map { typeDiscriminatorValue =>
               childClassRepWithParent.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, Some(typeDiscriminatorValue)))
-            } getOrElse childClassRepWithParent
+            } getOrElse childClassRepWithParent.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
 
           (childId, childClassRepWithParentAndJsonInfo)
         }
 
+      // We assume there can be intermediary levels in the hierarchy.
       val classRepWithParent =
         objectEl.parent map { parentId =>
-          classRp.withParent(parentId)
+          classRp.withParent(ClassReferenceBuilder(parentId))
         } getOrElse classRp
 
-      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectEl.children)
+      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectEl.children.map(ClassReferenceBuilder(_)))
 
       val classRepWithParentAndChildrenAndJsonTypeInfo =
         classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
@@ -168,19 +145,10 @@ object ClassRepAssembler {
 
 }
 
-/**
- * Helper case class for the canonical name generator.
- *
- * @param className The file name in the schema path that is cleaned up to be used as a class name.
- * @param path The relative path of the schema ID, without the file name itself.
- * @param fragment The fragment path of the schema ID.
- * @param origin The original schema ID.
- */
-case class SchemaClassReference(className: String, path: List[String], fragment: List[String], origin: AbsoluteId)
 
-object SchemaClassReference {
+object ClassReferenceBuilder {
 
-  def apply(origin: AbsoluteId): SchemaClassReference = {
+  def apply(origin: AbsoluteId): ClassReference = {
 
     val hostPathReversed = origin.hostPath.reverse
     val relativePath = origin.rootPath.dropRight(1)
@@ -194,12 +162,15 @@ object SchemaClassReference {
     // originalFileName = "myschema.json"
     // fragmentPath = List("definitions", "schema2")
 
-    SchemaClassReference(
-      className = CleanNameUtil.cleanClassNameFromFileName(originalFileName),
-      path = hostPathReversed ++ relativePath,
-      fragment = fragmentPath,
-      origin = origin
-    )
+    val classBaseName = CleanNameUtil.cleanClassNameFromFileName(originalFileName)
+    val path = hostPathReversed ++ relativePath
+    val fragment = fragmentPath
+
+    val className = fragment.foldLeft(classBaseName) { (classNm, fragmentPart) =>
+      s"$classNm${CleanNameUtil.cleanClassName(fragmentPart)}"
+    }
+
+    ClassReference(name = className, packageParts = path)
   }
 
 }

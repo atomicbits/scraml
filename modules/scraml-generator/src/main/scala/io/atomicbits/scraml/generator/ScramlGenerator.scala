@@ -74,7 +74,9 @@ object ScramlGenerator {
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
 
-    val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(schemaLookup)
+    val caseClasses: Seq[ClassRep] =
+      CaseClassGenerator
+        .generateCaseClasses(schemaLookup.classReps.values.map(rep => rep.classRef -> rep).toMap)
     println(s"Case classes generated")
 
     val packageBasePath = apiPackageName.split('.').toList

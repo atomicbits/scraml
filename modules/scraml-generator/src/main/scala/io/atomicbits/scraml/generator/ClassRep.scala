@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.generator
 
+import io.atomicbits.scraml.generator.ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
-import io.atomicbits.scraml.jsonschemaparser.AbsoluteId
 
 import scala.annotation.tailrec
 
@@ -39,9 +39,9 @@ trait ClassRep {
 
   def fields: List[ClassAsFieldRep]
 
-  def parentClass: Option[AbsoluteId]
+  def parentClass: Option[ClassReference]
 
-  def subClasses: List[AbsoluteId]
+  def subClasses: List[ClassReference]
 
   def predef: Boolean
 
@@ -53,13 +53,15 @@ trait ClassRep {
 
   def withFields(fields: List[ClassAsFieldRep]): ClassRep
 
-  def withParent(parentId: AbsoluteId): ClassRep
+  def withParent(parentId: ClassReference): ClassRep
 
-  def withChildren(childIds: List[AbsoluteId]): ClassRep
+  def withChildren(childIds: List[ClassReference]): ClassRep
 
   def withContent(content: String): ClassRep
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep
+
+  def classRef = ClassReference(name, packageParts)
 
   /**
    * The class definition as a string.
@@ -86,19 +88,19 @@ trait ClassRep {
    * Gives the top level parent of the hierarchy this class rep takes part in if any. If this class rep is the top level class,
    * it will be returned as the result (as opposed to the method topLevelParent).
    */
-  def hierarchyParent(schemaLookup: SchemaLookup): Option[ClassRep] = {
+  def hierarchyParent(classMap: ClassMap): Option[ClassRep] = {
     if (parentClass.isEmpty && subClasses.nonEmpty) Some(this)
-    else topLevelParent(schemaLookup)
+    else topLevelParent(classMap)
   }
 
   /**
    * Gives the top level parent of this class rep. A top level parent class itself has no parent and thus no top level parent.
    */
-  def topLevelParent(schemaLookup: SchemaLookup): Option[ClassRep] = {
+  def topLevelParent(classMap: ClassMap): Option[ClassRep] = {
 
     @tailrec
-    def findTopLevelParent(parentId: AbsoluteId): ClassRep = {
-      val parentClass = schemaLookup.classReps(parentId)
+    def findTopLevelParent(parentId: ClassReference): ClassRep = {
+      val parentClass = classMap(parentId)
       parentClass.parentClass match {
         case Some(prntId) => findTopLevelParent(prntId)
         case None         => parentClass
@@ -117,9 +119,9 @@ trait LibraryClassRep extends ClassRep {
 
   def fields: List[ClassAsFieldRep] = List.empty
 
-  def parentClass: Option[AbsoluteId] = None
+  def parentClass: Option[ClassReference] = None
 
-  def subClasses: List[AbsoluteId] = List.empty
+  def subClasses: List[ClassReference] = List.empty
 
   def predef: Boolean = false
 
@@ -133,9 +135,9 @@ trait LibraryClassRep extends ClassRep {
 
   def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a library class rep.")
 
-  def withParent(parentId: AbsoluteId): ClassRep = sys.error("We shouldn't set the parent of a library class rep.")
+  def withParent(parentId: ClassReference): ClassRep = sys.error("We shouldn't set the parent of a library class rep.")
 
-  def withChildren(childIds: List[AbsoluteId]): ClassRep = sys.error("We shouldn't set the children of a library class rep.")
+  def withChildren(childIds: List[ClassReference]): ClassRep = sys.error("We shouldn't set the children of a library class rep.")
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = sys.error("We shouldn't set JSON type info on a library class rep.")
 
@@ -150,9 +152,9 @@ trait PredefinedClassRep extends ClassRep {
 
   def fields: List[ClassAsFieldRep] = List.empty
 
-  def parentClass: Option[AbsoluteId] = None
+  def parentClass: Option[ClassReference] = None
 
-  def subClasses: List[AbsoluteId] = List.empty
+  def subClasses: List[ClassReference] = List.empty
 
   def predef: Boolean = true
 
@@ -166,9 +168,9 @@ trait PredefinedClassRep extends ClassRep {
 
   def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a predefined class rep.")
 
-  def withParent(parentId: AbsoluteId): ClassRep = sys.error("We shouldn't set the parent of a predefined class rep.")
+  def withParent(parentId: ClassReference): ClassRep = sys.error("We shouldn't set the parent of a predefined class rep.")
 
-  def withChildren(childIds: List[AbsoluteId]): ClassRep = sys.error("We shouldn't set the children of a predefined class rep.")
+  def withChildren(childIds: List[ClassReference]): ClassRep = sys.error("We shouldn't set the children of a predefined class rep.")
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep =
     sys.error("We shouldn't set JSON type info on a predefined class rep.")
@@ -212,7 +214,7 @@ case object JsValueClassRep extends LibraryClassRep {
 object ListClassRep {
 
   def apply(listType: ClassRep): ClassRep = {
-    ClassRep(name = "List", types = List(listType), predef = true)
+    ClassRep(classReference = ClassReference(name = "List"), types = List(listType), predef = true)
   }
 
 }
@@ -221,8 +223,8 @@ case class CustomClassRep(name: String,
                           packageParts: List[String] = List.empty,
                           types: List[ClassRep] = List.empty,
                           fields: List[ClassAsFieldRep] = List.empty,
-                          parentClass: Option[AbsoluteId] = None,
-                          subClasses: List[AbsoluteId] = List.empty,
+                          parentClass: Option[ClassReference] = None,
+                          subClasses: List[ClassReference] = List.empty,
                           predef: Boolean = false,
                           library: Boolean = false,
                           content: Option[String] = None,
@@ -232,9 +234,9 @@ case class CustomClassRep(name: String,
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
 
-  def withParent(parentId: AbsoluteId): ClassRep = copy(parentClass = Some(parentId))
+  def withParent(parentId: ClassReference): ClassRep = copy(parentClass = Some(parentId))
 
-  def withChildren(childIds: List[AbsoluteId]): ClassRep = copy(subClasses = childIds)
+  def withChildren(childIds: List[ClassReference]): ClassRep = copy(subClasses = childIds)
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = copy(jsonTypeInfo = Some(jsonTypeInfo))
 
@@ -253,12 +255,11 @@ case class JsonTypeInfo(discriminator: String, discriminatorValue: Option[String
 
 object ClassRep {
 
+  type ClassMap = Map[ClassReference, ClassRep]
+  
   /**
    *
-   * @param name The name of this class.
-   *             E.g. "ClassRep" for this class.
-   * @param packageParts The package of this class, separated in its composing parts in ascending order.
-   *                     E.g. List("io", "atomicbits", "scraml", "generator") for this class.
+   * @param classReference The class reference for the class representation.
    * @param types The generic types of this class representation.
    * @param fields The public fields for this class rep (to become a scala case class or java pojo).
    * @param parentClass The class rep of the parent class of this class rep.
@@ -269,24 +270,34 @@ object ClassRep {
    *                Library classes don't need to be generated (they already exist), but do need to be imported before you can use them.
    * @param content The source content of the class.
    */
-  def apply(name: String,
-            packageParts: List[String] = List.empty,
+  def apply(classReference: ClassReference,
             types: List[ClassRep] = List.empty,
             fields: List[ClassAsFieldRep] = List.empty,
-            parentClass: Option[AbsoluteId] = None,
-            subClasses: List[AbsoluteId] = List.empty,
+            parentClass: Option[ClassReference] = None,
+            subClasses: List[ClassReference] = List.empty,
             predef: Boolean = false,
             library: Boolean = false,
             content: Option[String] = None,
             jsonTypeInfo: Option[JsonTypeInfo] = None): ClassRep = {
 
-    name match {
+    classReference.name match {
       case "String"  => StringClassRep
       case "Boolean" => BooleanClassRep
       case "Double"  => DoubleClassRep
       case "Long"    => LongClassRep
       case "JsValue" => JsValueClassRep
-      case _         => CustomClassRep(name, packageParts, types, fields, parentClass, subClasses, predef, library, content, jsonTypeInfo)
+      case _         => CustomClassRep(
+        classReference.name,
+        classReference.packageParts,
+        types,
+        fields,
+        parentClass,
+        subClasses,
+        predef,
+        library,
+        content,
+        jsonTypeInfo
+      )
     }
 
   }
