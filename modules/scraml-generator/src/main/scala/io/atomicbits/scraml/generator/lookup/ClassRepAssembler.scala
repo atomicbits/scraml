@@ -37,18 +37,13 @@ object ClassRepAssembler {
 
     val withCanonicals = deduceCanonicalNames(schemaLookup)
 
-    
+    val withEnumClassReps = addEnums(withCanonicals)
 
-    val withCaseClassFields = addCaseClassFields(withCanonicals)
+    val withCaseClassFields = addCaseClassFields(withEnumClassReps)
 
     val withClassHierarchy = addClassHierarchy(withCaseClassFields)
-
-    //val withEnumClassReps = addEnums(withClassHierarchy)
-
-    val withEnumClassReps = addEnums(withClassHierarchy)
-
-
-    withEnumClassReps
+    
+    withClassHierarchy
   }
 
 
@@ -59,7 +54,7 @@ object ClassRepAssembler {
     }.map { case (id, enumEl) =>
       (id, EnumValuesClassRep(classRep = ClassRep(ClassReferenceBuilder(id)), values = enumEl.choices))
     }
-    
+
     schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
   }
 
@@ -84,6 +79,9 @@ object ClassRepAssembler {
       val (propertyName, schema) = property
 
       schema match {
+        case enumField: EnumEl =>
+          val required = requiredFields.contains(propertyName) || enumField.required
+          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(enumField), required)
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.required
           ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(objField), required)
@@ -97,13 +95,18 @@ object ClassRepAssembler {
       schemaLookup.classReps map { idAndClassRep =>
         val (id, classRep) = idAndClassRep
 
-        val objectEl = schemaLookup.objectMap(id)
+        schemaLookup.objectMap.get(id) match {
+          case Some(objectEl) =>
+            val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
 
-        val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
+            val classRepWithFields = classRep.withFields(fields)
 
-        val classRepWithFields = classRep.withFields(fields)
+            (id, classRepWithFields)
 
-        (id, classRepWithFields)
+          case None =>
+            assert(classRep.isInstanceOf[EnumValuesClassRep])
+            idAndClassRep
+        }
       }
 
     schemaLookup.copy(classReps = canonicalMapWithCaseClassFields)
@@ -148,17 +151,21 @@ object ClassRepAssembler {
     schemaLookup.classReps.foldLeft(schemaLookup) { (lookUp, idWithClassRep) =>
       val (id, classRep) = idWithClassRep
 
-      val objectEl = schemaLookup.objectMap(id)
+      schemaLookup.objectMap.get(id) match {
+        case Some(objectEl) =>
+          val classRepsWithParentAndChildren: Map[AbsoluteId, ClassRep] =
+            objectEl.selection match {
+              case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
+              case Some(AnyOf(selection)) => Map.empty // We only support OneOf for now.
+              case Some(AllOf(selection)) => Map.empty // We only support OneOf for now.
+              case _                      => Map.empty
+            }
 
-      val classRepsWithParentAndChildren: Map[AbsoluteId, ClassRep] =
-        objectEl.selection match {
-          case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
-          case Some(AnyOf(selection)) => Map.empty // We only support OneOf for now.
-          case Some(AllOf(selection)) => Map.empty // We only support OneOf for now.
-          case _                      => Map.empty
-        }
+          lookUp.copy(classReps = lookUp.classReps ++ classRepsWithParentAndChildren)
 
-      lookUp.copy(classReps = lookUp.classReps ++ classRepsWithParentAndChildren)
+        case None => lookUp
+
+      }
     }
 
   }
