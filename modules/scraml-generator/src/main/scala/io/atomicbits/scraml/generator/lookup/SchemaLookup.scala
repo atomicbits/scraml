@@ -83,7 +83,12 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
       case schemaRef: SchemaReference => schemaAsClassRep(lookupSchema(schemaRef.refersTo))
       case enumEl: EnumEl             =>
         if (enumEl.choices.size == 1) StringClassRep // Probably a "type" discriminator field.
-        else classReps(SchemaUtil.asAbsoluteId(schema.id))
+          
+//        else classReps(SchemaUtil.asAbsoluteId(schema.id))
+        else {
+          val name = SchemaUtil.asAbsoluteId(schema.id).fragments.map(_.capitalize).mkString("")+"Enum"
+          EnumValuesClassRep(name=name,values = enumEl.choices)
+        }
       case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a class representation.")
     }
 

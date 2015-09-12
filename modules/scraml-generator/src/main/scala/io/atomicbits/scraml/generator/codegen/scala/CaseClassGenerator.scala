@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.codegen.scala
 
-import io.atomicbits.scraml.generator.model.ClassRep
+import io.atomicbits.scraml.generator.model.{EnumValuesClassRep, ClassRep}
 import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
 
 
@@ -80,7 +80,82 @@ object CaseClassGenerator {
   def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
+    
+    
+    classRep match  {
+      case e:EnumValuesClassRep => generateEnumClassRep(e)
+      case _ =>   generateNonEnumClassRep(classRep)
+    }
+  }
+  
+  private def generateEnumClassRep(classRep:EnumValuesClassRep) : ClassRep = {
+    val imports: Set[String] = collectImports(classRep)
 
+    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
+
+    def enumValue(value:String) : String = {
+      s"""
+         |case object $value extends ${classRep.name} {
+         | val name = "$value"
+         |}
+         |
+       """.stripMargin
+    }
+    
+    def generateEnumCompanionObject : String = {
+      
+      val name = classRep.name
+      s"""
+         |object $name {
+         |
+         | ${classRep.values.map(enumValue).mkString("\n")}
+         | 
+         | val byName = Map(
+         |    ${classRep.values.map{v => s"$v.name -> $v"}.mkString(",")}
+         |  )
+         |
+         | implicit val ${name}Format = new Format[$name] {
+         | 
+         |     override def reads(json: JsValue): JsResult[$name] = {
+         |      json.validate[String].map($name.byName(_))
+         |    }
+         |
+         |    override def writes(o: $name): JsValue = {
+         |      JsString(o.name)
+         |    }
+         | 
+         | }
+         |
+         |}
+         |
+         |
+         |
+         |
+       """.stripMargin
+    }
+    
+    val source =
+      s"""
+        package ${classRep.packageName}
+
+        import play.api.libs.json.{Format, Json}
+
+        ${imports.mkString("\n")}
+        
+        sealed trait ${classRep.name} {
+          def name:String
+        }
+        
+       
+        
+        
+        ${generateEnumCompanionObject}
+     """
+
+    classRep.withContent(content = source)
+  }
+  
+  private def generateNonEnumClassRep(classRep:ClassRep) : ClassRep = {
     val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)

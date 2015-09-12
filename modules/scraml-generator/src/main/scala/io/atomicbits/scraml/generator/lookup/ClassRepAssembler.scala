@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.lookup
 
 import io.atomicbits.scraml.generator._
-import io.atomicbits.scraml.generator.model.{JsonTypeInfo, ClassAsFieldRep, ClassRep, ClassReference}
+import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.jsonschemaparser._
 import io.atomicbits.scraml.jsonschemaparser.model._
@@ -37,13 +37,32 @@ object ClassRepAssembler {
 
     val withCanonicals = deduceCanonicalNames(schemaLookup)
 
+    
+
     val withCaseClassFields = addCaseClassFields(withCanonicals)
 
     val withClassHierarchy = addClassHierarchy(withCaseClassFields)
 
-    withClassHierarchy
+    //val withEnumClassReps = addEnums(withClassHierarchy)
+
+    val withEnumClassReps = addEnums(withClassHierarchy)
+
+
+    withEnumClassReps
   }
 
+
+  def addEnums(schemaLookup: SchemaLookup): SchemaLookup = {
+
+    val enumClassReps = schemaLookup.enumMap.filter { case (id, enumEl) =>
+      enumEl.choices.size > 1
+    }.map { case (id, enumEl) =>
+      val name = id.fragments.map(_.capitalize).mkString("") + "Enum"
+      (id, EnumValuesClassRep(name = name, values = enumEl.choices))
+    }
+    
+    schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
+  }
 
   /**
    * @param schemaLookup: The schema lookup
