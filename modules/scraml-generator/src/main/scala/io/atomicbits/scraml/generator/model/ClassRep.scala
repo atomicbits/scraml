@@ -228,15 +228,15 @@ case object JsValueClassRep extends LibraryClassRep {
 
 
 case class EnumValuesClassRep(name: String,
-                             values: List[String] = List.empty,
-                             packageParts: List[String] = List.empty,
-                             types: List[ClassRep] = List.empty,
-                             parentClass: Option[ClassReference] = None,
-                             subClasses: List[ClassReference] = List.empty,
-                             predef: Boolean = false,
-                             library: Boolean = false,
-                             content: Option[String] = None,
-                             jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
+                              values: List[String] = List.empty,
+                              packageParts: List[String] = List.empty,
+                              types: List[ClassRep] = List.empty,
+                              parentClass: Option[ClassReference] = None,
+                              subClasses: List[ClassReference] = List.empty,
+                              predef: Boolean = false,
+                              library: Boolean = false,
+                              content: Option[String] = None,
+                              jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
   val fields: List[ClassAsFieldRep] = Nil
 
@@ -251,6 +251,14 @@ case class EnumValuesClassRep(name: String,
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = copy(jsonTypeInfo = Some(jsonTypeInfo))
 
 }
+
+object EnumValuesClassRep {
+
+  def apply(classRep: ClassRep, values: List[String]): EnumValuesClassRep =
+    EnumValuesClassRep(name = classRep.name, packageParts = classRep.packageParts, values = values)
+
+}
+
 
 object ListClassRep {
 

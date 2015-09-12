@@ -32,7 +32,7 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
           "withenum.rest.RestResource",
           "withenum.rest.withenum.WithEnumResource",
           "withenum.schema.WithEnum",
-          "MethodEnum"
+          "withenum.schema.WithEnumMethod"
         )
 
         classRepsByFullName.keys.foreach { key =>
@@ -45,7 +45,7 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
         val linkResource = classRepsByFullName("withenum.schema.WithEnum")
         println(linkResource)
         
-        val methodEnumClass = classRepsByFullName("MethodEnum")
+        val methodEnumClass = classRepsByFullName("withenum.schema.WithEnumMethod")
         println(methodEnumClass)
       }
 

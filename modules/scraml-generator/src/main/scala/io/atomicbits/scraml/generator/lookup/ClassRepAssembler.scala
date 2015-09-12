@@ -57,8 +57,7 @@ object ClassRepAssembler {
     val enumClassReps = schemaLookup.enumMap.filter { case (id, enumEl) =>
       enumEl.choices.size > 1
     }.map { case (id, enumEl) =>
-      val name = id.fragments.map(_.capitalize).mkString("") + "Enum"
-      (id, EnumValuesClassRep(name = name, values = enumEl.choices))
+      (id, EnumValuesClassRep(classRep = ClassRep(ClassReferenceBuilder(id)), values = enumEl.choices))
     }
     
     schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
