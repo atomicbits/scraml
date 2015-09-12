@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
-import io.atomicbits.scraml.dsl.java.client.rxhttpclient.RxHttpClientSupport;
+import io.atomicbits.scraml.dsl.java.rxhttpclient.RxHttpClientSupport;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.java.client.rxhttpclient;
+package io.atomicbits.scraml.dsl.java.rxhttpclient;
 
 import io.atomicbits.scraml.dsl.java.Client;
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
