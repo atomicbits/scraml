@@ -227,6 +227,31 @@ case object JsValueClassRep extends LibraryClassRep {
 }
 
 
+case class EnumValuesClassRep(name: String,
+                             values: List[String] = List.empty,
+                             packageParts: List[String] = List.empty,
+                             types: List[ClassRep] = List.empty,
+                             parentClass: Option[ClassReference] = None,
+                             subClasses: List[ClassReference] = List.empty,
+                             predef: Boolean = false,
+                             library: Boolean = false,
+                             content: Option[String] = None,
+                             jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
+
+  val fields: List[ClassAsFieldRep] = Nil
+
+  def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("An EnumValueclassRep has no fields")
+
+  def withContent(content: String): ClassRep = copy(content = Some(content))
+
+  def withParent(parentId: ClassReference): ClassRep = copy(parentClass = Some(parentId))
+
+  def withChildren(childIds: List[ClassReference]): ClassRep = copy(subClasses = childIds)
+
+  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = copy(jsonTypeInfo = Some(jsonTypeInfo))
+
+}
+
 object ListClassRep {
 
   def apply(listType: ClassRep): ClassRep = {

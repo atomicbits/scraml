@@ -11,8 +11,7 @@
     },
     "method": {
       "type": "string",
-      "required": true,
-      "enum": [ "GET", "PUT", "POST", "DELETE", "HEAD", "CONNECT", "TRACE", "OPTIONS" ]
+      "required": true
     },
     "accept": {
       "type": "string",

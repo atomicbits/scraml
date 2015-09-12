@@ -42,7 +42,7 @@ trait PrimitiveSchema extends Schema
 trait FragmentedSchema extends Schema {
 
   def fragments: Map[String, Schema]
-  
+
 }
 
 trait AllowedAsObjectField {
@@ -54,22 +54,30 @@ trait AllowedAsObjectField {
 object Schema {
 
   def apply(schema: JsObject): Schema = {
-    (schema \ "type").asOpt[String] match {
-      case Some("object") => ObjectEl(schema)
-      case Some("array") => ArrayEl(schema)
-      case Some("string") => StringEl(schema)
-      case Some("number") => NumberEl(schema)
+
+    val typeOpt = (schema \ "type").asOpt[String]
+    val enumOpt = (schema \ "enum").asOpt[List[String]]
+
+    typeOpt match {
+      case Some("object")  => ObjectEl(schema)
+      case Some("array")   => ArrayEl(schema)
+      case Some("string")  =>
+        enumOpt match {
+          case Some(enum) => EnumEl(schema)
+          case None       => StringEl(schema)
+        }
+      case Some("number")  => NumberEl(schema)
       case Some("integer") => IntegerEl(schema)
       case Some("boolean") => BooleanEl(schema)
-      case Some("null") => NullEl(schema)
-      case Some(x) => sys.error(s"Unkown json-schema type $x")
-      case None =>
+      case Some("null")    => NullEl(schema)
+      case Some(x)         => sys.error(s"Unkown json-schema type $x")
+      case None            =>
         (schema \ "$ref").asOpt[String] match {
           case Some(_) => SchemaReference(schema)
-          case None =>
+          case None    =>
             (schema \ "enum").asOpt[List[String]] match {
               case Some(choices) => EnumEl(schema)
-              case None => Fragment(schema)
+              case None          => Fragment(schema)
             }
         }
     }

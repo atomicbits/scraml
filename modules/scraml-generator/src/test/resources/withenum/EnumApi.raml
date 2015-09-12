@@ -1,0 +1,15 @@
+#%RAML 0.8
+---
+title: test01
+version: v1
+
+schemas:
+  - link:     !include schemas/link.json
+
+/rest/withEnum:
+  get:
+    responses:
+      200:
+        body:
+          application/vnd-v1.0+json:
+            schema: link

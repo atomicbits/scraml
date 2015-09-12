@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://withenum/schema/withEnum.json#",
+  "type": "object",
+  "description": "Something with an enum",
+  "properties": {
+    "method": {
+      "type": "string",
+      "required": true,
+      "enum": [ "GET", "PUT", "POST"]
+    }
+  }
+}
