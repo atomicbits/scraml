@@ -22,14 +22,18 @@ package io.atomicbits.scraml.generator.model
 import io.atomicbits.scraml.generator.lookup.SchemaLookup
 import io.atomicbits.scraml.parser.model._
 
+import scala.language.postfixOps
+
 /**
  * Created by peter on 22/08/15. 
  */
 case class RichAction(actionType: ActionType,
                       queryParameters: Map[String, Parameter],
-                      contentTypes: List[ContentType],
-                      responseTypes: List[ResponseType],
-                      headers: Map[String, Parameter])
+                      contentTypes: Set[ContentType],
+                      responseTypes: Set[ResponseType],
+                      headers: Map[String, Parameter],
+                      selectedContentType: ContentType = NoContentType,
+                      selectedResponsetype: ResponseType = NoResponseType)
 
 object RichAction {
 
@@ -45,7 +49,7 @@ object RichAction {
         classRep = mimeTypeToClassRep(mimeType),
         formParameters = mimeType.formParameters
       )
-    }
+    } toSet
 
     val responseTypes =
       action.responses.values.toList flatMap { response =>
@@ -56,7 +60,7 @@ object RichAction {
           )
         }
 
-      }
+      } toSet
 
     RichAction(
       actionType = action.actionType,

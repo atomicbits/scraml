@@ -20,23 +20,20 @@
 package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.parser.model.ActionType
 
 /**
  * Created by peter on 28/08/15. 
  */
 object ActionFunctionGenerator extends ActionGeneratorSupport {
 
+
   def generate(action: RichAction): List[String] = {
 
-    action.contentTypes.headOption map {
-      case _: StringContentType        => generateAction(action)
-      case _: JsonContentType          => generateAction(action)
-      case _: TypedContentType         => generateAction(action)
+    action.selectedContentType match {
       case x: FormPostContentType      => generateFormAction(action, x)
       case _: MultipartFormContentType => generateMultipartFormPostAction(action)
-      case x                           => sys.error(s"We don't expect a $x content type on a post action.")
-    } getOrElse generateAction(action)
+      case x                           => generateAction(action)
+    }
 
   }
 
@@ -59,39 +56,30 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
         expandParameterAsMapEntry((name, paramList.head))
       }
 
-    val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
-    val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
-
-    val segmentType = createSegmentType(action.actionType, action.responseTypes.headOption)(None)
+    val segmentType = createSegmentType(action.selectedResponsetype)(None)
 
     val formAction: String =
       generateAction(
-        actionType = action.actionType,
+        action = action,
         actionParameters = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
-        segmentType = segmentType,
-        validAcceptHeaders = validAcceptHeaders,
-        validContentTypeHeaders = validContentTypeHeaders
+        segmentType = segmentType
       )
 
     List(formAction)
   }
 
+
   def generateMultipartFormPostAction(action: RichAction): List[String] = {
 
-    val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
-    val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
-
-    val multipartResponseType = createSegmentType(action.actionType, action.responseTypes.headOption)(None)
+    val multipartResponseType = createSegmentType(action.selectedResponsetype)(None)
 
     val multipartAction: String =
       generateAction(
-        actionType = action.actionType,
+        action = action,
         actionParameters = List("parts: List[BodyPart]"),
         multipartParams = "parts",
-        segmentType = multipartResponseType,
-        validAcceptHeaders = validAcceptHeaders,
-        validContentTypeHeaders = validContentTypeHeaders
+        segmentType = multipartResponseType
       )
 
     List(multipartAction)
@@ -114,19 +102,14 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
 
     val queryParameterMapEntries = action.queryParameters.toList.map(expandParameterAsMapEntry)
 
-    val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
-    val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
-
-    val segmentType = createSegmentType(action.actionType, action.responseTypes.headOption)(None)
+    val segmentType = createSegmentType(action.selectedResponsetype)(None)
 
     val queryAction: String =
       generateAction(
-        actionType = action.actionType,
+        action = action,
         actionParameters = queryParameterMethodParameters,
         queryParameterMapEntries = queryParameterMapEntries,
-        segmentType = segmentType,
-        validAcceptHeaders = validAcceptHeaders,
-        validContentTypeHeaders = validContentTypeHeaders
+        segmentType = segmentType
       )
 
     List(queryAction)
@@ -135,39 +118,39 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
 
   def generateBodyAction(action: RichAction): List[String] = {
 
-    val validAcceptHeaders = action.responseTypes.map(_.acceptHeaderValue)
-    val validContentTypeHeaders = action.contentTypes.map(_.contentTypeHeaderValue)
-
-    val segmentTypeFactory = createSegmentType(action.actionType, action.responseTypes.headOption) _
+    val segmentTypeFactory = createSegmentType(action.selectedResponsetype) _
 
     bodyTypes(action).map { bodyType =>
 
       val (actionBodyParameters, bodyField) = bodyType.map(bdType => (List(s"body: $bdType"), "Some(body)")).getOrElse(List.empty, "None")
 
       generateAction(
-        actionType = action.actionType,
+        action = action,
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
-        bodyField = bodyField,
-        validAcceptHeaders = validAcceptHeaders,
-        validContentTypeHeaders = validContentTypeHeaders
+        bodyField = bodyField
       )
     }
 
   }
 
 
-  private def generateAction(actionType: ActionType,
+  private def generateAction(action: RichAction,
                              segmentType: String,
                              actionParameters: List[String] = List.empty,
                              bodyField: String = "None",
                              queryParameterMapEntries: List[String] = List.empty,
                              formParameterMapEntries: List[String] = List.empty,
-                             multipartParams: String = "List.empty",
-                             validAcceptHeaders: List[String] = List.empty,
-                             validContentTypeHeaders: List[String] = List.empty): String = {
+                             multipartParams: String = "List.empty"): String = {
 
+    val actionType = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase
+
+    val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
+    val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
+
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
@@ -181,8 +164,8 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
              ${formParameterMapEntries.mkString(",")}
            ),
            multipartParams = $multipartParams,
-           validAcceptHeaders = List(${validAcceptHeaders.map(quoteString).mkString(",")}),
-           validContentTypeHeaders = List(${validContentTypeHeaders.map(quoteString).mkString(",")}),
+           expectedAcceptHeader = $acceptHeader,
+           expectedContentTypeHeader = $contentHeader,
            req = requestBuilder
          )
      """

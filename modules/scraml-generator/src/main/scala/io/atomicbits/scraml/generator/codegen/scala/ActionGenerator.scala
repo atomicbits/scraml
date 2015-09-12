@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.parser.model.{Delete, Get, Post, Put}
+import io.atomicbits.scraml.parser.model._
 
 /**
  * Created by peter on 23/08/15. 
@@ -40,12 +40,12 @@ object ActionGenerator {
     val contentTypeImports =
       action.contentTypes.collect {
         case TypedContentType(contentTypeHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.toSet.flatten
+      }.flatten
 
     val responseTypeImports =
       action.responseTypes.collect {
         case TypedResponseType(acceptHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.toSet.flatten
+      }.flatten
 
     contentTypeImports ++ responseTypeImports
   }
@@ -53,19 +53,44 @@ object ActionGenerator {
   /**
    * The reason why we treat all actions of a resource together is that certain paths towards the actual action
    * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
-   * contenttype and/or accept header paths. Although such situations may be rare, we want to support them (in the future),
+   * content-type and/or accept header paths. Although such situations may be rare, we want to support them (in the future),
    * so we pass all actions of a single resource together.
    *
-   * @param actions All actions belonging to a single resource.
+   * @param resource The resource whose actions are going to be processed (NOT recursively!)
    * @return A list of action function definitions or action paths that lead to the action function. Action paths will only be
    *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
    *         don't support those yet, but we will do so in the future).
    */
-  def generateActionFunctions(actions: List[RichAction]): List[String] = {
+  def generateActionFunctions(resource: RichResource): List[String] = {
+
+    val actions: List[RichAction] = resource.actions
+
+    val actionsWithSafeContentAndResponseTypes =
+      actions map {
+        case action if action.contentTypes.isEmpty => action.copy(contentTypes = Set(NoContentType))
+        case action                                => action
+      } map {
+        case action if action.responseTypes.isEmpty => action.copy(responseTypes = Set(NoResponseType))
+        case action                                 => action
+      }
+
+    val actionsWithTypeSelection: List[RichAction] =
+      actionsWithSafeContentAndResponseTypes.flatMap { action =>
+        for {
+          contentType <- action.contentTypes
+          responseType <- action.responseTypes
+          actionWithTypeSelection = action.copy(selectedContentType = contentType, selectedResponsetype = responseType)
+        } yield actionWithTypeSelection
+      }
+
+    val groupedByActionType: Map[ActionType, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
+    // groupedByActionType
 
     // For now, we generate them individually, assuming there is only one content type and one response type per action.
-    actions.flatMap(ActionFunctionGenerator.generate)
+    groupedByActionType.values.flatten.flatMap(ActionFunctionGenerator.generate).toList
 
+
+    // Splitting action.responseTypes and action.contentTypes
 
     //    val contentAcceptPaths: Map[ContentType, Map[ResponseType, Set[RichAction]]] = Map.empty
     //

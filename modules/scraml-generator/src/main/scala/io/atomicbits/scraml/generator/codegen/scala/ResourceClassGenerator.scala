@@ -44,7 +44,7 @@ object ResourceClassGenerator {
             val imports = oneRoot.actions.flatMap(ActionGenerator.generateActionImports).toSet
             // oneRoot.resources.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet ++
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val actionFunctions = ActionGenerator.generateActionFunctions(oneRoot.actions)
+            val actionFunctions = ActionGenerator.generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions)
           case manyRoots                                    =>
             val imports = Set.empty[String] // manyRoots.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet
@@ -144,7 +144,7 @@ object ResourceClassGenerator {
       val dslFields = resource.resources.map(generateResourceDslField)
 
       val actionImports = resource.actions.flatMap(ActionGenerator.generateActionImports).toSet
-      val actionFunctions = ActionGenerator.generateActionFunctions(resource.actions)
+      val actionFunctions = ActionGenerator.generateActionFunctions(resource)
 
       val imports = actionImports // fieldImports ++
 

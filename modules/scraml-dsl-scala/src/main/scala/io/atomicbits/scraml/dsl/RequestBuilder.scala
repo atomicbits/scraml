@@ -33,8 +33,6 @@ case class RequestBuilder(client: Client,
                           queryParameters: Map[String, HttpParam] = Map.empty,
                           formParameters: Map[String, HttpParam] = Map.empty,
                           multipartParams: List[BodyPart] = List.empty,
-                          validAcceptHeaders: List[String] = Nil,
-                          validContentTypeHeaders: List[String] = Nil,
                           headers: Map[String, String] = Map()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")

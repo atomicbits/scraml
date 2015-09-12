@@ -28,6 +28,8 @@ sealed trait ContentType {
 
   def contentTypeHeaderValue: String
 
+  def contentTypeHeaderOpt: Option[String] = Some(contentTypeHeaderValue)
+
 }
 
 case class StringContentType(contentTypeHeaderValue: String) extends ContentType
@@ -41,7 +43,11 @@ case class FormPostContentType(contentTypeHeaderValue: String, formParameters: M
 case class MultipartFormContentType(contentTypeHeaderValue: String) extends ContentType
 
 case object NoContentType extends ContentType {
+
   val contentTypeHeaderValue = ""
+
+  override val contentTypeHeaderOpt = None
+
 }
 
 object ContentType {

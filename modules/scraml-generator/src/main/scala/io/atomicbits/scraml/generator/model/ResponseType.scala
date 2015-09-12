@@ -26,6 +26,8 @@ sealed trait ResponseType {
 
   def acceptHeaderValue: String
 
+  def acceptHeaderOpt: Option[String] = Some(acceptHeaderValue)
+
 }
 
 case class StringResponseType(acceptHeaderValue: String) extends ResponseType
@@ -35,7 +37,11 @@ case class JsonResponseType(acceptHeaderValue: String) extends ResponseType
 case class TypedResponseType(acceptHeaderValue: String, classRep: ClassRep) extends ResponseType
 
 case object NoResponseType extends ResponseType {
+
   val acceptHeaderValue = ""
+
+  override val acceptHeaderOpt = None
+
 }
 
 
