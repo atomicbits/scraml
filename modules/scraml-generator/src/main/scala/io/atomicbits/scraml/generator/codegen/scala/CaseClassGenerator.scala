@@ -138,7 +138,7 @@ object CaseClassGenerator {
       s"""
         package ${classRep.packageName}
 
-        import play.api.libs.json.{Format, Json}
+        import play.api.libs.json.{Format, Json, JsResult, JsValue, JsString}
 
         ${imports.mkString("\n")}
         

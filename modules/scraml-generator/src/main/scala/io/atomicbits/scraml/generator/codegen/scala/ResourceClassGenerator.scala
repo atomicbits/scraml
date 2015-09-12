@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.codegen.scala
 
+import io.atomicbits.scraml.generator.codegen.scala.ActionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.parser.model._
 
@@ -41,14 +42,13 @@ object ResourceClassGenerator {
       val (imports, dslFields, actionFunctions) =
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
-            val imports = oneRoot.actions.flatMap(ActionGenerator.generateActionImports).toSet
-            // oneRoot.resources.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet ++
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val actionFunctions = ActionGenerator.generateActionFunctions(oneRoot)
+            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator.generateActionFunctions(oneRoot)
+            // ToDo: process the headerPathClassReps
             (imports, dslFields, actionFunctions)
           case manyRoots                                    =>
-            val imports = Set.empty[String] // manyRoots.flatMap(generateResourceFieldImports(_, apiPackageName)).toSet
-          val dslFields = manyRoots.map(generateResourceDslField)
+            val imports = Set.empty[String]
+            val dslFields = manyRoots.map(generateResourceDslField)
             val actionFunctions = List.empty[String]
             (imports, dslFields, actionFunctions)
         }
@@ -143,8 +143,8 @@ object ResourceClassGenerator {
       // val fieldImports = resource.resources.flatMap(generateResourceFieldImports(_, resource.classRep.packageParts)).toSet
       val dslFields = resource.resources.map(generateResourceDslField)
 
-      val actionImports = resource.actions.flatMap(ActionGenerator.generateActionImports).toSet
-      val actionFunctions = ActionGenerator.generateActionFunctions(resource)
+      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator.generateActionFunctions(resource)
+      // ToDo: process the headerPathClassReps
 
       val imports = actionImports // fieldImports ++
 
@@ -199,11 +199,11 @@ object ResourceClassGenerator {
 
     def generateParameterType(parameterType: ParameterType): String = {
       parameterType match {
-        case StringType => "String"
+        case StringType  => "String"
         case IntegerType => "Long"
-        case NumberType => "Double"
+        case NumberType  => "Double"
         case BooleanType => "Boolean"
-        case x => sys.error(s"Unknown URL parameter type $x")
+        case x           => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

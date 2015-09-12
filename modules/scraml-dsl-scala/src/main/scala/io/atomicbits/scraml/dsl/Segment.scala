@@ -47,6 +47,12 @@ class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
 
 }
 
+class HeaderSegment(req: RequestBuilder) extends Segment {
+
+  protected val requestBuilder = req
+
+}
+
 
 abstract class MethodSegment[B, R](method: Method,
                                    theBody: Option[B],

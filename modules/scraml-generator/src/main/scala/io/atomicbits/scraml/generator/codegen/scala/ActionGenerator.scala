@@ -29,28 +29,14 @@ import scala.language.postfixOps
  */
 object ActionGenerator {
 
-  def generateActionImports(action: RichAction): Set[String] = {
 
-    def nonPredefinedImports(classReps: List[ClassRep]): Set[String] = {
-      classReps match {
-        case cr :: crs if !cr.predef => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs) + s"import ${cr.fullyQualifiedName}"
-        case cr :: crs               => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs)
-        case Nil                     => Set()
-      }
-    }
+  case class ActionFunctionResult(imports: Set[String], fields: List[String], classes: List[ClassRep]) {
 
-    val contentTypeImports =
-      action.contentTypes.collect {
-        case TypedContentType(contentTypeHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.flatten
+    def ++(other: ActionFunctionResult): ActionFunctionResult =
+      ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
 
-    val responseTypeImports =
-      action.responseTypes.collect {
-        case TypedResponseType(acceptHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.flatten
-
-    contentTypeImports ++ responseTypeImports
   }
+
 
   /**
    * The reason why we treat all actions of a resource together is that certain paths towards the actual action
@@ -63,7 +49,7 @@ object ActionGenerator {
    *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
    *         don't support those yet, but we will do so in the future).
    */
-  def generateActionFunctions(resource: RichResource): List[String] = {
+  def generateActionFunctions(resource: RichResource): ActionFunctionResult = {
 
     val actions: List[RichAction] = resource.actions
 
@@ -113,14 +99,93 @@ object ActionGenerator {
         .mapValues(_.groupBy(_.acceptHeader))
         .mapValues(_.mapValues(_.map(_.action)))
 
-    uniqueActionPaths
+    val baseClassReference = resource.classRep.classRef
 
-    groupedByActionType.values.flatten.flatMap(ActionFunctionGenerator.generate).toList
+    val actionPathExpansion: List[ActionFunctionResult] =
+      uniqueActionPaths.toList map {
+        case (NoContentHeaderSegment, acceptHeaderMap) =>
+          expandAcceptHeaderMap(baseClassReference, acceptHeaderMap)
 
+        case (ActualContentHeaderSegment(contentType), acceptHeaderMap) =>
+          expandContentTypePath(baseClassReference, contentType, acceptHeaderMap)
+      }
+
+    actionPathExpansion.reduce(_ ++ _)
   }
 
+
+  private def expandContentTypePath(baseClassRef: ClassReference,
+                                    contentType: ContentType,
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+
+    // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
+    // add a content type path field that instantiates the above class (into the List[String] result)
+    // add the List[String] results of the expansion of the acceptHeader map to the above class
+    // add the List[ClassRep] results of the expansion of the acceptHeader map to the List[ClassRep] result
+
+    ???
+  }
+
+
+  private def expandAcceptHeaderMap(baseClassRef: ClassReference,
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+
+    val actionPathExpansion: List[ActionFunctionResult] =
+      acceptHeaderMap.toList map {
+        case (NoAcceptHeaderSegment, actions)                   =>
+          ActionFunctionResult(
+            actions.toSet.flatMap(generateActionImports),
+            actions.flatMap(ActionFunctionGenerator.generate),
+            List.empty
+          )
+        case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
+      }
+
+    actionPathExpansion.reduce(_ ++ _)
+  }
+
+
+  private def expandResponseTypePath(baseClassRef: ClassReference,
+                                     responseType: ResponseType,
+                                     actions: List[RichAction]): ActionFunctionResult = {
+
+    // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
+    // add a result type path field that instantiates the above class (into the List[String] result)
+    // add the List[String] results of the expansion of the actions to the above class and also add the imports needed by the actions
+    // into the above class
+
+    ???
+  }
+
+
+  private def generateActionImports(action: RichAction): Set[String] = {
+
+    def nonPredefinedImports(classReps: List[ClassRep]): Set[String] = {
+      classReps match {
+        case cr :: crs if !cr.predef => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs) + s"import ${cr.fullyQualifiedName}"
+        case cr :: crs               => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs)
+        case Nil                     => Set()
+      }
+    }
+
+    val contentTypeImports =
+      action.contentTypes.collect {
+        case TypedContentType(contentTypeHeader, classRep) => nonPredefinedImports(List(classRep))
+      }.flatten
+
+    val responseTypeImports =
+      action.responseTypes.collect {
+        case TypedResponseType(acceptHeader, classRep) => nonPredefinedImports(List(classRep))
+      }.flatten
+
+    contentTypeImports ++ responseTypeImports
+  }
+
+
+  // Helper class to represent the path from a resource to an action over a content header segment and a accept header segment.
   case class ActionPath(contentHeader: ContentHeaderSegment, acceptHeader: AcceptHeaderSegment, action: RichAction)
 
+  
   sealed trait HeaderSegment
 
   trait ContentHeaderSegment extends HeaderSegment
