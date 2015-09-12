@@ -22,6 +22,8 @@ package io.atomicbits.scraml.generator.codegen.scala
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.parser.model._
 
+import scala.language.postfixOps
+
 /**
  * Created by peter on 23/08/15. 
  */
@@ -84,23 +86,53 @@ object ActionGenerator {
       }
 
     val groupedByActionType: Map[ActionType, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
-    // groupedByActionType
 
-    // For now, we generate them individually, assuming there is only one content type and one response type per action.
+    // now, we have to map the actions onto a segment path if necessary
+    val actionPathToAction: List[ActionPath] =
+      groupedByActionType.values flatMap {
+        case actionOfKindList@(aok :: Nil)  => List(ActionPath(NoContentHeaderSegment, NoAcceptHeaderSegment, actionOfKindList.head))
+        case actionOfKindList@(aok :: aoks) =>
+          actionOfKindList map { actionOfKind =>
+            val contentHeader =
+              actionOfKind.selectedContentType match {
+                case NoContentType   => NoContentHeaderSegment
+                case ct: ContentType => ActualContentHeaderSegment(ct)
+              }
+            val acceptHeader =
+              actionOfKind.selectedResponsetype match {
+                case NoResponseType   => NoAcceptHeaderSegment
+                case rt: ResponseType => ActualAcceptHeaderSegment(rt)
+              }
+            ActionPath(contentHeader, acceptHeader, actionOfKind)
+          }
+      } toList
+
+    val uniqueActionPaths: Map[ContentHeaderSegment, Map[AcceptHeaderSegment, List[RichAction]]] =
+      actionPathToAction
+        .groupBy(_.contentHeader)
+        .mapValues(_.groupBy(_.acceptHeader))
+        .mapValues(_.mapValues(_.map(_.action)))
+
+    uniqueActionPaths
+
     groupedByActionType.values.flatten.flatMap(ActionFunctionGenerator.generate).toList
 
-
-    // Splitting action.responseTypes and action.contentTypes
-
-    //    val contentAcceptPaths: Map[ContentType, Map[ResponseType, Set[RichAction]]] = Map.empty
-    //
-    //    actions.foldLeft(contentAcceptPaths) { (paths, action) =>
-    //
-    //      val uniquePath = action.contentTypes.length <= 1 && action.responseTypes.length <= 1
-    //
-    //      ???
-    //    }
-
   }
+
+  case class ActionPath(contentHeader: ContentHeaderSegment, acceptHeader: AcceptHeaderSegment, action: RichAction)
+
+  sealed trait HeaderSegment
+
+  trait ContentHeaderSegment extends HeaderSegment
+
+  trait AcceptHeaderSegment extends HeaderSegment
+
+  case object NoContentHeaderSegment extends ContentHeaderSegment
+
+  case class ActualContentHeaderSegment(header: ContentType) extends ContentHeaderSegment
+
+  case object NoAcceptHeaderSegment extends AcceptHeaderSegment
+
+  case class ActualAcceptHeaderSegment(header: ResponseType) extends AcceptHeaderSegment
 
 }
