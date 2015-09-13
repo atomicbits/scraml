@@ -194,14 +194,16 @@ object ActionGenerator {
     }
 
     val contentTypeImports =
-      action.contentTypes.collect {
+      action.selectedContentType match {
         case TypedContentType(contentTypeHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.flatten
+        case _                                             => Set.empty[String]
+      }
 
     val responseTypeImports =
-      action.responseTypes.collect {
+      action.selectedResponsetype match {
         case TypedResponseType(acceptHeader, classRep) => nonPredefinedImports(List(classRep))
-      }.flatten
+        case _                                         => Set.empty[String]
+      }
 
     contentTypeImports ++ responseTypeImports
   }
@@ -217,6 +219,9 @@ object ActionGenerator {
     val sourceCode =
       s"""
          package ${classRep.packageName}
+
+         import io.atomicbits.scraml.dsl._
+         import play.api.libs.json._
 
          ${imports.mkString("\n")}
 

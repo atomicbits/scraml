@@ -52,15 +52,14 @@ object RichAction {
     } toSet
 
     val responseTypes =
-      action.responses.values.toList flatMap { response =>
-        response.body.values.toList map { mimeType =>
+      action.responses.get("200") map { response =>
+        response.body.values.toSet[MimeType] map { mimeType =>
           ResponseType(
             acceptHeader = mimeType.mimeType,
             classRep = mimeTypeToClassRep(mimeType)
           )
         }
-
-      } toSet
+      }  getOrElse Set.empty[ResponseType]
 
     RichAction(
       actionType = action.actionType,
