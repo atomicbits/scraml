@@ -29,23 +29,22 @@ trait ActionGeneratorSupport {
 
 
   def bodyTypes(action: RichAction): List[Option[String]] =
-    action.contentTypes.headOption map {
+    action.selectedContentType match {
       case StringContentType(contentTypeHeader)          => List(Some("String"))
       case JsonContentType(contentTypeHeader)            => List(Some("String"), Some("JsValue"))
       case TypedContentType(contentTypeHeader, classRep) => List(Some("String"), Some("JsValue"), Some(classRep.classDefinitionScala))
-      case x                                             => sys
-        .error(s"We don't expect a $x content type on a ${action.actionType} action.")
-    } getOrElse List(None)
+      case NoContentType                                 => List(None, Some("String"))
+      case x                                             => List(Some("String"))
+    }
 
 
-  def createSegmentType(actionType: ActionType, responseType: Option[ResponseType])(optBodyType: Option[String]): String = {
+  def createSegmentType(responseType: ResponseType)(optBodyType: Option[String]): String = {
     val bodyType = optBodyType.getOrElse("String")
-    responseType map {
-      case StringResponseType(acceptHeader)          => s"StringMethodSegment[$bodyType]"
+    responseType match {
       case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
       case TypedResponseType(acceptHeader, classRep) => s"TypeMethodSegment[$bodyType, ${classRep.classDefinitionScala}]"
-      case x                                         => sys.error(s"We don't expect a $x content type on a put action.")
-    } getOrElse s"StringMethodSegment[$bodyType]"
+      case x                                         => s"StringMethodSegment[$bodyType]"
+    }
   }
 
 

@@ -28,9 +28,6 @@ import play.api.libs.json.JsValue
  */
 class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment[String](value, req) {
 
-  def withHeader(header: (String, String)) =
-    new PathparamResource(value, requestBuilder.withAddedHeaders(header))
-
   def withHeaders(newHeaders: (String, String)*) =
     new PathparamResource(value, requestBuilder.withAddedHeaders(newHeaders: _*))
 
@@ -41,7 +38,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       "queryparY" -> Option(queryparY).map(HttpParam(_)),
       "queryParZ" -> queryParZ.map(HttpParam(_))
     ),
-    validAcceptHeaders = List("application/json"),
+    expectedAcceptHeader = Some("application/json"),
     req = requestBuilder
   )
 
@@ -49,8 +46,8 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
     new TypeMethodSegment[String, Address](
       method = Put,
       theBody = Some(body),
-      validAcceptHeaders = List("application/json"),
-      validContentTypeHeaders = List("application/json"),
+      expectedAcceptHeader = Some("application/json"),
+      expectedContentTypeHeader = Some("application/json"),
       req = requestBuilder
     )
 
@@ -58,8 +55,8 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
     new TypeMethodSegment[JsValue, Address](
       method = Put,
       theBody = Some(body),
-      validAcceptHeaders = List("application/json"),
-      validContentTypeHeaders = List("application/json"),
+      expectedAcceptHeader = Some("application/json"),
+      expectedContentTypeHeader = Some("application/json"),
       req = requestBuilder
     )
 
@@ -67,8 +64,8 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
     new TypeMethodSegment[User, Address](
       method = Put,
       theBody = Some(body),
-      validAcceptHeaders = List("application/json"),
-      validContentTypeHeaders = List("application/json"),
+      expectedAcceptHeader = Some("application/json"),
+      expectedContentTypeHeader = Some("application/json"),
       req = requestBuilder)
 
   def post(formparX: Int, formParY: Double, formParZ: Option[String]) =
@@ -81,8 +78,8 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
         "formParZ" -> formParZ.map(HttpParam(_))
       ),
       multipartParams = List.empty,
-      validAcceptHeaders = List("application/json"),
-      validContentTypeHeaders = List("application/json"),
+      expectedAcceptHeader = Some("application/json"),
+      expectedContentTypeHeader = Some("application/json"),
       req = requestBuilder
     )
 

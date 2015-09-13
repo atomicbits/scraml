@@ -137,7 +137,7 @@ class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       val futureResultGet: Future[User] =
         XoClient(protocol = "http", host = host, port = port)
           .rest.some.webservice.pathparam("pathparamvalue")
-          .withHeader("Accept" -> "application/json")
+          .withHeaders("Accept" -> "application/json")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .call().asType
 
