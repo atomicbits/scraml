@@ -30,10 +30,11 @@ object CleanNameUtil {
     cleanClassName(withOutExtension)
   }
 
+
   def cleanClassName(dirtyName: String): String = {
     // capitalize after special characters and drop those characters along the way
     val capitalizedAfterDropChars =
-      List('-', '_', '+', ' ').foldLeft(dirtyName) { (cleaned, dropChar) =>
+      List('-', '_', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
       }
     // capitalize after numbers 0 to 9, but keep the numbers
@@ -46,9 +47,17 @@ object CleanNameUtil {
     // final cleanup of all strange characters
     capitalized.replaceAll("[^A-Za-z0-9]", "")
   }
-  
+
+
+  def cleanMethodName(dirtyName: String): String = {
+    val chars = cleanClassName(dirtyName).toCharArray
+    chars(0) = chars(0).toLower
+    new String(chars)
+  }
+
+
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
-  
+
 }

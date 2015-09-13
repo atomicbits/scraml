@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.codegen.scala
 
 import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
 import scala.language.postfixOps
@@ -30,7 +31,9 @@ import scala.language.postfixOps
 object ActionGenerator {
 
 
-  case class ActionFunctionResult(imports: Set[String], fields: List[String], classes: List[ClassRep]) {
+  case class ActionFunctionResult(imports: Set[String] = Set.empty,
+                                  fields: List[String] = List.empty,
+                                  classes: List[ClassRep] = List.empty) {
 
     def ++(other: ActionFunctionResult): ActionFunctionResult =
       ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
@@ -110,7 +113,8 @@ object ActionGenerator {
           expandContentTypePath(baseClassReference, contentType, acceptHeaderMap)
       }
 
-    actionPathExpansion.reduce(_ ++ _)
+    if (actionPathExpansion.nonEmpty) actionPathExpansion.reduce(_ ++ _)
+    else ActionFunctionResult()
   }
 
 
@@ -120,10 +124,20 @@ object ActionGenerator {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
-    // add the List[String] results of the expansion of the acceptHeader map to the above class
+    // add the List[String] results of the expansion of the acceptHeader map to source of the above class
     // add the List[ClassRep] results of the expansion of the acceptHeader map to the List[ClassRep] result
 
-    ???
+    val ActionFunctionResult(acceptSegmentMethodImports, acceptSegmentMethods, acceptHeaderClasses) =
+      expandAcceptHeaderMap(baseClassRef, acceptHeaderMap)
+
+    val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}HeaderSegment"
+    val headerSegment: ClassRep =
+      createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
+
+    val contentHeaderMethodName = s"_content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
+    val contentHeaderSegment: String = s"""def $contentHeaderMethodName = new ${headerSegment.fullyQualifiedName}(requestBuilder)"""
+
+    ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
 
 
@@ -141,7 +155,8 @@ object ActionGenerator {
         case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
       }
 
-    actionPathExpansion.reduce(_ ++ _)
+    if (actionPathExpansion.nonEmpty) actionPathExpansion.reduce(_ ++ _)
+    else ActionFunctionResult()
   }
 
 
@@ -154,7 +169,17 @@ object ActionGenerator {
     // add the List[String] results of the expansion of the actions to the above class and also add the imports needed by the actions
     // into the above class
 
-    ???
+    val actionImports = actions.toSet.flatMap(generateActionImports)
+    val actionMethods = actions.flatMap(ActionFunctionGenerator.generate)
+
+    val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}HeaderSegment"
+    val headerSegment: ClassRep =
+      createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
+
+    val acceptHeaderMethodName = s"_accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
+    val acceptHeaderSegment: String = s"""def $acceptHeaderMethodName = new ${headerSegment.fullyQualifiedName}(requestBuilder)"""
+
+    ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
 
 
@@ -182,15 +207,40 @@ object ActionGenerator {
   }
 
 
+  private def createHeaderSegment(packageParts: List[String],
+                                  className: String,
+                                  imports: Set[String],
+                                  methods: List[String]): ClassRep = {
+
+    val classRep = ClassRep(ClassReference(name = className, packageParts = packageParts))
+
+    val sourceCode =
+      s"""
+         package ${classRep.packageName}
+
+         ${imports.mkString("\n")}
+
+
+         class ${classRep.name}(req: RequestBuilder) extends HeaderSegment(req) {
+
+           ${methods.mkString("\n")}
+
+         }
+       """
+
+    classRep.withContent(sourceCode)
+  }
+
+
   // Helper class to represent the path from a resource to an action over a content header segment and a accept header segment.
   case class ActionPath(contentHeader: ContentHeaderSegment, acceptHeader: AcceptHeaderSegment, action: RichAction)
 
-  
+
   sealed trait HeaderSegment
 
-  trait ContentHeaderSegment extends HeaderSegment
+  sealed trait ContentHeaderSegment extends HeaderSegment
 
-  trait AcceptHeaderSegment extends HeaderSegment
+  sealed trait AcceptHeaderSegment extends HeaderSegment
 
   case object NoContentHeaderSegment extends ContentHeaderSegment
 
