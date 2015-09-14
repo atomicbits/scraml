@@ -30,6 +30,8 @@ trait Dependencies { this:Build =>
 
   val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
+  val scalariform     =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
+
   // test dependencies
   val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
@@ -40,7 +42,8 @@ trait Dependencies { this:Build =>
   val scramlGeneratorDeps = Seq (
     rxHttpClient,
     playJson,
-    wiremock
+    wiremock,
+    scalariform
   )
 
   val scramlGeneratorTestDefDeps = Seq (

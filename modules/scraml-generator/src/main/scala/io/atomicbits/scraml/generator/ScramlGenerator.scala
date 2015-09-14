@@ -38,6 +38,9 @@ import scala.language.postfixOps
 
 import java.util.{Map => JMap}
 
+import scalariform.formatter.ScalaFormatter
+import scalariform.formatter.preferences._
+
 
 object ScramlGenerator {
 
@@ -46,6 +49,7 @@ object ScramlGenerator {
     val tupleList =
       generateClassReps(ramlApiPath, apiPackageName, apiClassName)
         .collect { case clRep if clRep.content.isDefined => clRep }
+        .map(addLicenseAndFormat)
         .map(classRepToFilePathAndContent)
 
     mapAsJavaMap[String, String](tupleList.toMap)
@@ -94,6 +98,37 @@ object ScramlGenerator {
 
     caseClasses ++ resources
   }
+
+
+  private val formatSettings = FormattingPreferences()
+    .setPreference(RewriteArrowSymbols, true)
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(IndentSpaces, 2)
+
+
+  private def addLicenseAndFormat(classRep: ClassRep): ClassRep = {
+    val content = s"$classHeaderLicense\n${classRep.content.get}"
+    classRep.withContent(ScalaFormatter.format(content, formatSettings))
+  }
+
+
+  private val classHeaderLicense =
+
+    s""" | /**
+       | *  All rights reserved. This program and the accompanying materials
+       | *  are made available under the terms of the GNU Affero General Public License
+       | *  (AGPL) version 3.0 which accompanies this distribution, and is available in
+       | *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+       | *
+       | *  This library is distributed in the hope that it will be useful,
+       | *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+       | *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+       | *  Affero General Public License for more details.
+       | */
+     """.stripMargin
+
 
   private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
 
