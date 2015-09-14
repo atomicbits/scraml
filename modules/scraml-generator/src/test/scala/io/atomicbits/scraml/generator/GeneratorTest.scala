@@ -66,7 +66,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.Animal",
         "io.atomicbits.schema.Dog",
         "io.atomicbits.schema.Cat",
-        "io.atomicbits.schema.Fish"
+        "io.atomicbits.schema.Fish",
+        "io.atomicbits.schema.Method"
       )
 
       classRepsByFullName.keys.foreach { key =>

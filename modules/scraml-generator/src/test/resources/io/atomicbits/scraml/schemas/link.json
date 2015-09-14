@@ -10,8 +10,8 @@
       "required": true
     },
     "method": {
-      "type": "string",
-      "required": true
+      "required": true,
+      "$ref": "http://atomicbits.io/schema/method.json#"
     },
     "accept": {
       "type": "string",
