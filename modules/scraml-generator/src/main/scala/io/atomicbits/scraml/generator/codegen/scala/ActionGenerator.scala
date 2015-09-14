@@ -145,14 +145,25 @@ object ActionGenerator {
                                     acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
 
     val actionPathExpansion: List[ActionFunctionResult] =
-      acceptHeaderMap.toList map {
-        case (NoAcceptHeaderSegment, actions)                   =>
-          ActionFunctionResult(
-            actions.toSet.flatMap(generateActionImports),
-            actions.flatMap(ActionFunctionGenerator.generate),
-            List.empty
+      acceptHeaderMap.toList match {
+        case (_, actions) :: Nil =>
+          List(
+            ActionFunctionResult(
+              actions.toSet.flatMap(generateActionImports),
+              actions.flatMap(ActionFunctionGenerator.generate),
+              List.empty
+            )
           )
-        case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
+        case ahMap@(ah :: ahs)   =>
+          ahMap map {
+            case (NoAcceptHeaderSegment, actions)                   =>
+              ActionFunctionResult(
+                actions.toSet.flatMap(generateActionImports),
+                actions.flatMap(ActionFunctionGenerator.generate),
+                List.empty
+              )
+            case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
+          }
       }
 
     if (actionPathExpansion.nonEmpty) actionPathExpansion.reduce(_ ++ _)
