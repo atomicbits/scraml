@@ -96,13 +96,14 @@
           application/vnd-v1.0+json:
             schema: |
               {
-                "$ref": "http://atomicbits.io/schema/paged-list.json",
+                "id": "http://atomicbits.io/schema/anonymous3.json",
+                "$ref": "http://atomicbits.io/schema/paged-list.json#",
                 "genericTypes": {
                   "T": {
                     "$ref": "http://atomicbits.io/schema/dog.json"
                   },
                   "U": {
-                    "$ref": "http://atomicbits.io/schema/user.json"
+                    "type": "string"
                   }
                 }
               }

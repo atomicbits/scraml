@@ -196,11 +196,12 @@ object ActionGenerator {
 
   private def generateActionImports(action: RichAction): Set[String] = {
 
-    def nonPredefinedImports(classReps: List[ClassRep]): Set[String] = {
+    def nonPredefinedImports(classReps: List[TypedClassReference]): Set[String] = {
       classReps match {
-        case cr :: crs if !cr.predef => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs) + s"import ${cr.fullyQualifiedName}"
-        case cr :: crs               => nonPredefinedImports(cr.types) ++ nonPredefinedImports(crs)
-        case Nil                     => Set()
+        case cr :: crs if !cr.classReference.predef =>
+          nonPredefinedImports(cr.types.values.toList) ++ nonPredefinedImports(crs) + s"import ${cr.classReference.fullyQualifiedName}"
+        case cr :: crs                              => nonPredefinedImports(cr.types.values.toList) ++ nonPredefinedImports(crs)
+        case Nil                                    => Set()
       }
     }
 

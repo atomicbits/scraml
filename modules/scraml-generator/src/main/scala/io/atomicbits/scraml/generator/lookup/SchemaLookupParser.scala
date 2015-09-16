@@ -66,18 +66,25 @@ object SchemaLookupParser {
           case frag: Fragment       => frag.copy(fragments = frag.fragments.map(expandFragment))
           case arr: ArrayEl         =>
             val (_, expanded) = expandFragment(("items", arr.items))
-            arr.copy(items = expanded)
-          case ref: SchemaReference => ref.copy(refersTo = root.toAbsolute(ref.refersTo, path))
+            arr.copy(
+              items = expanded,
+              fragments = arr.fragments.map(expandFragment)
+            )
+          case ref: SchemaReference =>
+            ref.copy(
+              refersTo = root.toAbsolute(ref.refersTo, path),
+              fragments = ref.fragments.map(expandFragment)
+            )
           case _                    => schema
         }
 
-      val schemaWithUpdatedProperties =
-        schemaWithUpdatedFragments match {
-          case objEl: ObjectEl => objEl.copy(properties = objEl.properties.map(expandFragment))
-          case _               => schemaWithUpdatedFragments
-        }
+      //      val schemaWithUpdatedProperties =
+      //        schemaWithUpdatedFragments match {
+      //          case objEl: ObjectEl => objEl.copy(properties = objEl.properties.map(expandFragment))
+      //          case _               => schemaWithUpdatedFragments
+      //        }
 
-      schemaWithUpdatedProperties.updated(expandedId)
+      schemaWithUpdatedFragments.updated(expandedId)
     }
 
     schema.id match {
@@ -112,7 +119,7 @@ object SchemaLookupParser {
       val absoluteId = SchemaUtil.asAbsoluteId(schema.id)
 
       schema match {
-        case objEl: ObjectEl    =>
+        case objEl: ObjectEl      =>
           val schemaLookupWithObjectFragments =
             objEl.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
           val schemaLookupWithObjectProperties =
@@ -123,6 +130,12 @@ object SchemaLookupParser {
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
             .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectElExt(objEl)))
+        case arrayEl: ArrayEl     =>
+          val schemaLookupWithArrayFragments =
+            arrayEl.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
+          updateLookupAndObjectMapInternal(schemaLookupWithArrayFragments, ("items", arrayEl.items))
+        case ref: SchemaReference =>
+          ref.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
         case fragment: Fragment =>
           fragment.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
         case enumEl: EnumEl     =>
@@ -142,8 +155,8 @@ object SchemaLookupParser {
     }
 
     updateLookupAndObjectMapInternal(schemaLookupWithUpdatedExternalLinks, ("", schema))
-
   }
+
 
   /**
    * For each unprocessed object, lookup the selection references and collect al selection objects recursively and
@@ -170,8 +183,8 @@ object SchemaLookupParser {
 
       val childrenWithParent = children.map(_.copy(parent = Some(absId)))
 
-      val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, obj) =>
-        lkup.copy(objectMap = lkup.objectMap + (obj.id -> obj))
+      val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, childObj) =>
+        lkup.copy(objectMap = lkup.objectMap + (childObj.id -> childObj))
       }
 
       val updatedObj = obj.copy(children = childrenWithParent.map(_.id))

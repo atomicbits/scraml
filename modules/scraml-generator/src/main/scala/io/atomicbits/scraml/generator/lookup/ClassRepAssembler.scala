@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator._
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.jsonschemaparser._
@@ -58,6 +57,7 @@ object ClassRepAssembler {
     schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
   }
 
+
   /**
    * @param schemaLookup: The schema lookup
    * @return A map containing the class representation for each absolute ID.
@@ -74,17 +74,17 @@ object ClassRepAssembler {
 
   def addCaseClassFields(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassAsFieldRep = {
+    def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassReferenceAsFieldRep = {
 
       val (propertyName, schema) = property
 
       schema match {
         case enumField: EnumEl =>
           val required = requiredFields.contains(propertyName) || enumField.required
-          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(enumField), required)
+          ClassReferenceAsFieldRep(propertyName, schemaLookup.schemaAsClassReference(enumField), required)
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.required
-          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(objField), required)
+          ClassReferenceAsFieldRep(propertyName, schemaLookup.schemaAsClassReference(objField), required)
         case noObjectField                  =>
           sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
       }
@@ -97,7 +97,7 @@ object ClassRepAssembler {
 
         schemaLookup.objectMap.get(id) match {
           case Some(objectEl) =>
-            val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
+            val fields: List[ClassReferenceAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
 
             val classRepWithFields = classRep.withFields(fields)
 

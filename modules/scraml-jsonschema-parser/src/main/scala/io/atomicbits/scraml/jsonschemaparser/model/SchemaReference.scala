@@ -21,26 +21,53 @@ package io.atomicbits.scraml.jsonschemaparser.model
 import io.atomicbits.scraml.jsonschemaparser.{Id, IdExtractor, RefExtractor}
 import play.api.libs.json.JsObject
 
+import scala.language.postfixOps
+
 /**
  * Created by peter on 7/06/15. 
  */
-case class SchemaReference(id: Id, refersTo: Id, required: Boolean = false) extends PrimitiveSchema with AllowedAsObjectField {
+case class SchemaReference(id: Id,
+                           refersTo: Id,
+                           required: Boolean = false,
+                           genericTypes: Map[String, Schema] = Map.empty,
+                           fragments: Map[String, Schema] = Map.empty) extends PrimitiveSchema with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Schema = copy(id = updatedId)
 
 }
 
+
 object SchemaReference {
 
   def apply(schema: JsObject): SchemaReference = {
+
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
     }
+
     val ref = schema match {
       case RefExtractor(refId) => refId
     }
+
     val required = (schema \ "required").asOpt[Boolean]
-    SchemaReference(id, ref, required.getOrElse(false))
+
+    val genericTypes =
+      (schema \ "genericTypes").toOption.collect {
+        case genericTs: JsObject =>
+          genericTs.value collect {
+            case (field, jsObj: JsObject) => (field, Schema(jsObj))
+          } toMap
+      } getOrElse Map.empty[String, Schema]
+
+    val fragments = Schema.collectFragments(schema)
+
+    new SchemaReference(
+      id = id,
+      refersTo = ref,
+      required = required.getOrElse(false),
+      genericTypes = genericTypes,
+      fragments = fragments
+    )
   }
 
 }
