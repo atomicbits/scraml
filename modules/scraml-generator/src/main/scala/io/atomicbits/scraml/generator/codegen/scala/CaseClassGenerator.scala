@@ -159,7 +159,7 @@ object CaseClassGenerator {
       s"""
         package ${classRep.packageName}
 
-        import play.api.libs.json.{Format, Json}
+        import play.api.libs.json._
 
         ${imports.mkString("\n")}
 
@@ -179,16 +179,35 @@ object CaseClassGenerator {
         classRep.fields.filterNot(_.fieldName == skipField)
       } getOrElse classRep.fields
 
-    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpressionScala)
+    val sortedFields = selectedFields.sortBy(!_.required)
+    val fieldExpressions = sortedFields.map(_.fieldExpressionScala)
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
+
+    val formatter = {
+      if (classRep.classRef.typeVariables.nonEmpty) {
+        val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
+        val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
+        s"""
+          import play.api.libs.functional.syntax._
+
+          implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+            ( ${formatUnLiftFields.mkString("~\n")}
+            )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+      }
+      else {
+        s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+      }
+    }
+
 
     s"""
       case class ${classRep.classDefinitionScala}(${fieldExpressions.mkString(",")}) $extendsClass
 
       object ${classRep.name} {
 
-        implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]
+        $formatter
 
       }
      """

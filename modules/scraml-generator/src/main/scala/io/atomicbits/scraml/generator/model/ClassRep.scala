@@ -29,21 +29,27 @@ import scala.annotation.tailrec
 
 trait ClassRep {
 
-  def name: String
+  def name = classRef.name
 
-  def packageParts: List[String]
+  def packageParts = classRef.packageParts
 
-  def typeVariables: List[String]
+  def packageName = classRef.packageName
+
+  def typeVariables = classRef.typeVariables
+
+  def fullyQualifiedName = classRef.fullyQualifiedName
+
+  def classDefinitionScala = classRef.classDefinitionScala
+
+  def classDefinitionJava = classRef.classDefinitionJava
+
+  def classRef: ClassReference
 
   def fields: List[ClassReferenceAsFieldRep]
 
   def parentClass: Option[ClassReference]
 
   def subClasses: List[ClassReference]
-
-  def predef: Boolean
-
-  def library: Boolean
 
   def content: Option[String]
 
@@ -58,16 +64,6 @@ trait ClassRep {
   def withContent(content: String): ClassRep
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep
-
-  def classRef = ClassReference(name, packageParts)
-
-  def classDefinitionScala: String = classRef.classDefinitionScala
-
-  def classDefinitionJava: String = classRef.classDefinitionJava
-
-  def packageName: String = packageParts.mkString(".")
-
-  def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
 
   def isInHierarchy: Boolean = parentClass.isDefined || subClasses.nonEmpty
 
@@ -132,14 +128,10 @@ case object JsValueClassReference {
 }
 
 
-case class EnumValuesClassRep(name: String,
+case class EnumValuesClassRep(classRef: ClassReference,
                               values: List[String] = List.empty,
-                              packageParts: List[String] = List.empty,
-                              typeVariables: List[String] = List.empty,
                               parentClass: Option[ClassReference] = None,
                               subClasses: List[ClassReference] = List.empty,
-                              predef: Boolean = false,
-                              library: Boolean = false,
                               content: Option[String] = None,
                               jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
@@ -159,15 +151,15 @@ case class EnumValuesClassRep(name: String,
 
 object EnumValuesClassRep {
 
-  def apply(classRep: ClassRep, values: List[String]): EnumValuesClassRep =
-    EnumValuesClassRep(name = classRep.name, packageParts = classRep.packageParts, values = values)
+  def apply(classRef: ClassReference, values: List[String]): EnumValuesClassRep =
+    new EnumValuesClassRep(classRef = classRef, values = values)
 
 }
 
 
 object ListClassReference {
 
-  def apply(typeVariable: String): ClassReference = ClassReference(name = "List", typeVariables = List(typeVariable))
+  def apply(typeVariable: String): ClassReference = ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
 
   def typed(listType: ClassPointer): TypedClassReference =
     TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
@@ -175,14 +167,10 @@ object ListClassReference {
 }
 
 
-case class CustomClassRep(name: String,
-                          packageParts: List[String] = List.empty,
-                          typeVariables: List[String] = List.empty,
+case class CustomClassRep(classRef: ClassReference,
                           fields: List[ClassReferenceAsFieldRep] = List.empty,
                           parentClass: Option[ClassReference] = None,
                           subClasses: List[ClassReference] = List.empty,
-                          predef: Boolean = false,
-                          library: Boolean = false,
                           content: Option[String] = None,
                           jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
@@ -205,6 +193,10 @@ case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointe
     if (required) s"$fieldName: ${classPointer.classDefinitionScala}"
     else s"$fieldName: Option[${classPointer.classDefinitionScala}] = None"
 
+  def fieldFormatUnliftScala: String =
+    if (required) s""" (__ \\ "$fieldName").format[${classPointer.classDefinitionScala}]"""
+    else s""" (__ \\ "$fieldName").formatNullable[${classPointer.classDefinitionScala}]"""
+
   def fieldExpressionJava: String = s"${classPointer.classDefinitionJava} $fieldName"
 
 }
@@ -222,33 +214,17 @@ object ClassRep {
    * @param fields The public fields for this class rep (to become a scala case class or java pojo).
    * @param parentClass The class rep of the parent class of this class rep.
    * @param subClasses The class reps of the children of this class rep.
-   * @param predef Indicates whether this class representation is a predefined type or not.
-   *               Predefined types are: String, Boolean, Double, List, ... They don't need to be imported.
-   * @param library Indicates whether this class representation is provided by a library or not.
-   *                Library classes don't need to be generated (they already exist), but do need to be imported before you can use them.
    * @param content The source content of the class.
+   * @param jsonTypeInfo Info about JSON-typing of case classes.
    */
   def apply(classReference: ClassReference,
             fields: List[ClassReferenceAsFieldRep] = List.empty,
             parentClass: Option[ClassReference] = None,
             subClasses: List[ClassReference] = List.empty,
-            predef: Boolean = false,
-            library: Boolean = false,
             content: Option[String] = None,
             jsonTypeInfo: Option[JsonTypeInfo] = None): ClassRep = {
 
-    CustomClassRep(
-      classReference.name,
-      classReference.packageParts,
-      classReference.typeVariables,
-      fields,
-      parentClass,
-      subClasses,
-      predef,
-      library,
-      content,
-      jsonTypeInfo
-    )
+    CustomClassRep(classReference, fields, parentClass, subClasses, content, jsonTypeInfo)
 
   }
 

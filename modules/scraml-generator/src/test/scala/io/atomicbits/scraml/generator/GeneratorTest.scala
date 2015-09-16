@@ -52,6 +52,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.scraml.TestApi",
         "io.atomicbits.scraml.rest.RestResource",
         "io.atomicbits.scraml.rest.user.UserResource",
+        "io.atomicbits.scraml.rest.user.userid.dogs.DogsResource",
         "io.atomicbits.scraml.rest.user.userid.UseridResource",
         "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV01JsonHeaderSegment",
         "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV10JsonHeaderSegment",
@@ -63,6 +64,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.User",
         "io.atomicbits.schema.UserDefinitionsAddress",
         "io.atomicbits.schema.Link",
+        "io.atomicbits.schema.PagedList",
         "io.atomicbits.schema.Animal",
         "io.atomicbits.schema.Dog",
         "io.atomicbits.schema.Cat",
@@ -76,14 +78,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val userResource = classRepsByFullName("io.atomicbits.scraml.rest.user.UserResource")
       val expectedUserResource = CustomClassRep(
-        "UserResource",
-        List("io", "atomicbits", "scraml", "rest", "user"),
-        List(),
+        classRef = ClassReference("UserResource", List("io", "atomicbits", "scraml", "rest", "user")),
         List(),
         None,
         List(),
-        false,
-        false,
         Some(""),
         None
       )
@@ -91,9 +89,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val animalClass = classRepsByFullName("io.atomicbits.schema.Animal")
       val expectedAnimalClassRep = CustomClassRep(
-        "Animal",
-        List("io", "atomicbits", "schema"),
-        List(),
+        classRef = ClassReference("Animal", List("io", "atomicbits", "schema")),
         List(),
         None,
         List(
@@ -101,8 +97,6 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
           ClassReference("Dog", List("io", "atomicbits", "schema")),
           ClassReference("Fish", List("io", "atomicbits", "schema"))
         ),
-        false,
-        false,
         Some(""),
         Some(JsonTypeInfo("_type", None))
       )

@@ -77,7 +77,7 @@ object ObjectEl {
     // Process the typeVariables field
     val typeVariables: List[String] =
       schema \ "typeVariables" toOption match {
-        case Some(req: JsArray) => req.value.toList.collect { case JsString(value) => value }
+        case Some(typeVars: JsArray) => typeVars.value.toList.collect { case JsString(value) => value }
         case _                  => List.empty[String]
       }
 

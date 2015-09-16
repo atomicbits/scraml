@@ -133,15 +133,16 @@ object ScramlGenerator {
 
   private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
 
-    val pathParts = classRep.packageParts
+    val classReference = classRep.classRef
+    val pathParts = classReference.packageParts
     // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
     // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
     //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
     //    val file = new File(dir, s"${classRep.name}.scala")
 
-    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classRep.name}.scala"
+    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.scala"
 
-    (filePath, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
+    (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }
 
 }

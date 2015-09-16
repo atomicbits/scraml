@@ -116,7 +116,7 @@ case class TypedClassReference(classReference: ClassReference,
    */
   def classDefinitionScala: String =
     if (classReference.typeVariables.isEmpty) classReference.name
-    else s"$classReference.name[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
+    else s"${classReference.name}[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
 
 
   /**
@@ -132,7 +132,7 @@ case class TypedClassReference(classReference: ClassReference,
    */
   def classDefinitionJava: String =
     if (classReference.typeVariables.isEmpty) classReference.name
-    else s"$classReference.name<${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}>"
+    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}>"
 
 }
 

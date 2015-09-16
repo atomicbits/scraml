@@ -135,7 +135,7 @@ object ActionGenerator {
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
     val contentHeaderMethodName = s"_content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
-    val contentHeaderSegment: String = s"""def $contentHeaderMethodName = new ${headerSegment.fullyQualifiedName}(requestBuilder)"""
+    val contentHeaderSegment: String = s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
@@ -188,7 +188,7 @@ object ActionGenerator {
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
     val acceptHeaderMethodName = s"_accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
-    val acceptHeaderSegment: String = s"""def $acceptHeaderMethodName = new ${headerSegment.fullyQualifiedName}(requestBuilder)"""
+    val acceptHeaderSegment: String = s"""def $acceptHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
@@ -226,11 +226,12 @@ object ActionGenerator {
                                   imports: Set[String],
                                   methods: List[String]): ClassRep = {
 
-    val classRep = ClassRep(ClassReference(name = className, packageParts = packageParts))
+    val classReference = ClassReference(name = className, packageParts = packageParts)
+    val classRep = ClassRep(classReference)
 
     val sourceCode =
       s"""
-         package ${classRep.packageName}
+         package ${classReference.packageName}
 
          import io.atomicbits.scraml.dsl._
          import play.api.libs.json._
@@ -238,7 +239,7 @@ object ActionGenerator {
          ${imports.mkString("\n")}
 
 
-         class ${classRep.name}(req: RequestBuilder) extends HeaderSegment(req) {
+         class ${classReference.name}(req: RequestBuilder) extends HeaderSegment(req) {
 
            ${methods.mkString("\n")}
 
