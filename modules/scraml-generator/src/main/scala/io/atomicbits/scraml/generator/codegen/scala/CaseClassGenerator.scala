@@ -53,7 +53,7 @@ object CaseClassGenerator {
   /**
    * Collect all type imports for a given class and its generic types, but not its parent or child classes.
    */
-  def collectImports(collectClassRep: ClassReference): Set[String] = {
+  def collectImports(collectClassRep: ClassRep): Set[String] = {
 
     val ownPackage = collectClassRep.packageName
 
@@ -78,7 +78,9 @@ object CaseClassGenerator {
       collectedFromClassPtr ++ collected
     }
 
-    collectTypeImports(Set.empty, collectClassRep)
+    val ownTypesImport = collectTypeImports(Set.empty, collectClassRep.classRef)
+
+    collectClassRep.fields.map(_.classPointer).foldLeft(ownTypesImport)(collectTypeImports)
   }
 
 
@@ -94,7 +96,7 @@ object CaseClassGenerator {
   }
 
   private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
-    val imports: Set[String] = collectImports(classRep.classRef)
+    val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
@@ -151,7 +153,8 @@ object CaseClassGenerator {
   }
 
   private def generateNonEnumClassRep(classRep: ClassRep): ClassRep = {
-    val imports: Set[String] = collectImports(classRep.classRef)
+
+    val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
@@ -267,7 +270,7 @@ object CaseClassGenerator {
        """.stripMargin)
 
     val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
-      collectImports(classRp.classRef) ++ importsAggr
+      collectImports(classRp) ++ importsAggr
     }
 
     val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
