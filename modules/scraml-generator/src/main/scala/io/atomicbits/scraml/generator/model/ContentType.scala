@@ -36,7 +36,7 @@ case class StringContentType(contentTypeHeaderValue: String) extends ContentType
 
 case class JsonContentType(contentTypeHeaderValue: String) extends ContentType
 
-case class TypedContentType(contentTypeHeaderValue: String, classRep: ClassRep) extends ContentType
+case class TypedContentType(contentTypeHeaderValue: String, classReference: TypedClassReference) extends ContentType
 
 case class FormPostContentType(contentTypeHeaderValue: String, formParameters: Map[String, List[Parameter]]) extends ContentType
 
@@ -53,15 +53,15 @@ case object NoContentType extends ContentType {
 object ContentType {
 
   def apply(contentTypeHeader: String,
-            classRep: Option[ClassRep],
+            classReference: Option[TypedClassReference],
             formParameters: Map[String, List[Parameter]]): ContentType = {
 
     if (contentTypeHeader.toLowerCase == "multipart/form-data") {
       MultipartFormContentType(contentTypeHeader)
     } else if (formParameters.nonEmpty) {
       FormPostContentType(contentTypeHeader, formParameters)
-    } else if (classRep.isDefined) {
-      TypedContentType(contentTypeHeader, classRep.get)
+    } else if (classReference.isDefined) {
+      TypedContentType(contentTypeHeader, classReference.get)
     } else if (contentTypeHeader.toLowerCase.contains("json")) {
       JsonContentType(contentTypeHeader)
     } else {

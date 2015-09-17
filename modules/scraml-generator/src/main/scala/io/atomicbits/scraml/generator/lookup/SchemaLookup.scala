@@ -68,31 +68,42 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
   }
 
 
-  def rootIdAsClassRep(rootId: RootId): ClassRep = schemaAsClassRep(lookupSchema(rootId))
+  def rootIdAsTypedClassReference(rootId: RootId): TypedClassReference = schemaAsClassReference(lookupSchema(rootId)).asTypedClassReference
 
 
-  def schemaAsClassRep(schema: Schema): ClassRep = {
+  /**
+   * It's the given schema that tells us what kind of class pointer we'll get.
+   */
+  def schemaAsClassReference(schema: Schema, types: Map[String, TypedClassReference] = Map.empty): ClassPointer = {
 
     schema match {
-      case objEl: ObjectEl            => classReps(SchemaUtil.asAbsoluteId(schema.id))
-      case arrEl: ArrayEl             => ListClassRep(schemaAsClassRep(arrEl.items))
-      case stringEl: StringEl         => StringClassRep
-      case numberEl: NumberEl         => DoubleClassRep
-      case integerEl: IntegerEl       => LongClassRep
-      case booleanEl: BooleanEl       => BooleanClassRep
-      case schemaRef: SchemaReference => schemaAsClassRep(lookupSchema(schemaRef.refersTo))
+      case objEl: ObjectEl            =>
+        val classReference = classReps(SchemaUtil.asAbsoluteId(schema.id)).classRef
+        if (types.isEmpty) classReference
+        else TypedClassReference(classReference, types)
+      case genObjEl: GenericObjectEl  => GenericClassPointer(genObjEl.typeVariable)
+      case arrEl: ArrayEl             =>
+        arrEl.items match {
+          case genObjEl: GenericObjectEl => ListClassReference(genObjEl.typeVariable)
+          case itemsSchema               => ListClassReference.typed(schemaAsClassReference(arrEl.items))
+        }
+      case stringEl: StringEl         => StringClassReference()
+      case numberEl: NumberEl         => DoubleClassReference()
+      case integerEl: IntegerEl       => LongClassReference()
+      case booleanEl: BooleanEl       => BooleanClassReference()
+      case schemaRef: SchemaReference =>
+        schemaAsClassReference(
+          lookupSchema(schemaRef.refersTo),
+          schemaRef.genericTypes.mapValues(schemaAsClassReference(_, types).asTypedClassReference)
+        )
       case enumEl: EnumEl             =>
-        if (enumEl.choices.size == 1) StringClassRep // Probably a "type" discriminator field.
+        if (enumEl.choices.size == 1) StringClassReference() // Probably a "type" discriminator field.
         else {
-          EnumValuesClassRep(classRep = ClassRep(ClassReferenceBuilder(SchemaUtil.asAbsoluteId(schema.id))), values = enumEl.choices)
+          ClassReferenceBuilder(SchemaUtil.asAbsoluteId(schema.id))
         }
       case otherSchema                => sys.error(s"Cannot transform schema with id ${otherSchema.id} to a class representation.")
     }
 
   }
-
-
-  def schemaAsType(schema: Schema): String = schemaAsClassRep(schema).classDefinitionScala
-
 
 }

@@ -32,7 +32,7 @@ trait ActionGeneratorSupport {
     action.selectedContentType match {
       case StringContentType(contentTypeHeader)          => List(Some("String"))
       case JsonContentType(contentTypeHeader)            => List(Some("String"), Some("JsValue"))
-      case TypedContentType(contentTypeHeader, classRep) => List(Some("String"), Some("JsValue"), Some(classRep.classDefinitionScala))
+      case TypedContentType(contentTypeHeader, classRef) => List(Some("String"), Some("JsValue"), Some(classRef.classDefinitionScala))
       case NoContentType                                 => List(None, Some("String"))
       case x                                             => List(Some("String"))
     }

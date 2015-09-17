@@ -26,7 +26,10 @@ import scala.language.postfixOps
 /**
  * Created by peter on 7/06/15. 
  */
-case class ArrayEl(id: Id, items: Schema, required: Boolean = false) extends Schema with AllowedAsObjectField {
+case class ArrayEl(id: Id,
+                   items: Schema,
+                   required: Boolean = false,
+                   fragments: Map[String, Schema] = Map.empty) extends Schema with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Schema = copy(id = updatedId)
 
@@ -45,18 +48,21 @@ object ArrayEl {
     val items =
       schema \ "items" toOption match {
         case Some(obj: JsObject) => Some(Schema(obj))
-        case _ => None
+        case _                   => None
       }
 
     // Process the required field
     val required = (schema \ "required").asOpt[Boolean]
+
+    val fragments = Schema.collectFragments(schema)
 
     ArrayEl(
       id = id,
       items = items.getOrElse(
         throw JsonSchemaParseException("An array type must have an 'items' field that refers to a JsObject")
       ),
-      required = required.getOrElse(false)
+      required = required.getOrElse(false),
+      fragments = fragments
     )
 
   }

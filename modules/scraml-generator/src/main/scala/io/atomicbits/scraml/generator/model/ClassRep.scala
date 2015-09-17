@@ -27,30 +27,35 @@ import scala.annotation.tailrec
  * Created by peter on 21/08/15. 
  */
 
-
 trait ClassRep {
 
-  def name: String
+  def name = classRef.name
 
-  def packageParts: List[String]
+  def packageParts = classRef.packageParts
 
-  def types: List[ClassRep]
+  def packageName = classRef.packageName
 
-  def fields: List[ClassAsFieldRep]
+  def typeVariables = classRef.typeVariables
+
+  def fullyQualifiedName = classRef.fullyQualifiedName
+
+  def classDefinitionScala = classRef.classDefinitionScala
+
+  def classDefinitionJava = classRef.classDefinitionJava
+
+  def classRef: ClassReference
+
+  def fields: List[ClassReferenceAsFieldRep]
 
   def parentClass: Option[ClassReference]
 
   def subClasses: List[ClassReference]
 
-  def predef: Boolean
-
-  def library: Boolean
-
   def content: Option[String]
 
   def jsonTypeInfo: Option[JsonTypeInfo]
 
-  def withFields(fields: List[ClassAsFieldRep]): ClassRep
+  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep
 
   def withParent(parentId: ClassReference): ClassRep
 
@@ -59,44 +64,6 @@ trait ClassRep {
   def withContent(content: String): ClassRep
 
   def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep
-
-  def classRef = ClassReference(name, packageParts)
-
-  /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List[User]"
-   * "List[List[Address]]"
-   *
-   */
-  def classDefinitionScala: String =
-    if (types.isEmpty) name
-    else s"$name[${types.map(_.classDefinitionScala).mkString(",")}]"
-
-
-  /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List<User>"
-   * "List<List<Address>>"
-   *
-   */
-  def classDefinitionJava: String =
-    if (types.isEmpty) name
-    else s"$name<${types.map(_.classDefinitionScala).mkString(",")}>"
-
-
-  def packageName: String = packageParts.mkString(".")
-
-  def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
 
   def isInHierarchy: Boolean = parentClass.isDefined || subClasses.nonEmpty
 
@@ -129,118 +96,48 @@ trait ClassRep {
 
 }
 
-trait LibraryClassRep extends ClassRep {
 
-  def types: List[ClassRep] = List.empty
+object StringClassReference {
 
-  def fields: List[ClassAsFieldRep] = List.empty
+  def apply(): ClassReference = ClassReference(name = "String", predef = true)
 
-  def parentClass: Option[ClassReference] = None
+}
 
-  def subClasses: List[ClassReference] = List.empty
+case object BooleanClassReference {
 
-  def predef: Boolean = false
+  def apply(): ClassReference = ClassReference(name = "Boolean", predef = true)
 
-  def library: Boolean = true
+}
 
-  def content: Option[String] = None
+case object DoubleClassReference {
 
-  def jsonTypeInfo: Option[JsonTypeInfo] = None
+  def apply(): ClassReference = ClassReference(name = "Double", predef = true)
 
-  def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("We shouldn't set the fields of a library class rep.")
+}
 
-  def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a library class rep.")
+case object LongClassReference {
 
-  def withParent(parentId: ClassReference): ClassRep = sys.error("We shouldn't set the parent of a library class rep.")
+  def apply(): ClassReference = ClassReference(name = "Long", predef = true)
 
-  def withChildren(childIds: List[ClassReference]): ClassRep = sys.error("We shouldn't set the children of a library class rep.")
+}
 
-  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep = sys.error("We shouldn't set JSON type info on a library class rep.")
+case object JsValueClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "String", packageParts = List("play", "api", "libs", "json"), library = true)
 
 }
 
 
-trait PredefinedClassRep extends ClassRep {
-
-  def packageParts: List[String] = List.empty
-
-  def types: List[ClassRep] = List.empty
-
-  def fields: List[ClassAsFieldRep] = List.empty
-
-  def parentClass: Option[ClassReference] = None
-
-  def subClasses: List[ClassReference] = List.empty
-
-  def predef: Boolean = true
-
-  def library: Boolean = false
-
-  def content: Option[String] = None
-
-  def jsonTypeInfo: Option[JsonTypeInfo] = None
-
-  def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("We shouldn't set the fields of a predefined class rep.")
-
-  def withContent(content: String): ClassRep = sys.error("We shouldn't set the content of a predefined class rep.")
-
-  def withParent(parentId: ClassReference): ClassRep = sys.error("We shouldn't set the parent of a predefined class rep.")
-
-  def withChildren(childIds: List[ClassReference]): ClassRep = sys.error("We shouldn't set the children of a predefined class rep.")
-
-  def withJsonTypeInfo(jsonTypeInfo: JsonTypeInfo): ClassRep =
-    sys.error("We shouldn't set JSON type info on a predefined class rep.")
-
-}
-
-
-case object StringClassRep extends PredefinedClassRep {
-
-  val name = "String"
-
-}
-
-case object BooleanClassRep extends PredefinedClassRep {
-
-  val name = "Boolean"
-
-}
-
-case object DoubleClassRep extends PredefinedClassRep {
-
-  val name = "Double"
-
-}
-
-case object LongClassRep extends PredefinedClassRep {
-
-  val name = "Long"
-
-}
-
-case object JsValueClassRep extends LibraryClassRep {
-
-  val name = "JsValue"
-
-  val packageParts = List("play", "api", "libs", "json")
-
-}
-
-
-case class EnumValuesClassRep(name: String,
+case class EnumValuesClassRep(classRef: ClassReference,
                               values: List[String] = List.empty,
-                              packageParts: List[String] = List.empty,
-                              types: List[ClassRep] = List.empty,
                               parentClass: Option[ClassReference] = None,
                               subClasses: List[ClassReference] = List.empty,
-                              predef: Boolean = false,
-                              library: Boolean = false,
                               content: Option[String] = None,
                               jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
-  val fields: List[ClassAsFieldRep] = Nil
+  val fields: List[ClassReferenceAsFieldRep] = Nil
 
-  def withFields(fields: List[ClassAsFieldRep]): ClassRep = sys.error("An EnumValueclassRep has no fields")
+  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep = sys.error("An EnumValueclassRep has no fields")
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
 
@@ -254,32 +151,30 @@ case class EnumValuesClassRep(name: String,
 
 object EnumValuesClassRep {
 
-  def apply(classRep: ClassRep, values: List[String]): EnumValuesClassRep =
-    EnumValuesClassRep(name = classRep.name, packageParts = classRep.packageParts, values = values)
+  def apply(classRef: ClassReference, values: List[String]): EnumValuesClassRep =
+    new EnumValuesClassRep(classRef = classRef, values = values)
 
 }
 
 
-object ListClassRep {
+object ListClassReference {
 
-  def apply(listType: ClassRep): ClassRep = {
-    ClassRep(classReference = ClassReference(name = "List"), types = List(listType), predef = true)
-  }
+  def apply(typeVariable: String): ClassReference = ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+
+  def typed(listType: ClassPointer): TypedClassReference =
+    TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
 
 }
 
-case class CustomClassRep(name: String,
-                          packageParts: List[String] = List.empty,
-                          types: List[ClassRep] = List.empty,
-                          fields: List[ClassAsFieldRep] = List.empty,
+
+case class CustomClassRep(classRef: ClassReference,
+                          fields: List[ClassReferenceAsFieldRep] = List.empty,
                           parentClass: Option[ClassReference] = None,
                           subClasses: List[ClassReference] = List.empty,
-                          predef: Boolean = false,
-                          library: Boolean = false,
                           content: Option[String] = None,
                           jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
-  def withFields(fields: List[ClassAsFieldRep]): ClassRep = copy(fields = fields)
+  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep = copy(fields = fields)
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
 
@@ -292,13 +187,17 @@ case class CustomClassRep(name: String,
 }
 
 
-case class ClassAsFieldRep(fieldName: String, classRep: ClassRep, required: Boolean) {
+case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointer, required: Boolean) {
 
   def fieldExpressionScala: String =
-    if (required) s"$fieldName: ${classRep.classDefinitionScala}"
-    else s"$fieldName: Option[${classRep.classDefinitionScala}] = None"
+    if (required) s"$fieldName: ${classPointer.classDefinitionScala}"
+    else s"$fieldName: Option[${classPointer.classDefinitionScala}] = None"
 
-  def fieldExpressionJava: String = s"${classRep.classDefinitionJava} $fieldName"
+  def fieldFormatUnliftScala: String =
+    if (required) s""" (__ \\ "$fieldName").format[${classPointer.classDefinitionScala}]"""
+    else s""" (__ \\ "$fieldName").formatNullable[${classPointer.classDefinitionScala}]"""
+
+  def fieldExpressionJava: String = s"${classPointer.classDefinitionJava} $fieldName"
 
 }
 
@@ -312,45 +211,20 @@ object ClassRep {
   /**
    *
    * @param classReference The class reference for the class representation.
-   * @param types The generic types of this class representation.
    * @param fields The public fields for this class rep (to become a scala case class or java pojo).
    * @param parentClass The class rep of the parent class of this class rep.
    * @param subClasses The class reps of the children of this class rep.
-   * @param predef Indicates whether this class representation is a predefined type or not.
-   *               Predefined types are: String, Boolean, Double, List, ... They don't need to be imported.
-   * @param library Indicates whether this class representation is provided by a library or not.
-   *                Library classes don't need to be generated (they already exist), but do need to be imported before you can use them.
    * @param content The source content of the class.
+   * @param jsonTypeInfo Info about JSON-typing of case classes.
    */
   def apply(classReference: ClassReference,
-            types: List[ClassRep] = List.empty,
-            fields: List[ClassAsFieldRep] = List.empty,
+            fields: List[ClassReferenceAsFieldRep] = List.empty,
             parentClass: Option[ClassReference] = None,
             subClasses: List[ClassReference] = List.empty,
-            predef: Boolean = false,
-            library: Boolean = false,
             content: Option[String] = None,
             jsonTypeInfo: Option[JsonTypeInfo] = None): ClassRep = {
 
-    classReference.name match {
-      case "String"  => StringClassRep
-      case "Boolean" => BooleanClassRep
-      case "Double"  => DoubleClassRep
-      case "Long"    => LongClassRep
-      case "JsValue" => JsValueClassRep
-      case _         => CustomClassRep(
-        classReference.name,
-        classReference.packageParts,
-        types,
-        fields,
-        parentClass,
-        subClasses,
-        predef,
-        library,
-        content,
-        jsonTypeInfo
-      )
-    }
+    CustomClassRep(classReference, fields, parentClass, subClasses, content, jsonTypeInfo)
 
   }
 

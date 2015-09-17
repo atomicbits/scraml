@@ -23,6 +23,8 @@
       }
     },
     {
+      "id": "http://atomicbits.io/schema/dog.json#",
+      "type": "object",
       "properties": {
         "_type": {
           "enum": [

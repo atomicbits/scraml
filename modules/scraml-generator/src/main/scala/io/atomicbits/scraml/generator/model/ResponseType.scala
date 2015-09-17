@@ -34,7 +34,7 @@ case class StringResponseType(acceptHeaderValue: String) extends ResponseType
 
 case class JsonResponseType(acceptHeaderValue: String) extends ResponseType
 
-case class TypedResponseType(acceptHeaderValue: String, classRep: ClassRep) extends ResponseType
+case class TypedResponseType(acceptHeaderValue: String, classReference: TypedClassReference) extends ResponseType
 
 case object NoResponseType extends ResponseType {
 
@@ -47,10 +47,10 @@ case object NoResponseType extends ResponseType {
 
 object ResponseType {
 
-  def apply(acceptHeader: String, classRep: Option[ClassRep]): ResponseType = {
+  def apply(acceptHeader: String, classReference: Option[TypedClassReference]): ResponseType = {
 
-    if (classRep.isDefined) {
-      TypedResponseType(acceptHeader, classRep.get)
+    if (classReference.isDefined) {
+      TypedResponseType(acceptHeader, classReference.get)
     } else if (acceptHeader.toLowerCase.contains("json")) {
       JsonResponseType(acceptHeader)
     } else {

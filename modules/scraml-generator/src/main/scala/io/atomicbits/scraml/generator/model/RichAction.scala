@@ -39,14 +39,14 @@ object RichAction {
 
   def apply(action: Action, schemaLookup: SchemaLookup): RichAction = {
 
-    def mimeTypeToClassRep(mimeType: MimeType): Option[ClassRep] = {
-      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsClassRep)
+    def mimeTypeToClassRep(mimeType: MimeType): Option[TypedClassReference] = {
+      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsTypedClassReference)
     }
 
     val contentTypes = action.body.values.toList map { mimeType =>
       ContentType(
         contentTypeHeader = mimeType.mimeType,
-        classRep = mimeTypeToClassRep(mimeType),
+        classReference = mimeTypeToClassRep(mimeType),
         formParameters = mimeType.formParameters
       )
     } toSet
@@ -56,7 +56,7 @@ object RichAction {
         response.body.values.toSet[MimeType] map { mimeType =>
           ResponseType(
             acceptHeader = mimeType.mimeType,
-            classRep = mimeTypeToClassRep(mimeType)
+            classReference = mimeTypeToClassRep(mimeType)
           )
         }
       }  getOrElse Set.empty[ResponseType]

@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator._
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.jsonschemaparser._
@@ -42,21 +41,23 @@ object ClassRepAssembler {
     val withCaseClassFields = addCaseClassFields(withEnumClassReps)
 
     val withClassHierarchy = addClassHierarchy(withCaseClassFields)
-    
+
     withClassHierarchy
   }
 
 
   def addEnums(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val enumClassReps = schemaLookup.enumMap.filter { case (id, enumEl) =>
-      enumEl.choices.size > 1
-    }.map { case (id, enumEl) =>
-      (id, EnumValuesClassRep(classRep = ClassRep(ClassReferenceBuilder(id)), values = enumEl.choices))
-    }
+    val enumClassReps =
+      schemaLookup.enumMap.filter {
+        case (id, enumEl) => enumEl.choices.size > 1
+      }.map {
+        case (id, enumEl) => (id, EnumValuesClassRep(classRef = ClassReferenceBuilder(id), values = enumEl.choices))
+      }
 
     schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
   }
+
 
   /**
    * @param schemaLookup: The schema lookup
@@ -64,9 +65,11 @@ object ClassRepAssembler {
    */
   def deduceCanonicalNames(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    val ids: List[AbsoluteId] = schemaLookup.objectMap.keys.toList
-
-    val canonicalMap: CanonicalMap = ids.map(id => id -> ClassRep(ClassReferenceBuilder(id))).toMap
+    val canonicalMap: CanonicalMap =
+      schemaLookup.objectMap.map { idAndObject =>
+        val (id: AbsoluteId, obj: ObjectElExt) = idAndObject
+        id -> ClassRep(ClassReferenceBuilder(id).copy(typeVariables = obj.typeVariables))
+      }
 
     schemaLookup.copy(classReps = canonicalMap)
   }
@@ -74,17 +77,17 @@ object ClassRepAssembler {
 
   def addCaseClassFields(schemaLookup: SchemaLookup): SchemaLookup = {
 
-    def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassAsFieldRep = {
+    def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassReferenceAsFieldRep = {
 
       val (propertyName, schema) = property
 
       schema match {
-        case enumField: EnumEl =>
+        case enumField: EnumEl              =>
           val required = requiredFields.contains(propertyName) || enumField.required
-          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(enumField), required)
+          ClassReferenceAsFieldRep(propertyName, schemaLookup.schemaAsClassReference(enumField), required)
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.required
-          ClassAsFieldRep(propertyName, schemaLookup.schemaAsClassRep(objField), required)
+          ClassReferenceAsFieldRep(propertyName, schemaLookup.schemaAsClassReference(objField), required)
         case noObjectField                  =>
           sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
       }
@@ -97,7 +100,7 @@ object ClassRepAssembler {
 
         schemaLookup.objectMap.get(id) match {
           case Some(objectEl) =>
-            val fields: List[ClassAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
+            val fields: List[ClassReferenceAsFieldRep] = objectEl.properties.toList.map(schemaAsField(_, objectEl.requiredFields))
 
             val classRepWithFields = classRep.withFields(fields)
 

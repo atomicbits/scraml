@@ -100,12 +100,13 @@ object ScramlGenerator {
   }
 
 
-  private val formatSettings = FormattingPreferences()
-    .setPreference(RewriteArrowSymbols, true)
-    .setPreference(AlignParameters, true)
-    .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(DoubleIndentClassDeclaration, true)
-    .setPreference(IndentSpaces, 2)
+  private val formatSettings =
+    FormattingPreferences()
+      .setPreference(RewriteArrowSymbols, true)
+      .setPreference(AlignParameters, true)
+      .setPreference(AlignSingleLineCaseStatements, true)
+      .setPreference(DoubleIndentClassDeclaration, true)
+      .setPreference(IndentSpaces, 2)
 
 
   private def addLicenseAndFormat(classRep: ClassRep): ClassRep = {
@@ -117,30 +118,31 @@ object ScramlGenerator {
   private val classHeaderLicense =
 
     s""" | /**
-       | *  All rights reserved. This program and the accompanying materials
-       | *  are made available under the terms of the GNU Affero General Public License
-       | *  (AGPL) version 3.0 which accompanies this distribution, and is available in
-       | *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
-       | *
-       | *  This library is distributed in the hope that it will be useful,
-       | *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-       | *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-       | *  Affero General Public License for more details.
-       | */
+       |*  All rights reserved. This program and the accompanying materials
+       |*  are made available under the terms of the GNU Affero General Public License
+       |*  (AGPL) version 3.0 which accompanies this distribution, and is available in
+       |*  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+       |*
+       |*  This library is distributed in the hope that it will be useful,
+       |*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+       |*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+       |*  Affero General Public License for more details.
+       |*/
      """.stripMargin
 
 
   private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
 
-    val pathParts = classRep.packageParts
+    val classReference = classRep.classRef
+    val pathParts = classReference.packageParts
     // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
     // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
     //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
     //    val file = new File(dir, s"${classRep.name}.scala")
 
-    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classRep.name}.scala"
+    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.scala"
 
-    (filePath, classRep.content.getOrElse(s"No content generated for class ${classRep.fullyQualifiedName}"))
+    (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }
 
 }

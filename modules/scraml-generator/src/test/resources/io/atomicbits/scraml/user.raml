@@ -82,6 +82,32 @@
           application/vnd-v1.0+json:
             schema: link
 
+
+/{userid}/dogs:
+  uriParameters:
+    userid:
+      description: The user's id.
+      type: string
+      required: true
+  get:
+    responses:
+      200:
+        body:
+          application/vnd-v1.0+json:
+            schema: |
+              {
+                "id": "http://atomicbits.io/schema/anonymous3.json",
+                "$ref": "http://atomicbits.io/schema/paged-list.json#",
+                "genericTypes": {
+                  "T": {
+                    "$ref": "http://atomicbits.io/schema/dog.json"
+                  },
+                  "U": {
+                    "type": "string"
+                  }
+                }
+              }
+
 #  description: todo support for anonymous schema id's for non-object schema's, List[] support in body and result directly
 #  description: todo testing primitives as request & response bodies
 

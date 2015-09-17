@@ -53,24 +53,14 @@ object ObjectEl {
 
     // Process the properties
     val properties =
-      schema \ "properties" toOption match {
-        case Some(props: JsObject) =>
-          Some(props.value.toSeq collect {
+      (schema \ "properties").toOption.collect {
+        case props: JsObject =>
+          props.value collect {
             case (fieldName, fragment: JsObject) => (fieldName, Schema(fragment))
-          } toMap)
-        case _                     => None
+          } toMap
       }
 
-    // Process the fragments and exclude the json-schema fields that we don't need to consider
-    // (should be only objects as other fields are ignored as fragmens) ToDo: check this
-    val keysToExclude = Seq("id", "type", "properties", "required", "oneOf", "anyOf", "allOf")
-    val fragmentsToKeep =
-      keysToExclude.foldLeft[Map[String, JsValue]](schema.value.toMap) { (schemaMap, excludeKey) =>
-        schemaMap - excludeKey
-      }
-    val fragments = fragmentsToKeep collect {
-      case (fragmentFieldName, fragment: JsObject) => (fragmentFieldName, Schema(fragment))
-    }
+    val fragments = Schema.collectFragments(schema)
 
     // Process the required field
     val (required, requiredFields) =
@@ -87,7 +77,7 @@ object ObjectEl {
     // Process the typeVariables field
     val typeVariables: List[String] =
       schema \ "typeVariables" toOption match {
-        case Some(req: JsArray) => req.value.toList.collect { case JsString(value) => value }
+        case Some(typeVars: JsArray) => typeVars.value.toList.collect { case JsString(value) => value }
         case _                  => List.empty[String]
       }
 
@@ -134,7 +124,7 @@ object ObjectEl {
       requiredFields = requiredFields.getOrElse(List.empty[String]),
       selection = selection,
       properties = properties.getOrElse(Map.empty[String, Schema]),
-      fragments = fragments.toMap,
+      fragments = fragments,
       typeVariables = typeVariables,
       typeDiscriminator = typeDiscriminator
     )

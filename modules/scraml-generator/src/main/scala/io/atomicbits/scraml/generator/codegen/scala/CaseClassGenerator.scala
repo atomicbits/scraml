@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.codegen.scala
 
-import io.atomicbits.scraml.generator.model.{EnumValuesClassRep, ClassRep}
+import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
 
 
@@ -58,82 +58,82 @@ object CaseClassGenerator {
     val ownPackage = collectClassRep.packageName
 
     /**
-     * Collect the type imports for the given class rep without recursing into the field types.
+     * Collect the type imports for the given class rep.
      */
-    def collectTypeImports(collected: Set[String], classRp: ClassRep): Set[String] = {
+    def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
 
-      val collectedWithClassRep =
-        if (classRp.packageName != ownPackage && !classRp.predef) collected + s"import ${classRp.fullyQualifiedName}"
-        else collected
+      def collectFromClassReference(classRef: ClassReference): Set[String] = {
+        if (classRef.packageName != ownPackage && !classRef.predef) collected + s"import ${classRef.fullyQualifiedName}"
+        else Set.empty[String]
+      }
 
-      classRp.types.foldLeft(collectedWithClassRep)(collectTypeImports)
+      val collectedFromClassPtr =
+        classPtr match {
+          case typedClassReference: TypedClassReference =>
+            typedClassReference.types.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
+          case classReference: ClassReference           => collectFromClassReference(classReference)
+          case _                                        => Set.empty[String]
+        }
 
+      collectedFromClassPtr ++ collected
     }
 
-    val ownTypeImports: Set[String] = collectTypeImports(Set.empty, collectClassRep)
+    val ownTypesImport = collectTypeImports(Set.empty, collectClassRep.classRef)
 
-    collectClassRep.fields.map(_.classRep).foldLeft(ownTypeImports)(collectTypeImports)
-
+    collectClassRep.fields.map(_.classPointer).foldLeft(ownTypesImport)(collectTypeImports)
   }
 
 
   def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
-    
-    
-    classRep match  {
-      case e:EnumValuesClassRep => generateEnumClassRep(e)
-      case _ =>   generateNonEnumClassRep(classRep)
+
+
+    classRep match {
+      case e: EnumValuesClassRep => generateEnumClassRep(e)
+      case _                     => generateNonEnumClassRep(classRep)
     }
   }
-  
-  private def generateEnumClassRep(classRep:EnumValuesClassRep) : ClassRep = {
+
+  private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
     val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
-    def enumValue(value:String) : String = {
+    def enumValue(value: String): String = {
       s"""
-         |case object $value extends ${classRep.name} {
-         | val name = "$value"
-         |}
-         |
-       """.stripMargin
+         case object $value extends ${classRep.name} {
+           val name = "$value"
+         }
+      """
     }
-    
-    def generateEnumCompanionObject : String = {
-      
+
+    def generateEnumCompanionObject: String = {
+
       val name = classRep.name
       s"""
-         |object $name {
-         |
-         | ${classRep.values.map(enumValue).mkString("\n")}
-         | 
-         | val byName = Map(
-         |    ${classRep.values.map{v => s"$v.name -> $v"}.mkString(",")}
-         |  )
-         |
-         | implicit val ${name}Format = new Format[$name] {
-         | 
-         |     override def reads(json: JsValue): JsResult[$name] = {
-         |      json.validate[String].map($name.byName(_))
-         |    }
-         |
-         |    override def writes(o: $name): JsValue = {
-         |      JsString(o.name)
-         |    }
-         | 
-         | }
-         |
-         |}
-         |
-         |
-         |
-         |
-       """.stripMargin
+        object $name {
+
+          ${classRep.values.map(enumValue).mkString("\n")}
+
+          val byName = Map(
+            ${classRep.values.map { v => s"$v.name -> $v" }.mkString(",")}
+          )
+
+          implicit val ${name}Format = new Format[$name] {
+
+            override def reads(json: JsValue): JsResult[$name] = {
+              json.validate[String].map($name.byName(_))
+            }
+
+            override def writes(o: $name): JsValue = {
+              JsString(o.name)
+            }
+          }
+        }
+       """
     }
-    
+
     val source =
       s"""
         package ${classRep.packageName}
@@ -141,21 +141,19 @@ object CaseClassGenerator {
         import play.api.libs.json.{Format, Json, JsResult, JsValue, JsString}
 
         ${imports.mkString("\n")}
-        
+
         sealed trait ${classRep.name} {
           def name:String
         }
-        
-       
-        
-        
-        ${generateEnumCompanionObject}
+
+        $generateEnumCompanionObject
      """
 
     classRep.withContent(content = source)
   }
-  
-  private def generateNonEnumClassRep(classRep:ClassRep) : ClassRep = {
+
+  private def generateNonEnumClassRep(classRep: ClassRep): ClassRep = {
+
     val imports: Set[String] = collectImports(classRep)
 
     val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
@@ -164,7 +162,7 @@ object CaseClassGenerator {
       s"""
         package ${classRep.packageName}
 
-        import play.api.libs.json.{Format, Json}
+        import play.api.libs.json._
 
         ${imports.mkString("\n")}
 
@@ -184,16 +182,35 @@ object CaseClassGenerator {
         classRep.fields.filterNot(_.fieldName == skipField)
       } getOrElse classRep.fields
 
-    val fieldExpressions = selectedFields.sortBy(!_.required).map(_.fieldExpressionScala)
+    val sortedFields = selectedFields.sortBy(!_.required)
+    val fieldExpressions = sortedFields.map(_.fieldExpressionScala)
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
+
+    val formatter = {
+      if (classRep.classRef.typeVariables.nonEmpty) {
+        val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
+        val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
+        s"""
+          import play.api.libs.functional.syntax._
+
+          implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+            ( ${formatUnLiftFields.mkString("~\n")}
+            )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+      }
+      else {
+        s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+      }
+    }
+
 
     s"""
       case class ${classRep.classDefinitionScala}(${fieldExpressions.mkString(",")}) $extendsClass
 
       object ${classRep.name} {
 
-        implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]
+        $formatter
 
       }
      """
@@ -248,8 +265,8 @@ object CaseClassGenerator {
       s"""
          |Classes in a class hierarchy must be defined in the same namespace/package. The classes
          |${hierarchyReps.map(_.name).mkString("\n")}
-         |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
-         |${packages.keys.mkString("\n")}
+          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+                                                              |${packages.keys.mkString("\n")}
        """.stripMargin)
 
     val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
