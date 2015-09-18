@@ -167,7 +167,7 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = requestBuilder
-         )
+         ).call()
      """
 
   }

@@ -163,7 +163,7 @@ object ResourceClassGenerator {
 
            $classDefinition
 
-             def withHeaders(newHeaders: (String, String)*) =
+             def addHeaders(newHeaders: (String, String)*) =
                new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
 
            ${dslFields.mkString("\n\n")}
