@@ -38,7 +38,7 @@ public class RequestBuilder {
     private Map<String, HttpParam> queryParameters = new HashMap<String, HttpParam>();
     private Map<String, HttpParam> formParameters = new HashMap<String, HttpParam>();
     private List<BodyPart> multipartParams = new ArrayList<BodyPart>();
-    private Map<String, String> headers = new HashMap<String, String>();
+    private HeaderMap headers = new HeaderMap();
 
     // Java makes it hard for us to get the initialization of the requestbuilders right.
     // We need to do some 'reverse initialization' in order to work with fields instead of methods to point
@@ -53,20 +53,20 @@ public class RequestBuilder {
     }
 
     private RequestBuilder(Client client,
-                           Map<String, HttpParam> formParameters,
-                           Map<String, String> headers,
+                           List<String> path,
                            Method method,
-                           List<BodyPart> multipartParams,
                            Map<String, HttpParam> queryParameters,
-                           List<String> path) {
+                           Map<String, HttpParam> formParameters,
+                           List<BodyPart> multipartParams,
+                           HeaderMap headers) {
 
         this.client = client;
-        this.formParameters = formParameters;
-        this.headers = headers;
-        this.method = method;
-        this.multipartParams = multipartParams;
-        this.queryParameters = queryParameters;
         this.path = path;
+        this.method = method;
+        this.queryParameters = queryParameters;
+        this.formParameters = formParameters;
+        this.multipartParams = multipartParams;
+        this.headers = headers;
     }
 
     public Client getClient() {
@@ -77,8 +77,12 @@ public class RequestBuilder {
         return formParameters;
     }
 
-    public Map<String, String> getHeaders() {
+    public HeaderMap getHeaders() {
         return headers;
+    }
+
+    public void addHeader(String key, String value) {
+        this.headers.addHeader(key, value);
     }
 
     public Method getMethod() {
@@ -91,6 +95,42 @@ public class RequestBuilder {
 
     public Map<String, HttpParam> getQueryParameters() {
         return queryParameters;
+    }
+
+    public List<String> getPath() {
+        return path;
+    }
+
+    public void setChildRequestBuilders(List<RequestBuilder> childRequestBuilders) {
+        this.childRequestBuilders = childRequestBuilders;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public void setFormParameters(Map<String, HttpParam> formParameters) {
+        this.formParameters = formParameters;
+    }
+
+    public void setHeaders(HeaderMap headers) {
+        this.headers = headers;
+    }
+
+    public void setMethod(Method method) {
+        this.method = method;
+    }
+
+    public void setMultipartParams(List<BodyPart> multipartParams) {
+        this.multipartParams = multipartParams;
+    }
+
+    public void setPath(List<String> path) {
+        this.path = path;
+    }
+
+    public void setQueryParameters(Map<String, HttpParam> queryParameters) {
+        this.queryParameters = queryParameters;
     }
 
     public String getRelativePath() {
@@ -107,26 +147,32 @@ public class RequestBuilder {
 
     public RequestBuilder cloneAddHeader(String key, String value) {
         RequestBuilder clone = this.shallowClone();
-        Map<String, String> clonedHeaders = cloneMap(clone.headers);
-        clonedHeaders.put(key, value);
-        clone.headers = clonedHeaders;
+        clone.headers = this.headers.cloned();
+        clone.addHeader(key, value);
         return clone;
     }
 
-    public <B, R> Future<Response<R>> callToTypeResponse(B body) {
-        return client.callToTypeResponse(this, body);
+    public <B> Future<Response<String>> callToStringResponse(B body) {
+        return client.callToStringResponse(this, body);
+    }
+
+    public <B, R> Future<Response<R>> callToTypeResponse(B body, String canonicalResponseType) {
+        return client.callToTypeResponse(this, body, canonicalResponseType);
     }
 
     public RequestBuilder shallowClone() {
-        return new RequestBuilder(
-                this.client,
-                this.formParameters,
-                this.headers,
-                this.method,
-                this.multipartParams,
-                this.queryParameters,
-                this.path
-        );
+        RequestBuilder rb =
+                new RequestBuilder(
+                        this.client,
+                        this.path,
+                        this.method,
+                        this.queryParameters,
+                        this.formParameters,
+                        this.multipartParams,
+                        this.headers
+                );
+        rb.childRequestBuilders = new ArrayList<RequestBuilder>(this.childRequestBuilders);
+        return rb;
     }
 
     /**
@@ -142,20 +188,6 @@ public class RequestBuilder {
         this.multipartParams = requestBuilder.multipartParams;
         this.queryParameters = requestBuilder.queryParameters;
         this.path = requestBuilder.path;
-    }
-
-    private <T> List<T> cloneList(List<T> list) {
-        List<T> clonedList = new ArrayList<T>(list.size());
-        for (T element : list) {
-            clonedList.add(element);
-        }
-        return clonedList;
-    }
-
-    private <T> Map<String, T> cloneMap(Map<String, T> map) {
-        Map<String, T> cloneMap = new HashMap<String, T>();
-        cloneMap.putAll(map);
-        return cloneMap;
     }
 
     public void addChild(RequestBuilder requestBuilder) {

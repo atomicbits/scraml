@@ -19,22 +19,73 @@
 
 package io.atomicbits.scraml.dsl.java;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
  * Created by peter on 19/08/15.
  */
-public abstract class MethodSegment<B, R> {
+public abstract class MethodSegment<B, R> extends Segment {
 
-    B body;
-    RequestBuilder requestBuilder;
+    private B body;
+    private RequestBuilder requestBuilder;
 
-    public MethodSegment(B body) {
-        this.body = body;
+    protected MethodSegment(Method method,
+                            B theBody,
+                            Map<String, HttpParam> queryParams,
+                            Map<String, HttpParam> formParams,
+                            List<BodyPart> multipartParams,
+                            String expectedAcceptHeader,
+                            String expectedContentTypeHeader,
+                            RequestBuilder req) {
+
+        this.body = theBody;
+
+        RequestBuilder requestBuilder = req.shallowClone();
+        requestBuilder.setMethod(method);
+        requestBuilder.setQueryParameters(removeNullParams(queryParams));
+        requestBuilder.setFormParameters(removeNullParams(formParams));
+        requestBuilder.setMultipartParams(multipartParams);
+
+        if (expectedAcceptHeader != null && !requestBuilder.getHeaders().hasKey("Accept")) {
+            requestBuilder.addHeader("Accept", expectedAcceptHeader);
+        }
+
+        if (expectedContentTypeHeader != null && !requestBuilder.getHeaders().hasKey("Content-Type")) {
+            requestBuilder.addHeader("Content-Type", expectedContentTypeHeader);
+        }
+
+        this.requestBuilder = requestBuilder;
     }
 
-    public Future<Response<R>> callToTypeResponse() {
-        return requestBuilder.callToTypeResponse(body);
+
+    protected Future<Response<String>> callToStringResponse() {
+        return requestBuilder.callToStringResponse(getBody());
+    }
+
+    protected Future<Response<R>> callToTypeResponse(String canonicalResponseType) {
+        return requestBuilder.callToTypeResponse(getBody(), canonicalResponseType);
+    }
+
+    protected B getBody() {
+        return body;
+    }
+
+    protected RequestBuilder getRequestBuilder() {
+        return requestBuilder;
+    }
+
+    private Map<String, HttpParam> removeNullParams(Map<String, HttpParam> map) {
+        Map<String, HttpParam> cleanedMap = new HashMap<String, HttpParam>();
+        for (String key : map.keySet()) {
+            HttpParam value = map.get(key);
+            if (value != null) {
+                cleanedMap.put(key, value);
+            }
+        }
+        return cleanedMap;
     }
 
 }

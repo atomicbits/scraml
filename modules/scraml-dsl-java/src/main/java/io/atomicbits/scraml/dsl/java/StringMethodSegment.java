@@ -19,22 +19,30 @@
 
 package io.atomicbits.scraml.dsl.java;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
  * Created by peter on 19/08/15.
  */
-public interface Client {
+public class StringMethodSegment<B> extends MethodSegment<B, String> {
 
-    Map<String, String> defaultHeaders();
+    public StringMethodSegment(Method method,
+                               B theBody,
+                               Map<String, HttpParam> queryParams,
+                               Map<String, HttpParam> formParams,
+                               List<BodyPart> multipartParams,
+                               String expectedAcceptHeader,
+                               String expectedContentTypeHeader,
+                               RequestBuilder req) {
+        super(method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req);
+    }
 
-    <B> Future<Response<String>>  callToStringResponse(RequestBuilder request, B body);
 
-    // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
+    public Future<Response<String>> call() {
+        return getRequestBuilder().callToStringResponse(getBody());
+    }
 
-    <B, R> Future<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalResponseType);
-
-    void close();
 
 }

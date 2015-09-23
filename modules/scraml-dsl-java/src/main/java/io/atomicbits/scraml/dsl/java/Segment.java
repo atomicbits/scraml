@@ -22,8 +22,8 @@ package io.atomicbits.scraml.dsl.java;
 /**
  * Created by peter on 19/08/15.
  */
-public interface Segment {
+public abstract class Segment {
 
-    // RequestBuilder requestBuilder();
+     protected abstract RequestBuilder getRequestBuilder();
 
 }

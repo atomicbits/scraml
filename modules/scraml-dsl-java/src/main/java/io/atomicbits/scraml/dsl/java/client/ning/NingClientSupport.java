@@ -19,12 +19,13 @@
 
 package io.atomicbits.scraml.dsl.java.client.ning;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Request;
-import com.ning.http.client.multipart.*;
 import io.atomicbits.scraml.dsl.java.*;
 import io.atomicbits.scraml.dsl.java.ByteArrayPart;
 import io.atomicbits.scraml.dsl.java.FilePart;
@@ -34,9 +35,11 @@ import io.atomicbits.scraml.dsl.java.client.ClientConfig;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 /**
  * Created by peter on 20/09/15.
@@ -52,6 +55,13 @@ public class NingClientSupport implements Client {
     private Map<String, String> defaultHeaders;
 
     private AsyncHttpClient ningClient;
+
+    /**
+     * Reuse of ObjectMapper and JsonFactory is very easy: they are thread-safe provided that configuration is done before any use
+     * (and from a single thread). After initial configuration use is fully thread-safe and does not need to be explicitly synchronized.
+     * Source: http://wiki.fasterxml.com/JacksonBestPracticesPerformance
+     */
+    private ObjectMapper objectMapper = new ObjectMapper();
 
 
     public NingClientSupport(String host,
@@ -135,8 +145,22 @@ public class NingClientSupport implements Client {
         return builder;
     }
 
+
     @Override
     public <B> Future<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body) {
+        return callToTransformedResponse(requestBuilder, body, (result) -> result);
+    }
+
+
+    @Override
+    public <B, R> Future<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalResponseType) {
+        return callToTransformedResponse(requestBuilder, body, (result) -> parseBodyToObject(canonicalResponseType, result));
+    }
+
+
+    protected <B, R> Future<Response<R>> callToTransformedResponse(RequestBuilder requestBuilder,
+                                                                   B body,
+                                                                   Function<String, R> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -147,7 +171,7 @@ public class NingClientSupport implements Client {
         Map<String, String> requestHeaders = new HashMap<String, String>(defaultHeaders);
         requestHeaders.putAll(requestBuilder.getHeaders());
         for (Map.Entry<String, String> header : requestHeaders.entrySet()) {
-             ningRb.addHeader(header.getKey(), header.getValue());
+            ningRb.addHeader(header.getKey(), header.getValue());
         }
 
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
@@ -163,10 +187,9 @@ public class NingClientSupport implements Client {
         }
 
         if (body != null) {
-            ObjectMapper mapper = new ObjectMapper();
             StringWriter writer = new StringWriter();
             try {
-                mapper.writeValue(writer, body);
+                objectMapper.writeValue(writer, body);
             } catch (IOException e) {
                 throw new RuntimeException("JSON serialization of a " + body.getClass().getSimpleName() + " instance failed: " + body, e);
             }
@@ -222,7 +245,7 @@ public class NingClientSupport implements Client {
                 );
             }
 
-            if(bodyPart.isByteArray()) {
+            if (bodyPart.isByteArray()) {
                 ByteArrayPart part = (ByteArrayPart) bodyPart;
                 ningRb.addBodyPart(
                         new com.ning.http.client.multipart.ByteArrayPart(
@@ -240,18 +263,20 @@ public class NingClientSupport implements Client {
         }
 
         Request ningRequest = ningRb.build();
-        // CompletableFuture is present in the JDS since 1.8
-        final CompletableFuture<Response<String>> future = new CompletableFuture<Response<String>>();
+        // CompletableFuture is present in the JDK since 1.8
+        final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
 
         getClient().executeRequest(ningRequest, new AsyncCompletionHandler<String>() {
 
             @Override
             public String onCompleted(com.ning.http.client.Response response) throws Exception {
                 try {
-                    Response<String> resp =
-                            new Response<String>(
-                                    response.getResponseBody(config.getResponseCharset().displayName()),
-                                    response.getResponseBody(config.getResponseCharset().displayName()),
+                    String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+
+                    Response<R> resp =
+                            new Response<R>(
+                                    responseBody,
+                                    transformer.apply(responseBody),
                                     response.getStatusCode(),
                                     response.getHeaders()
                             );
@@ -275,14 +300,21 @@ public class NingClientSupport implements Client {
 
 
     @Override
-    public <B, R> Future<Response<R>> callToTypeResponse(RequestBuilder request, B body) {
-        return null;
-    }
-
-    @Override
     public void close() {
         if (ningClient != null) {
             ningClient.close();
+        }
+    }
+
+
+    //    private <R> R parseBodyToObject(Class<R> clazz, String body) {
+    private <R> R parseBodyToObject(String canonicalResponseType, String body) {
+        //        JavaType javaType = TypeFactory.defaultInstance().constructType(clazz);
+        JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);
+        try {
+            return this.objectMapper.readValue(body, javaType);
+        } catch (IOException e) {
+            throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
         }
     }
 

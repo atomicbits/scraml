@@ -22,7 +22,7 @@ package io.atomicbits.scraml.dsl.java;
 /**
  * Created by peter on 19/08/15.
  */
-public class PlainSegment implements Segment {
+public class PlainSegment extends Segment {
 
     protected String pathElement;
     // We have to initialize it empty and fill it in later to get the resource segments initialized as fields and not methods.
@@ -36,7 +36,8 @@ public class PlainSegment implements Segment {
         parentRequestBuilder.addChild(this.requestBuilder);
     }
 
-    protected RequestBuilder requestBuilder() {
+    @Override
+    protected RequestBuilder getRequestBuilder() {
         return this.requestBuilder;
     }
 

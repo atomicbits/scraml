@@ -44,7 +44,7 @@ public class PathparamResource extends ParamSegment<String> {
         return pathparamResource;
     }
 
-    public GetSegment<String, String> get(double queryparX, int queryparY, Integer queryParZ) {
+    public StringMethodSegment<String, String> get(double queryparX, int queryparY, Integer queryParZ) {
         Map<String, HttpParam> queryParams = new HashMap<String, HttpParam>();
         queryParams.put("queryParX", new SingleHttpParam(queryparX));
         queryParams.put("queryparY", new SingleHttpParam(queryparY));
@@ -53,7 +53,7 @@ public class PathparamResource extends ParamSegment<String> {
         List<String> validAcceptHeaders = new ArrayList<String>();
         validAcceptHeaders.add("application/json");
 
-        return new GetSegment<String, String>(queryParams, validAcceptHeaders, this.requestBuilder);
+        return new StringMethodSegment<String, String>(queryParams, validAcceptHeaders, this.requestBuilder);
     }
 
     private PathparamResource shallowClone() {
