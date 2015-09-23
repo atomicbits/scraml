@@ -22,32 +22,37 @@ import sbt._
 trait Dependencies { this:Build =>
 
   // main dependencies
-//  val scalaLogging    =   "com.typesafe.scala-logging"  %%    "scala-logging"       % "3.1.0"
-  val logback         =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
+  val logback             =   "ch.qos.logback"              %     "logback-classic"     % "1.1.1"
 
-  val rxHttpClient    =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
-  val playJson        =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
+  // java dsl dependencies
+  val jacksonAnnotations  =   "com.fasterxml.jackson.core"  %     "jackson-annotations" % "2.5.4"
+  val jacksonCore         =   "com.fasterxml.jackson.core"  %     "jackson-core"        % "2.5.4"
+  val jacksonDatabind     =   "com.fasterxml.jackson.core"  %     "jackson-databind"    % "2.5.4"
+  val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
 
-  val ramlJavaParser  =   "org.raml"                    %     "raml-parser"         % "0.8.11"
+  val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
+  val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
 
-  val scalariform     =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
+  val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
+
+  val scalariform         =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
 
   // test dependencies
-  val scalaTest       =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
-  val wiremock        =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
+  val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
+  val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
 
 
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    rxHttpClient,
+    rxHttpClientScala,
     playJson,
     wiremock,
     scalariform
   )
 
   val scramlGeneratorTestDefDeps = Seq (
-    rxHttpClient,
+    rxHttpClientScala,
     playJson,
     wiremock
   )
@@ -61,9 +66,16 @@ trait Dependencies { this:Build =>
     playJson
   )
 
-  val scramlDslDeps = Seq(
+  val scramlDslDepsScala = Seq(
     playJson,
-    rxHttpClient
+    rxHttpClientScala
+  )
+
+  val scramlDslDepsJava = Seq(
+    jacksonCore,
+    jacksonAnnotations,
+    jacksonDatabind,
+    rxHttpClientJava
   )
 
   val mainDeps = Seq(

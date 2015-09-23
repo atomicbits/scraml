@@ -24,6 +24,10 @@ package io.atomicbits.scraml.dsl.java;
  */
 public interface BodyPart {
 
+    Boolean isString();
 
+    Boolean isFile();
+
+    Boolean isByteArray();
 
 }

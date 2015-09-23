@@ -53,17 +53,32 @@ case class RxHttpClientSupport(protocol: String,
     applyConfiguration(builder).build.asScala
   }
 
+
   private def applyConfiguration(builder: RxHttpClient.Builder): RxHttpClient.Builder = {
-    // todo: add more timeouts & other configuration parameters from the ClientConfig
     builder.setReadTimeout(config.requestTimeout)
     builder.setMaxConnections(config.maxConnections)
+    builder.setRequestTimeout(config.requestTimeout)
+    builder.setMaxRequestRetry(config.maxRequestRetry)
+    builder.setConnectTimeout(config.connectTimeout)
+    builder.setConnectionTTL(config.connectionTTL)
+    builder.setWebSocketTimeout(config.webSocketTimeout)
+    builder.setMaxConnectionsPerHost(config.maxConnectionsPerHost)
+    builder.setAllowPoolingConnections(config.allowPoolingConnections)
+    builder.setAllowPoolingSslConnections(config.allowPoolingSslConnections)
+    builder.setPooledConnectionIdleTimeout(config.pooledConnectionIdleTimeout)
+    builder.setAcceptAnyCertificate(config.acceptAnyCertificate)
+    builder.setFollowRedirect(config.followRedirect)
+    builder.setMaxRedirects(config.maxRedirects)
+    builder.setRemoveQueryParamsOnRedirect(config.removeQueryParamOnRedirect)
+    builder.setStrict302Handling(config.strict302Handling)
   }
+
 
   def callTo200Response[B](requestBuilder: RequestBuilder, body: Option[B])
                           (implicit bodyFormat: Format[B]): Future[Response[String]] = {
     val clientWithResourcePathAndMethod = {
       client
-        .requestBuilder()
+        .requestBuilder() // returns a new instance of a request builder
         .setUrlRelativetoBase(requestBuilder.relativePath)
         .setMethod(requestBuilder.method.toString)
     }
@@ -82,7 +97,7 @@ case class RxHttpClientSupport(protocol: String,
       }
     }
 
-    // ToDo: support for form parameters, different body types (Array[Byte]), streaming,
+    // ToDo: support for different body types (Array[Byte]), streaming,
 
     body.foreach { body =>
       clientWithResourcePathAndMethod.setBody(bodyFormat.writes(body).toString())

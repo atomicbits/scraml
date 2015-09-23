@@ -34,4 +34,9 @@ public class SingleHttpParam implements HttpParam {
         return parameter;
     }
 
+    @Override
+    public Boolean isSingle() {
+        return true;
+    }
+
 }

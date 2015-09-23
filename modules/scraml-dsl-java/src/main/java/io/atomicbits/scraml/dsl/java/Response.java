@@ -33,7 +33,7 @@ public class Response<T> {
     private T body;
     private Map<String, List<String>> headers;
 
-    public Response(T body, Map<String, List<String>> headers, int status, String stringBody) {
+    public Response(String stringBody, T body, int status, Map<String, List<String>> headers) {
         this.body = body;
         this.headers = headers;
         this.status = status;

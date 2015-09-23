@@ -19,13 +19,15 @@
 
 package io.atomicbits.scraml.dsl.java;
 
+import sun.security.jgss.HttpCaller;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by peter on 19/08/15.
  */
-public class RepeatedHttpParam {
+public class RepeatedHttpParam implements HttpParam {
 
     private List<String> parameters;
 
@@ -40,4 +42,10 @@ public class RepeatedHttpParam {
     public List<String> getParameters() {
         return parameters;
     }
+
+    @Override
+    public Boolean isSingle() {
+        return false;
+    }
+
 }

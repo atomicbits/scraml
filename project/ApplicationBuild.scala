@@ -39,13 +39,13 @@ with Dependencies {
   val scramlDslScala = Project(
     id = "scraml-dsl-scala",
     base = file("modules/scraml-dsl-scala"),
-    settings = buildSettings(dependencies = scramlDslDeps ++ testDeps)
+    settings = buildSettings(dependencies = scramlDslDepsScala ++ testDeps)
   )
 
   val scramlDslJava = Project(
     id = "scraml-dsl-java",
     base = file("modules/scraml-dsl-java"),
-    settings = buildSettings(dependencies = testDeps)
+    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps)
   )
 
   val scramlGenerator = Project(

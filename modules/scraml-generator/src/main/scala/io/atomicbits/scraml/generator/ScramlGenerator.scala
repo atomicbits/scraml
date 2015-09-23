@@ -87,6 +87,7 @@ object ScramlGenerator {
     val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
     val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
 
+
     // Here's the actual code generation
     val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
     println(s"Case classes generated")

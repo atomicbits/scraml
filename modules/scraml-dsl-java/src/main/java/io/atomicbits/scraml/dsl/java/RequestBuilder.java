@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.dsl.java;
 
+import io.atomicbits.scraml.dsl.java.util.ListUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,15 +32,13 @@ import java.util.concurrent.Future;
  */
 public class RequestBuilder {
 
-    Client client;
-    List<String> path = new ArrayList<String>();
-    Method method = Method.GET;
-    Map<String, HttpParam> queryParameters = new HashMap<String, HttpParam>();
-    Map<String, HttpParam> formParameters = new HashMap<String, HttpParam>();
-    List<BodyPart> multipartParams = new ArrayList<BodyPart>();
-    List<String> validAcceptHeaders = new ArrayList<String>();
-    List<String> validContentTypeHeaders = new ArrayList<String>();
-    Map<String, String> headers = new HashMap<String, String>();
+    private Client client;
+    private List<String> path = new ArrayList<String>();
+    private Method method = Method.GET;
+    private Map<String, HttpParam> queryParameters = new HashMap<String, HttpParam>();
+    private Map<String, HttpParam> formParameters = new HashMap<String, HttpParam>();
+    private List<BodyPart> multipartParams = new ArrayList<BodyPart>();
+    private Map<String, String> headers = new HashMap<String, String>();
 
     // Java makes it hard for us to get the initialization of the requestbuilders right.
     // We need to do some 'reverse initialization' in order to work with fields instead of methods to point
@@ -58,9 +58,8 @@ public class RequestBuilder {
                            Method method,
                            List<BodyPart> multipartParams,
                            Map<String, HttpParam> queryParameters,
-                           List<String> path,
-                           List<String> validAcceptHeaders,
-                           List<String> validContentTypeHeaders) {
+                           List<String> path) {
+
         this.client = client;
         this.formParameters = formParameters;
         this.headers = headers;
@@ -68,12 +67,34 @@ public class RequestBuilder {
         this.multipartParams = multipartParams;
         this.queryParameters = queryParameters;
         this.path = path;
-        this.validAcceptHeaders = validAcceptHeaders;
-        this.validContentTypeHeaders = validContentTypeHeaders;
     }
 
     public Client getClient() {
         return client;
+    }
+
+    public Map<String, HttpParam> getFormParameters() {
+        return formParameters;
+    }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public List<BodyPart> getMultipartParams() {
+        return multipartParams;
+    }
+
+    public Map<String, HttpParam> getQueryParameters() {
+        return queryParameters;
+    }
+
+    public String getRelativePath() {
+        return ListUtils.mkString(path, "/");
     }
 
     public void appendPathElement(String pathElement) {
@@ -104,9 +125,7 @@ public class RequestBuilder {
                 this.method,
                 this.multipartParams,
                 this.queryParameters,
-                this.path,
-                this.validAcceptHeaders,
-                this.validContentTypeHeaders
+                this.path
         );
     }
 
@@ -123,8 +142,6 @@ public class RequestBuilder {
         this.multipartParams = requestBuilder.multipartParams;
         this.queryParameters = requestBuilder.queryParameters;
         this.path = requestBuilder.path;
-        this.validAcceptHeaders = requestBuilder.validAcceptHeaders;
-        this.validContentTypeHeaders = requestBuilder.validContentTypeHeaders;
     }
 
     private <T> List<T> cloneList(List<T> list) {

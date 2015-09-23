@@ -20,7 +20,8 @@
 package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
-import io.atomicbits.scraml.dsl.java.rxhttpclient.RxHttpClientSupport;
+import io.atomicbits.scraml.dsl.java.client.ClientConfig;
+import io.atomicbits.scraml.dsl.java.client.rxhttpclient.RxHttpClientSupport;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class JXoClient {
         // Have a look at how the field 'rest' is initialized. That's why we have to reuse the existing (empty) RequestBuilder.
         this.requestBuilder.initialize(
                 new RequestBuilder(
-                        new RxHttpClientSupport(protocol, host, port, null, requestTimeout, maxConnections, new HashMap<String, String>())
+                        new RxHttpClientSupport(host, port, protocol, null, new ClientConfig(), new HashMap<String, String>())
                 )
         );
         this.requestBuilder.initializeChildren();
