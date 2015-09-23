@@ -39,7 +39,7 @@ trait Dependencies { this:Build =>
 
   // test dependencies
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
-  val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.56"     % "test"
+  val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.57"     % "test"
 
 
 

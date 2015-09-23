@@ -61,15 +61,24 @@ public class HeaderMap {
     }
 
 
+    public void addHeaders(HeaderMap headerMap) {
+        for (Map.Entry<String, List<String>> header : headerMap.getHeaders().entrySet()) {
+            for (String value : header.getValue()) {
+                addHeader(header.getKey(), value);
+            }
+        }
+    }
+
+
     public Map<String, List<String>> getHeaders() {
 
-        Map<String, List<String>> headers = new HashMap<>();
+        Map<String, List<String>> headerList = new HashMap<>();
 
         for (Map.Entry<String, List<String>> header : headers.entrySet()) {
-            headers.put(originalKeys.get(header.getKey()), header.getValue());
+            headerList.put(originalKeys.get(header.getKey()), header.getValue());
         }
 
-        return headers;
+        return headerList;
     }
 
 

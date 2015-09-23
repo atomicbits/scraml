@@ -168,10 +168,13 @@ public class NingClientSupport implements Client {
         ningRb.setMethod(requestBuilder.getMethod().name());
 
 
-        Map<String, String> requestHeaders = new HashMap<String, String>(defaultHeaders);
-        requestHeaders.putAll(requestBuilder.getHeaders());
-        for (Map.Entry<String, String> header : requestHeaders.entrySet()) {
-            ningRb.addHeader(header.getKey(), header.getValue());
+        HeaderMap requestHeaders = new HeaderMap();
+        requestHeaders.addHeaders(defaultHeaders);
+        requestHeaders.addHeaders(requestBuilder.getHeaders());
+        for (Map.Entry<String, List<String>> header : requestHeaders.getHeaders().entrySet()) {
+            for (String value : header.getValue()) {
+                ningRb.addHeader(header.getKey(), value);
+            }
         }
 
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
@@ -263,6 +266,7 @@ public class NingClientSupport implements Client {
         }
 
         Request ningRequest = ningRb.build();
+        printRequest(ningRequest);
         // CompletableFuture is present in the JDK since 1.8
         final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
 
@@ -316,6 +320,13 @@ public class NingClientSupport implements Client {
         } catch (IOException e) {
             throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
         }
+    }
+
+
+    private String printRequest(Request ningRequest) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ningRequest.getMethod()).append(" ").append(ningRequest.getUri());
+        return sb.toString();
     }
 
 }

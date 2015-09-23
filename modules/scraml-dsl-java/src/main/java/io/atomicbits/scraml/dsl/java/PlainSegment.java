@@ -28,6 +28,8 @@ public class PlainSegment extends Segment {
     // We have to initialize it empty and fill it in later to get the resource segments initialized as fields and not methods.
     protected RequestBuilder requestBuilder = new RequestBuilder();
 
+    public PlainSegment(){}
+
     public PlainSegment(String pathElement, RequestBuilder parentRequestBuilder) {
         this.pathElement = pathElement;
         // The parent will be initialized later, so we have to wait to initialize our request builder until the parent

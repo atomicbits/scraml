@@ -31,29 +31,39 @@ import java.util.Map;
  */
 public class PathparamResource extends ParamSegment<String> {
 
-    public PathparamResource() {
+    public PathparamResource(){
     }
 
     public PathparamResource(String value, RequestBuilder requestBuilder) {
         super(value, requestBuilder);
     }
 
-    public PathparamResource withHeader(String key, String value) {
+    public PathparamResource addHeader(String key, String value) {
         PathparamResource pathparamResource = this.shallowClone();
         pathparamResource.requestBuilder = pathparamResource.requestBuilder.cloneAddHeader(key, value);
         return pathparamResource;
     }
 
-    public StringMethodSegment<String, String> get(double queryparX, int queryparY, Integer queryParZ) {
+    public TypeMethodSegment<String, Persoon> get(double queryparX, int queryparY, Integer queryparZ) {
         Map<String, HttpParam> queryParams = new HashMap<String, HttpParam>();
-        queryParams.put("queryParX", new SingleHttpParam(queryparX));
+        queryParams.put("queryparX", new SingleHttpParam(queryparX));
         queryParams.put("queryparY", new SingleHttpParam(queryparY));
-        queryParams.put("queryParZ", new SingleHttpParam(queryParZ));
+        queryParams.put("queryparZ", new SingleHttpParam(queryparZ));
 
-        List<String> validAcceptHeaders = new ArrayList<String>();
-        validAcceptHeaders.add("application/json");
+        String expectedAcceptHeader = "application/json";
+        String expectedContentTypeHeader = null;
 
-        return new StringMethodSegment<String, String>(queryParams, validAcceptHeaders, this.requestBuilder);
+        return new TypeMethodSegment<String, Persoon>(
+                Method.GET,
+                null,
+                queryParams,
+                null,
+                null,
+                expectedAcceptHeader,
+                expectedContentTypeHeader,
+                this.getRequestBuilder(),
+                "io.atomicbits.scraml.client.java.Persoon"
+        );
     }
 
     private PathparamResource shallowClone() {

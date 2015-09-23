@@ -31,6 +31,6 @@ public class RestResource extends PlainSegment {
         super("rest", parentRequestBuilder);
     }
 
-    public SomeResource some = new SomeResource(this.requestBuilder());
+    public SomeResource some = new SomeResource(this.getRequestBuilder());
 
 }

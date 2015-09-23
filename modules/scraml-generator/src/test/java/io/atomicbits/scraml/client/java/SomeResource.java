@@ -31,6 +31,6 @@ public class SomeResource extends PlainSegment {
         super("some", requestBuilder);
     }
 
-    public WebserviceResource webservice = new WebserviceResource(this.requestBuilder());
+    public WebserviceResource webservice = new WebserviceResource(this.getRequestBuilder());
 
 }

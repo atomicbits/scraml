@@ -60,13 +60,13 @@ public class RequestBuilder {
                            List<BodyPart> multipartParams,
                            HeaderMap headers) {
 
-        this.client = client;
-        this.path = path;
-        this.method = method;
-        this.queryParameters = queryParameters;
-        this.formParameters = formParameters;
-        this.multipartParams = multipartParams;
-        this.headers = headers;
+        setClient(client);
+        setPath(path);
+        setMethod(method);
+        setQueryParameters(queryParameters);
+        setFormParameters(formParameters);
+        setMultipartParams(multipartParams);
+        setHeaders(headers);
     }
 
     public Client getClient() {
@@ -110,11 +110,19 @@ public class RequestBuilder {
     }
 
     public void setFormParameters(Map<String, HttpParam> formParameters) {
-        this.formParameters = formParameters;
+        if (formParameters == null) {
+            this.formParameters = new HashMap<>();
+        } else {
+            this.formParameters = formParameters;
+        }
     }
 
     public void setHeaders(HeaderMap headers) {
-        this.headers = headers;
+        if (headers == null) {
+            this.headers = new HeaderMap();
+        } else {
+            this.headers = headers;
+        }
     }
 
     public void setMethod(Method method) {
@@ -122,15 +130,27 @@ public class RequestBuilder {
     }
 
     public void setMultipartParams(List<BodyPart> multipartParams) {
-        this.multipartParams = multipartParams;
+        if (multipartParams == null) {
+            this.multipartParams = new ArrayList<>();
+        } else {
+            this.multipartParams = multipartParams;
+        }
     }
 
     public void setPath(List<String> path) {
-        this.path = path;
+        if (path == null) {
+            this.path = new ArrayList<>();
+        } else {
+            this.path = path;
+        }
     }
 
     public void setQueryParameters(Map<String, HttpParam> queryParameters) {
-        this.queryParameters = queryParameters;
+        if (queryParameters == null) {
+            this.queryParameters = new HashMap<>();
+        } else {
+            this.queryParameters = queryParameters;
+        }
     }
 
     public String getRelativePath() {

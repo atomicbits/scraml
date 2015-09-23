@@ -28,6 +28,8 @@ public class ParamSegment<T> extends Segment {
     // We have to initialize it empty and fill it in later to get the resource segments initialized as fields and not methods.
     protected RequestBuilder requestBuilder = new RequestBuilder();
 
+    public ParamSegment(){}
+
     public ParamSegment(T value, RequestBuilder parentRequestBuilder) {
         this.value = value;
         // The preceding part of the path will be prepended later.

@@ -21,7 +21,7 @@ package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-import io.atomicbits.scraml.dsl.java.client.rxhttpclient.RxHttpClientSupport;
+import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,37 +34,34 @@ public class JXoClient {
     private String host;
     private int port;
     private String protocol;
-    private int requestTimeout;
-    private int maxConnections;
     private Map<String, String> defaultHeaders;
 
-    // It's important that the requestBuilder is package-accessible.
+    // It's important that the requestBuilder is package-accessible so that it's not visible in the DSL.
     RequestBuilder requestBuilder = new RequestBuilder();
 
     public JXoClient(String host,
                      int port,
                      String protocol,
-                     int requestTimeout,
-                     int maxConnections,
+                     ClientConfig clientConfig,
                      Map<String, String> defaultHeaders) {
         this.host = host;
         this.port = port;
         this.protocol = protocol;
-        this.requestTimeout = requestTimeout;
-        this.maxConnections = maxConnections;
         this.defaultHeaders = defaultHeaders;
 
         // Have a look at how the field 'rest' is initialized. That's why we have to reuse the existing (empty) RequestBuilder.
         this.requestBuilder.initialize(
-                new RequestBuilder(
-                        new RxHttpClientSupport(host, port, protocol, null, new ClientConfig(), new HashMap<String, String>())
-                )
+                new RequestBuilder(new NingClientSupport(host, port, protocol, null, clientConfig, new HashMap<>()))
         );
         this.requestBuilder.initializeChildren();
         System.out.println(this.requestBuilder.toString());
     }
 
+
+
     public RestResource rest = new RestResource(this.requestBuilder);
+
+
 
     public Map<String, String> getDefaultHeaders() {
         return defaultHeaders;
@@ -74,20 +71,12 @@ public class JXoClient {
         return host;
     }
 
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
     public int getPort() {
         return port;
     }
 
     public String getProtocol() {
         return protocol;
-    }
-
-    public int getRequestTimeout() {
-        return requestTimeout;
     }
 
     public void close() {

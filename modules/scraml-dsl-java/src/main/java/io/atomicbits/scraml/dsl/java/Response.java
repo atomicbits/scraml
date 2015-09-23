@@ -56,4 +56,8 @@ public class Response<T> {
         return stringBody;
     }
 
+    public String toString() {
+        return "Status: " + status + "\n" + "body:\n" + stringBody;
+    }
+
 }
