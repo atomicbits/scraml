@@ -67,7 +67,7 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
               .withStatus(200)))
 
       stubFor(
-        get(urlEqualTo(s"/rest/some/webservice/foo?queryparX=21.5&queryparZ=66&queryparY=55"))
+        get(urlEqualTo(s"/rest/some/webservice/bar?queryparX=21.5&queryparZ=66&queryparY=55"))
           .withHeader("Accept", equalTo("application/json"))
           .withHeader("Cookie", equalTo("bar"))
           .willReturn(
@@ -77,10 +77,13 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
 
       When("we execute some restful requests using the DSL")
 
-      val client: JXoClient = new JXoClient(host, port, "http", new ClientConfig(), new util.HashMap[String, String]())
-      val resource = client.rest.some.webservice.pathparam("foo")
+      val client: JXoClient = new JXoClient(host, port, "http", null, new ClientConfig(), new util.HashMap[String, String]())
+      val resource = client.rest.some.webservice
 
-      val result1: Future[Response[Persoon]] = resource.addHeader("Cookie", "mjam").get(30.0, 5, 6).call()
+      val request1 = resource.pathparam("foo").addHeader("Cookie", "mjam")
+      val request2 = resource.pathparam("bar").addHeader("Cookie", "bar")
+
+      val result1: Future[Response[Persoon]] = request1.get(30.0, 5, 6).call()
       val response1 = result1.get(10, TimeUnit.SECONDS)
 
       val persoon1 = new Persoon()
@@ -89,7 +92,7 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
       persoon1.setAge(21L)
       assertResult(persoon1)(response1.getBody)
 
-      val result2: Future[Response[Persoon]] = resource.addHeader("Cookie", "bar").get(21.5, 55, 66).call()
+      val result2: Future[Response[Persoon]] = request2.get(21.5, 55, 66).call()
       val response2 = result2.get(10, TimeUnit.SECONDS)
 
       val persoon2 = new Persoon()

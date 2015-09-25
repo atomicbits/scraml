@@ -49,8 +49,11 @@ object CleanNameUtil {
   }
 
 
-  def cleanMethodName(dirtyName: String): String = {
-    val chars = cleanClassName(dirtyName).toCharArray
+  def cleanMethodName(dirtyName: String): String = camelCased(cleanClassName(dirtyName))
+
+
+  def camelCased(dirtyName: String): String = {
+    val chars = dirtyName.toCharArray
     chars(0) = chars(0).toLower
     new String(chars)
   }

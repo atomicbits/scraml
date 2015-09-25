@@ -40,6 +40,7 @@ public class PathparamResource extends ParamSegment<String> {
 
     public PathparamResource addHeader(String key, String value) {
         PathparamResource pathparamResource = this.shallowClone();
+        // At this point, the request builder has been initialized, so we can clone it and go on.
         pathparamResource.requestBuilder = pathparamResource.requestBuilder.cloneAddHeader(key, value);
         return pathparamResource;
     }
@@ -50,17 +51,14 @@ public class PathparamResource extends ParamSegment<String> {
         queryParams.put("queryparY", new SingleHttpParam(queryparY));
         queryParams.put("queryparZ", new SingleHttpParam(queryparZ));
 
-        String expectedAcceptHeader = "application/json";
-        String expectedContentTypeHeader = null;
-
         return new TypeMethodSegment<String, Persoon>(
                 Method.GET,
                 null,
                 queryParams,
                 null,
                 null,
-                expectedAcceptHeader,
-                expectedContentTypeHeader,
+                "application/json",
+                null,
                 this.getRequestBuilder(),
                 "io.atomicbits.scraml.client.java.Persoon"
         );

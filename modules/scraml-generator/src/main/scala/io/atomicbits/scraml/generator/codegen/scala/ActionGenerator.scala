@@ -44,7 +44,7 @@ object ActionGenerator {
   /**
    * The reason why we treat all actions of a resource together is that certain paths towards the actual action
    * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
-   * content-type and/or accept header paths. Although such situations may be rare, we want to support them (in the future),
+   * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
    * so we pass all actions of a single resource together.
    *
    * @param resource The resource whose actions are going to be processed (NOT recursively!)

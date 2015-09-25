@@ -44,6 +44,7 @@ public class RequestBuilder {
     // We need to do some 'reverse initialization' in order to work with fields instead of methods to point
     // to our REST path segments.
     List<RequestBuilder> childRequestBuilders = new ArrayList<RequestBuilder>();
+    private boolean initialized;
 
     public RequestBuilder() {
     }
@@ -195,35 +196,23 @@ public class RequestBuilder {
         return rb;
     }
 
-    /**
-     * Initialize this with a given requestbuilder.
-     *
-     * @param requestBuilder The requestbuilder to initialize this with.
-     */
-    public void initialize(RequestBuilder requestBuilder) {
-        this.client = requestBuilder.client;
-        this.formParameters = requestBuilder.formParameters;
-        this.headers = requestBuilder.headers;
-        this.method = requestBuilder.method;
-        this.multipartParams = requestBuilder.multipartParams;
-        this.queryParameters = requestBuilder.queryParameters;
-        this.path = requestBuilder.path;
-    }
-
     public void addChild(RequestBuilder requestBuilder) {
         childRequestBuilders.add(requestBuilder);
     }
 
     public void initializeChildren() {
         for (RequestBuilder child : childRequestBuilders) {
-            initializeChild(this, child);
+            child.initializeFromParent(this);
         }
     }
 
-    private void initializeChild(RequestBuilder parent, RequestBuilder child) {
-        child.client = parent.client;
-        child.prependPathElements(parent.path);
-        child.initializeChildren();
+    protected void initializeFromParent(RequestBuilder parent) {
+        if (isNotInitialized()) {
+            client = parent.client;
+            prependPathElements(parent.path);
+            initializeChildren();
+            setInitialized();
+        }
     }
 
     @Override
@@ -243,6 +232,14 @@ public class RequestBuilder {
             txt += o.toString() + ", ";
         }
         return txt;
+    }
+
+    public boolean isNotInitialized() {
+        return !initialized;
+    }
+
+    private void setInitialized() {
+        this.initialized = true;
     }
 
 }

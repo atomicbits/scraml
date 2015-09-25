@@ -42,6 +42,7 @@ public class JXoClient {
     public JXoClient(String host,
                      int port,
                      String protocol,
+                     String prefix,
                      ClientConfig clientConfig,
                      Map<String, String> defaultHeaders) {
         this.host = host;
@@ -50,9 +51,7 @@ public class JXoClient {
         this.defaultHeaders = defaultHeaders;
 
         // Have a look at how the field 'rest' is initialized. That's why we have to reuse the existing (empty) RequestBuilder.
-        this.requestBuilder.initialize(
-                new RequestBuilder(new NingClientSupport(host, port, protocol, null, clientConfig, new HashMap<>()))
-        );
+        this.requestBuilder.setClient(new NingClientSupport(host, port, protocol, prefix, clientConfig, new HashMap<>()));
         this.requestBuilder.initializeChildren();
         System.out.println(this.requestBuilder.toString());
     }
