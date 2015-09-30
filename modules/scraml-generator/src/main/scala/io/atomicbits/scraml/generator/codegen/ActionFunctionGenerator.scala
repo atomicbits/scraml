@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 
@@ -25,6 +25,16 @@ import io.atomicbits.scraml.generator.model._
  * Created by peter on 28/08/15. 
  */
 object ActionFunctionGenerator extends ActionGeneratorSupport {
+
+
+  case class ActionFunctionResult(imports: Set[String] = Set.empty[String],
+                                  fields: List[String] = List.empty[String],
+                                  classes: List[ClassRep] = List.empty[ClassRep]) {
+
+    def ++(other: ActionFunctionResult): ActionFunctionResult =
+      ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
+
+  }
 
 
   def generate(action: RichAction): List[String] = {

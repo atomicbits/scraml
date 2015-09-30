@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.java
+package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.codegen.java.JavaActionGenerator.JavaActionFunctionResult
+import ActionFunctionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
@@ -39,8 +39,8 @@ object JavaResourceClassGenerator {
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val JavaActionFunctionResult(imports, actionFunctions, headerPathClassReps) =
-              JavaActionGenerator.generateActionFunctions(oneRoot)
+            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) =
+              ActionGenerator(JavaActionCode).generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
           case manyRoots                                    =>
             val imports = Set.empty[String]
@@ -125,6 +125,17 @@ object JavaResourceClassGenerator {
       val className = resource.classRep.name
       val classNameCamel = CleanNameUtil.camelCased(className)
 
+      val dslFields = resource.resources.map(generateResourceDslField)
+
+      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) =
+        ActionGenerator(JavaActionCode).generateActionFunctions(resource)
+
+      val imports = actionImports
+
+      val classDefinition = generateClassDefinition(resource)
+
+      val resourceConstructor = generateResourceConstructor(resource)
+
       val sourcecode =
         s"""
            package ${resource.classRep.packageName};
@@ -161,7 +172,38 @@ object JavaResourceClassGenerator {
            }
          """
 
+      val resourceClassRep = resource.classRep.withContent(sourcecode)
+
+      resourceClassRep :: resource.resources.flatMap(generateResourceClassesHelper) ::: headerPathClassReps
     }
+
+
+    def generateResourceConstructor(resource: RichResource): String =
+      resource.urlParameter match {
+        case Some(parameter) =>
+          val paramType = generateParameterType(parameter.parameterType)
+          s"""
+             public ${resource.classRep.name}($paramType value, RequestBuilder requestBuilder) {
+               super(value, requestBuilder);
+             }
+           """
+        case None            =>
+          s"""
+             public ${resource.classRep.name}(RequestBuilder requestBuilder) {
+               super("${resource.urlSegment}", requestBuilder);
+             }
+           """
+      }
+
+
+    def generateClassDefinition(resource: RichResource): String =
+      resource.urlParameter match {
+        case Some(parameter) =>
+          val paramType = generateParameterType(parameter.parameterType)
+          s"""public class ${resource.classRep.name} extends ParamSegment<$paramType> { """
+        case None            =>
+          s"""public class ${resource.classRep.name} extends PlainSegment {"""
+      }
 
 
     def generateParameterType(parameterType: ParameterType): String = {

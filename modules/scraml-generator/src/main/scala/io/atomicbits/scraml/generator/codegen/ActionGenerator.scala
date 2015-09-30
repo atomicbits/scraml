@@ -17,28 +17,17 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
+import io.atomicbits.scraml.generator.codegen.ActionFunctionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
-import scala.language.postfixOps
-
 /**
  * Created by peter on 23/08/15. 
  */
-object ActionGenerator {
-
-
-  case class ActionFunctionResult(imports: Set[String] = Set.empty,
-                                  fields: List[String] = List.empty,
-                                  classes: List[ClassRep] = List.empty) {
-
-    def ++(other: ActionFunctionResult): ActionFunctionResult =
-      ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
-
-  }
+case class ActionGenerator(actionCode: ActionCode) {
 
 
   /**
@@ -151,7 +140,7 @@ object ActionGenerator {
             ActionFunctionResult(
               actions.toSet.flatMap(generateActionImports),
               actions.flatMap(ActionFunctionGenerator.generate),
-              List.empty
+              List.empty[ClassRep]
             )
           )
         case ahMap@(ah :: ahs)   =>
@@ -160,7 +149,7 @@ object ActionGenerator {
               ActionFunctionResult(
                 actions.toSet.flatMap(generateActionImports),
                 actions.flatMap(ActionFunctionGenerator.generate),
-                List.empty
+                List.empty[ClassRep]
               )
             case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
           }

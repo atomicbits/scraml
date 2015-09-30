@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.parser.model._

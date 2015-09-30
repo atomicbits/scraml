@@ -17,25 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.java;
+package io.atomicbits.scraml.generator.codegen
 
 /**
- * Created by peter on 23/09/15.
+ * Created by peter on 30/09/15.
  */
-public class HeaderSegment extends Segment {
-
-    protected RequestBuilder requestBuilder = new RequestBuilder();
-
-    public HeaderSegment(){}
-
-    public HeaderSegment(RequestBuilder parentRequestBuilder) {
-        parentRequestBuilder.addChild(this.requestBuilder);
-        parentRequestBuilder.initializeChildren();
-    }
-
-    @Override
-    protected RequestBuilder getRequestBuilder() {
-        return this.requestBuilder;
-    }
+object ScalaActionCode extends ActionCode {
 
 }

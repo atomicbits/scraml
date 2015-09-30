@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.codegen.scala.ActionGenerator.ActionFunctionResult
+import io.atomicbits.scraml.generator.codegen.ActionFunctionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.parser.model._
 
@@ -43,7 +43,7 @@ object ResourceClassGenerator {
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator.generateActionFunctions(oneRoot)
+            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode).generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
           case manyRoots                                    =>
             val imports = Set.empty[String]
@@ -145,7 +145,7 @@ object ResourceClassGenerator {
       // val fieldImports = resource.resources.flatMap(generateResourceFieldImports(_, resource.classRep.packageParts)).toSet
       val dslFields = resource.resources.map(generateResourceDslField)
 
-      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator.generateActionFunctions(resource)
+      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode).generateActionFunctions(resource)
 
       val imports = actionImports
 
