@@ -44,4 +44,12 @@ trait ActionCode {
 
   def quoteString(text: String): String = s""""$text""""
 
+  def generateAction(action: RichAction,
+                     segmentType: String,
+                     actionParameters: List[String] = List.empty,
+                     bodyField: Boolean = false,
+                     queryParameterMapEntries: List[String] = List.empty,
+                     formParameterMapEntries: List[String] = List.empty,
+                     multipartParams: Option[String] = None): String
+
 }

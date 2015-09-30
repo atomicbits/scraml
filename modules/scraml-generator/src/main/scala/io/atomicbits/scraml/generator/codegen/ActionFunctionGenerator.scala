@@ -59,7 +59,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val formAction: String =
-      generateAction(
+      actionCode.generateAction(
         action = action,
         actionParameters = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
@@ -75,7 +75,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     val multipartResponseType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val multipartAction: String =
-      generateAction(
+      actionCode.generateAction(
         action = action,
         actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference("BodyPart"))),
         multipartParams = Some("parts"),
@@ -105,7 +105,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val queryAction: String =
-      generateAction(
+      actionCode.generateAction(
         action = action,
         actionParameters = queryParameterMethodParameters,
         queryParameterMapEntries = queryParameterMapEntries,
@@ -125,55 +125,13 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       val actionBodyParameters =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
-      generateAction(
+      actionCode.generateAction(
         action = action,
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
         bodyField = actionBodyParameters.nonEmpty
       )
     }
-
-  }
-
-
-  private def generateAction(action: RichAction,
-                             segmentType: String,
-                             actionParameters: List[String] = List.empty,
-                             bodyField: Boolean = false,
-                             queryParameterMapEntries: List[String] = List.empty,
-                             formParameterMapEntries: List[String] = List.empty,
-                             multipartParams: Option[String] = None): String = {
-
-    val actionType = action.actionType
-    val actionTypeMethod: String = actionType.toString.toLowerCase
-
-    val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
-    val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
-
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
-    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
-
-    val bodyFieldValue = if(bodyField) "Some(body)" else "None"
-
-    val multipartParamsValue = multipartParams.getOrElse("List.empty")
-
-    s"""
-       def $actionTypeMethod(${actionParameters.mkString(", ")}) =
-         new $segmentType(
-           method = $actionType,
-           theBody = $bodyFieldValue,
-           queryParams = Map(
-             ${queryParameterMapEntries.mkString(",")}
-           ),
-           formParams = Map(
-             ${formParameterMapEntries.mkString(",")}
-           ),
-           multipartParams = $multipartParamsValue,
-           expectedAcceptHeader = $acceptHeader,
-           expectedContentTypeHeader = $contentHeader,
-           req = requestBuilder
-         ).call()
-     """
 
   }
 

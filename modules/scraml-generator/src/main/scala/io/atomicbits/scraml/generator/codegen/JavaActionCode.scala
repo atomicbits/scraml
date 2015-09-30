@@ -28,13 +28,13 @@ import io.atomicbits.scraml.parser.model.Parameter
 object JavaActionCode extends ActionCode {
 
 
-  override def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
+  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
     s"""public ${headerSegment.classRef.fullyQualifiedName} $contentHeaderMethodName =
           new ${headerSegment.classRef.fullyQualifiedName}(this.getRequestBuilder());"""
   }
 
 
-  override def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String = {
+  def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String = {
     s"""
          package ${headerSegmentClassRef.packageName};
 
@@ -56,7 +56,7 @@ object JavaActionCode extends ActionCode {
   }
 
 
-  override def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
+  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
     parameters map { parameterDef =>
       val(field, classRef) = parameterDef
       s"${classRef.classDefinitionJava} $field"
@@ -64,12 +64,20 @@ object JavaActionCode extends ActionCode {
   }
 
 
-  override def bodyTypes(action: RichAction): List[Option[ClassPointer]] = ???
+  def bodyTypes(action: RichAction): List[Option[ClassPointer]] = ???
 
-  override def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = ???
+  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = ???
 
-  override def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = ???
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = ???
 
-  override def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = ???
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = ???
+
+  def generateAction(action: RichAction,
+                     segmentType: String,
+                     actionParameters: List[String] = List.empty,
+                     bodyField: Boolean = false,
+                     queryParameterMapEntries: List[String] = List.empty,
+                     formParameterMapEntries: List[String] = List.empty,
+                     multipartParams: Option[String] = None): String = ???
 
 }

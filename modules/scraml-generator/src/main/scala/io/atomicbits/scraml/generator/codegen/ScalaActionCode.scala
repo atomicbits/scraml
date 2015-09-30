@@ -66,7 +66,7 @@ object ScalaActionCode extends ActionCode {
     val bodyType = optBodyType.map(_.classDefinitionScala).getOrElse("String")
     responseType match {
       case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
-      case TypedResponseType(acceptHeader, classRep) => s"TypeMethodSegment[$bodyType, ${classRep.classDefinitionScala}]"
+      case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment[$bodyType, ${classPtr.classDefinitionScala}]"
       case x                                         => s"StringMethodSegment[$bodyType]"
     }
   }
@@ -74,8 +74,8 @@ object ScalaActionCode extends ActionCode {
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
     parameters map { parameterDef =>
-      val (field, classRef) = parameterDef
-      s"$field: ${classRef.classDefinitionScala}"
+      val (field, classPtr) = parameterDef
+      s"$field: ${classPtr.classDefinitionScala}"
     }
   }
 
@@ -114,5 +114,45 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
+
+  def generateAction(action: RichAction,
+                     segmentType: String,
+                     actionParameters: List[String] = List.empty,
+                     bodyField: Boolean = false,
+                     queryParameterMapEntries: List[String] = List.empty,
+                     formParameterMapEntries: List[String] = List.empty,
+                     multipartParams: Option[String] = None): String = {
+
+    val actionType = action.actionType
+    val actionTypeMethod: String = actionType.toString.toLowerCase
+
+    val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
+    val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
+
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
+
+    val bodyFieldValue = if (bodyField) "Some(body)" else "None"
+
+    val multipartParamsValue = multipartParams.getOrElse("List.empty")
+
+    s"""
+       def $actionTypeMethod(${actionParameters.mkString(", ")}) =
+         new $segmentType(
+           method = $actionType,
+           theBody = $bodyFieldValue,
+           queryParams = Map(
+             ${queryParameterMapEntries.mkString(",")}
+           ),
+           formParams = Map(
+             ${formParameterMapEntries.mkString(",")}
+           ),
+           multipartParams = $multipartParamsValue,
+           expectedAcceptHeader = $acceptHeader,
+           expectedContentTypeHeader = $contentHeader,
+           req = requestBuilder
+         ).call()
+     """
+  }
 
 }
