@@ -123,7 +123,7 @@ case object LongClassReference {
 
 case object JsValueClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "String", packageParts = List("play", "api", "libs", "json"), library = true)
+  def apply(): ClassReference = ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
 
 }
 

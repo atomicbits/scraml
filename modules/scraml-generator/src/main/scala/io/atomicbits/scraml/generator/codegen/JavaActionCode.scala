@@ -19,9 +19,57 @@
 
 package io.atomicbits.scraml.generator.codegen
 
+import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.parser.model.Parameter
+
 /**
  * Created by peter on 30/09/15.
  */
 object JavaActionCode extends ActionCode {
+
+
+  override def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
+    s"""public ${headerSegment.classRef.fullyQualifiedName} $contentHeaderMethodName =
+          new ${headerSegment.classRef.fullyQualifiedName}(this.getRequestBuilder());"""
+  }
+
+
+  override def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String = {
+    s"""
+         package ${headerSegmentClassRef.packageName};
+
+         import io.atomicbits.scraml.dsl.java.*;
+
+         ${imports.mkString(";\n")};
+
+
+         public class ${headerSegmentClassRef.name} extends HeaderSegment {
+
+           public ${headerSegmentClassRef.name}(RequestBuilder requestBuilder) {
+             super(requestBuilder);
+           }
+
+           ${methods.mkString("\n")}
+
+         }
+       """
+  }
+
+
+  override def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
+    parameters map { parameterDef =>
+      val(field, classRef) = parameterDef
+      s"${classRef.classDefinitionJava} $field"
+    }
+  }
+
+
+  override def bodyTypes(action: RichAction): List[Option[ClassPointer]] = ???
+
+  override def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = ???
+
+  override def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = ???
+
+  override def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = ???
 
 }

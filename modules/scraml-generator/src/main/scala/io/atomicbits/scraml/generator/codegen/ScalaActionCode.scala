@@ -19,9 +19,100 @@
 
 package io.atomicbits.scraml.generator.codegen
 
+import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.parser.model._
+
 /**
  * Created by peter on 30/09/15.
  */
 object ScalaActionCode extends ActionCode {
+
+  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
+    s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+  }
+
+
+  def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String = {
+    s"""
+         package ${headerSegmentClassRef.packageName}
+
+         import io.atomicbits.scraml.dsl._
+         import play.api.libs.json._
+
+         ${imports.mkString("\n")}
+
+
+         class ${headerSegmentClassRef.name}(req: RequestBuilder) extends HeaderSegment(req) {
+
+           ${methods.mkString("\n")}
+
+         }
+       """
+  }
+
+
+  def bodyTypes(action: RichAction): List[Option[ClassPointer]] =
+    action.selectedContentType match {
+      case StringContentType(contentTypeHeader)          => List(Some(StringClassReference()))
+      case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()), Some(JsValueClassReference()))
+      case TypedContentType(contentTypeHeader, classRef) =>
+        List(Some(StringClassReference()), Some(JsValueClassReference()), Some(classRef))
+      case NoContentType                                 => List(None, Some(StringClassReference()))
+      case x                                             => List(Some(StringClassReference()))
+    }
+
+
+  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
+    val bodyType = optBodyType.map(_.classDefinitionScala).getOrElse("String")
+    responseType match {
+      case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
+      case TypedResponseType(acceptHeader, classRep) => s"TypeMethodSegment[$bodyType, ${classRep.classDefinitionScala}]"
+      case x                                         => s"StringMethodSegment[$bodyType]"
+    }
+  }
+
+
+  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
+    parameters map { parameterDef =>
+      val (field, classRef) = parameterDef
+      s"$field: ${classRef.classDefinitionScala}"
+    }
+  }
+
+
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {
+    val (queryParameterName, parameter) = qParam
+
+    val nameTermName = queryParameterName
+    val typeTypeName = parameter.parameterType match {
+      case StringType  => "String"
+      case IntegerType => "Long"
+      case NumberType  => "Double"
+      case BooleanType => "Boolean"
+      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
+      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
+    }
+
+    if (parameter.repeated) {
+      s"$nameTermName: List[$typeTypeName]"
+    } else {
+      if (parameter.required) {
+        s"$nameTermName: $typeTypeName"
+      } else {
+        s"$nameTermName: Option[$typeTypeName] = None"
+      }
+    }
+  }
+
+
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
+    val (queryParameterName, parameter) = qParam
+    parameter match {
+      case Parameter(_, _, true)      => s""""$queryParameterName" -> Option($queryParameterName).map(HttpParam(_))"""
+      case Parameter(_, true, false)  => s""""$queryParameterName" -> Option($queryParameterName).map(HttpParam(_))"""
+      case Parameter(_, false, false) => s""""$queryParameterName" -> $queryParameterName.map(HttpParam(_))"""
+    }
+  }
+
 
 }

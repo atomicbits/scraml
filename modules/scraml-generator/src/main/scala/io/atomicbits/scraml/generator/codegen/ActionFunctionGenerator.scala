@@ -24,17 +24,7 @@ import io.atomicbits.scraml.generator.model._
 /**
  * Created by peter on 28/08/15. 
  */
-object ActionFunctionGenerator extends ActionGeneratorSupport {
-
-
-  case class ActionFunctionResult(imports: Set[String] = Set.empty[String],
-                                  fields: List[String] = List.empty[String],
-                                  classes: List[ClassRep] = List.empty[ClassRep]) {
-
-    def ++(other: ActionFunctionResult): ActionFunctionResult =
-      ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
-
-  }
+case class ActionFunctionGenerator(actionCode: ActionCode) {
 
 
   def generate(action: RichAction): List[String] = {
@@ -54,7 +44,7 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
       formPostContentType.formParameters.toList.sortBy(_._2.head.required).map { paramPair =>
         val (name, paramList) = paramPair
         if (paramList.isEmpty) sys.error(s"Form parameter $name has no valid type definition.")
-        expandParameterAsMethodParameter((name, paramList.head))
+        actionCode.expandQueryOrFormParameterAsMethodParameter((name, paramList.head))
         // We still don't understand why the form parameters are represented as a Map[String, List[Parameter]]
         // instead of just a Map[String, Parameter] in the Java Raml model. Here, we just use the first element
         // of the parameter list.
@@ -63,10 +53,10 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
     val formParameterMapEntries =
       formPostContentType.formParameters.toList.map { paramPair =>
         val (name, paramList) = paramPair
-        expandParameterAsMapEntry((name, paramList.head))
+        actionCode.expandQueryOrFormParameterAsMapEntry((name, paramList.head))
       }
 
-    val segmentType = createSegmentType(action.selectedResponsetype)(None)
+    val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val formAction: String =
       generateAction(
@@ -82,13 +72,13 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
 
   def generateMultipartFormPostAction(action: RichAction): List[String] = {
 
-    val multipartResponseType = createSegmentType(action.selectedResponsetype)(None)
+    val multipartResponseType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val multipartAction: String =
       generateAction(
         action = action,
-        actionParameters = List("parts: List[BodyPart]"),
-        multipartParams = "parts",
+        actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference("BodyPart"))),
+        multipartParams = Some("parts"),
         segmentType = multipartResponseType
       )
 
@@ -108,11 +98,11 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
       action.queryParameters.toList.sortBy { t =>
         val (field, param) = t
         (!param.required, !param.repeated)
-      } map expandParameterAsMethodParameter
+      } map actionCode.expandQueryOrFormParameterAsMethodParameter
 
-    val queryParameterMapEntries = action.queryParameters.toList.map(expandParameterAsMapEntry)
+    val queryParameterMapEntries = action.queryParameters.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
 
-    val segmentType = createSegmentType(action.selectedResponsetype)(None)
+    val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val queryAction: String =
       generateAction(
@@ -128,17 +118,18 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
 
   def generateBodyAction(action: RichAction): List[String] = {
 
-    val segmentTypeFactory = createSegmentType(action.selectedResponsetype) _
+    val segmentTypeFactory = actionCode.createSegmentType(action.selectedResponsetype) _
 
-    bodyTypes(action).map { bodyType =>
+    actionCode.bodyTypes(action).map { bodyType =>
 
-      val (actionBodyParameters, bodyField) = bodyType.map(bdType => (List(s"body: $bdType"), "Some(body)")).getOrElse(List.empty, "None")
+      val actionBodyParameters =
+        bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
       generateAction(
         action = action,
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
-        bodyField = bodyField
+        bodyField = actionBodyParameters.nonEmpty
       )
     }
 
@@ -148,10 +139,10 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
   private def generateAction(action: RichAction,
                              segmentType: String,
                              actionParameters: List[String] = List.empty,
-                             bodyField: String = "None",
+                             bodyField: Boolean = false,
                              queryParameterMapEntries: List[String] = List.empty,
                              formParameterMapEntries: List[String] = List.empty,
-                             multipartParams: String = "List.empty"): String = {
+                             multipartParams: Option[String] = None): String = {
 
     val actionType = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase
@@ -162,18 +153,22 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
     val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
 
+    val bodyFieldValue = if(bodyField) "Some(body)" else "None"
+
+    val multipartParamsValue = multipartParams.getOrElse("List.empty")
+
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
          new $segmentType(
            method = $actionType,
-           theBody = $bodyField,
+           theBody = $bodyFieldValue,
            queryParams = Map(
              ${queryParameterMapEntries.mkString(",")}
            ),
            formParams = Map(
              ${formParameterMapEntries.mkString(",")}
            ),
-           multipartParams = $multipartParams,
+           multipartParams = $multipartParamsValue,
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = requestBuilder
@@ -183,3 +178,14 @@ object ActionFunctionGenerator extends ActionGeneratorSupport {
   }
 
 }
+
+
+case class ActionFunctionResult(imports: Set[String] = Set.empty[String],
+                                fields: List[String] = List.empty[String],
+                                classes: List[ClassRep] = List.empty[ClassRep]) {
+
+  def ++(other: ActionFunctionResult): ActionFunctionResult =
+    ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
+
+}
+

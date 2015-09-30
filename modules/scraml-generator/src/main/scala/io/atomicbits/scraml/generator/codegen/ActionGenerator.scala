@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.codegen.ActionFunctionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
@@ -119,12 +118,13 @@ case class ActionGenerator(actionCode: ActionCode) {
     val ActionFunctionResult(acceptSegmentMethodImports, acceptSegmentMethods, acceptHeaderClasses) =
       expandAcceptHeaderMap(baseClassRef, acceptHeaderMap)
 
+    // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
     val contentHeaderMethodName = s"_content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
-    val contentHeaderSegment: String = s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+    val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
@@ -139,7 +139,7 @@ case class ActionGenerator(actionCode: ActionCode) {
           List(
             ActionFunctionResult(
               actions.toSet.flatMap(generateActionImports),
-              actions.flatMap(ActionFunctionGenerator.generate),
+              actions.flatMap(ActionFunctionGenerator(actionCode).generate),
               List.empty[ClassRep]
             )
           )
@@ -148,7 +148,7 @@ case class ActionGenerator(actionCode: ActionCode) {
             case (NoAcceptHeaderSegment, actions)                   =>
               ActionFunctionResult(
                 actions.toSet.flatMap(generateActionImports),
-                actions.flatMap(ActionFunctionGenerator.generate),
+                actions.flatMap(ActionFunctionGenerator(actionCode).generate),
                 List.empty[ClassRep]
               )
             case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
@@ -170,14 +170,15 @@ case class ActionGenerator(actionCode: ActionCode) {
     // into the above class
 
     val actionImports = actions.toSet.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator.generate)
+    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate)
 
+    // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
     val acceptHeaderMethodName = s"_accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
-    val acceptHeaderSegment: String = s"""def $acceptHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+    val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
@@ -218,22 +219,7 @@ case class ActionGenerator(actionCode: ActionCode) {
     val classReference = ClassReference(name = className, packageParts = packageParts)
     val classRep = ClassRep(classReference)
 
-    val sourceCode =
-      s"""
-         package ${classReference.packageName}
-
-         import io.atomicbits.scraml.dsl._
-         import play.api.libs.json._
-
-         ${imports.mkString("\n")}
-
-
-         class ${classReference.name}(req: RequestBuilder) extends HeaderSegment(req) {
-
-           ${methods.mkString("\n")}
-
-         }
-       """
+    val sourceCode = actionCode.headerSegmentClass(classReference, imports, methods)
 
     classRep.withContent(sourceCode)
   }

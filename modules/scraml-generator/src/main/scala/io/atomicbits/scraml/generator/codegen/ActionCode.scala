@@ -19,9 +19,29 @@
 
 package io.atomicbits.scraml.generator.codegen
 
+import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.parser.model.Parameter
+
 /**
  * Created by peter on 30/09/15.
  */
 trait ActionCode {
+
+
+  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String
+
+  def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String
+
+  def bodyTypes(action: RichAction): List[Option[ClassPointer]]
+
+  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
+
+  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
+
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String
+
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
+
+  def quoteString(text: String): String = s""""$text""""
 
 }

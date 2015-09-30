@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import ActionFunctionGenerator.ActionFunctionResult
 import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
