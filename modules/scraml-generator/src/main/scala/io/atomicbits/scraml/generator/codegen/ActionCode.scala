@@ -50,6 +50,7 @@ trait ActionCode {
                      bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None): String
+                     multipartParams: Option[String] = None,
+                     canonicalResponseTypeOpt: Option[String] = None): String
 
 }

@@ -125,11 +125,14 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       val actionBodyParameters =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
+      val canonicalResponseTypeOpt = bodyType.map(_.fullyQualifiedName)
+
       actionCode.generateAction(
         action = action,
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
-        bodyField = actionBodyParameters.nonEmpty
+        bodyField = actionBodyParameters.nonEmpty,
+        canonicalResponseTypeOpt = canonicalResponseTypeOpt
       )
     }
 

@@ -51,6 +51,14 @@ object ScalaActionCode extends ActionCode {
   }
 
 
+  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
+    parameters map { parameterDef =>
+      val (field, classPtr) = parameterDef
+      s"$field: ${classPtr.classDefinitionScala}"
+    }
+  }
+
+
   def bodyTypes(action: RichAction): List[Option[ClassPointer]] =
     action.selectedContentType match {
       case StringContentType(contentTypeHeader)          => List(Some(StringClassReference()))
@@ -68,14 +76,6 @@ object ScalaActionCode extends ActionCode {
       case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
       case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment[$bodyType, ${classPtr.classDefinitionScala}]"
       case x                                         => s"StringMethodSegment[$bodyType]"
-    }
-  }
-
-
-  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
-    parameters map { parameterDef =>
-      val (field, classPtr) = parameterDef
-      s"$field: ${classPtr.classDefinitionScala}"
     }
   }
 
@@ -121,7 +121,8 @@ object ScalaActionCode extends ActionCode {
                      bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None): String = {
+                     multipartParams: Option[String] = None,
+                     canonicalResponseTypeOpt: Option[String] = None): String = {
 
     val actionType = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase

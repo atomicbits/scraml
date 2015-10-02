@@ -24,7 +24,9 @@ package io.atomicbits.scraml.generator.model
  *
  */
 
-
+/**
+ * Represents an abstract pointer to a class.
+ */
 sealed trait ClassPointer {
 
   def classDefinitionScala: String
@@ -40,20 +42,31 @@ sealed trait ClassPointer {
     }
   }
 
+  def packageName: String
+
+  def fullyQualifiedName: String
+
 }
 
 
+/**
+ * A generic class pointer points to a class via a variable, while not knowing what the actual class is it points to.
+ * E.g. "T" in List[T]
+ */
 case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
   def classDefinitionScala: String = typeVariable
 
   def classDefinitionJava: String = typeVariable
 
+  override def fullyQualifiedName: String = sys.error("Cannot specify a fully qualified name of a generic class pointer.")
+
+  override def packageName: String = sys.error("Cannot specify the package name of a generic class pointer.")
 }
 
 
 /**
- * A unique reference to a class.
+ * A unique reference to a class. E.g. List[T].
  */
 case class ClassReference(name: String,
                           packageParts: List[String] = List.empty,
@@ -133,6 +146,11 @@ case class TypedClassReference(classReference: ClassReference,
   def classDefinitionJava: String =
     if (classReference.typeVariables.isEmpty) classReference.name
     else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}>"
+
+
+  def packageName: String = classReference.packageName
+
+  def fullyQualifiedName: String = classReference.fullyQualifiedName
 
 }
 
