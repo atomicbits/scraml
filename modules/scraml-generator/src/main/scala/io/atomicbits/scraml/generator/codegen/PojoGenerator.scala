@@ -41,7 +41,61 @@ object PojoGenerator {
 
 
   def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
-    ???
+
+    val topLevelClass = hierarchyReps.find(_.parentClass.isEmpty).get
+    // If there are no intermediary levels between the top level class and the children, then the
+    // childClasses and leafClasses will be identical sets.
+    val childClasses = hierarchyReps.filter(_.parentClass.isDefined)
+    val leafClasses = hierarchyReps.filter(_.subClasses.isEmpty)
+
+    val packages = hierarchyReps.groupBy(_.packageName)
+    assert(
+      packages.keys.size == 1,
+      s"""
+         |Classes in a class hierarchy must be defined in the same namespace/package. The classes
+         |${hierarchyReps.map(_.name).mkString("\n")}
+          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+                                                              |${packages.keys.mkString("\n")}
+       """.stripMargin)
+
+    val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
+
+    val topLevelImports: Set[String] = collectImports(topLevelClass)
+
+    val classesWithDiscriminators =
+      childClasses.flatMap(childClass => childClass.jsonTypeInfo.flatMap(_.discriminatorValue).map((childClass, _)))
+
+    val jsonSubTypes =
+      classesWithDiscriminators map {
+        case (classRep, discriminator) =>
+          s"""
+             @JsonSubTypes.Type(value = ${classRep.name}.class, name = "$discriminator")
+           """
+      }
+
+    val jsonTypeInfo =
+      s"""
+         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "$typeDiscriminator")
+         @JsonSubTypes({
+                 ${jsonSubTypes.mkString(",\n")}
+         })
+       """
+
+    val topLevelSource =
+      s"""
+        package ${topLevelClass.packageName};
+
+        import org.codehaus.jackson.annotate.JsonSubTypes;
+        import org.codehaus.jackson.annotate.JsonTypeInfo;
+
+        ${topLevelImports.mkString(";\n")};
+
+        $jsonTypeInfo
+        ${generatePojoSource(topLevelClass)}
+
+     """
+
+    topLevelClass.withContent(topLevelSource) +: childClasses.map(generateNonHierarchicalClassRep(_, classMap))
   }
 
 
@@ -105,30 +159,25 @@ object PojoGenerator {
 
     val privateFieldExpressions = fieldExpressions.map(fe => s"private $fe;")
 
-    val getterAndSetters = sortedFields map { sf =>
+    val getterAndSetters = sortedFields map {
+      case ClassReferenceAsFieldRep(fieldName, classPointer, required) =>
+        val fieldNameCap = fieldName.capitalize
+        s"""
+           public ${classPointer.classDefinitionJava} get$fieldNameCap() {
+             return $fieldName;
+           }
 
-      val ClassReferenceAsFieldRep(fieldName, classPointer, required) = sf
+           public void set$fieldNameCap(${classPointer.classDefinitionJava} $fieldName) {
+             this.$fieldName = $fieldName;
+           }
 
-      val fieldNameCap = fieldName.capitalize
-
-      s"""
-         public ${classPointer.classDefinitionJava} get$fieldNameCap() {
-           return $fieldName;
-         }
-
-         public void set$fieldNameCap(${classPointer.classDefinitionJava} $fieldName) {
-           this.$fieldName = $fieldName;
-         }
-
-       """
+         """
     }
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionJava}").getOrElse("")
 
     val constructorInitialization = sortedFields map { sf =>
-
       val fieldName = sf.fieldName
-
       s"""this.$fieldName = $fieldName;"""
     }
 
