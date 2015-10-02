@@ -33,7 +33,7 @@ import io.atomicbits.scraml.generator.model._
  * http://forums.raml.org/t/how-do-you-reference-another-schema-from-a-schema/485
  *
  */
-object CaseClassGenerator {
+object CaseClassGenerator extends DtoSupport {
 
 
   def generateCaseClasses(classMap: ClassMap): List[ClassRep] = {
@@ -50,40 +50,6 @@ object CaseClassGenerator {
   }
 
 
-  /**
-   * Collect all type imports for a given class and its generic types, but not its parent or child classes.
-   */
-  def collectImports(collectClassRep: ClassRep): Set[String] = {
-
-    val ownPackage = collectClassRep.packageName
-
-    /**
-     * Collect the type imports for the given class rep.
-     */
-    def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
-
-      def collectFromClassReference(classRef: ClassReference): Set[String] = {
-        if (classRef.packageName != ownPackage && !classRef.predef) collected + s"import ${classRef.fullyQualifiedName}"
-        else Set.empty[String]
-      }
-
-      val collectedFromClassPtr =
-        classPtr match {
-          case typedClassReference: TypedClassReference =>
-            typedClassReference.types.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
-          case classReference: ClassReference           => collectFromClassReference(classReference)
-          case _                                        => Set.empty[String]
-        }
-
-      collectedFromClassPtr ++ collected
-    }
-
-    val ownTypesImport = collectTypeImports(Set.empty, collectClassRep.classRef)
-
-    collectClassRep.fields.map(_.classPointer).foldLeft(ownTypesImport)(collectTypeImports)
-  }
-
-
   def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
@@ -95,10 +61,9 @@ object CaseClassGenerator {
     }
   }
 
+
   private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
     val imports: Set[String] = collectImports(classRep)
-
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
     def enumValue(value: String): String = {
       s"""
@@ -152,11 +117,10 @@ object CaseClassGenerator {
     classRep.withContent(content = source)
   }
 
+
   private def generateNonEnumClassRep(classRep: ClassRep): ClassRep = {
 
     val imports: Set[String] = collectImports(classRep)
-
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
     val source =
       s"""
