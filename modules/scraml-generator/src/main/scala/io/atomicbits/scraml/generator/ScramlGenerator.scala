@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
-import io.atomicbits.scraml.generator.codegen.{ResourceClassGenerator, CaseClassGenerator}
+import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ResourceClassGenerator, CaseClassGenerator}
 import io.atomicbits.scraml.generator.model.ClassRep
 import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
@@ -45,9 +45,20 @@ import scalariform.formatter.preferences._
 object ScramlGenerator {
 
 
-  def generate(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] = {
+  def generateScalaCode(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] =
+    generateFor(Scala, ramlApiPath, apiPackageName, apiClassName)
+
+
+  def generateJavaCode(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] =
+    generateFor(Java, ramlApiPath, apiPackageName, apiClassName)
+
+
+  private[generator] def generateFor(language: Language,
+                                     ramlApiPath: String,
+                                     apiPackageName: String,
+                                     apiClassName: String): JMap[String, String] = {
     val tupleList =
-      generateClassReps(ramlApiPath, apiPackageName, apiClassName)
+      generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
         .collect { case clRep if clRep.content.isDefined => clRep }
         .map(addLicenseAndFormat)
         .map(classRepToFilePathAndContent)
@@ -56,7 +67,10 @@ object ScramlGenerator {
   }
 
 
-  private[generator] def generateClassReps(ramlApiPath: String, apiPackageName: String, apiClassName: String): Seq[ClassRep] = {
+  private[generator] def generateClassReps(ramlApiPath: String,
+                                           apiPackageName: String,
+                                           apiClassName: String,
+                                           language: Language): Seq[ClassRep] = {
     // Validate RAML spec
     println(s"Running RAML validation on $ramlApiPath: ")
     val validationResults: List[ValidationResult] = RamlParser.validateRaml(ramlApiPath)
@@ -67,7 +81,7 @@ object ScramlGenerator {
            |Invalid RAML specification:
            |
            |${RamlParser.printValidations(validationResults)}
-            |
+           |
             |""".stripMargin
       )
     }
@@ -88,16 +102,21 @@ object ScramlGenerator {
     val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
 
 
-    // Here's the actual code generation
-    val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
-    println(s"Case classes generated")
-    val resources: Seq[ClassRep] = ResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
-    println(s"Resources DSL generated")
+    language match {
+      case Scala =>
+        val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
+        println(s"Case classes generated")
+        val resources: Seq[ClassRep] = ResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
+        println(s"Resources DSL generated")
+        caseClasses ++ resources
+      case Java  =>
+        val pojos: Seq[ClassRep] = PojoGenerator.generatePojos(classMap)
+        println(s"POJOs generated")
+        val resources: Seq[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
+        println(s"Resources DSL generated")
+        pojos ++ resources
+    }
 
-    // ToDo: process enumerations
-    //    val enumObjects = CaseClassGenerator.generateEnumerationObjects(schemaLookup, c)
-
-    caseClasses ++ resources
   }
 
 
@@ -145,5 +164,11 @@ object ScramlGenerator {
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }
+
+  sealed trait Language
+
+  case object Scala extends Language
+
+  case object Java extends Language
 
 }

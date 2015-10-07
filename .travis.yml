@@ -10,6 +10,7 @@ notifications:
     - peter.rigole@atomicbits.io
 after_success:
 - '[[ $TRAVIS_BRANCH == "develop" ]] && { sbt "+ publish" ; };'
+- '[[ $TRAVIS_BRANCH == "feature/Java_DSL_support" ]] && { sbt "+ publish" ; };'
 
 env:
   global:

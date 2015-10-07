@@ -21,7 +21,8 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
           ScramlGenerator.generateClassReps(
             ramlApiPath = apiResourceUrl.toString,
             apiPackageName = "withenum",
-            apiClassName = "EnumApi"
+            apiClassName = "EnumApi",
+            ScramlGenerator.Scala
           )
 
         Then("we should get valid class representations")

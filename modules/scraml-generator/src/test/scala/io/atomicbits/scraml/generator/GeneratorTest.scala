@@ -42,7 +42,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         ScramlGenerator.generateClassReps(
           ramlApiPath = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits.scraml",
-          apiClassName = "TestApi"
+          apiClassName = "TestApi",
+          ScramlGenerator.Scala
         )
 
       Then("we should get valid class representations")
