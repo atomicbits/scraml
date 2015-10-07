@@ -57,6 +57,7 @@ object ScramlGenerator {
                                      ramlApiPath: String,
                                      apiPackageName: String,
                                      apiClassName: String): JMap[String, String] = {
+    println(s"Generating $language client.")
     val tupleList =
       generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
         .collect { case clRep if clRep.content.isDefined => clRep }
