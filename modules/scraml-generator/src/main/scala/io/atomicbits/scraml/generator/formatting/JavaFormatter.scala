@@ -17,35 +17,17 @@
  *
  */
 
-package io.atomicbits.scraml.dsl.java;
-
-import sun.security.jgss.HttpCaller;
-
-import java.util.ArrayList;
-import java.util.List;
+package io.atomicbits.scraml.generator.formatting
 
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 10/10/15.
  */
-public class RepeatedHttpParam implements HttpParam {
+object JavaFormatter {
 
-    private List<String> parameters;
-
-    public RepeatedHttpParam(List parameters) {
-        List<String> stringParams = new ArrayList<String>(parameters.size());
-        for (Object param : parameters) {
-            stringParams.add(param.toString());
-        }
-        this.parameters = stringParams;
-    }
-
-    public List<String> getParameters() {
-        return parameters;
-    }
-
-    @Override
-    public Boolean isSingle() {
-        return false;
-    }
+  def format(code: String): String = {
+    // ToDo: add Java code formatting...
+    // https://github.com/krasa/eclipsecodeformatter ???
+    code
+  }
 
 }

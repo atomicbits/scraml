@@ -41,6 +41,7 @@ object JavaActionCode extends ActionCode {
          package ${headerSegmentClassRef.packageName};
 
          import io.atomicbits.scraml.dsl.java.*;
+         import java.util.*;
 
          ${imports.mkString(";\n")};
 
@@ -80,7 +81,7 @@ object JavaActionCode extends ActionCode {
     val bodyType = optBodyType.map(_.classDefinitionJava).getOrElse("String")
     responseType match {
       case JsonResponseType(acceptHeader)            => s"StringMethodSegment<$bodyType>"
-      case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment<$bodyType, ${classPtr.classDefinitionScala}>"
+      case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment<$bodyType, ${classPtr.classDefinitionJava}>"
       case x                                         => s"StringMethodSegment<$bodyType>"
     }
   }
@@ -102,7 +103,7 @@ object JavaActionCode extends ActionCode {
     if (parameter.repeated) {
       s"List<$typeTypeName> $nameTermName"
     } else {
-      s"$nameTermName: $typeTypeName"
+      s"$typeTypeName $nameTermName"
     }
   }
 
@@ -132,24 +133,28 @@ object JavaActionCode extends ActionCode {
 
     val bodyFieldValue = if (bodyField) "body" else "null"
 
-    val queryParams =
+    val (queryParamMap, queryParams) =
       if (queryParameterMapEntries.nonEmpty) {
-        s"""
+        (s"""
            Map<String, HttpParam> params = new HashMap<String, HttpParam>();
            ${queryParameterMapEntries.mkString("\n")}
-         """
+         """,
+          "params"
+          )
       } else {
-        "null"
+        ("", "null")
       }
 
-    val formParams =
+    val (formParamMap, formParams) =
       if (formParameterMapEntries.nonEmpty) {
-        s"""
+        (s"""
            Map<String, HttpParam> params = new HashMap<String, HttpParam>();
            ${formParameterMapEntries.mkString("\n")}
-         """
+         """,
+          "params"
+          )
       } else {
-        "null"
+        ("", "null")
       }
 
     val multipartParamsValue = multipartParams.getOrElse("null")
@@ -160,10 +165,14 @@ object JavaActionCode extends ActionCode {
     val acceptHeader = expectedAcceptHeader.map(acceptH => s""""$acceptH"""").getOrElse("null")
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""$contentHeader"""").getOrElse("null")
 
-    val canonicalResponseType = canonicalResponseTypeOpt.getOrElse("null")
+    val canonicalResponseType = canonicalResponseTypeOpt.map(quoteString).getOrElse("null")
 
     s"""
        public $segmentType $actionTypeMethod(${actionParameters.mkString(", ")}) {
+
+         $queryParamMap
+
+         $formParamMap
 
          return new $segmentType(
            $method,

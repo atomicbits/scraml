@@ -54,8 +54,8 @@ object PojoGenerator {
       s"""
          |Classes in a class hierarchy must be defined in the same namespace/package. The classes
          |${hierarchyReps.map(_.name).mkString("\n")}
-          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
-                                                              |${packages.keys.mkString("\n")}
+         |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+         |${packages.keys.mkString("\n")}
        """.stripMargin)
 
     val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
@@ -85,10 +85,9 @@ object PojoGenerator {
       s"""
         package ${topLevelClass.packageName};
 
-        import org.codehaus.jackson.annotate.JsonSubTypes;
-        import org.codehaus.jackson.annotate.JsonTypeInfo;
+        import com.fasterxml.jackson.annotation.*;
 
-        ${topLevelImports.mkString(";\n")};
+        ${topLevelImports.mkString("", ";\n", ";")};
 
         $jsonTypeInfo
         ${generatePojoSource(topLevelClass)}
@@ -115,6 +114,8 @@ object PojoGenerator {
 
     val source =
       s"""
+        package ${classRep.packageName};
+
         public enum ${classRep.name} {
 
           ${classRep.values.mkString(",\n")}
@@ -136,7 +137,9 @@ object PojoGenerator {
       s"""
         package ${classRep.packageName};
 
-        ${imports.mkString(";\n")};
+        ${imports.mkString("", ";\n", ";")}
+
+        import java.util.*;
 
         ${generatePojoSource(classRep)}
      """
@@ -146,7 +149,6 @@ object PojoGenerator {
 
 
   private def generatePojoSource(classRep: ClassRep,
-                                 parentClassRep: Option[ClassRep] = None,
                                  skipFieldName: Option[String] = None): String = {
 
     val selectedFields =
@@ -158,6 +160,7 @@ object PojoGenerator {
     val fieldExpressions = sortedFields.map(_.fieldExpressionJava)
 
     val privateFieldExpressions = fieldExpressions.map(fe => s"private $fe;")
+
 
     val getterAndSetters = sortedFields map {
       case ClassReferenceAsFieldRep(fieldName, classPointer, required) =>
@@ -174,28 +177,36 @@ object PojoGenerator {
          """
     }
 
-    val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionJava}").getOrElse("")
+    val extendsClass = classRep.parentClass.map(parentClassRep => s"extends ${parentClassRep.classDefinitionJava}").getOrElse("")
 
     val constructorInitialization = sortedFields map { sf =>
       val fieldName = sf.fieldName
       s"""this.$fieldName = $fieldName;"""
     }
 
+    val fieldConstructor =
+      if (fieldExpressions.nonEmpty)
+        s"""
+          public ${classRep.name}(${fieldExpressions.mkString(", ")}) {
+            ${constructorInitialization.mkString("\n")}
+          }
+         """
+      else ""
+
 
     s"""
-      public class ${classRep.classDefinitionJava} $extendsClass
+      public class ${classRep.classDefinitionJava} $extendsClass {
 
-      ${privateFieldExpressions.mkString("\n")}
+        ${privateFieldExpressions.mkString("\n")}
 
-      public ${classRep.name}() {
+        public ${classRep.name}() {
+        }
+
+        $fieldConstructor
+
+        ${getterAndSetters.mkString("\n")}
+
       }
-
-      public ${classRep.name}(${fieldExpressions.mkString(", ")}) {
-        ${constructorInitialization.mkString("\n")}
-      }
-
-      ${getterAndSetters.mkString("\n")}
-
      """
   }
 

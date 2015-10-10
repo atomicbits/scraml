@@ -35,7 +35,8 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
                                List<BodyPart> multipartParams,
                                String expectedAcceptHeader,
                                String expectedContentTypeHeader,
-                               RequestBuilder req) {
+                               RequestBuilder req,
+                               String canonicalResponseType) {
         super(method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req);
     }
 

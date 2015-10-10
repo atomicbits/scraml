@@ -56,8 +56,7 @@ object JavaResourceClassGenerator {
            import io.atomicbits.scraml.dsl.java.client.ClientConfig;
            import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
 
-           import java.util.HashMap;
-           import java.util.Map;
+           import java.util.*;
 
            public class $apiClassName {
 
@@ -135,6 +134,10 @@ object JavaResourceClassGenerator {
 
       val resourceConstructor = generateResourceConstructor(resource)
 
+      val shallowCloneValueAssignment =
+        if (isParameterized(resource)) s"$classNameCamel.value = this.value;"
+        else ""
+
       val sourcecode =
         s"""
            package ${resource.classRep.packageName};
@@ -142,7 +145,7 @@ object JavaResourceClassGenerator {
            import io.atomicbits.scraml.dsl.java.*;
            import java.util.*;
 
-           ${imports.mkString("\n")}
+           ${imports.mkString("", ";\n", ";")}
 
            $classDefinition
 
@@ -163,9 +166,9 @@ object JavaResourceClassGenerator {
 
              private $className shallowClone() {
                $className $classNameCamel = new $className();
-               $classNameCamel.value = this.value;
+               $shallowCloneValueAssignment
                $classNameCamel.requestBuilder = this.requestBuilder;
-               return $classNameCamel
+               return $classNameCamel;
              }
 
            }
@@ -203,6 +206,9 @@ object JavaResourceClassGenerator {
         case None            =>
           s"""public class ${resource.classRep.name} extends PlainSegment {"""
       }
+
+
+    def isParameterized(resource: RichResource) = resource.urlParameter.isDefined
 
 
     def generateParameterType(parameterType: ParameterType): String = {

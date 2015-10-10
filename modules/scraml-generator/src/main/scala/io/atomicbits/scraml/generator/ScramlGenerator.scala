@@ -22,6 +22,7 @@ package io.atomicbits.scraml.generator
 import java.io.File
 
 import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ResourceClassGenerator, CaseClassGenerator}
+import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model.ClassRep
 import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
@@ -62,7 +63,7 @@ object ScramlGenerator {
       generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
         .collect { case clRep if clRep.content.isDefined => clRep }
         .map(addLicenseAndFormat(_, language))
-        .map(classRepToFilePathAndContent)
+        .map(classRepToFilePathAndContent(_, language))
 
     mapAsJavaMap[String, String](tupleList.toMap)
   }
@@ -97,7 +98,7 @@ object ScramlGenerator {
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
 
-    val packageBasePath = apiPackageName.split('.').toList
+    val packageBasePath = apiPackageName.split('.').toList.filter(!_.isEmpty)
 
     val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
     val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
@@ -134,12 +135,12 @@ object ScramlGenerator {
     val content = s"$classHeaderLicense\n${classRep.content.get}"
     val formattedContent = language match {
       case Scala => ScalaFormatter.format(content, formatSettings)
-      case Java  => content
+      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
     }
     classRep.withContent(formattedContent)
   }
 
-  
+
   private val classHeaderLicense =
 
     s""" | /**
@@ -156,7 +157,7 @@ object ScramlGenerator {
      """.stripMargin
 
 
-  private def classRepToFilePathAndContent(classRep: ClassRep): (String, String) = {
+  private def classRepToFilePathAndContent(classRep: ClassRep, language: Language): (String, String) = {
 
     val classReference = classRep.classRef
     val pathParts = classReference.packageParts
@@ -165,7 +166,12 @@ object ScramlGenerator {
     //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
     //    val file = new File(dir, s"${classRep.name}.scala")
 
-    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.scala"
+    val extension = language match {
+      case Scala => "scala"
+      case Java  => "java"
+    }
+
+    val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.$extension"
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }

@@ -36,6 +36,8 @@ trait Dependencies { this:Build =>
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
   val scalariform         =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
+  // val eclipseJdt          =   "org.eclipse"                 %    "jdt"                 % "3.3.0-v20070607-1300"
+
 
   // test dependencies
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
