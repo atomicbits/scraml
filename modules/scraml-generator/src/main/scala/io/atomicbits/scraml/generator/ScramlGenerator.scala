@@ -61,7 +61,7 @@ object ScramlGenerator {
     val tupleList =
       generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
         .collect { case clRep if clRep.content.isDefined => clRep }
-        .map(addLicenseAndFormat)
+        .map(addLicenseAndFormat(_, language))
         .map(classRepToFilePathAndContent)
 
     mapAsJavaMap[String, String](tupleList.toMap)
@@ -130,12 +130,16 @@ object ScramlGenerator {
       .setPreference(IndentSpaces, 2)
 
 
-  private def addLicenseAndFormat(classRep: ClassRep): ClassRep = {
+  private def addLicenseAndFormat(classRep: ClassRep, language: Language): ClassRep = {
     val content = s"$classHeaderLicense\n${classRep.content.get}"
-    classRep.withContent(ScalaFormatter.format(content, formatSettings))
+    val formattedContent = language match {
+      case Scala => ScalaFormatter.format(content, formatSettings)
+      case Java  => content
+    }
+    classRep.withContent(formattedContent)
   }
 
-
+  
   private val classHeaderLicense =
 
     s""" | /**
