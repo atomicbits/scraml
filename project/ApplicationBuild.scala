@@ -45,14 +45,16 @@ with Dependencies {
   val scramlDslJava = Project(
     id = "scraml-dsl-java",
     base = file("modules/scraml-dsl-java"),
-    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps)
+    // This is a pure Java project without scala versioning,
+    // see http://stackoverflow.com/questions/8296280/use-sbt-to-build-pure-java-project
+    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps) ++ Seq(crossPaths := false, autoScalaLibrary := false)
   )
 
   val scramlGenerator = Project(
     id = "scraml-generator",
     base = file("modules/scraml-generator"),
     settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-  )  dependsOn(scramlDslScala, scramlDslJava, scramlParser, scramlJsonSchemaParser)
+  ) dependsOn(scramlDslScala, scramlDslJava, scramlParser, scramlJsonSchemaParser)
 
   val main = Project(
     id = "scraml-project",
