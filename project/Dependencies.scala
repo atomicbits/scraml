@@ -37,7 +37,7 @@ trait Dependencies { this:Build =>
 
   val scalariform         =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
   // val eclipseJdt          =   "org.eclipse"                 %    "jdt"                 % "3.3.0-v20070607-1300"
-
+  val slf4j               =   "org.slf4j"                   %    "slf4j-api"            % "1.7.12"
 
   // test dependencies
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
@@ -69,11 +69,13 @@ trait Dependencies { this:Build =>
   )
 
   val scramlDslDepsScala = Seq(
+    slf4j,
     playJson,
     rxHttpClientScala
   )
 
   val scramlDslDepsJava = Seq(
+    slf4j,
     jacksonCore,
     jacksonAnnotations,
     jacksonDatabind,

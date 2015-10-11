@@ -38,6 +38,10 @@ trait ActionCode {
 
   def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
 
+  def responseClassDefinition(responseType: ResponseType): String
+
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
@@ -51,6 +55,6 @@ trait ActionCode {
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
                      multipartParams: Option[String] = None,
-                     canonicalResponseTypeOpt: Option[String] = None): String
+                     responseType: ResponseType): String
 
 }

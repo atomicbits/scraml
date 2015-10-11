@@ -21,7 +21,7 @@ package io.atomicbits.scraml.dsl.java;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
@@ -41,7 +41,7 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
     }
 
 
-    public Future<Response<String>> call() {
+    public CompletableFuture<Response<String>> call() {
         return getRequestBuilder().callToStringResponse(getBody());
     }
 

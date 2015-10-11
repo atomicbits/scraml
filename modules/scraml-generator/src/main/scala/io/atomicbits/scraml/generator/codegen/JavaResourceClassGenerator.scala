@@ -57,6 +57,7 @@ object JavaResourceClassGenerator {
            import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
 
            import java.util.*;
+           import java.util.concurrent.CompletableFuture;
 
            public class $apiClassName {
 
@@ -144,6 +145,7 @@ object JavaResourceClassGenerator {
 
            import io.atomicbits.scraml.dsl.java.*;
            import java.util.*;
+           import java.util.concurrent.CompletableFuture;
 
            ${imports.mkString("", ";\n", ";")}
 

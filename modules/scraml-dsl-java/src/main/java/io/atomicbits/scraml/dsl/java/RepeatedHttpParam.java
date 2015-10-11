@@ -33,8 +33,10 @@ public class RepeatedHttpParam implements HttpParam {
 
     public RepeatedHttpParam(List parameters) {
         List<String> stringParams = new ArrayList<String>(parameters.size());
-        for (Object param : parameters) {
-            stringParams.add(param.toString());
+        if (parameters != null) {
+            for (Object param : parameters) {
+                stringParams.add(param.toString());
+            }
         }
         this.parameters = stringParams;
     }

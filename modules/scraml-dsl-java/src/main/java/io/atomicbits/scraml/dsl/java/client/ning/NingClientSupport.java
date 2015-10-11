@@ -31,6 +31,8 @@ import io.atomicbits.scraml.dsl.java.ByteArrayPart;
 import io.atomicbits.scraml.dsl.java.FilePart;
 import io.atomicbits.scraml.dsl.java.StringPart;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,7 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 
 /**
@@ -56,6 +57,8 @@ public class NingClientSupport implements Client {
 
     private AsyncHttpClient ningClient;
 
+    private Logger LOGGER = LoggerFactory.getLogger(NingClientSupport.class);
+
     /**
      * Reuse of ObjectMapper and JsonFactory is very easy: they are thread-safe provided that configuration is done before any use
      * (and from a single thread). After initial configuration use is fully thread-safe and does not need to be explicitly synchronized.
@@ -65,17 +68,37 @@ public class NingClientSupport implements Client {
 
 
     public NingClientSupport(String host,
-                             int port,
+                             Integer port,
                              String protocol,
                              String prefix,
                              ClientConfig config,
                              Map<String, String> defaultHeaders) {
-        this.host = host;
-        this.port = port;
-        this.protocol = protocol;
+        if (host != null) {
+            this.host = host;
+        } else {
+            this.host = "localhost";
+        }
+        if (port != null) {
+            this.port = port;
+        } else {
+            this.port = 80;
+        }
+        if (protocol != null) {
+            this.protocol = protocol;
+        } else {
+            this.protocol = "http";
+        }
         this.prefix = prefix;
-        this.config = config;
-        this.defaultHeaders = defaultHeaders;
+        if (config != null) {
+            this.config = config;
+        } else {
+            this.config = new ClientConfig();
+        }
+        if (defaultHeaders != null) {
+            this.defaultHeaders = defaultHeaders;
+        } else {
+            this.defaultHeaders = new HashMap<>();
+        }
 
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
         this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());
@@ -147,20 +170,20 @@ public class NingClientSupport implements Client {
 
 
     @Override
-    public <B> Future<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body) {
+    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body) {
         return callToTransformedResponse(requestBuilder, body, (result) -> result);
     }
 
 
     @Override
-    public <B, R> Future<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalResponseType) {
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalResponseType) {
         return callToTransformedResponse(requestBuilder, body, (result) -> parseBodyToObject(canonicalResponseType, result));
     }
 
 
-    protected <B, R> Future<Response<R>> callToTransformedResponse(RequestBuilder requestBuilder,
-                                                                   B body,
-                                                                   Function<String, R> transformer) {
+    protected <B, R> CompletableFuture<Response<R>> callToTransformedResponse(RequestBuilder requestBuilder,
+                                                                              B body,
+                                                                              Function<String, R> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -180,11 +203,15 @@ public class NingClientSupport implements Client {
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
             if (queryParam.getValue().isSingle()) {
                 SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
-                ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
+                if (param.getParameter() != null) {
+                    ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
+                }
             } else {
                 RepeatedHttpParam params = (RepeatedHttpParam) queryParam.getValue();
-                for (String param : params.getParameters()) {
-                    ningRb.addQueryParam(queryParam.getKey(), param);
+                if (params.getParameters() != null) {
+                    for (String param : params.getParameters()) {
+                        ningRb.addQueryParam(queryParam.getKey(), param);
+                    }
                 }
             }
         }
@@ -269,6 +296,8 @@ public class NingClientSupport implements Client {
         printRequest(ningRequest);
         // CompletableFuture is present in the JDK since 1.8
         final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
+
+        LOGGER.debug("Executing request: " + ningRequest);
 
         getClient().executeRequest(ningRequest, new AsyncCompletionHandler<String>() {
 

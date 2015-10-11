@@ -42,6 +42,7 @@ object JavaActionCode extends ActionCode {
 
          import io.atomicbits.scraml.dsl.java.*;
          import java.util.*;
+         import java.util.concurrent.CompletableFuture;
 
          ${imports.mkString(";\n")};
 
@@ -87,6 +88,27 @@ object JavaActionCode extends ActionCode {
   }
 
 
+  def responseClassDefinition(responseType: ResponseType): String = {
+    responseType match {
+      case JsonResponseType(acceptHeader)            => "CompletableFuture<Response<String>>"
+      case TypedResponseType(acceptHeader, classPtr) => s"CompletableFuture<Response<${classPtr.classDefinitionJava}>>"
+      case x                                         => "CompletableFuture<Response<String>>"
+    }
+  }
+
+
+  def canonicalResponseType(responseType: ResponseType): Option[String] = {
+    responseType match {
+      case JsonResponseType(acceptHeader)            => None
+      case TypedResponseType(acceptHeader, classPtr) => Some(classPtr.fullyQualifiedName)
+      case x                                         => None
+    }
+  }
+
+
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams
+
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
 
@@ -124,7 +146,7 @@ object JavaActionCode extends ActionCode {
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
                      multipartParams: Option[String] = None,
-                     canonicalResponseTypeOpt: Option[String] = None): String = {
+                     responseType: ResponseType): String = {
 
     val actionType = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase(Locale.ENGLISH)
@@ -165,10 +187,12 @@ object JavaActionCode extends ActionCode {
     val acceptHeader = expectedAcceptHeader.map(acceptH => s""""$acceptH"""").getOrElse("null")
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""$contentHeader"""").getOrElse("null")
 
-    val canonicalResponseType = canonicalResponseTypeOpt.map(quoteString).getOrElse("null")
+    val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
+
+    val callResponseType = responseClassDefinition(responseType)
 
     s"""
-       public $segmentType $actionTypeMethod(${actionParameters.mkString(", ")}) {
+       public $callResponseType $actionTypeMethod(${actionParameters.mkString(", ")}) {
 
          $queryParamMap
 
@@ -183,8 +207,8 @@ object JavaActionCode extends ActionCode {
            $acceptHeader,
            $contentHeader,
            this.getRequestBuilder(),
-           $canonicalResponseType
-         );
+           $canonicalResponseT
+         ).call();
        }
      """
   }

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
@@ -173,11 +173,11 @@ public class RequestBuilder {
         return clone;
     }
 
-    public <B> Future<Response<String>> callToStringResponse(B body) {
+    public <B> CompletableFuture<Response<String>> callToStringResponse(B body) {
         return client.callToStringResponse(this, body);
     }
 
-    public <B, R> Future<Response<R>> callToTypeResponse(B body, String canonicalResponseType) {
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(B body, String canonicalResponseType) {
         return client.callToTypeResponse(this, body, canonicalResponseType);
     }
 

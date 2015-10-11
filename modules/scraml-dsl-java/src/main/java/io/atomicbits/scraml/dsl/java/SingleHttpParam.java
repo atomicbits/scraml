@@ -27,7 +27,7 @@ public class SingleHttpParam implements HttpParam {
     private String parameter;
 
     public SingleHttpParam(Object parameter) {
-        this.parameter = parameter.toString();
+        if (parameter != null) this.parameter = parameter.toString();
     }
 
     public String getParameter() {

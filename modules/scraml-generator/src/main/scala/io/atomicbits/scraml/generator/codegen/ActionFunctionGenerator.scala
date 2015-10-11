@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.parser.model.Parameter
 
 /**
  * Created by peter on 28/08/15. 
@@ -40,14 +41,19 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateFormAction(action: RichAction, formPostContentType: FormPostContentType): List[String] = {
 
+    val actualFormParameters: Map[String, Parameter] = formPostContentType.formParameters.map { fps =>
+      val (name, paramList) = fps
+      if (paramList.isEmpty) sys.error(s"Form parameter $name has no valid type definition.")
+      // We still don't understand why the form parameters are represented as a Map[String, List[Parameter]]
+      // instead of just a Map[String, Parameter] in the Java Raml model. Here, we just use the first element
+      // of the parameter list.
+      (name, paramList.head)
+    }
+
     val formParameterMethodParameters =
-      formPostContentType.formParameters.toList.sortBy(_._2.head.required).map { paramPair =>
-        val (name, paramList) = paramPair
-        if (paramList.isEmpty) sys.error(s"Form parameter $name has no valid type definition.")
-        actionCode.expandQueryOrFormParameterAsMethodParameter((name, paramList.head))
-        // We still don't understand why the form parameters are represented as a Map[String, List[Parameter]]
-        // instead of just a Map[String, Parameter] in the Java Raml model. Here, we just use the first element
-        // of the parameter list.
+      actionCode.sortQueryOrFormParameters(actualFormParameters.toList).map { paramPair =>
+        val (name, param) = paramPair
+        actionCode.expandQueryOrFormParameterAsMethodParameter((name, param))
       }
 
     val formParameterMapEntries =
@@ -63,7 +69,8 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         action = action,
         actionParameters = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
-        segmentType = segmentType
+        segmentType = segmentType,
+        responseType = action.selectedResponsetype
       )
 
     List(formAction)
@@ -79,7 +86,8 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         action = action,
         actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference("BodyPart"))),
         multipartParams = Some("parts"),
-        segmentType = multipartResponseType
+        segmentType = multipartResponseType,
+        responseType = action.selectedResponsetype
       )
 
     List(multipartAction)
@@ -95,10 +103,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   def generateQueryAction(action: RichAction): List[String] = {
 
     val queryParameterMethodParameters =
-      action.queryParameters.toList.sortBy { t =>
-        val (field, param) = t
-        (!param.required, !param.repeated)
-      } map actionCode.expandQueryOrFormParameterAsMethodParameter
+      actionCode.sortQueryOrFormParameters(action.queryParameters.toList).map(actionCode.expandQueryOrFormParameterAsMethodParameter)
 
     val queryParameterMapEntries = action.queryParameters.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
 
@@ -109,7 +114,8 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         action = action,
         actionParameters = queryParameterMethodParameters,
         queryParameterMapEntries = queryParameterMapEntries,
-        segmentType = segmentType
+        segmentType = segmentType,
+        responseType = action.selectedResponsetype
       )
 
     List(queryAction)
@@ -125,14 +131,12 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       val actionBodyParameters =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
-      val canonicalResponseTypeOpt = bodyType.map(_.fullyQualifiedName)
-
       actionCode.generateAction(
         action = action,
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
         bodyField = actionBodyParameters.nonEmpty,
-        canonicalResponseTypeOpt = canonicalResponseTypeOpt
+        responseType = action.selectedResponsetype
       )
     }
 

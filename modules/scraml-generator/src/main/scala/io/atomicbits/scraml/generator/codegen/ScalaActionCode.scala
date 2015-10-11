@@ -79,6 +79,22 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
+  def responseClassDefinition(responseType: ResponseType): String = {
+    responseType match {
+      case JsonResponseType(acceptHeader)            => "String"
+      case TypedResponseType(acceptHeader, classPtr) => classPtr.classDefinitionScala
+      case x                                         => "String"
+    }
+  }
+
+
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = {
+    fieldParams.sortBy { t =>
+      val (field, param) = t
+      (!param.required, !param.repeated)
+    }
+  }
+
 
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
@@ -94,7 +110,7 @@ object ScalaActionCode extends ActionCode {
     }
 
     if (parameter.repeated) {
-      s"$nameTermName: List[$typeTypeName]"
+      s"$nameTermName: List[$typeTypeName] = List.empty[$typeTypeName]"
     } else {
       if (parameter.required) {
         s"$nameTermName: $typeTypeName"
@@ -122,7 +138,7 @@ object ScalaActionCode extends ActionCode {
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
                      multipartParams: Option[String] = None,
-                     canonicalResponseTypeOpt: Option[String] = None): String = {
+                     responseType: ResponseType): String = {
 
     val actionType = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase

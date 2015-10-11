@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.dsl.java;
 
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
@@ -29,11 +29,11 @@ public interface Client {
 
     Map<String, String> defaultHeaders();
 
-    <B> Future<Response<String>>  callToStringResponse(RequestBuilder request, B body);
+    <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body);
 
     // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
 
-    <B, R> Future<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalResponseType);
+    <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalResponseType);
 
     void close();
 
