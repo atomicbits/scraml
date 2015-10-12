@@ -156,7 +156,7 @@ object PojoGenerator {
         classRep.fields.filterNot(_.fieldName == skipField)
       } getOrElse classRep.fields
 
-    val sortedFields = selectedFields.sortBy(!_.required)
+    val sortedFields = selectedFields.sortBy(_.fieldName) // In Java Pojo's, we sort by field name!
     val fieldExpressions = sortedFields.map(_.fieldExpressionJava)
 
     val privateFieldExpressions = fieldExpressions.map(fe => s"private $fe;")

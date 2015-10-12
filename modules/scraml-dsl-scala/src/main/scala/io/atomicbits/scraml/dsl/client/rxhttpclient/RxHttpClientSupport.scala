@@ -23,6 +23,7 @@ import be.wegenenverkeer.rxhttp.{RxHttpClient, HttpClientError, HttpServerError}
 import be.wegenenverkeer.rxhttp.scala.ImplicitConversions._
 import io.atomicbits.scraml.dsl._
 import io.atomicbits.scraml.dsl.client.ClientConfig
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,6 +43,8 @@ case class RxHttpClientSupport(protocol: String,
                                prefix: Option[String],
                                config: ClientConfig,
                                defaultHeaders: Map[String, String]) extends Client {
+
+  val LOGGER: Logger = LoggerFactory.getLogger(classOf[RxHttpClientSupport])
 
   val cleanPrefix = prefix.map { pref =>
     val strippedPref = pref.stripPrefix("/").stripSuffix("/")
@@ -149,6 +152,8 @@ case class RxHttpClientSupport(protocol: String,
     val clientRequest = clientWithResourcePathAndMethod.build()
 
     // ToDo: logging s"client request: $clientRequest"
+
+    LOGGER.debug(s"Executing request: $clientRequest")
 
     client.execute[Response[String]](
       clientRequest,

@@ -100,13 +100,13 @@ object JavaActionCode extends ActionCode {
   def canonicalResponseType(responseType: ResponseType): Option[String] = {
     responseType match {
       case JsonResponseType(acceptHeader)            => None
-      case TypedResponseType(acceptHeader, classPtr) => Some(classPtr.fullyQualifiedName)
+      case TypedResponseType(acceptHeader, classPtr) => Some(classPtr.canonicalNameJava)
       case x                                         => None
     }
   }
 
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
 
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {

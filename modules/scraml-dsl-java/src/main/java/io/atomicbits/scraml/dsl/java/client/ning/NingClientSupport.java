@@ -235,11 +235,15 @@ public class NingClientSupport implements Client {
         for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
             if (formParam.getValue().isSingle()) {
                 SingleHttpParam param = (SingleHttpParam) formParam.getValue();
-                ningRb.addFormParam(formParam.getKey(), param.getParameter());
+                if (param.getParameter() != null) {
+                    ningRb.addFormParam(formParam.getKey(), param.getParameter());
+                }
             } else {
                 RepeatedHttpParam params = (RepeatedHttpParam) formParam.getValue();
-                for (String param : params.getParameters()) {
-                    ningRb.addFormParam(formParam.getKey(), param);
+                if (params.getParameters() != null) {
+                    for (String param : params.getParameters()) {
+                        ningRb.addFormParam(formParam.getKey(), param);
+                    }
                 }
             }
         }

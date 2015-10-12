@@ -104,7 +104,56 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       assert(animalClass.withContent("") == expectedAnimalClassRep)
     }
 
-  }
 
+
+    scenario("test generated Java DSL") {
+
+      Given("a RAML specification")
+      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+
+      When("we generate the RAMl specification into class representations")
+      val classReps: Seq[ClassRep] =
+        ScramlGenerator.generateClassReps(
+          ramlApiPath = apiResourceUrl.toString,
+          apiPackageName = "io.atomicbits.scraml",
+          apiClassName = "TestApi",
+          ScramlGenerator.Java
+        )
+
+      Then("we should get valid class representations")
+      val classRepsByFullName: Map[String, ClassRep] = classReps.map(rep => rep.fullyQualifiedName -> rep).toMap
+
+      val classes = List(
+        "io.atomicbits.scraml.TestApi",
+        "io.atomicbits.scraml.rest.RestResource",
+        "io.atomicbits.scraml.rest.user.UserResource",
+        "io.atomicbits.scraml.rest.user.userid.dogs.DogsResource",
+        "io.atomicbits.scraml.rest.user.userid.UseridResource",
+        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV01JsonHeaderSegment",
+        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV10JsonHeaderSegment",
+        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV01JsonHeaderSegment",
+        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV10JsonHeaderSegment",
+        "io.atomicbits.scraml.rest.user.upload.UploadResource",
+        "io.atomicbits.scraml.rest.user.activate.ActivateResource",
+        "io.atomicbits.scraml.rest.animals.AnimalsResource",
+        "io.atomicbits.schema.User",
+        "io.atomicbits.schema.UserDefinitionsAddress",
+        "io.atomicbits.schema.Link",
+        "io.atomicbits.schema.PagedList",
+        "io.atomicbits.schema.Animal",
+        "io.atomicbits.schema.Dog",
+        "io.atomicbits.schema.Cat",
+        "io.atomicbits.schema.Fish",
+        "io.atomicbits.schema.Method"
+      )
+
+      classRepsByFullName.keys.foreach { key =>
+        assert(classes.contains(key), s"Class $key is not generated.")
+      }
+
+
+    }
+
+  }
 }
 

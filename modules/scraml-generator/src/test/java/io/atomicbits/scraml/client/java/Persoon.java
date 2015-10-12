@@ -53,6 +53,11 @@ public class Persoon {
     }
 
     @Override
+    public String toString() {
+        return "first name: " + firstName + ", last name: " + lastName + ", age: " + age;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
