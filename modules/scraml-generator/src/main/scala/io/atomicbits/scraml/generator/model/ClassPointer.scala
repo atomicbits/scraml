@@ -175,6 +175,6 @@ case class TypedClassReference(classReference: ClassReference,
 
   def canonicalNameJava: String =
     if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName
-    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameJava).mkString(",")}>"
+    else s"${classReference.fullyQualifiedName}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameJava).mkString(",")}>"
 
 }

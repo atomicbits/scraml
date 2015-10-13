@@ -28,7 +28,7 @@ import io.atomicbits.scraml.parser.model.Parameter
 case class ActionFunctionGenerator(actionCode: ActionCode) {
 
 
-  def generate(action: RichAction): List[String] = {
+  def generate(action: RichAction)(implicit lang: Language): List[String] = {
 
     action.selectedContentType match {
       case x: FormPostContentType      => generateFormAction(action, x)
@@ -77,7 +77,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   }
 
 
-  def generateMultipartFormPostAction(action: RichAction): List[String] = {
+  def generateMultipartFormPostAction(action: RichAction)(implicit lang: Language): List[String] = {
 
     val multipartResponseType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 

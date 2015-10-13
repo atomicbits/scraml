@@ -21,12 +21,11 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
-import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ResourceClassGenerator, CaseClassGenerator}
+import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ScalaResourceClassGenerator, CaseClassGenerator}
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
-import io.atomicbits.scraml.generator.model.ClassRep
+import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
-import io.atomicbits.scraml.generator.model.RichResource
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
@@ -94,6 +93,9 @@ object ScramlGenerator {
     val raml: Raml = RamlParser.buildRaml(ramlApiPath).asScala
     println(s"RAML model generated")
 
+    // We need an implicit reference to the language we're generating the DSL for.
+    implicit val lang = language
+
     val schemas: Map[String, Schema] = JsonSchemaParser.parse(raml.schemas)
     val schemaLookup: SchemaLookup = SchemaLookupParser.parse(schemas)
     println(s"Schema Lookup generated")
@@ -108,7 +110,7 @@ object ScramlGenerator {
       case Scala =>
         val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
         println(s"Case classes generated")
-        val resources: Seq[ClassRep] = ResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
+        val resources: Seq[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
         caseClasses ++ resources
       case Java  =>
@@ -175,11 +177,5 @@ object ScramlGenerator {
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }
-
-  sealed trait Language
-
-  case object Scala extends Language
-
-  case object Java extends Language
 
 }

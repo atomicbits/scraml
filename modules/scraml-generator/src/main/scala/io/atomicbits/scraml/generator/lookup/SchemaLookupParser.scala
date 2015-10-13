@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.lookup
 
+import io.atomicbits.scraml.generator.model.Language
 import io.atomicbits.scraml.jsonschemaparser.model._
 import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, JsonSchemaParseException, RootId}
 
@@ -27,13 +28,14 @@ import scala.annotation.tailrec
 
 object SchemaLookupParser {
 
-  def parse(schemas: Map[String, Schema]): SchemaLookup = {
+
+  def parse(schemas: Map[String, Schema])(implicit lang: Language): SchemaLookup = {
     schemas
       .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
       .foldLeft(SchemaLookup())(updateLookupTableAndObjectMap)
       .map(updateObjectHierarchy)
       .map(updateTypeDiscriminatorFields)
-      .map(ClassRepAssembler.deduceClassReps)
+      .map(SchemaClassRepAssembler.deduceClassReps)
   }
 
 

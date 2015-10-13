@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.model.{JsonTypeInfo, CustomClassRep, ClassRep, ClassReference}
+import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.jsonschemaparser.RootId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
@@ -43,7 +43,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
           ramlApiPath = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits.scraml",
           apiClassName = "TestApi",
-          ScramlGenerator.Scala
+          Scala
         )
 
       Then("we should get valid class representations")
@@ -117,7 +117,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
           ramlApiPath = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits.scraml",
           apiClassName = "TestApi",
-          ScramlGenerator.Java
+          Java
         )
 
       Then("we should get valid class representations")

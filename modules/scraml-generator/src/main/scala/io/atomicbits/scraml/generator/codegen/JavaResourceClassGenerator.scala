@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, RichResource}
+import io.atomicbits.scraml.generator.model.{Language, ClassReference, ClassRep, RichResource}
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
@@ -30,7 +30,8 @@ object JavaResourceClassGenerator {
 
   def generateResourceClasses(apiClassName: String,
                               apiPackageName: List[String],
-                              resources: List[RichResource]): List[ClassRep] = {
+                              resources: List[RichResource])
+                             (implicit lang: Language): List[ClassRep] = {
 
     def generateClientClass(topLevelResources: List[RichResource]): List[ClassRep] = {
 

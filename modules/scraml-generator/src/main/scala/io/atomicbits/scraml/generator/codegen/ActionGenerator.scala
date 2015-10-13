@@ -40,7 +40,7 @@ case class ActionGenerator(actionCode: ActionCode) {
    *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
    *         don't support those yet, but we will do so in the future).
    */
-  def generateActionFunctions(resource: RichResource): ActionFunctionResult = {
+  def generateActionFunctions(resource: RichResource)(implicit lang: Language): ActionFunctionResult = {
 
     val actions: List[RichAction] = resource.actions
 
@@ -108,7 +108,8 @@ case class ActionGenerator(actionCode: ActionCode) {
 
   private def expandContentTypePath(baseClassRef: ClassReference,
                                     contentType: ContentType,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
+                                   (implicit lang: Language): ActionFunctionResult = {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
@@ -131,7 +132,8 @@ case class ActionGenerator(actionCode: ActionCode) {
 
 
   private def expandAcceptHeaderMap(baseClassRef: ClassReference,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
+                                   (implicit lang: Language): ActionFunctionResult = {
 
     val actionPathExpansion: List[ActionFunctionResult] =
       acceptHeaderMap.toList match {
@@ -162,7 +164,8 @@ case class ActionGenerator(actionCode: ActionCode) {
 
   private def expandResponseTypePath(baseClassRef: ClassReference,
                                      responseType: ResponseType,
-                                     actions: List[RichAction]): ActionFunctionResult = {
+                                     actions: List[RichAction])
+                                    (implicit lang: Language): ActionFunctionResult = {
 
     // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a result type path field that instantiates the above class (into the List[String] result)

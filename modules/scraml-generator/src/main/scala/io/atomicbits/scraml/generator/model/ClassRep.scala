@@ -159,9 +159,12 @@ object EnumValuesClassRep {
 
 object ListClassReference {
 
-  def apply(typeVariable: String): ClassReference = ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+  def apply(typeVariable: String)(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+    case Java => ClassReference(name = "List", packageParts = List("java", "util"), typeVariables = List(typeVariable), library = true)
+  }
 
-  def typed(listType: ClassPointer): TypedClassReference =
+  def typed(listType: ClassPointer)(implicit lang: Language): TypedClassReference =
     TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
 
 }

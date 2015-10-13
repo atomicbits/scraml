@@ -1,7 +1,7 @@
 package io.atomicbits.scraml.generator
 
 
-import io.atomicbits.scraml.generator.model.{JsonTypeInfo, CustomClassRep, ClassRep, ClassReference}
+import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.jsonschemaparser.RootId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
@@ -22,7 +22,7 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
             ramlApiPath = apiResourceUrl.toString,
             apiPackageName = "withenum",
             apiClassName = "EnumApi",
-            ScramlGenerator.Scala
+            Scala
           )
 
         Then("we should get valid class representations")
@@ -39,9 +39,6 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
         classRepsByFullName.keys.foreach { key =>
           assert(classes.contains(key), s"Class $key is not generated.")
         }
-
-       
-
 
         val linkResource = classRepsByFullName("withenum.schema.WithEnum")
         println(linkResource)

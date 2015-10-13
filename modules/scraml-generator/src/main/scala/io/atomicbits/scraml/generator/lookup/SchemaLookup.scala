@@ -68,13 +68,14 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
   }
 
 
-  def rootIdAsTypedClassReference(rootId: RootId): TypedClassReference = schemaAsClassReference(lookupSchema(rootId)).asTypedClassReference
+  def rootIdAsTypedClassReference(rootId: RootId)(implicit lang: Language): TypedClassReference =
+    schemaAsClassReference(lookupSchema(rootId)).asTypedClassReference
 
 
   /**
    * It's the given schema that tells us what kind of class pointer we'll get.
    */
-  def schemaAsClassReference(schema: Schema, types: Map[String, TypedClassReference] = Map.empty): ClassPointer = {
+  def schemaAsClassReference(schema: Schema, types: Map[String, TypedClassReference] = Map.empty)(implicit lang: Language): ClassPointer = {
 
     schema match {
       case objEl: ObjectEl            =>

@@ -59,7 +59,7 @@ class ObjectMapperTest extends FeatureSpec with GivenWhenThen with BeforeAndAfte
       Then("The correct data type is read")
 
       println(s"Persoon list is: $readPerson")
-      assertResult(personList)(readPerson)
+      assertResult(personList)(readPerson) // equals is overriden in Persoon
 
     }
   }

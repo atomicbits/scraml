@@ -35,7 +35,7 @@ case class RichResource(urlSegment: String,
 
 object RichResource {
 
-  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: SchemaLookup): RichResource = {
+  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: SchemaLookup)(implicit lang: Language): RichResource = {
 
     def createRichResource(resource: Resource, actualPackageBasePath: List[String]): RichResource = {
 
