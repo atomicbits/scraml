@@ -90,22 +90,22 @@ object PojoGenerator {
         ${topLevelImports.mkString("", ";\n", ";")};
 
         $jsonTypeInfo
-        ${generatePojoSource(topLevelClass)}
+        ${generatePojoSource(topLevelClass, Some(typeDiscriminator))}
 
      """
 
-    topLevelClass.withContent(topLevelSource) +: childClasses.map(generateNonHierarchicalClassRep(_, classMap))
+    topLevelClass.withContent(topLevelSource) +: childClasses.map(generateNonHierarchicalClassRep(_, classMap, Some(typeDiscriminator)))
   }
 
 
-  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
+  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap, skipField: Option[String] = None): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
 
 
     classRep match {
       case e: EnumValuesClassRep => generateEnumClassRep(e)
-      case _                     => generateNonEnumClassRep(classRep)
+      case _                     => generateNonEnumClassRep(classRep, skipField)
     }
   }
 
@@ -127,7 +127,7 @@ object PojoGenerator {
   }
 
 
-  private def generateNonEnumClassRep(classRep: ClassRep): ClassRep = {
+  private def generateNonEnumClassRep(classRep: ClassRep, skipField: Option[String] = None): ClassRep = {
 
     val imports: Set[String] = collectImports(classRep)
 
@@ -140,8 +140,9 @@ object PojoGenerator {
         ${imports.mkString("", ";\n", ";")}
 
         import java.util.*;
+        import com.fasterxml.jackson.annotation.*;
 
-        ${generatePojoSource(classRep)}
+        ${generatePojoSource(classRep, skipField)}
      """
 
     classRep.withContent(content = source)
@@ -156,22 +157,26 @@ object PojoGenerator {
         classRep.fields.filterNot(_.fieldName == skipField)
       } getOrElse classRep.fields
 
-    val sortedFields = selectedFields.sortBy(_.fieldName) // In Java Pojo's, we sort by field name!
-    val fieldExpressions = sortedFields.map(_.fieldExpressionJava)
+    val sortedFields = selectedFields.sortBy(_.safeFieldNameJava) // In Java Pojo's, we sort by field name!
 
-    val privateFieldExpressions = fieldExpressions.map(fe => s"private $fe;")
+    val privateFieldExpressions = sortedFields.map { field =>
+      s"""
+           @JsonProperty(value = "${field.fieldName}")
+           private ${field.fieldExpressionJava};
+         """
+    }
 
 
     val getterAndSetters = sortedFields map {
-      case ClassReferenceAsFieldRep(fieldName, classPointer, required) =>
-        val fieldNameCap = fieldName.capitalize
+      case fieldRep@ClassReferenceAsFieldRep(fieldName, classPointer, required) =>
+        val fieldNameCap = fieldRep.safeFieldNameJava.capitalize
         s"""
            public ${classPointer.classDefinitionJava} get$fieldNameCap() {
-             return $fieldName;
+             return ${fieldRep.safeFieldNameJava};
            }
 
-           public void set$fieldNameCap(${classPointer.classDefinitionJava} $fieldName) {
-             this.$fieldName = $fieldName;
+           public void set$fieldNameCap(${classPointer.classDefinitionJava} ${fieldRep.safeFieldNameJava}) {
+             this.${fieldRep.safeFieldNameJava} = ${fieldRep.safeFieldNameJava};
            }
 
          """
@@ -180,9 +185,11 @@ object PojoGenerator {
     val extendsClass = classRep.parentClass.map(parentClassRep => s"extends ${parentClassRep.classDefinitionJava}").getOrElse("")
 
     val constructorInitialization = sortedFields map { sf =>
-      val fieldName = sf.fieldName
+      val fieldName = sf.safeFieldNameJava
       s"""this.$fieldName = $fieldName;"""
     }
+
+    val fieldExpressions = sortedFields.map(_.fieldExpressionJava)
 
     val fieldConstructor =
       if (fieldExpressions.nonEmpty)
@@ -192,7 +199,6 @@ object PojoGenerator {
           }
          """
       else ""
-
 
     s"""
       public class ${classRep.classDefinitionJava} $extendsClass {

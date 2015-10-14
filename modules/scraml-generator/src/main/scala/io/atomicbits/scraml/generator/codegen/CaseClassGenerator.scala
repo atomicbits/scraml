@@ -153,6 +153,7 @@ object CaseClassGenerator extends DtoSupport {
 
     val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
 
+    // ToDo: see how we can cleanup these nested if-statements below!
     val formatter = {
       if (classRep.classRef.typeVariables.nonEmpty) {
         val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
