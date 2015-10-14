@@ -151,23 +151,51 @@ object CaseClassGenerator extends DtoSupport {
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
 
+    val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
+
     val formatter = {
       if (classRep.classRef.typeVariables.nonEmpty) {
         val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
-        val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
-        s"""
-          import play.api.libs.functional.syntax._
 
-          implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
-            ( ${formatUnLiftFields.mkString("~\n")}
-            )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
-         """
+        if (formatUnLiftFields.size == 1) {
+          s"""
+            import play.api.libs.functional.syntax._
+
+            implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+              ${formatUnLiftFields.head}.inmap(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+           """
+        } else {
+          s"""
+            import play.api.libs.functional.syntax._
+
+            implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+              ( ${formatUnLiftFields.mkString("~\n")}
+              )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+           """
+        }
       }
       else {
-        s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+        // s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+
+        if (formatUnLiftFields.size == 1) {
+          s"""
+           import play.api.libs.functional.syntax._
+
+           implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
+             ${formatUnLiftFields.head}.inmap(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+        } else {
+          s"""
+           import play.api.libs.functional.syntax._
+
+           implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
+             ( ${formatUnLiftFields.mkString("~\n")}
+             )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+        }
+
       }
     }
-
 
     s"""
       case class ${classRep.classDefinitionScala}(${fieldExpressions.mkString(",")}) $extendsClass
@@ -229,8 +257,8 @@ object CaseClassGenerator extends DtoSupport {
       s"""
          |Classes in a class hierarchy must be defined in the same namespace/package. The classes
          |${hierarchyReps.map(_.name).mkString("\n")}
-          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
-                                                              |${packages.keys.mkString("\n")}
+         |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+         |${packages.keys.mkString("\n")}
        """.stripMargin)
 
     val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
@@ -243,7 +271,7 @@ object CaseClassGenerator extends DtoSupport {
       s"""
         package ${topLevelClass.packageName}
 
-        import play.api.libs.json.{Format, Json}
+        import play.api.libs.json._
         import io.atomicbits.scraml.dsl.json.TypedJson._
 
         ${imports.mkString("\n")}
