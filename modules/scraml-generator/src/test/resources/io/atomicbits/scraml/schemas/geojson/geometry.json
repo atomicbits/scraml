@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://atomicbits.io/schema/geometry.json",
+  "title": "Geo JSON object",
+  "description": "Schema for a Geo JSON object",
+  "type": "object",
+  "typeDiscriminator": "type",
+  "properties": {
+    "crs": {
+      "$ref": "crs.json"
+    },
+    "bbox": {
+      "$ref": "bbox.json"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "Point"
+          ]
+        },
+        "coordinates": {
+          "$ref": "#/definitions/position"
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "MultiPoint"
+          ]
+        },
+        "coordinates": {
+          "$ref": "#/definitions/positionArray"
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "LineString"
+          ]
+        },
+        "coordinates": {
+          "$ref": "#/definitions/lineString"
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "MultiLineString"
+          ]
+        },
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/lineString"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "Polygon"
+          ]
+        },
+        "coordinates": {
+          "$ref": "#/definitions/polygon"
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "MultiPolygon"
+          ]
+        },
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/polygon"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "type": {
+          "enum": [
+            "GeometryCollection"
+          ]
+        },
+        "geometries": {
+          "type": "array",
+          "items": {
+            "$ref": "geometry.json"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "position": {
+      "description": "A single position",
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "positionArray": {
+      "description": "An array of positions",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/position"
+      }
+    },
+    "lineString": {
+      "description": "An array of two or more positions",
+      "$ref": "#/definitions/positionArray"
+    },
+    "linearRing": {
+      "description": "An array of four positions where the first equals the last",
+      "$ref": "#/definitions/positionArray"
+    },
+    "polygon": {
+      "description": "An array of linear rings",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/linearRing"
+      }
+    }
+  }
+}
+

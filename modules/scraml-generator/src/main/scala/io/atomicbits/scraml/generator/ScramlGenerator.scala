@@ -135,10 +135,11 @@ object ScramlGenerator {
 
   private def addLicenseAndFormat(classRep: ClassRep, language: Language): ClassRep = {
     val content = s"$classHeaderLicense\n${classRep.content.get}"
-    val formattedContent = language match {
-      case Scala => ScalaFormatter.format(content, formatSettings)
-      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
-    }
+    val formattedContent =content
+//    language match {
+//      case Scala => ScalaFormatter.format(content, formatSettings)
+//      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
+//    }
     classRep.withContent(formattedContent)
   }
 

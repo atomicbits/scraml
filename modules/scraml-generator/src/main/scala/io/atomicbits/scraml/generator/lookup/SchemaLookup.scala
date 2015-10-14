@@ -51,20 +51,23 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
 
     val absoluteId = SchemaUtil.asAbsoluteId(id)
 
-    @tailrec
     def fragmentSearch(schema: Schema, fragmentPath: List[String]): Schema = {
       fragmentPath match {
         case Nil       => schema
         case fr :: frs =>
           schema match {
-            case fragmentedSchema: FragmentedSchema => fragmentSearch(fragmentedSchema.fragments(fr), frs)
+            case fragmentedSchema: FragmentedSchema =>
+              fragmentedSchema.fragments.get(fr)
+                .map(fragmentSearch(_, frs))
+                .getOrElse(
+                  sys.error(s"Cannot follow fragment $fr into ${fragmentedSchema.id}")
+                )
             case _                                  => sys.error(s"Cannot follow the following fragment path: ${absoluteId.id}")
           }
       }
     }
 
     fragmentSearch(lookupTable(absoluteId.rootPart), absoluteId.fragments)
-
   }
 
 

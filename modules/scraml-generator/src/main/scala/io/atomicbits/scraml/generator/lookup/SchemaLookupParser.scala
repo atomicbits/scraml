@@ -47,13 +47,28 @@ object SchemaLookupParser {
    */
   def expandRelativeToAbsoluteIds(schema: Schema): Schema = {
 
-    def expandWithRootAndPath(schema: Schema, root: RootId, path: List[String] = List.empty): Schema = {
+    /**
+     * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
+     *
+     * @param schema the schema whose ids need expanding
+     * @param root the nearest (original) root id that was found in the enclosing schemas
+     * @param expandingRoot the root that we're expanding (creating) based on the seed (the nearest original root id)
+     * @param path the fragment path we're on
+     * @return a copy of the original schema in which all ids are replaced by root ids
+     */
+    def expandWithRootAndPath(schema: Schema, root: RootId, expandingRoot: RootId, path: List[String] = List.empty): Schema = {
+
+      val currentRoot =
+        schema.id match {
+          case absId: RootId => absId
+          case _             => root
+        }
 
       val expandedId = root.toAbsolute(schema.id, path)
 
       def expandFragment(fragmentPath: (String, Schema)): (String, Schema) = {
         val (pathPart, subSchema) = fragmentPath
-        val updatedSubSchema = expandWithRootAndPath(subSchema, expandedId.rootPart, path :+ pathPart)
+        val updatedSubSchema = expandWithRootAndPath(subSchema, currentRoot, expandedId.rootPart, path :+ pathPart)
         (pathPart, updatedSubSchema)
       }
 
@@ -63,7 +78,7 @@ object SchemaLookupParser {
             objEl.copy(
               fragments = objEl.fragments.map(expandFragment),
               properties = objEl.properties.map(expandFragment),
-              selection = objEl.selection.map(select => select.map(schema => expandWithRootAndPath(schema, root, path)))
+              selection = objEl.selection.map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
           case frag: Fragment       => frag.copy(fragments = frag.fragments.map(expandFragment))
           case arr: ArrayEl         =>
@@ -74,7 +89,7 @@ object SchemaLookupParser {
             )
           case ref: SchemaReference =>
             ref.copy(
-              refersTo = root.toAbsolute(ref.refersTo, path),
+              refersTo = currentRoot.toAbsolute(ref.refersTo, path),
               fragments = ref.fragments.map(expandFragment)
             )
           case _                    => schema
@@ -90,7 +105,7 @@ object SchemaLookupParser {
     }
 
     schema.id match {
-      case rootId: RootId => expandWithRootAndPath(schema, rootId)
+      case rootId: RootId => expandWithRootAndPath(schema, rootId, rootId)
       case _              => throw JsonSchemaParseException("We cannot expand the ids in a schema that has no absolute root id.")
     }
 
@@ -138,11 +153,11 @@ object SchemaLookupParser {
           updateLookupAndObjectMapInternal(schemaLookupWithArrayFragments, ("items", arrayEl.items))
         case ref: SchemaReference =>
           ref.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
-        case fragment: Fragment =>
+        case fragment: Fragment   =>
           fragment.fragments.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
-        case enumEl: EnumEl     =>
+        case enumEl: EnumEl       =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumEl))
-        case _                  => updatedSchemaLookup
+        case _                    => updatedSchemaLookup
       }
 
     }

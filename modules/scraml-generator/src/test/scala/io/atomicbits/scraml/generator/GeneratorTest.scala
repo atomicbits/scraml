@@ -70,7 +70,18 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.Dog",
         "io.atomicbits.schema.Cat",
         "io.atomicbits.schema.Fish",
-        "io.atomicbits.schema.Method"
+        "io.atomicbits.schema.Method",
+        "io.atomicbits.schema.Geometry",
+        "io.atomicbits.schema.Point",
+        "io.atomicbits.schema.LineString",
+        "io.atomicbits.schema.MultiPoint",
+        "io.atomicbits.schema.MultiLineString",
+        "io.atomicbits.schema.Polygon",
+        "io.atomicbits.schema.MultiPolygon",
+        "io.atomicbits.schema.GeometryCollection",
+        "io.atomicbits.schema.Crs",
+        "io.atomicbits.schema.NamedCrsProperty",
+        "io.atomicbits.schema.Bbox"
       )
 
       classRepsByFullName.keys.foreach { key =>
@@ -144,7 +155,18 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.Dog",
         "io.atomicbits.schema.Cat",
         "io.atomicbits.schema.Fish",
-        "io.atomicbits.schema.Method"
+        "io.atomicbits.schema.Method",
+        "io.atomicbits.schema.Geometry",
+        "io.atomicbits.schema.Point",
+        "io.atomicbits.schema.LineString",
+        "io.atomicbits.schema.MultiPoint",
+        "io.atomicbits.schema.MultiLineString",
+        "io.atomicbits.schema.Polygon",
+        "io.atomicbits.schema.MultiPolygon",
+        "io.atomicbits.schema.GeometryCollection",
+        "io.atomicbits.schema.Crs",
+        "io.atomicbits.schema.NamedCrsProperty",
+        "io.atomicbits.schema.Bbox"
       )
 
       classRepsByFullName.keys.foreach { key =>
