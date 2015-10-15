@@ -40,7 +40,7 @@ object SchemaClassRepAssembler {
 
     val withCaseClassFields = addCaseClassFields(withEnumClassReps)
 
-    val withClassHierarchy = addClassHierarchy(withCaseClassFields)
+    val withClassHierarchy = addParentChildRelations(withCaseClassFields)
 
     withClassHierarchy
   }
@@ -116,7 +116,7 @@ object SchemaClassRepAssembler {
   }
 
 
-  def addClassHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
+  def addParentChildRelations(schemaLookup: SchemaLookup): SchemaLookup = {
 
     def updateParentAndChildren(objectEl: ObjectElExt, classRp: ClassRep): Map[AbsoluteId, ClassRep] = {
 

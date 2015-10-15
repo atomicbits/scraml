@@ -45,12 +45,12 @@ object CaseClassGenerator extends DtoSupport {
     val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(classMap))
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
-    classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, classMap)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassRep(_, classMap))
+    classHierarchies.values.toList.flatMap(generateHierarchicalClassSource(_, classMap)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassSource(_, classMap))
   }
 
 
-  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
+  def generateNonHierarchicalClassSource(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
 
@@ -141,10 +141,15 @@ object CaseClassGenerator extends DtoSupport {
                                              parentClassRep: Option[ClassRep] = None,
                                              skipFieldName: Option[String] = None): String = {
 
+    val fieldsWithParentFields =
+      parentClassRep map { parentClass =>
+        classRep.fields ++ parentClass.fields
+      } getOrElse classRep.fields
+
     val selectedFields =
       skipFieldName map { skipField =>
-        classRep.fields.filterNot(_.fieldName == skipField)
-      } getOrElse classRep.fields
+        fieldsWithParentFields.filterNot(_.fieldName == skipField)
+      } getOrElse fieldsWithParentFields
 
     val sortedFields = selectedFields.sortBy(!_.required)
     val fieldExpressions = sortedFields.map(_.fieldExpressionScala)
@@ -212,7 +217,7 @@ object CaseClassGenerator extends DtoSupport {
 
   private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], classMap: ClassMap): String = {
 
-    println(s"Generating case class for: ${topLevelClassRep.classDefinitionScala}")
+    println(s"Generating trait for: ${topLevelClassRep.classDefinitionScala}")
 
     def leafClassRepToWithTypeHintExpression(leafClassRep: ClassRep): String = {
       s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue.get}")"""
@@ -222,10 +227,22 @@ object CaseClassGenerator extends DtoSupport {
       s"extends ${classMap(parentClass).classDefinitionScala}"
     } getOrElse ""
 
+    val fieldDefinitions = topLevelClassRep.fields map { fieldRep =>
+
+      if (fieldRep.required) {
+        s"def ${fieldRep.safeFieldNameScala}: ${fieldRep.classPointer.classDefinitionScala}"
+      } else {
+        s"def ${fieldRep.safeFieldNameScala}: Option[${fieldRep.classPointer.classDefinitionScala}]"
+      }
+
+    }
+
     topLevelClassRep.jsonTypeInfo.collect {
       case jsonTypeInfo if leafClassReps.forall(_.jsonTypeInfo.isDefined) =>
         s"""
           sealed trait ${topLevelClassRep.classDefinitionScala} $extendsClass {
+
+            ${fieldDefinitions.mkString("\n\n")}
 
           }
 
@@ -244,7 +261,7 @@ object CaseClassGenerator extends DtoSupport {
   }
 
 
-  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
+  def generateHierarchicalClassSource(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
 
     val topLevelClass = hierarchyReps.find(_.parentClass.isEmpty).get
     // If there are no intermediary levels between the top level class and the children, then the
@@ -282,6 +299,7 @@ object CaseClassGenerator extends DtoSupport {
         ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
      """
 
+    // The implementations sits completely in the top level class, so the source of the child classes remains empty.
     topLevelClass.withContent(source) +: childClasses
   }
 

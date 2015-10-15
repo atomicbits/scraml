@@ -36,7 +36,7 @@ object PojoGenerator {
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
     classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, classMap)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassRep(_, classMap))
+      classRepsStandalone.map(generateNonHierarchicalClassRep(_, None, classMap))
   }
 
 
@@ -90,22 +90,26 @@ object PojoGenerator {
         ${topLevelImports.mkString("", ";\n", ";")};
 
         $jsonTypeInfo
-        ${generatePojoSource(topLevelClass, Some(typeDiscriminator))}
+        ${generatePojoSource(topLevelClass, None, Some(typeDiscriminator), isAbstract = true)}
 
      """
 
-    topLevelClass.withContent(topLevelSource) +: childClasses.map(generateNonHierarchicalClassRep(_, classMap, Some(typeDiscriminator)))
+    topLevelClass.withContent(topLevelSource) +:
+      childClasses.map(generateNonHierarchicalClassRep(_, Some(topLevelClass), classMap, Some(typeDiscriminator)))
   }
 
 
-  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap, skipField: Option[String] = None): ClassRep = {
+  def generateNonHierarchicalClassRep(classRep: ClassRep,
+                                      parentClassRep: Option[ClassRep] = None,
+                                      classMap: ClassMap,
+                                      skipField: Option[String] = None): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
 
 
     classRep match {
       case e: EnumValuesClassRep => generateEnumClassRep(e)
-      case _                     => generateNonEnumClassRep(classRep, skipField)
+      case _                     => generateNonEnumClassRep(classRep, parentClassRep, skipField)
     }
   }
 
@@ -127,7 +131,7 @@ object PojoGenerator {
   }
 
 
-  private def generateNonEnumClassRep(classRep: ClassRep, skipField: Option[String] = None): ClassRep = {
+  private def generateNonEnumClassRep(classRep: ClassRep, parentClassRep: Option[ClassRep] = None, skipField: Option[String] = None): ClassRep = {
 
     val imports: Set[String] = collectImports(classRep)
 
@@ -142,7 +146,7 @@ object PojoGenerator {
         import java.util.*;
         import com.fasterxml.jackson.annotation.*;
 
-        ${generatePojoSource(classRep, skipField)}
+        ${generatePojoSource(classRep, parentClassRep, skipField)}
      """
 
     classRep.withContent(content = source)
@@ -150,7 +154,8 @@ object PojoGenerator {
 
 
   private def generatePojoSource(classRep: ClassRep,
-                                 skipFieldName: Option[String] = None): String = {
+                                 parentClassRep: Option[ClassRep] = None,
+                                 skipFieldName: Option[String] = None, isAbstract: Boolean = false): String = {
 
     val selectedFields =
       skipFieldName map { skipField =>
@@ -184,12 +189,17 @@ object PojoGenerator {
 
     val extendsClass = classRep.parentClass.map(parentClassRep => s"extends ${parentClassRep.classDefinitionJava}").getOrElse("")
 
-    val constructorInitialization = sortedFields map { sf =>
-      val fieldName = sf.safeFieldNameJava
-      s"""this.$fieldName = $fieldName;"""
+    val fieldsWithParentFields =
+      parentClassRep map { parentClass =>
+        (sortedFields ++ parentClass.fields).sortBy(_.safeFieldNameJava)
+      } getOrElse sortedFields
+
+    val constructorInitialization = fieldsWithParentFields map { sf =>
+      val fieldNameCap = sf.safeFieldNameJava.capitalize
+      s"this.set$fieldNameCap(${sf.safeFieldNameJava});"
     }
 
-    val fieldExpressions = sortedFields.map(_.fieldExpressionJava)
+    val fieldExpressions = fieldsWithParentFields.map(_.fieldExpressionJava)
 
     val fieldConstructor =
       if (fieldExpressions.nonEmpty)
@@ -200,8 +210,10 @@ object PojoGenerator {
          """
       else ""
 
+    val classTypeDef = if (isAbstract) "abstract class" else "class"
+
     s"""
-      public class ${classRep.classDefinitionJava} $extendsClass {
+      public $classTypeDef ${classRep.classDefinitionJava} $extendsClass {
 
         ${privateFieldExpressions.mkString("\n")}
 
