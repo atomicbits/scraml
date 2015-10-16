@@ -51,30 +51,34 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
 
     val absoluteId = SchemaUtil.asAbsoluteId(id)
 
-    @tailrec
     def fragmentSearch(schema: Schema, fragmentPath: List[String]): Schema = {
       fragmentPath match {
         case Nil       => schema
         case fr :: frs =>
           schema match {
-            case fragmentedSchema: FragmentedSchema => fragmentSearch(fragmentedSchema.fragments(fr), frs)
+            case fragmentedSchema: FragmentedSchema =>
+              fragmentedSchema.fragments.get(fr)
+                .map(fragmentSearch(_, frs))
+                .getOrElse(
+                  sys.error(s"Cannot follow fragment $fr into ${fragmentedSchema.id}")
+                )
             case _                                  => sys.error(s"Cannot follow the following fragment path: ${absoluteId.id}")
           }
       }
     }
 
     fragmentSearch(lookupTable(absoluteId.rootPart), absoluteId.fragments)
-
   }
 
 
-  def rootIdAsTypedClassReference(rootId: RootId): TypedClassReference = schemaAsClassReference(lookupSchema(rootId)).asTypedClassReference
+  def rootIdAsTypedClassReference(rootId: RootId)(implicit lang: Language): TypedClassReference =
+    schemaAsClassReference(lookupSchema(rootId)).asTypedClassReference
 
 
   /**
    * It's the given schema that tells us what kind of class pointer we'll get.
    */
-  def schemaAsClassReference(schema: Schema, types: Map[String, TypedClassReference] = Map.empty): ClassPointer = {
+  def schemaAsClassReference(schema: Schema, types: Map[String, TypedClassReference] = Map.empty)(implicit lang: Language): ClassPointer = {
 
     schema match {
       case objEl: ObjectEl            =>

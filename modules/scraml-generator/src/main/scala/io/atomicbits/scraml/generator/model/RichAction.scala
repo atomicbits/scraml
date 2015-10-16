@@ -37,7 +37,7 @@ case class RichAction(actionType: ActionType,
 
 object RichAction {
 
-  def apply(action: Action, schemaLookup: SchemaLookup): RichAction = {
+  def apply(action: Action, schemaLookup: SchemaLookup)(implicit lang: Language): RichAction = {
 
     def mimeTypeToClassRep(mimeType: MimeType): Option[TypedClassReference] = {
       mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsTypedClassReference)

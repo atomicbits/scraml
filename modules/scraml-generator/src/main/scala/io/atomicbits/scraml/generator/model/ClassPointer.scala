@@ -24,7 +24,9 @@ package io.atomicbits.scraml.generator.model
  *
  */
 
-
+/**
+ * Represents an abstract pointer to a class.
+ */
 sealed trait ClassPointer {
 
   def classDefinitionScala: String
@@ -40,20 +42,39 @@ sealed trait ClassPointer {
     }
   }
 
+  def packageName: String
+
+  def fullyQualifiedName: String
+
+  def canonicalNameScala: String
+
+  def canonicalNameJava: String
+
 }
 
 
+/**
+ * A generic class pointer points to a class via a variable, while not knowing what the actual class is it points to.
+ * E.g. "T" in List[T]
+ */
 case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
   def classDefinitionScala: String = typeVariable
 
   def classDefinitionJava: String = typeVariable
 
+  override def fullyQualifiedName: String = sys.error("Cannot specify a fully qualified name of a generic class pointer.")
+
+  override def packageName: String = sys.error("Cannot specify the package name of a generic class pointer.")
+
+  override def canonicalNameJava: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
+
+  override def canonicalNameScala: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
 }
 
 
 /**
- * A unique reference to a class.
+ * A unique reference to a class. E.g. List[T].
  */
 case class ClassReference(name: String,
                           packageParts: List[String] = List.empty,
@@ -94,6 +115,12 @@ case class ClassReference(name: String,
     if (typeVariables.isEmpty) name
     else s"$name<${typeVariables.mkString(",")}>"
 
+
+  def canonicalNameScala: String  = if (packageName.nonEmpty) s"$packageName.$classDefinitionScala" else classDefinitionScala
+
+
+  def canonicalNameJava: String  = if (packageName.nonEmpty) s"$packageName.$classDefinitionJava" else classDefinitionJava
+
 }
 
 
@@ -132,7 +159,22 @@ case class TypedClassReference(classReference: ClassReference,
    */
   def classDefinitionJava: String =
     if (classReference.typeVariables.isEmpty) classReference.name
-    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}>"
+    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionJava).mkString(",")}>"
+
+
+  def packageName: String = classReference.packageName
+
+
+  def fullyQualifiedName: String = classReference.fullyQualifiedName
+
+
+  def canonicalNameScala: String =
+    if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName
+    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameScala).mkString(",")}>"
+
+
+  def canonicalNameJava: String =
+    if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName
+    else s"${classReference.fullyQualifiedName}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameJava).mkString(",")}>"
 
 }
-

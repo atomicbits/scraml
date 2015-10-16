@@ -17,10 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
+import io.atomicbits.scraml.generator.model._
 
 
 /**
@@ -33,7 +33,7 @@ import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
  * http://forums.raml.org/t/how-do-you-reference-another-schema-from-a-schema/485
  *
  */
-object CaseClassGenerator {
+object CaseClassGenerator extends DtoSupport {
 
 
   def generateCaseClasses(classMap: ClassMap): List[ClassRep] = {
@@ -45,46 +45,12 @@ object CaseClassGenerator {
     val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(classMap))
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
-    classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, classMap)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassRep(_, classMap))
+    classHierarchies.values.toList.flatMap(generateHierarchicalClassSource(_, classMap)) :::
+      classRepsStandalone.map(generateNonHierarchicalClassSource(_, classMap))
   }
 
 
-  /**
-   * Collect all type imports for a given class and its generic types, but not its parent or child classes.
-   */
-  def collectImports(collectClassRep: ClassRep): Set[String] = {
-
-    val ownPackage = collectClassRep.packageName
-
-    /**
-     * Collect the type imports for the given class rep.
-     */
-    def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
-
-      def collectFromClassReference(classRef: ClassReference): Set[String] = {
-        if (classRef.packageName != ownPackage && !classRef.predef) collected + s"import ${classRef.fullyQualifiedName}"
-        else Set.empty[String]
-      }
-
-      val collectedFromClassPtr =
-        classPtr match {
-          case typedClassReference: TypedClassReference =>
-            typedClassReference.types.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
-          case classReference: ClassReference           => collectFromClassReference(classReference)
-          case _                                        => Set.empty[String]
-        }
-
-      collectedFromClassPtr ++ collected
-    }
-
-    val ownTypesImport = collectTypeImports(Set.empty, collectClassRep.classRef)
-
-    collectClassRep.fields.map(_.classPointer).foldLeft(ownTypesImport)(collectTypeImports)
-  }
-
-
-  def generateNonHierarchicalClassRep(classRep: ClassRep, classMap: ClassMap): ClassRep = {
+  def generateNonHierarchicalClassSource(classRep: ClassRep, classMap: ClassMap): ClassRep = {
 
     println(s"Generating case class for: ${classRep.classDefinitionScala}")
 
@@ -95,10 +61,9 @@ object CaseClassGenerator {
     }
   }
 
+
   private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
     val imports: Set[String] = collectImports(classRep)
-
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
     def enumValue(value: String): String = {
       s"""
@@ -152,11 +117,10 @@ object CaseClassGenerator {
     classRep.withContent(content = source)
   }
 
+
   private def generateNonEnumClassRep(classRep: ClassRep): ClassRep = {
 
     val imports: Set[String] = collectImports(classRep)
-
-    val fieldExpressions = classRep.fields.sortBy(!_.required).map(_.fieldExpressionScala)
 
     val source =
       s"""
@@ -177,33 +141,102 @@ object CaseClassGenerator {
                                              parentClassRep: Option[ClassRep] = None,
                                              skipFieldName: Option[String] = None): String = {
 
+    val fieldsWithParentFields =
+      parentClassRep map { parentClass =>
+        classRep.fields ++ parentClass.fields
+      } getOrElse classRep.fields
+
     val selectedFields =
       skipFieldName map { skipField =>
-        classRep.fields.filterNot(_.fieldName == skipField)
-      } getOrElse classRep.fields
+        fieldsWithParentFields.filterNot(_.fieldName == skipField)
+      } getOrElse fieldsWithParentFields
 
     val sortedFields = selectedFields.sortBy(!_.required)
     val fieldExpressions = sortedFields.map(_.fieldExpressionScala)
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
 
+    val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
+
+    // ToDo: see how we can cleanup these nested if-statements below!
     val formatter = {
       if (classRep.classRef.typeVariables.nonEmpty) {
+        // "Complex version for typed variables"
+        /**
+         * This is the only way we know that formats typed variables, but it has problems with recursive types,
+         * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types).
+         */
         val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
-        val formatUnLiftFields = sortedFields.map(_.fieldFormatUnliftScala)
-        s"""
-          import play.api.libs.functional.syntax._
 
-          implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
-            ( ${formatUnLiftFields.mkString("~\n")}
-            )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
-         """
+        if (formatUnLiftFields.size == 1) {
+          s"""
+            import play.api.libs.functional.syntax._
+
+            implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+              ${formatUnLiftFields.head}.inmap(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+           """
+        } else {
+          s"""
+            import play.api.libs.functional.syntax._
+
+            implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] =
+              ( ${formatUnLiftFields.mkString("~\n")}
+              )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+           """
+        }
       }
       else {
-        s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+
+        val anyFieldRenamed = sortedFields.exists(field => field.fieldName != field.safeFieldNameScala)
+
+        if (anyFieldRenamed) {
+          // "Complex version"
+          if (formatUnLiftFields.size == 1) {
+            s"""
+           import play.api.libs.functional.syntax._
+
+           implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
+             ${formatUnLiftFields.head}.inmap(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+          } else {
+            s"""
+           import play.api.libs.functional.syntax._
+
+           implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
+             ( ${formatUnLiftFields.mkString("~\n")}
+             )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
+         """
+          }
+        } else {
+          // "Easy version"
+          /**
+           * The reason why we like to use the easy macro version below is that it resolves issues like the recursive
+           * type problem that the elaborate "Complex version" has
+           * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types)
+           * Types like the one below cannot be formatted with the "Complex version":
+           *
+           * > case class Tree(value: String, children: List[Tree])
+           *
+           * To format it with the "Complex version" has to be done as follows:
+           *
+           * > case class Tree(value: String, children: List[Tree])
+           * > object Tree {
+           * >   import play.api.libs.functional.syntax._
+           * >   implicit def jsonFormatter: Format[Tree] = // Json.format[Tree]
+           * >     ((__ \ "value").format[String] ~
+           * >       (__ \ "children").lazyFormat[List[Tree]](Reads.list[Tree](jsonFormatter), Writes.list[Tree](jsonFormatter)))(Tree.apply, unlift(Tree.unapply))
+           * > }
+           *
+           * To format it with the "Easy version" is simply:
+           *
+           * > implicit val jsonFormatter: Format[Tree] = Json.format[Tree]
+           *
+           */
+
+          s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+        }
       }
     }
-
 
     s"""
       case class ${classRep.classDefinitionScala}(${fieldExpressions.mkString(",")}) $extendsClass
@@ -219,7 +252,7 @@ object CaseClassGenerator {
 
   private def generateTraitWithCompanion(topLevelClassRep: ClassRep, leafClassReps: List[ClassRep], classMap: ClassMap): String = {
 
-    println(s"Generating case class for: ${topLevelClassRep.classDefinitionScala}")
+    println(s"Generating trait for: ${topLevelClassRep.classDefinitionScala}")
 
     def leafClassRepToWithTypeHintExpression(leafClassRep: ClassRep): String = {
       s"""${leafClassRep.name}.jsonFormatter.withTypeHint("${leafClassRep.jsonTypeInfo.get.discriminatorValue.get}")"""
@@ -229,10 +262,22 @@ object CaseClassGenerator {
       s"extends ${classMap(parentClass).classDefinitionScala}"
     } getOrElse ""
 
+    val fieldDefinitions = topLevelClassRep.fields map { fieldRep =>
+
+      if (fieldRep.required) {
+        s"def ${fieldRep.safeFieldNameScala}: ${fieldRep.classPointer.classDefinitionScala}"
+      } else {
+        s"def ${fieldRep.safeFieldNameScala}: Option[${fieldRep.classPointer.classDefinitionScala}]"
+      }
+
+    }
+
     topLevelClassRep.jsonTypeInfo.collect {
       case jsonTypeInfo if leafClassReps.forall(_.jsonTypeInfo.isDefined) =>
         s"""
           sealed trait ${topLevelClassRep.classDefinitionScala} $extendsClass {
+
+            ${fieldDefinitions.mkString("\n\n")}
 
           }
 
@@ -251,7 +296,7 @@ object CaseClassGenerator {
   }
 
 
-  def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
+  def generateHierarchicalClassSource(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
 
     val topLevelClass = hierarchyReps.find(_.parentClass.isEmpty).get
     // If there are no intermediary levels between the top level class and the children, then the
@@ -265,8 +310,8 @@ object CaseClassGenerator {
       s"""
          |Classes in a class hierarchy must be defined in the same namespace/package. The classes
          |${hierarchyReps.map(_.name).mkString("\n")}
-          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
-                                                              |${packages.keys.mkString("\n")}
+         |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
+         |${packages.keys.mkString("\n")}
        """.stripMargin)
 
     val imports: Set[String] = hierarchyReps.foldLeft(Set.empty[String]) { (importsAggr, classRp) =>
@@ -279,7 +324,7 @@ object CaseClassGenerator {
       s"""
         package ${topLevelClass.packageName}
 
-        import play.api.libs.json.{Format, Json}
+        import play.api.libs.json._
         import io.atomicbits.scraml.dsl.json.TypedJson._
 
         ${imports.mkString("\n")}
@@ -289,6 +334,7 @@ object CaseClassGenerator {
         ${leafClasses.map(generateCaseClassWithCompanion(_, Some(topLevelClass), Some(typeDiscriminator))).mkString("\n\n")}
      """
 
+    // The implementations sits completely in the top level class, so the source of the child classes remains empty.
     topLevelClass.withContent(source) +: childClasses
   }
 

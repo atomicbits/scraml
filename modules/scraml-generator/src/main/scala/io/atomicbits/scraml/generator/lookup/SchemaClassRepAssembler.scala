@@ -27,12 +27,12 @@ import io.atomicbits.scraml.jsonschemaparser.model._
 /**
  * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
  */
-object ClassRepAssembler {
+object SchemaClassRepAssembler {
 
   type CanonicalMap = Map[AbsoluteId, ClassRep]
 
 
-  def deduceClassReps(schemaLookup: SchemaLookup): SchemaLookup = {
+  def deduceClassReps(schemaLookup: SchemaLookup)(implicit lang: Language): SchemaLookup = {
 
     val withCanonicals = deduceCanonicalNames(schemaLookup)
 
@@ -40,7 +40,7 @@ object ClassRepAssembler {
 
     val withCaseClassFields = addCaseClassFields(withEnumClassReps)
 
-    val withClassHierarchy = addClassHierarchy(withCaseClassFields)
+    val withClassHierarchy = addParentChildRelations(withCaseClassFields)
 
     withClassHierarchy
   }
@@ -75,7 +75,7 @@ object ClassRepAssembler {
   }
 
 
-  def addCaseClassFields(schemaLookup: SchemaLookup): SchemaLookup = {
+  def addCaseClassFields(schemaLookup: SchemaLookup)(implicit lang: Language): SchemaLookup = {
 
     def schemaAsField(property: (String, Schema), requiredFields: List[String]): ClassReferenceAsFieldRep = {
 
@@ -116,7 +116,7 @@ object ClassRepAssembler {
   }
 
 
-  def addClassHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
+  def addParentChildRelations(schemaLookup: SchemaLookup): SchemaLookup = {
 
     def updateParentAndChildren(objectEl: ObjectElExt, classRp: ClassRep): Map[AbsoluteId, ClassRep] = {
 

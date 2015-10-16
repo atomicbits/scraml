@@ -21,9 +21,7 @@ package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.dsl.java.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,29 +29,38 @@ import java.util.Map;
  */
 public class PathparamResource extends ParamSegment<String> {
 
-    public PathparamResource() {
+    public PathparamResource(){
     }
 
     public PathparamResource(String value, RequestBuilder requestBuilder) {
         super(value, requestBuilder);
     }
 
-    public PathparamResource withHeader(String key, String value) {
+    public PathparamResource addHeader(String key, String value) {
         PathparamResource pathparamResource = this.shallowClone();
+        // At this point, the request builder has been initialized, so we can clone it and go on.
         pathparamResource.requestBuilder = pathparamResource.requestBuilder.cloneAddHeader(key, value);
         return pathparamResource;
     }
 
-    public GetSegment<String, String> get(double queryparX, int queryparY, Integer queryParZ) {
+    public TypeMethodSegment<String, Person> get(double queryparX, int queryparY, Integer queryparZ) {
         Map<String, HttpParam> queryParams = new HashMap<String, HttpParam>();
-        queryParams.put("queryParX", new SingleHttpParam(queryparX));
+        queryParams.put("queryparX", new SingleHttpParam(queryparX));
         queryParams.put("queryparY", new SingleHttpParam(queryparY));
-        queryParams.put("queryParZ", new SingleHttpParam(queryParZ));
+        queryParams.put("queryparZ", new SingleHttpParam(queryparZ));
 
-        List<String> validAcceptHeaders = new ArrayList<String>();
-        validAcceptHeaders.add("application/json");
-
-        return new GetSegment<String, String>(queryParams, validAcceptHeaders, this.requestBuilder);
+        return new TypeMethodSegment<String, Person>(
+                Method.GET,
+                null,
+                queryParams,
+                null,
+                null,
+                "application/json",
+                null,
+                this.getRequestBuilder(),
+                null,
+                "io.atomicbits.scraml.client.java.Person"
+        );
     }
 
     private PathparamResource shallowClone() {

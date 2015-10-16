@@ -32,7 +32,7 @@ public class WebserviceResource extends PlainSegment {
     }
 
     public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.requestBuilder());
+        return new PathparamResource(value, this.getRequestBuilder());
     }
 
 }

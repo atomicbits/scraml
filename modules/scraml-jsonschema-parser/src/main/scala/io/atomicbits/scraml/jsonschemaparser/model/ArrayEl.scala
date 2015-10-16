@@ -59,7 +59,7 @@ object ArrayEl {
     ArrayEl(
       id = id,
       items = items.getOrElse(
-        throw JsonSchemaParseException("An array type must have an 'items' field that refers to a JsObject")
+        throw JsonSchemaParseException(s"An array type must have an 'items' field that refers to a JsObject in $schema")
       ),
       required = required.getOrElse(false),
       fragments = fragments

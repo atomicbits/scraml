@@ -17,34 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen.scala
+package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
-import scala.language.postfixOps
-
 /**
  * Created by peter on 23/08/15. 
  */
-object ActionGenerator {
-
-
-  case class ActionFunctionResult(imports: Set[String] = Set.empty,
-                                  fields: List[String] = List.empty,
-                                  classes: List[ClassRep] = List.empty) {
-
-    def ++(other: ActionFunctionResult): ActionFunctionResult =
-      ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
-
-  }
+case class ActionGenerator(actionCode: ActionCode) {
 
 
   /**
    * The reason why we treat all actions of a resource together is that certain paths towards the actual action
    * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
-   * content-type and/or accept header paths. Although such situations may be rare, we want to support them (in the future),
+   * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
    * so we pass all actions of a single resource together.
    *
    * @param resource The resource whose actions are going to be processed (NOT recursively!)
@@ -52,7 +40,7 @@ object ActionGenerator {
    *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
    *         don't support those yet, but we will do so in the future).
    */
-  def generateActionFunctions(resource: RichResource): ActionFunctionResult = {
+  def generateActionFunctions(resource: RichResource)(implicit lang: Language): ActionFunctionResult = {
 
     val actions: List[RichAction] = resource.actions
 
@@ -120,7 +108,8 @@ object ActionGenerator {
 
   private def expandContentTypePath(baseClassRef: ClassReference,
                                     contentType: ContentType,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
+                                   (implicit lang: Language): ActionFunctionResult = {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
@@ -130,19 +119,21 @@ object ActionGenerator {
     val ActionFunctionResult(acceptSegmentMethodImports, acceptSegmentMethods, acceptHeaderClasses) =
       expandAcceptHeaderMap(baseClassRef, acceptHeaderMap)
 
+    // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
     val contentHeaderMethodName = s"_content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
-    val contentHeaderSegment: String = s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+    val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
 
 
   private def expandAcceptHeaderMap(baseClassRef: ClassReference,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]]): ActionFunctionResult = {
+                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
+                                   (implicit lang: Language): ActionFunctionResult = {
 
     val actionPathExpansion: List[ActionFunctionResult] =
       acceptHeaderMap.toList match {
@@ -150,8 +141,8 @@ object ActionGenerator {
           List(
             ActionFunctionResult(
               actions.toSet.flatMap(generateActionImports),
-              actions.flatMap(ActionFunctionGenerator.generate),
-              List.empty
+              actions.flatMap(ActionFunctionGenerator(actionCode).generate),
+              List.empty[ClassRep]
             )
           )
         case ahMap@(ah :: ahs)   =>
@@ -159,8 +150,8 @@ object ActionGenerator {
             case (NoAcceptHeaderSegment, actions)                   =>
               ActionFunctionResult(
                 actions.toSet.flatMap(generateActionImports),
-                actions.flatMap(ActionFunctionGenerator.generate),
-                List.empty
+                actions.flatMap(ActionFunctionGenerator(actionCode).generate),
+                List.empty[ClassRep]
               )
             case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(baseClassRef, responseType, actions)
           }
@@ -173,7 +164,8 @@ object ActionGenerator {
 
   private def expandResponseTypePath(baseClassRef: ClassReference,
                                      responseType: ResponseType,
-                                     actions: List[RichAction]): ActionFunctionResult = {
+                                     actions: List[RichAction])
+                                    (implicit lang: Language): ActionFunctionResult = {
 
     // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a result type path field that instantiates the above class (into the List[String] result)
@@ -181,14 +173,15 @@ object ActionGenerator {
     // into the above class
 
     val actionImports = actions.toSet.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator.generate)
+    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate)
 
+    // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
     val acceptHeaderMethodName = s"_accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
-    val acceptHeaderSegment: String = s"""def $acceptHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+    val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
@@ -229,22 +222,7 @@ object ActionGenerator {
     val classReference = ClassReference(name = className, packageParts = packageParts)
     val classRep = ClassRep(classReference)
 
-    val sourceCode =
-      s"""
-         package ${classReference.packageName}
-
-         import io.atomicbits.scraml.dsl._
-         import play.api.libs.json._
-
-         ${imports.mkString("\n")}
-
-
-         class ${classReference.name}(req: RequestBuilder) extends HeaderSegment(req) {
-
-           ${methods.mkString("\n")}
-
-         }
-       """
+    val sourceCode = actionCode.headerSegmentClass(classReference, imports, methods)
 
     classRep.withContent(sourceCode)
   }

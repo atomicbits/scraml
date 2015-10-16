@@ -49,8 +49,26 @@ object CleanNameUtil {
   }
 
 
-  def cleanMethodName(dirtyName: String): String = {
-    val chars = cleanClassName(dirtyName).toCharArray
+  def cleanMethodName(dirtyName: String): String = camelCased(cleanClassName(dirtyName))
+
+
+  def cleanFieldName(dirtyName: String): String = {
+    // an underscore is allowed!
+    // we don't do capitalization on field names, we keep them as close to the original as possible!
+    val dropCharred =
+      List('-', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
+        cleaned.split(dropChar).filter(_.nonEmpty).mkString("")
+      }
+    // we cannot begin with a number
+    dropCharred.toList.foldLeft(List.empty[Char]) { (collected, nextChar) =>
+      if (collected.isEmpty && (0 to 9).map(_.toString.head).contains(nextChar)) collected
+      else collected :+ nextChar
+    } mkString ""
+  }
+
+
+  def camelCased(dirtyName: String): String = {
+    val chars = dirtyName.toCharArray
     chars(0) = chars(0).toLower
     new String(chars)
   }

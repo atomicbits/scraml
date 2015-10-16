@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.model.ClassRep.ClassMap
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 import scala.annotation.tailrec
 
@@ -123,7 +124,7 @@ case object LongClassReference {
 
 case object JsValueClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "String", packageParts = List("play", "api", "libs", "json"), library = true)
+  def apply(): ClassReference = ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
 
 }
 
@@ -159,9 +160,12 @@ object EnumValuesClassRep {
 
 object ListClassReference {
 
-  def apply(typeVariable: String): ClassReference = ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+  def apply(typeVariable: String)(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+    case Java  => ClassReference(name = "List", packageParts = List("java", "util"), typeVariables = List(typeVariable), library = true)
+  }
 
-  def typed(listType: ClassPointer): TypedClassReference =
+  def typed(listType: ClassPointer)(implicit lang: Language): TypedClassReference =
     TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
 
 }
@@ -190,14 +194,49 @@ case class CustomClassRep(classRef: ClassReference,
 case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointer, required: Boolean) {
 
   def fieldExpressionScala: String =
-    if (required) s"$fieldName: ${classPointer.classDefinitionScala}"
-    else s"$fieldName: Option[${classPointer.classDefinitionScala}] = None"
+    if (required) s"$safeFieldNameScala: ${classPointer.classDefinitionScala}"
+    else s"$safeFieldNameScala: Option[${classPointer.classDefinitionScala}] = None"
 
   def fieldFormatUnliftScala: String =
-    if (required) s""" (__ \\ "$fieldName").format[${classPointer.classDefinitionScala}]"""
-    else s""" (__ \\ "$fieldName").formatNullable[${classPointer.classDefinitionScala}]"""
+    if (required)
+      s""" (__ \\ "$fieldName").format[${classPointer.classDefinitionScala}]"""
+    else
+      s""" (__ \\ "$fieldName").formatNullable[${classPointer.classDefinitionScala}]"""
 
-  def fieldExpressionJava: String = s"${classPointer.classDefinitionJava} $fieldName"
+  lazy val safeFieldNameScala: String = {
+
+    val scalaReservedwords =
+      List("Byte", "Short", "Char", "Int", "Long", "Float", "Double", "Boolean", "Unit", "String", "abstract", "case", "catch", "class",
+        "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new",
+        "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try",
+        "true", "type", "val", "var", "while", "with", "yield")
+
+    val cleanName = CleanNameUtil.cleanFieldName(fieldName)
+
+    scalaReservedwords.foldLeft(cleanName) { (name, resWord) =>
+      if (name == resWord) s"$name$$"
+      else name
+    }
+  }
+
+
+  def fieldExpressionJava: String = s"${classPointer.classDefinitionJava} $safeFieldNameJava"
+
+  lazy val safeFieldNameJava: String = {
+
+    val javaReservedWords =
+      List("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do",
+        "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof",
+        "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static",
+        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while")
+
+    val cleanName = CleanNameUtil.cleanFieldName(fieldName)
+
+    javaReservedWords.foldLeft(cleanName) { (name, resWord) =>
+      if (name == resWord) s"$name$$"
+      else name
+    }
+  }
 
 }
 
