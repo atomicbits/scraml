@@ -33,7 +33,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     action.selectedContentType match {
       case x: FormPostContentType      => generateFormAction(action, x)
       case _: MultipartFormContentType => generateMultipartFormPostAction(action)
-      case x                           => generateAction(action)
+      case x                           => generateBodyAction(action)
     }
 
   }
@@ -96,36 +96,12 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   }
 
 
-  def generateAction(action: RichAction): List[String] = {
-    if (action.queryParameters.isEmpty) generateBodyAction(action)
-    else generateQueryAction(action)
-  }
-
-
-  def generateQueryAction(action: RichAction): List[String] = {
+  def generateBodyAction(action: RichAction): List[String] = {
 
     val queryParameterMethodParameters =
       actionCode.sortQueryOrFormParameters(action.queryParameters.toList).map(actionCode.expandQueryOrFormParameterAsMethodParameter)
 
     val queryParameterMapEntries = action.queryParameters.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
-
-    val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
-
-    val queryAction: String =
-      actionCode.generateAction(
-        action = action,
-        actionParameters = queryParameterMethodParameters,
-        queryParameterMapEntries = queryParameterMapEntries,
-        segmentType = segmentType,
-        contentType = action.selectedContentType,
-        responseType = action.selectedResponsetype
-      )
-
-    List(queryAction)
-  }
-
-
-  def generateBodyAction(action: RichAction): List[String] = {
 
     val segmentTypeFactory = actionCode.createSegmentType(action.selectedResponsetype) _
 
@@ -134,9 +110,12 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       val actionBodyParameters =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
+      val allActionParameters = actionBodyParameters ++ queryParameterMethodParameters
+
       actionCode.generateAction(
         action = action,
-        actionParameters = actionBodyParameters,
+        actionParameters = allActionParameters,
+        queryParameterMapEntries = queryParameterMapEntries,
         segmentType = segmentTypeFactory(bodyType),
         bodyField = actionBodyParameters.nonEmpty,
         contentType = action.selectedContentType,

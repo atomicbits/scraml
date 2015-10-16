@@ -65,7 +65,7 @@ object ScalaActionCode extends ActionCode {
       case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()), Some(JsValueClassReference()))
       case TypedContentType(contentTypeHeader, classRef) =>
         List(Some(StringClassReference()), Some(JsValueClassReference()), Some(classRef))
-      case NoContentType                                 => List(None, Some(StringClassReference()))
+      case NoContentType                                 => List(None)
       case x                                             => List(Some(StringClassReference()))
     }
 

@@ -161,6 +161,11 @@ object CaseClassGenerator extends DtoSupport {
     // ToDo: see how we can cleanup these nested if-statements below!
     val formatter = {
       if (classRep.classRef.typeVariables.nonEmpty) {
+        // "Complex version for typed variables"
+        /**
+         * This is the only way we know that formats typed variables, but it has problems with recursive types,
+         * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types).
+         */
         val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
 
         if (formatUnLiftFields.size == 1) {
@@ -181,25 +186,55 @@ object CaseClassGenerator extends DtoSupport {
         }
       }
       else {
-        // s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
 
-        if (formatUnLiftFields.size == 1) {
-          s"""
+        val anyFieldRenamed = sortedFields.exists(field => field.fieldName != field.safeFieldNameScala)
+
+        if (anyFieldRenamed) {
+          // "Complex version"
+          if (formatUnLiftFields.size == 1) {
+            s"""
            import play.api.libs.functional.syntax._
 
            implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
              ${formatUnLiftFields.head}.inmap(${classRep.name}.apply, unlift(${classRep.name}.unapply))
          """
-        } else {
-          s"""
+          } else {
+            s"""
            import play.api.libs.functional.syntax._
 
            implicit def jsonFormatter: Format[${classRep.classDefinitionScala}] =
              ( ${formatUnLiftFields.mkString("~\n")}
              )(${classRep.name}.apply, unlift(${classRep.name}.unapply))
          """
-        }
+          }
+        } else {
+          // "Easy version"
+          /**
+           * The reason why we like to use the easy macro version below is that it resolves issues like the recursive
+           * type problem that the elaborate "Complex version" has
+           * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types)
+           * Types like the one below cannot be formatted with the "Complex version":
+           *
+           * > case class Tree(value: String, children: List[Tree])
+           *
+           * To format it with the "Complex version" has to be done as follows:
+           *
+           * > case class Tree(value: String, children: List[Tree])
+           * > object Tree {
+           * >   import play.api.libs.functional.syntax._
+           * >   implicit def jsonFormatter: Format[Tree] = // Json.format[Tree]
+           * >     ((__ \ "value").format[String] ~
+           * >       (__ \ "children").lazyFormat[List[Tree]](Reads.list[Tree](jsonFormatter), Writes.list[Tree](jsonFormatter)))(Tree.apply, unlift(Tree.unapply))
+           * > }
+           *
+           * To format it with the "Easy version" is simply:
+           *
+           * > implicit val jsonFormatter: Format[Tree] = Json.format[Tree]
+           *
+           */
 
+          s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
+        }
       }
     }
 
