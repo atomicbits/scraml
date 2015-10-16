@@ -38,6 +38,7 @@ import scala.language.postfixOps
 
 import java.util.{Map => JMap}
 
+import scala.util.Try
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences._
 
@@ -135,11 +136,10 @@ object ScramlGenerator {
 
   private def addLicenseAndFormat(classRep: ClassRep, language: Language): ClassRep = {
     val content = s"$classHeaderLicense\n${classRep.content.get}"
-    val formattedContent =content
-//    language match {
-//      case Scala => ScalaFormatter.format(content, formatSettings)
-//      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
-//    }
+    val formattedContent = language match {
+      case Scala => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
+      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
+    }
     classRep.withContent(formattedContent)
   }
 

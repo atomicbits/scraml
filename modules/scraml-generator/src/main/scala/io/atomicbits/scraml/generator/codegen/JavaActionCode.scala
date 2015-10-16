@@ -106,6 +106,15 @@ object JavaActionCode extends ActionCode {
   }
 
 
+  def canonicalContentType(contentType: ContentType): Option[String] = {
+    contentType match {
+      case JsonContentType(contentTypeHeader)            => None
+      case TypedContentType(contentTypeHeader, classPtr) => Some(classPtr.canonicalNameJava)
+      case x                                             => None
+    }
+  }
+
+
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
 
@@ -146,6 +155,7 @@ object JavaActionCode extends ActionCode {
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
                      multipartParams: Option[String] = None,
+                     contentType: ContentType,
                      responseType: ResponseType): String = {
 
     val actionType = action.actionType
@@ -157,7 +167,8 @@ object JavaActionCode extends ActionCode {
 
     val (queryParamMap, queryParams) =
       if (queryParameterMapEntries.nonEmpty) {
-        (s"""
+        (
+          s"""
            Map<String, HttpParam> params = new HashMap<String, HttpParam>();
            ${queryParameterMapEntries.mkString("\n")}
          """,
@@ -169,7 +180,8 @@ object JavaActionCode extends ActionCode {
 
     val (formParamMap, formParams) =
       if (formParameterMapEntries.nonEmpty) {
-        (s"""
+        (
+          s"""
            Map<String, HttpParam> params = new HashMap<String, HttpParam>();
            ${formParameterMapEntries.mkString("\n")}
          """,
@@ -189,6 +201,8 @@ object JavaActionCode extends ActionCode {
 
     val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
 
+    val canonicalContentT = canonicalContentType(contentType).map(quoteString).getOrElse("null")
+
     val callResponseType = responseClassDefinition(responseType)
 
     s"""
@@ -207,6 +221,7 @@ object JavaActionCode extends ActionCode {
            $acceptHeader,
            $contentHeader,
            this.getRequestBuilder(),
+           $canonicalContentT,
            $canonicalResponseT
          ).call();
        }

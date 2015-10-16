@@ -173,12 +173,12 @@ public class RequestBuilder {
         return clone;
     }
 
-    public <B> CompletableFuture<Response<String>> callToStringResponse(B body) {
-        return client.callToStringResponse(this, body);
+    public <B> CompletableFuture<Response<String>> callToStringResponse(B body, String canonicalContentType) {
+        return client.callToStringResponse(this, body, canonicalContentType);
     }
 
-    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(B body, String canonicalResponseType) {
-        return client.callToTypeResponse(this, body, canonicalResponseType);
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(B body, String canonicalContentType, String canonicalResponseType) {
+        return client.callToTypeResponse(this, body, canonicalContentType, canonicalResponseType);
     }
 
     public RequestBuilder shallowClone() {

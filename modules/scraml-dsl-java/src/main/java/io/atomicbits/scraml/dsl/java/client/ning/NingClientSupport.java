@@ -19,8 +19,10 @@
 
 package io.atomicbits.scraml.dsl.java.client.ning;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -170,19 +172,20 @@ public class NingClientSupport implements Client {
 
 
     @Override
-    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body) {
-        return callToTransformedResponse(requestBuilder, body, (result) -> result);
+    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body, String canonicalContentType) {
+        return callToTransformedResponse(requestBuilder, body, canonicalContentType, (result) -> result);
     }
 
 
     @Override
-    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalResponseType) {
-        return callToTransformedResponse(requestBuilder, body, (result) -> parseBodyToObject(canonicalResponseType, result));
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalContentType, String canonicalResponseType) {
+        return callToTransformedResponse(requestBuilder, body, canonicalContentType, (result) -> parseBodyToObject(canonicalResponseType, result));
     }
 
 
     protected <B, R> CompletableFuture<Response<R>> callToTransformedResponse(RequestBuilder requestBuilder,
                                                                               B body,
+                                                                              String canonicalContentType,
                                                                               Function<String, R> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
@@ -217,19 +220,7 @@ public class NingClientSupport implements Client {
         }
 
         if (body != null) {
-            StringWriter writer = new StringWriter();
-            try {
-                objectMapper.writeValue(writer, body);
-            } catch (IOException e) {
-                throw new RuntimeException("JSON serialization of a " + body.getClass().getSimpleName() + " instance failed: " + body, e);
-            }
-            writer.flush();
-            ningRb.setBody(writer.toString());
-            try {
-                writer.close();
-            } catch (IOException ignored) {
-                // ignored, shouldn't happen on a StringWriter
-            }
+            ningRb.setBody(writeBodyToString(canonicalContentType, body));
         }
 
         for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
@@ -297,11 +288,10 @@ public class NingClientSupport implements Client {
         }
 
         Request ningRequest = ningRb.build();
-        printRequest(ningRequest);
         // CompletableFuture is present in the JDK since 1.8
         final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
 
-        LOGGER.debug("Executing request: " + ningRequest);
+        LOGGER.debug("Executing request: " + ningRequest + "\nWith body: " + ningRequest.getStringData());
 
         getClient().executeRequest(ningRequest, new AsyncCompletionHandler<String>() {
 
@@ -344,22 +334,47 @@ public class NingClientSupport implements Client {
     }
 
 
-    //    private <R> R parseBodyToObject(Class<R> clazz, String body) {
+    /**
+     * Write the body to a JSON string.
+     * <p>
+     * The main reason why we need the canonical form of the request type to serialize the body is in cases where
+     * Java type erasure hides access to the Json annotations of our transfer objects.
+     * <p>
+     * Examples of such type erasure are cases where types in a hierarchy are put inside a java.util.List<B>. Then, the type of
+     * <B> is hidden in java.util.List<?>, which hides the @JsonTypeInfo annotations for the objectmapper so that all type info
+     * disappears form the resulting JSON objects.
+     *
+     * @param canonicalRequestType The canonical form of the request body.
+     * @param body                 The actual body.
+     * @param <B>                  The type of the body.
+     * @return The JSON representation of the body as a string.
+     */
+    private <B> String writeBodyToString(String canonicalRequestType, B body) {
+        if (canonicalRequestType != null) {
+            JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
+            ObjectWriter writer = this.objectMapper.writerFor(javaType);
+            try {
+                return writer.writeValueAsString(body);
+            } catch (IOException e) {
+                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
+            }
+        } else {
+            try {
+                return this.objectMapper.writeValueAsString(body);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
+            }
+        }
+    }
+
+
     private <R> R parseBodyToObject(String canonicalResponseType, String body) {
-        //        JavaType javaType = TypeFactory.defaultInstance().constructType(clazz);
         JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);
         try {
             return this.objectMapper.readValue(body, javaType);
         } catch (IOException e) {
             throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
         }
-    }
-
-
-    private String printRequest(Request ningRequest) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ningRequest.getMethod()).append(" ").append(ningRequest.getUri());
-        return sb.toString();
     }
 
 }

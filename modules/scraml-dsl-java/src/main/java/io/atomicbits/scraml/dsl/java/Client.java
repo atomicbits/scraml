@@ -29,11 +29,11 @@ public interface Client {
 
     Map<String, String> defaultHeaders();
 
-    <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body);
+    <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body, String canonicalContentType);
 
     // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
 
-    <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalResponseType);
+    <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalContentType, String canonicalResponseType);
 
     void close();
 

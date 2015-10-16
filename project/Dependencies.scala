@@ -42,7 +42,7 @@ trait Dependencies { this:Build =>
   // test dependencies
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.57"     % "test"
-
+  val junit               =   "junit"                       %     "junit"               % "4.12"     % "test"
 
 
   // inclusion of the above dependencies in the modules
@@ -50,6 +50,7 @@ trait Dependencies { this:Build =>
     rxHttpClientScala,
     playJson,
     wiremock,
+    junit,
     scalariform
   )
 

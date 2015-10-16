@@ -70,6 +70,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         actionParameters = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
         segmentType = segmentType,
+        contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
 
@@ -87,6 +88,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference("BodyPart"))),
         multipartParams = Some("parts"),
         segmentType = multipartResponseType,
+        contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
 
@@ -115,6 +117,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         actionParameters = queryParameterMethodParameters,
         queryParameterMapEntries = queryParameterMapEntries,
         segmentType = segmentType,
+        contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
 
@@ -136,6 +139,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         actionParameters = actionBodyParameters,
         segmentType = segmentTypeFactory(bodyType),
         bodyField = actionBodyParameters.nonEmpty,
+        contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
     }

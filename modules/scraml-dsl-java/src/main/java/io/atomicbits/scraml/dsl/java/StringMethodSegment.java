@@ -28,6 +28,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class StringMethodSegment<B> extends MethodSegment<B, String> {
 
+    private String canonicalContentType;
+
     public StringMethodSegment(Method method,
                                B theBody,
                                Map<String, HttpParam> queryParams,
@@ -36,14 +38,16 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
                                String expectedAcceptHeader,
                                String expectedContentTypeHeader,
                                RequestBuilder req,
+                               String canonicalContentType,
                                String canonicalResponseType) {
         super(method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req);
+
+        this.canonicalContentType = canonicalContentType;
     }
 
 
     public CompletableFuture<Response<String>> call() {
-        return getRequestBuilder().callToStringResponse(getBody());
+        return getRequestBuilder().callToStringResponse(getBody(), canonicalContentType);
     }
-
 
 }

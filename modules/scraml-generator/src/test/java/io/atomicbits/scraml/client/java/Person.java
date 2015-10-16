@@ -22,7 +22,7 @@ package io.atomicbits.scraml.client.java;
 /**
  * Created by peter on 23/09/15.
  */
-public class Persoon {
+public class Person {
 
     private String firstName;
     private String lastName;
@@ -62,11 +62,11 @@ public class Persoon {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Persoon persoon = (Persoon) o;
+        Person person = (Person) o;
 
-        if (firstName != null ? !firstName.equals(persoon.firstName) : persoon.firstName != null) return false;
-        if (lastName != null ? !lastName.equals(persoon.lastName) : persoon.lastName != null) return false;
-        return !(age != null ? !age.equals(persoon.age) : persoon.age != null);
+        if (firstName != null ? !firstName.equals(person.firstName) : person.firstName != null) return false;
+        if (lastName != null ? !lastName.equals(person.lastName) : person.lastName != null) return false;
+        return !(age != null ? !age.equals(person.age) : person.age != null);
 
     }
 

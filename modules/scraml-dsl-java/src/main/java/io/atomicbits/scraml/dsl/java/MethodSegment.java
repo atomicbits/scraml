@@ -61,12 +61,12 @@ public abstract class MethodSegment<B, R> extends Segment {
     }
 
 
-    protected Future<Response<String>> callToStringResponse() {
-        return requestBuilder.callToStringResponse(getBody());
+    protected Future<Response<String>> callToStringResponse(String canonicalRequestType) {
+        return requestBuilder.callToStringResponse(getBody(), canonicalRequestType);
     }
 
-    protected Future<Response<R>> callToTypeResponse(String canonicalResponseType) {
-        return requestBuilder.callToTypeResponse(getBody(), canonicalResponseType);
+    protected Future<Response<R>> callToTypeResponse(String canonicalRequestType, String canonicalResponseType) {
+        return requestBuilder.callToTypeResponse(getBody(), canonicalRequestType, canonicalResponseType);
     }
 
     protected B getBody() {

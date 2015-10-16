@@ -21,9 +21,7 @@ package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.dsl.java.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,13 +43,13 @@ public class PathparamResource extends ParamSegment<String> {
         return pathparamResource;
     }
 
-    public TypeMethodSegment<String, Persoon> get(double queryparX, int queryparY, Integer queryparZ) {
+    public TypeMethodSegment<String, Person> get(double queryparX, int queryparY, Integer queryparZ) {
         Map<String, HttpParam> queryParams = new HashMap<String, HttpParam>();
         queryParams.put("queryparX", new SingleHttpParam(queryparX));
         queryParams.put("queryparY", new SingleHttpParam(queryparY));
         queryParams.put("queryparZ", new SingleHttpParam(queryparZ));
 
-        return new TypeMethodSegment<String, Persoon>(
+        return new TypeMethodSegment<String, Person>(
                 Method.GET,
                 null,
                 queryParams,
@@ -60,7 +58,8 @@ public class PathparamResource extends ParamSegment<String> {
                 "application/json",
                 null,
                 this.getRequestBuilder(),
-                "io.atomicbits.scraml.client.java.Persoon"
+                null,
+                "io.atomicbits.scraml.client.java.Person"
         );
     }
 

@@ -83,19 +83,19 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
       val request1 = resource.pathparam("foo").addHeader("Cookie", "mjam")
       val request2 = resource.pathparam("bar").addHeader("Cookie", "bar")
 
-      val result1: Future[Response[Persoon]] = request1.get(30.0, 5, 6).call()
+      val result1: Future[Response[Person]] = request1.get(30.0, 5, 6).call()
       val response1 = result1.get(10, TimeUnit.SECONDS)
 
-      val persoon1 = new Persoon()
+      val persoon1 = new Person()
       persoon1.setFirstName("John")
       persoon1.setLastName("Doe")
       persoon1.setAge(21L)
       assertResult(persoon1)(response1.getBody)
 
-      val result2: Future[Response[Persoon]] = request2.get(21.5, 55, 66).call()
+      val result2: Future[Response[Person]] = request2.get(21.5, 55, 66).call()
       val response2 = result2.get(10, TimeUnit.SECONDS)
 
-      val persoon2 = new Persoon()
+      val persoon2 = new Person()
       persoon2.setFirstName("Ziva")
       persoon2.setLastName("Zoef")
       persoon2.setAge(2L)

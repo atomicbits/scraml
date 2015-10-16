@@ -55,6 +55,7 @@ trait ActionCode {
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
                      multipartParams: Option[String] = None,
+                     contentType: ContentType,
                      responseType: ResponseType): String
 
 }
