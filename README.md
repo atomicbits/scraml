@@ -1,6 +1,9 @@
 Type safe Java and Scala RAML client generator
 ==============================================
 
+[![Build Status](https://travis-ci.org/atomicbits/scraml.svg?branch=develop)](https://travis-ci.org/atomicbits/scraml)
+
+
 This is a Java and Scala client library generator based on RAML definition files. This version supports DSL code generation with automated JSON to case class transformations. Enable code generation with scraml in your project with the scraml-sbt-plugin. Have a look at the scraml-test-scala project for an example of how to do it (look at plugin.sbt and build.sbt). The Java version is currently under development and a maven plugin will soon be available. 
 
 The code contains the following modules:
