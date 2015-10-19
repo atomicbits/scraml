@@ -118,7 +118,7 @@ object JavaActionCode extends ActionCode {
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val nameTermName = queryParameterName

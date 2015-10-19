@@ -42,7 +42,7 @@ trait ActionCode {
 
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
 

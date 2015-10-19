@@ -98,14 +98,22 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateBodyAction(action: RichAction): List[String] = {
 
+    /**
+     * In scala, we can get compiler issues with default values on overloaded action methods. That's why we don't add
+     * a default value in such cases. We do this any time when there are overloaded action methods, i.e. when there
+     * are multiple body types.
+     */
+    val bodyTypes = actionCode.bodyTypes(action)
+    val noDefault = bodyTypes.size > 1
     val queryParameterMethodParameters =
-      actionCode.sortQueryOrFormParameters(action.queryParameters.toList).map(actionCode.expandQueryOrFormParameterAsMethodParameter)
+      actionCode.sortQueryOrFormParameters(action.queryParameters.toList)
+        .map(actionCode.expandQueryOrFormParameterAsMethodParameter(_, noDefault))
 
     val queryParameterMapEntries = action.queryParameters.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
 
     val segmentTypeFactory = actionCode.createSegmentType(action.selectedResponsetype) _
 
-    actionCode.bodyTypes(action).map { bodyType =>
+    bodyTypes.map { bodyType =>
 
       val actionBodyParameters =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)

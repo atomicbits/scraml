@@ -96,7 +96,7 @@ object ScalaActionCode extends ActionCode {
   }
 
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter)): String = {
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val nameTermName = queryParameterName
@@ -110,12 +110,14 @@ object ScalaActionCode extends ActionCode {
     }
 
     if (parameter.repeated) {
-      s"$nameTermName: List[$typeTypeName] = List.empty[$typeTypeName]"
+      val defaultValue = if (noDefault) "" else s"= List.empty[$typeTypeName]"
+      s"$nameTermName: List[$typeTypeName] $defaultValue"
     } else {
       if (parameter.required) {
         s"$nameTermName: $typeTypeName"
       } else {
-        s"$nameTermName: Option[$typeTypeName] = None"
+        val defaultValue = if (noDefault) "" else s"= None"
+        s"$nameTermName: Option[$typeTypeName] $defaultValue"
       }
     }
   }
