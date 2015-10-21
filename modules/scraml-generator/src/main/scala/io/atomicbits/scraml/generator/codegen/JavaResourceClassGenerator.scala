@@ -217,9 +217,9 @@ object JavaResourceClassGenerator {
     def generateParameterType(parameterType: ParameterType): String = {
       parameterType match {
         case StringType  => "String"
-        case IntegerType => "long"
-        case NumberType  => "double"
-        case BooleanType => "boolean"
+        case IntegerType => "Long" // NOT long
+        case NumberType  => "Double" // NOT double
+        case BooleanType => "Boolean" // NOT boolean
         case x           => sys.error(s"Unknown URL parameter type $x")
       }
     }
