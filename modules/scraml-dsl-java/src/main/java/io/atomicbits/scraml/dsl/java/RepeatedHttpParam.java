@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.dsl.java;
 
-import sun.security.jgss.HttpCaller;
-
 import java.util.ArrayList;
 import java.util.List;
 

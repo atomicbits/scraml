@@ -71,9 +71,9 @@ object ScalaResourceClassGenerator {
                              defaultHeaders: Map[String, String]) {
 
            import io.atomicbits.scraml.dsl._
-           import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClientSupport
+           import io.atomicbits.scraml.dsl.client.ning.NingClientSupport
 
-           private val requestBuilder = RequestBuilder(new RxHttpClientSupport(protocol, host, port, prefix, config, defaultHeaders))
+           private val requestBuilder = RequestBuilder(new NingClientSupport(protocol, host, port, prefix, config, defaultHeaders))
 
            ${dslFields.mkString("\n\n")}
 

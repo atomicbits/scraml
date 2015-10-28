@@ -18,3 +18,6 @@ The scraml code contains the following modules:
 
 
 
+## Copyright and License
+Copyright 2015 Atomic BITS b.v.b.a. Code released under the the AGPLv3 license.
+

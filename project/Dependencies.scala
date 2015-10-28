@@ -28,9 +28,10 @@ trait Dependencies { this:Build =>
   val jacksonAnnotations  =   "com.fasterxml.jackson.core"  %     "jackson-annotations" % "2.5.4"
   val jacksonCore         =   "com.fasterxml.jackson.core"  %     "jackson-core"        % "2.5.4"
   val jacksonDatabind     =   "com.fasterxml.jackson.core"  %     "jackson-databind"    % "2.5.4"
-  val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
+  // val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
 
-  val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
+  // val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
+  val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.0"
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
 
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
@@ -47,7 +48,7 @@ trait Dependencies { this:Build =>
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    rxHttpClientScala,
+    asyncClient,
     playJson,
     wiremock,
     junit,
@@ -55,7 +56,7 @@ trait Dependencies { this:Build =>
   )
 
   val scramlGeneratorTestDefDeps = Seq (
-    rxHttpClientScala,
+    asyncClient,
     playJson,
     wiremock
   )
@@ -72,7 +73,7 @@ trait Dependencies { this:Build =>
   val scramlDslDepsScala = Seq(
     slf4j,
     playJson,
-    rxHttpClientScala
+    asyncClient
   )
 
   val scramlDslDepsJava = Seq(
@@ -80,7 +81,7 @@ trait Dependencies { this:Build =>
     jacksonCore,
     jacksonAnnotations,
     jacksonDatabind,
-    rxHttpClientJava
+    asyncClient
   )
 
   val mainDeps = Seq(

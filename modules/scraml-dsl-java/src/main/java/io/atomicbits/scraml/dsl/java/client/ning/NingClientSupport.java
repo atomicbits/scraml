@@ -20,9 +20,7 @@
 package io.atomicbits.scraml.dsl.java.client.ning;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -101,6 +99,8 @@ public class NingClientSupport implements Client {
         } else {
             this.defaultHeaders = new HashMap<>();
         }
+
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
         this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());

@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.dsl.client
 
+import java.nio.charset.Charset
+
 import com.ning.http.client.AsyncHttpClientConfigDefaults
 
 /**
@@ -39,4 +41,5 @@ case class ClientConfig(requestTimeout: Int = AsyncHttpClientConfigDefaults.defa
                         followRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultFollowRedirect(),
                         maxRedirects: Int = AsyncHttpClientConfigDefaults.defaultMaxRedirects(),
                         removeQueryParamOnRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultRemoveQueryParamOnRedirect(),
-                        strict302Handling: Boolean = AsyncHttpClientConfigDefaults.defaultStrict302Handling())
+                        strict302Handling: Boolean = AsyncHttpClientConfigDefaults.defaultStrict302Handling(),
+                        responseCharset: Charset = Charset.defaultCharset)

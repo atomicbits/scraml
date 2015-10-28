@@ -42,15 +42,16 @@ case class XoClient(host: String,
                     defaultHeaders: Map[String, String] = Map()) {
 
   import io.atomicbits.scraml.dsl._
-  import io.atomicbits.scraml.dsl.client.rxhttpclient.RxHttpClientSupport
+  import io.atomicbits.scraml.dsl.client.ning.NingClientSupport
 
-  private val requestBuilder = RequestBuilder(new RxHttpClientSupport(protocol, host, port, prefix, config, defaultHeaders))
+  private val requestBuilder = RequestBuilder(new NingClientSupport(protocol, host, port, prefix, config, defaultHeaders))
 
   def close() = requestBuilder.client.close()
 
   def rest = new RestResource(requestBuilder.withAddedPathSegment("rest"))
 
 }
+
 
 object XoClient {
 
