@@ -27,7 +27,7 @@ trait BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-  val Version = "0.3.5" + snapshotSuffix
+  val Version = "0.3.6" + snapshotSuffix
 
   val ScalaVersion = "2.10.5"
 

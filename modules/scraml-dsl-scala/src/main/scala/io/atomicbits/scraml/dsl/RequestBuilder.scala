@@ -33,17 +33,17 @@ case class RequestBuilder(client: Client,
                           queryParameters: Map[String, HttpParam] = Map.empty,
                           formParameters: Map[String, HttpParam] = Map.empty,
                           multipartParams: List[BodyPart] = List.empty,
-                          headers: Map[String, String] = Map()) {
+                          headers: HeaderMap = HeaderMap()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
 
   def defaultHeaders = client.defaultHeaders
 
-  def allHeaders = defaultHeaders ++ headers
+  def allHeaders = HeaderMap() ++ (defaultHeaders.toList:_*) ++ headers // headers last to overwrite defaults!
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 
-  def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").exists(_ == "multipart/form-data")
+  def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").exists(_.contains("multipart/form-data"))
 
   def callToStringResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] =
     client.callToStringResponse(this, body)
@@ -57,7 +57,7 @@ case class RequestBuilder(client: Client,
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 
   def withAddedHeaders(additionalHeaders: (String, String)*): RequestBuilder = {
-    this.copy(headers = this.headers ++ additionalHeaders)
+    this.copy(headers = this.headers ++ (additionalHeaders:_*))
   }
 
   def withAddedPathSegment(additionalPathSegment: Any): RequestBuilder = {

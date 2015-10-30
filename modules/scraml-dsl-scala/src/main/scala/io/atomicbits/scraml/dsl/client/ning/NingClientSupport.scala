@@ -112,10 +112,11 @@ case class NingClientSupport(protocol: String,
       ningRb
     }
 
-    (defaultHeaders ++ requestBuilder.headers).foreach {
-      element =>
-        val (key, value) = element
+    (HeaderMap() ++ (defaultHeaders.toSeq:_*) ++ requestBuilder.headers).foreach { element =>
+      val (key, values) = element
+      values.foreach { value =>
         ningBuilder.addHeader(key, value)
+      }
     }
 
     requestBuilder.queryParameters.foreach {
