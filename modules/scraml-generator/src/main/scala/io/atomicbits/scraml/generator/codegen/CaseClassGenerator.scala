@@ -151,7 +151,7 @@ object CaseClassGenerator extends DtoSupport {
         fieldsWithParentFields.filterNot(_.fieldName == skipField)
       } getOrElse fieldsWithParentFields
 
-    val sortedFields = selectedFields.sortBy(!_.required)
+    val sortedFields = selectedFields.sortBy(field => (!field.required, field.fieldName))
     val fieldExpressions = sortedFields.map(_.fieldExpressionScala)
 
     val extendsClass = parentClassRep.map(parentClassRep => s"extends ${parentClassRep.classDefinitionScala}").getOrElse("")
