@@ -47,7 +47,15 @@ with Dependencies {
     base = file("modules/scraml-dsl-java"),
     // This is a pure Java project without scala versioning,
     // see http://stackoverflow.com/questions/8296280/use-sbt-to-build-pure-java-project
-    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps) ++ Seq(crossPaths := false, autoScalaLibrary := false)
+    // We also override the crossScalaVersions to avoid publish overwrite problems during release publishing, and because that
+    // doesn't work (although I think it should), we also override the publishArtifact property.
+    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps) ++
+      Seq(
+        crossPaths := false,
+        autoScalaLibrary := false,
+        publishArtifact <<= scalaVersion { sv => sv != ScalaVersion }
+        // , crossScalaVersions := Seq(ScalaVersion)
+      )
   )
 
   val scramlGenerator = Project(
