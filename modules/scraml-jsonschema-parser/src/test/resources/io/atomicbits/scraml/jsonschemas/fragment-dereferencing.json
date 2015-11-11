@@ -1,0 +1,25 @@
+{
+  "foo": {
+    "anArray": [
+      {"prop": 44}
+    ],
+    "another prop": {
+      "baz": "A string"
+    }
+  }
+}
+
+//The following fragment identifiers would be resolved:
+
+//fragment identifier      resolution
+//-------------------      ----------
+//#                        self, the root of the resource itself
+//#/foo                    the object referred to by the foo property
+//#/foo/another%20prop     the object referred to by the "another prop"
+//property of the object referred to by the
+//"foo" property
+//#/foo/another%20prop/baz the string referred to by the value of "baz"
+//property of the "another prop" property of
+//the object referred to by the "foo" property
+//#/foo/anArray/0          the first object in the "anArray" array
+

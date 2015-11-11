@@ -1,5 +1,21 @@
+/*
+ * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Affero General Public License
+ * (AGPL) version 3.0 which accompanies this distribution, and is available in
+ * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * Contributors:
+ *     Peter Rigole
+ *
+ */
 
-//import play.PlayScala
 import sbt.Keys._
 import sbt._
 
@@ -8,44 +24,53 @@ object ApplicationBuild extends Build
 with BuildSettings
 with Dependencies {
 
-  val scramlgenParser = Project(
-    id = "scramlgen-parser",
-    base = file("modules/scramlgen-parser"),
-    settings = projectSettings(dependencies = scramlgenParserDeps ++ testDeps)
-  ) settings (resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository")
+  val scramlParser = Project(
+    id = "scraml-parser",
+    base = file("modules/scraml-parser"),
+    settings = buildSettings(dependencies = scramlParserDeps ++ testDeps)
+  )
 
-  val scramlgen = Project(
-    id = "scramlgen",
-    base = file("modules/scramlgen"),
-    settings = projectSettings(dependencies = scramlgenDeps ++ testDeps)
-  ) settings(
-    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository",
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
-    incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
-    ) dependsOn scramlgenParser
+  val scramlJsonSchemaParser = Project(
+    id = "scraml-jsonschema-parser",
+    base = file("modules/scraml-jsonschema-parser"),
+    settings = buildSettings(dependencies = scramlJsonSchemaParserDeps ++ testDeps)
+  )
 
-  val scramlgenTest = Project(
-    id = "scramlgen-test",
-    base = file("modules/scramlgen-test"),
-    settings = projectSettings(dependencies = scramlgenTestDeps ++ testDeps)
-  ) settings(
-    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository"
-    )
+  val scramlDslScala = Project(
+    id = "scraml-dsl-scala",
+    base = file("modules/scraml-dsl-scala"),
+    settings = buildSettings(dependencies = scramlDslDepsScala ++ testDeps)
+  )
 
-  val scramlgenTestDef = Project(
-    id = "scramlgen-testdef",
-    base = file("modules/scramlgen-testdef"),
-    settings = projectSettings(dependencies = scramlgenDeps ++ testDeps)
-  ) settings(
-    resolvers += "Local Maven Repository" at "file:///Users/peter/.m2/repository",
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
-    incOptions := incOptions.value.withNameHashing(false) // See issue: https://github.com/sbt/sbt/issues/1593
-    ) dependsOn scramlgen
+  val scramlDslJava = Project(
+    id = "scraml-dsl-java",
+    base = file("modules/scraml-dsl-java"),
+    // This is a pure Java project without scala versioning,
+    // see http://stackoverflow.com/questions/8296280/use-sbt-to-build-pure-java-project
+    // We also override the crossScalaVersions to avoid publish overwrite problems during release publishing, and because that
+    // doesn't work (although I think it should), we also override the publishArtifact property.
+    settings = buildSettings(dependencies = scramlDslDepsJava ++ testDeps) ++
+      Seq(
+        crossPaths := false,
+        autoScalaLibrary := false,
+        publishArtifact <<= scalaVersion { sv => sv != ScalaVersion }
+        // , crossScalaVersions := Seq(ScalaVersion)
+      )
+  )
+
+  val scramlGenerator = Project(
+    id = "scraml-generator",
+    base = file("modules/scraml-generator"),
+    settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
+  ) dependsOn(scramlDslScala, scramlDslJava, scramlParser, scramlJsonSchemaParser)
 
   val main = Project(
-    id = "scramlgen-project",
+    id = "scraml-project",
     base = file("."),
-    settings = projectSettings(dependencies = allDeps)
-  ) settings(publish :=(), publishLocal :=()) aggregate(scramlgenParser, scramlgen, scramlgenTest, scramlgenTestDef)
+    settings = buildSettings(dependencies = allDeps)
+  ) settings(
+    publish :=(),
+    publishLocal :=()
+    ) aggregate(scramlParser, scramlJsonSchemaParser, scramlDslScala, scramlDslJava, scramlGenerator)
 
 }

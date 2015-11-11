@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://wegenenverkeer.be/po/schema/field-validation-error.json",
+  "type": "object",
+  "properties": {
+    "key": {
+      "description": "Het type van de validatiefout.",
+      "type": "string",
+      "required": true
+    },
+    "property": {
+      "description": "Een verwijzing naar het veld waar de fout betrekking op heeft.",
+      "type": "string",
+      "required": true
+    },
+    "message": {
+      "description": "De boodschap die aan de gebruiker getoond kan worden voor deze validatiefout.",
+      "type": "string",
+      "required": true
+    }
+  }
+}

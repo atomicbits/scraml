@@ -1,0 +1,53 @@
+#%RAML 0.8
+---
+title: test
+version: v1
+
+schemas:
+  - link:     !include schemas/link.scheme
+  - user:     !include schemas/user.scheme
+
+
+/rest/gebruiker/{void}:
+    uriParameters:
+      void:
+        description: De Vo ID van de gevraagde gebruiker.
+        type: string
+    description: Vraag beperkte, niet privacy-gevoelige gegevens op van een gebruiker.
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.awv.po-v3.0+json:
+              schema: user
+    post:
+      description: Create a comment on a media. Please email apidevelopers[at]instagram.com for access.
+      body:
+        application/x-www-form-urlencoded:
+          formParameters:
+            text:
+              description: Text to post as a comment on the media as specified in {mediaId}.
+              type: string
+              required: true
+      responses:
+        200:
+          body:
+            application/vnd.awv.po-v3.0+json:
+              schema: |
+                {
+                  "$schema": "http://json-schema.org/draft-03/schema",
+                  "id": "http://atomicbits.io/schema/link-alternative.json#",
+                  "type": "object",
+                  "description": "A href",
+                  "properties": {
+                    "href": {
+                      "type": "string",
+                      "required": true
+                    },
+                    "method": {
+                      "type": "string",
+                      "required": true,
+                      "enum": [ "GET", "PUT", "POST", "DELETE", "HEAD", "CONNECT", "TRACE", "OPTIONS" ]
+                    }
+                  }
+                }
