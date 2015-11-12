@@ -6,7 +6,15 @@ Type safe Java and Scala RAML client generator
 
 [Scraml](http://scraml.io) generates a typesafe Java or Scala client library based on a [RAML](http://raml.org) specification. It transforms JSON schema into fully typed Java POJOs or Scala case classes and a REST resources DSL that enforces your RAML specification. See [scraml.io](http://scraml.io) for more information. 
 
-Enable code generation with scraml in your project with the [scraml-maven-plugin](https://github.com/atomicbits/scraml-maven-plugin) (Java) or the [scraml-sbt-plugin](https://github.com/atomicbits/scraml-sbt-plugin) (Scala). Have a look at the [scraml-test-java](https://github.com/atomicbits/scraml-test-java) and [scraml-test-scala](https://github.com/atomicbits/scraml-test-scala) projects respectively for an example of how to empower scraml in you projects. 
+## Quickstart
+
+Follow the steps in these quickstart guidelines: 
+
+ 1. Java: http://scraml.io/javadocumentation
+ 2. Scala: http://scraml.io/scaladocumentation
+
+
+## Scraml 
 
 The scraml code contains the following modules:
 
@@ -16,6 +24,7 @@ The scraml code contains the following modules:
    * *scraml-dsl-scala*: This is the Scala code that supports the generated DSL and will be included in the resulting project by the scraml-sbt-plugin.
    * *scraml-generator*: The generator will generate the actual DSL code from a given RAML specification. 
 
+Enable code generation with scraml in your project with the [scraml-maven-plugin](https://github.com/atomicbits/scraml-maven-plugin) (Java) or the [scraml-sbt-plugin](https://github.com/atomicbits/scraml-sbt-plugin) (Scala). Have a look at the [scraml-test-java](https://github.com/atomicbits/scraml-test-java) and [scraml-test-scala](https://github.com/atomicbits/scraml-test-scala) projects respectively for an example of how to empower scraml in you projects. 
 
 
 ## Copyright and License
