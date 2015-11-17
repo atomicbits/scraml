@@ -61,7 +61,7 @@ object IdAnalyser {
     else RelativeId(id = id.trim.stripPrefix("/"))
   }
 
-  def isRoot(id: String): Boolean = id.contains("://")
+  def isRoot(id: String): Boolean = id.contains("://") && !isAbsoluteFragment(id)
 
   def isFragment(id: String): Boolean = {
     id.trim.startsWith("#")

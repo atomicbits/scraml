@@ -135,3 +135,11 @@
                   "$ref": "user.json"
                 }
               }
+
+/{userid}/location:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: geometry

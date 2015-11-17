@@ -81,7 +81,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.GeometryCollection",
         "io.atomicbits.schema.Crs",
         "io.atomicbits.schema.NamedCrsProperty",
-        "io.atomicbits.schema.Bbox"
+        "io.atomicbits.schema.Bbox",
+        "io.atomicbits.scraml.rest.user.userid.location.LocationResource"
       )
 
       classRepsByFullName.keys.foreach { key =>
@@ -166,7 +167,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.GeometryCollection",
         "io.atomicbits.schema.Crs",
         "io.atomicbits.schema.NamedCrsProperty",
-        "io.atomicbits.schema.Bbox"
+        "io.atomicbits.schema.Bbox",
+        "io.atomicbits.scraml.rest.user.userid.location.LocationResource"
       )
 
       classRepsByFullName.keys.foreach { key =>
