@@ -77,5 +77,37 @@ object CleanNameUtil {
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
+  
+  
+  def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
+
+    val javaReservedWords =
+      List("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do",
+        "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof",
+        "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static",
+        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while")
+
+    javaReservedWords.foldLeft(someName) { (name, resWord) =>
+      if (name == resWord) s"$name$escape"
+      else name
+    }
+
+  }
+
+
+  def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
+    val scalaReservedwords =
+      List("Byte", "Short", "Char", "Int", "Long", "Float", "Double", "Boolean", "Unit", "String", "abstract", "case", "catch", "class",
+        "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new",
+        "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try",
+        "true", "type", "val", "var", "while", "with", "yield")
+
+
+    scalaReservedwords.foldLeft(someName) { (name, resWord) =>
+      if (name == resWord) s"$name$$"
+      else name
+    }
+
+  }
 
 }

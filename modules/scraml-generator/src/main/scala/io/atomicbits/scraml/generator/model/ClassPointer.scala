@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.model
 
+import io.atomicbits.scraml.generator.util.CleanNameUtil
+
 /**
  * Created by peter on 11/09/15.
  *
@@ -37,7 +39,7 @@ sealed trait ClassPointer {
     this match {
       case classReference: ClassReference           => TypedClassReference(classReference)
       case typedClassReference: TypedClassReference => typedClassReference
-      case generic: GenericClassPointer            =>
+      case generic: GenericClassPointer             =>
         sys.error(s"A generic object pointer cannot be transformed to a class pointer: $generic")
     }
   }
@@ -45,6 +47,8 @@ sealed trait ClassPointer {
   def packageName: String
 
   def fullyQualifiedName: String
+
+  def safePackageParts: List[String]
 
   def canonicalNameScala: String
 
@@ -67,6 +71,8 @@ case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
   override def packageName: String = sys.error("Cannot specify the package name of a generic class pointer.")
 
+  override def safePackageParts: List[String] = sys.error("Cannot specify the package name of a generic class pointer.")
+
   override def canonicalNameJava: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
 
   override def canonicalNameScala: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
@@ -82,9 +88,13 @@ case class ClassReference(name: String,
                           predef: Boolean = false,
                           library: Boolean = false) extends ClassPointer {
 
-  def packageName: String = packageParts.mkString(".")
+  def packageName: String = safePackageParts.mkString(".")
 
   def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
+
+  // package parts need to be escaped in Java for Java keywords, Scala doesn't mind if you use keywords in a package name.
+  // ToDo: only rename package parts that are keywords if we're generating Java.
+  def safePackageParts: List[String] = packageParts.map(CleanNameUtil.escapeJavaKeyword(_, "esc"))
 
   /**
    * The class definition as a string.
@@ -116,10 +126,10 @@ case class ClassReference(name: String,
     else s"$name<${typeVariables.mkString(",")}>"
 
 
-  def canonicalNameScala: String  = if (packageName.nonEmpty) s"$packageName.$classDefinitionScala" else classDefinitionScala
+  def canonicalNameScala: String = if (packageName.nonEmpty) s"$packageName.$classDefinitionScala" else classDefinitionScala
 
 
-  def canonicalNameJava: String  = if (packageName.nonEmpty) s"$packageName.$classDefinitionJava" else classDefinitionJava
+  def canonicalNameJava: String = if (packageName.nonEmpty) s"$packageName.$classDefinitionJava" else classDefinitionJava
 
 }
 
@@ -167,6 +177,7 @@ case class TypedClassReference(classReference: ClassReference,
 
   def fullyQualifiedName: String = classReference.fullyQualifiedName
 
+  def safePackageParts: List[String] = classReference.safePackageParts
 
   def canonicalNameScala: String =
     if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName

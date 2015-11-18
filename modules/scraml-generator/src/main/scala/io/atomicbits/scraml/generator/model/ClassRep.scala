@@ -205,18 +205,9 @@ case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointe
 
   lazy val safeFieldNameScala: String = {
 
-    val scalaReservedwords =
-      List("Byte", "Short", "Char", "Int", "Long", "Float", "Double", "Boolean", "Unit", "String", "abstract", "case", "catch", "class",
-        "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new",
-        "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try",
-        "true", "type", "val", "var", "while", "with", "yield")
-
     val cleanName = CleanNameUtil.cleanFieldName(fieldName)
 
-    scalaReservedwords.foldLeft(cleanName) { (name, resWord) =>
-      if (name == resWord) s"$name$$"
-      else name
-    }
+    CleanNameUtil.escapeScalaKeyword(cleanName)
   }
 
 
@@ -224,18 +215,9 @@ case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointe
 
   lazy val safeFieldNameJava: String = {
 
-    val javaReservedWords =
-      List("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do",
-        "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof",
-        "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static",
-        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while")
-
     val cleanName = CleanNameUtil.cleanFieldName(fieldName)
 
-    javaReservedWords.foldLeft(cleanName) { (name, resWord) =>
-      if (name == resWord) s"$name$$"
-      else name
-    }
+    CleanNameUtil.escapeJavaKeyword(cleanName)
   }
 
 }
