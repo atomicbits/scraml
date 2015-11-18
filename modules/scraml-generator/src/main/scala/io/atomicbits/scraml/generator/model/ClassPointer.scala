@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.model
 
+import io.atomicbits.scraml.generator.util.CleanNameUtil
+
 /**
  * Created by peter on 11/09/15.
  *
@@ -82,7 +84,9 @@ case class ClassReference(name: String,
                           predef: Boolean = false,
                           library: Boolean = false) extends ClassPointer {
 
-  def packageName: String = packageParts.mkString(".")
+  // package parts need to be escaped in Java for Java keywords, Scala doesn't mind if you use keywords in a package name.
+  // ToDo: only rename package parts that are keywords if we're generating Java.
+  def packageName: String = packageParts.map(CleanNameUtil.escapeJavaKeyword(_, "esc")).mkString(".")
 
   def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
 
