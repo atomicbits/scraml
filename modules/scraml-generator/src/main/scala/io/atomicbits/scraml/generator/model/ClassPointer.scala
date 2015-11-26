@@ -189,3 +189,64 @@ case class TypedClassReference(classReference: ClassReference,
     else s"${classReference.fullyQualifiedName}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameJava).mkString(",")}>"
 
 }
+
+
+object StringClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "String", predef = true)
+
+}
+
+case object BooleanClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "Boolean", predef = true)
+
+}
+
+case object DoubleClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "Double", predef = true)
+
+}
+
+case object LongClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "Long", predef = true)
+
+}
+
+case object JsValueClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
+
+}
+
+case object JsObjectClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "JsObject", packageParts = List("play", "api", "libs", "json"), library = true)
+
+}
+
+case object JsonNodeClassReference {
+
+  def apply(): ClassReference =
+    ClassReference(
+      name = "JsonNode",
+      packageParts = List("com", "fasterxml", "jackson", "databind"),
+      library = true
+    )
+
+}
+
+object ListClassReference {
+
+  def apply(typeVariable: String)(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
+    case Java  => ClassReference(name = "List", packageParts = List("java", "util"), typeVariables = List(typeVariable), library = true)
+  }
+
+  def typed(listType: ClassPointer)(implicit lang: Language): TypedClassReference =
+    TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
+
+}
+

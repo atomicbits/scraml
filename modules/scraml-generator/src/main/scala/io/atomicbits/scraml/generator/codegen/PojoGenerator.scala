@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.codegen.CaseClassGenerator._
-import io.atomicbits.scraml.generator.model.{ClassReferenceAsFieldRep, EnumValuesClassRep, ClassRep}
+import io.atomicbits.scraml.generator.model.{Field, EnumValuesClassRep, ClassRep}
 import io.atomicbits.scraml.generator.model.ClassRep._
 
 /**
@@ -104,12 +104,10 @@ object PojoGenerator {
                                       classMap: ClassMap,
                                       skipField: Option[String] = None): ClassRep = {
 
-    println(s"Generating case class for: ${classRep.classDefinitionScala}")
-
-
     classRep match {
-      case e: EnumValuesClassRep => generateEnumClassRep(e)
-      case _                     => generateNonEnumClassRep(classRep, parentClassRep, skipField)
+      case e: EnumValuesClassRep                          => generateEnumClassRep(e)
+      case x if !x.classRef.library && !x.classRef.predef => generateNonEnumClassRep(x, parentClassRep, skipField)
+      case y                                              => y
     }
   }
 
@@ -127,6 +125,7 @@ object PojoGenerator {
         }
      """
 
+    println(s"Generating enum for: ${classRep.classDefinitionJava}")
     classRep.withContent(content = source)
   }
 
@@ -149,6 +148,7 @@ object PojoGenerator {
         ${generatePojoSource(classRep, parentClassRep, skipField)}
      """
 
+    println(s"Generating POJO for: ${classRep.classDefinitionJava}")
     classRep.withContent(content = source)
   }
 
@@ -173,7 +173,7 @@ object PojoGenerator {
 
 
     val getterAndSetters = sortedFields map {
-      case fieldRep@ClassReferenceAsFieldRep(fieldName, classPointer, required) =>
+      case fieldRep@Field(fieldName, classPointer, required) =>
         val fieldNameCap = fieldRep.safeFieldNameJava.capitalize
         s"""
            public ${classPointer.classDefinitionJava} get$fieldNameCap() {

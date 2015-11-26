@@ -46,7 +46,7 @@ trait ClassRep {
 
   def classRef: ClassReference
 
-  def fields: List[ClassReferenceAsFieldRep]
+  def fields: List[Field]
 
   def parentClass: Option[ClassReference]
 
@@ -56,7 +56,7 @@ trait ClassRep {
 
   def jsonTypeInfo: Option[JsonTypeInfo]
 
-  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep
+  def withFields(fields: List[Field]): ClassRep
 
   def withParent(parentId: ClassReference): ClassRep
 
@@ -98,35 +98,6 @@ trait ClassRep {
 }
 
 
-object StringClassReference {
-
-  def apply(): ClassReference = ClassReference(name = "String", predef = true)
-
-}
-
-case object BooleanClassReference {
-
-  def apply(): ClassReference = ClassReference(name = "Boolean", predef = true)
-
-}
-
-case object DoubleClassReference {
-
-  def apply(): ClassReference = ClassReference(name = "Double", predef = true)
-
-}
-
-case object LongClassReference {
-
-  def apply(): ClassReference = ClassReference(name = "Long", predef = true)
-
-}
-
-case object JsValueClassReference {
-
-  def apply(): ClassReference = ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
-
-}
 
 
 case class EnumValuesClassRep(classRef: ClassReference,
@@ -136,9 +107,9 @@ case class EnumValuesClassRep(classRef: ClassReference,
                               content: Option[String] = None,
                               jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
-  val fields: List[ClassReferenceAsFieldRep] = Nil
+  val fields: List[Field] = Nil
 
-  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep = sys.error("An EnumValueclassRep has no fields")
+  def withFields(fields: List[Field]): ClassRep = sys.error("An EnumValueclassRep has no fields")
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
 
@@ -158,27 +129,14 @@ object EnumValuesClassRep {
 }
 
 
-object ListClassReference {
-
-  def apply(typeVariable: String)(implicit lang: Language): ClassReference = lang match {
-    case Scala => ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
-    case Java  => ClassReference(name = "List", packageParts = List("java", "util"), typeVariables = List(typeVariable), library = true)
-  }
-
-  def typed(listType: ClassPointer)(implicit lang: Language): TypedClassReference =
-    TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
-
-}
-
-
-case class CustomClassRep(classRef: ClassReference,
-                          fields: List[ClassReferenceAsFieldRep] = List.empty,
+case class CommonClassRep(classRef: ClassReference,
+                          fields: List[Field] = List.empty,
                           parentClass: Option[ClassReference] = None,
                           subClasses: List[ClassReference] = List.empty,
                           content: Option[String] = None,
                           jsonTypeInfo: Option[JsonTypeInfo] = None) extends ClassRep {
 
-  def withFields(fields: List[ClassReferenceAsFieldRep]): ClassRep = copy(fields = fields)
+  def withFields(fields: List[Field]): ClassRep = copy(fields = fields)
 
   def withContent(content: String): ClassRep = copy(content = Some(content))
 
@@ -191,7 +149,7 @@ case class CustomClassRep(classRef: ClassReference,
 }
 
 
-case class ClassReferenceAsFieldRep(fieldName: String, classPointer: ClassPointer, required: Boolean) {
+case class Field(fieldName: String, classPointer: ClassPointer, required: Boolean) {
 
   def fieldExpressionScala: String =
     if (required) s"$safeFieldNameScala: ${classPointer.classDefinitionScala}"
@@ -239,13 +197,13 @@ object ClassRep {
    * @param jsonTypeInfo Info about JSON-typing of case classes.
    */
   def apply(classReference: ClassReference,
-            fields: List[ClassReferenceAsFieldRep] = List.empty,
+            fields: List[Field] = List.empty,
             parentClass: Option[ClassReference] = None,
             subClasses: List[ClassReference] = List.empty,
             content: Option[String] = None,
             jsonTypeInfo: Option[JsonTypeInfo] = None): ClassRep = {
 
-    CustomClassRep(classReference, fields, parentClass, subClasses, content, jsonTypeInfo)
+    CommonClassRep(classReference, fields, parentClass, subClasses, content, jsonTypeInfo)
 
   }
 
