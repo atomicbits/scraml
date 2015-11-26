@@ -83,7 +83,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.NamedCrsProperty",
         "io.atomicbits.schema.Bbox",
         "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
-        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource"
+        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
+        "play.api.libs.json.JsObject"
       )
 
       classRepsByFullName.keys.foreach { key =>
@@ -91,7 +92,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       }
 
       val userResource = classRepsByFullName("io.atomicbits.scraml.rest.user.UserResource")
-      val expectedUserResource = CustomClassRep(
+      val expectedUserResource = CommonClassRep(
         classRef = ClassReference("UserResource", List("io", "atomicbits", "scraml", "rest", "user")),
         List(),
         None,
@@ -102,7 +103,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       assert(userResource.withContent("") == expectedUserResource)
 
       val animalClass = classRepsByFullName("io.atomicbits.schema.Animal")
-      val expectedAnimalClassRep = CustomClassRep(
+      val expectedAnimalClassRep = CommonClassRep(
         classRef = ClassReference("Animal", List("io", "atomicbits", "schema")),
         List(),
         None,
@@ -170,7 +171,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.NamedCrsProperty",
         "io.atomicbits.schema.Bbox",
         "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
-        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource"
+        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
+        "com.fasterxml.jackson.databind.JsonNode"
       )
 
       classRepsByFullName.keys.foreach { key =>

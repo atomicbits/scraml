@@ -46,18 +46,16 @@ object CaseClassGenerator extends DtoSupport {
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
     classHierarchies.values.toList.flatMap(generateHierarchicalClassSource(_, classMap)) :::
-      classRepsStandalone.map(generateNonHierarchicalClassSource(_, classMap))
+      classRepsStandalone.map(generateNonHierarchicalClassSource)
   }
 
 
-  def generateNonHierarchicalClassSource(classRep: ClassRep, classMap: ClassMap): ClassRep = {
-
-    println(s"Generating case class for: ${classRep.classDefinitionScala}")
-
+  def generateNonHierarchicalClassSource(classRep: ClassRep): ClassRep = {
 
     classRep match {
-      case e: EnumValuesClassRep => generateEnumClassRep(e)
-      case _                     => generateNonEnumClassRep(classRep)
+      case e: EnumValuesClassRep                          => generateEnumClassRep(e)
+      case x if !x.classRef.library && !x.classRef.predef => generateNonEnumClassRep(x)
+      case y                                              => y
     }
   }
 
@@ -114,6 +112,7 @@ object CaseClassGenerator extends DtoSupport {
         $generateEnumCompanionObject
      """
 
+    println(s"Generating enum objects for: ${classRep.classDefinitionScala}")
     classRep.withContent(content = source)
   }
 
@@ -133,6 +132,7 @@ object CaseClassGenerator extends DtoSupport {
         ${generateCaseClassWithCompanion(classRep)}
      """
 
+    println(s"Generating case class for: ${classRep.classDefinitionScala}")
     classRep.withContent(content = source)
   }
 
