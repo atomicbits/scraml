@@ -165,7 +165,6 @@ public class NingClientSupport implements Client {
         builder.setAcceptAnyCertificate(config.getAcceptAnyCertificate());
         builder.setFollowRedirect(config.getFollowRedirect());
         builder.setMaxRedirects(config.getMaxRedirects());
-        builder.setRemoveQueryParamsOnRedirect(config.getRemoveQueryParamOnRedirect());
         builder.setStrict302Handling(config.getStrict302Handling());
         return builder;
     }

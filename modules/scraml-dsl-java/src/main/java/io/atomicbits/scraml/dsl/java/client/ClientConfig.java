@@ -43,7 +43,6 @@ public class ClientConfig {
     private Boolean acceptAnyCertificate = AsyncHttpClientConfigDefaults.defaultAcceptAnyCertificate();
     private Boolean followRedirect = AsyncHttpClientConfigDefaults.defaultFollowRedirect();
     private int maxRedirects = AsyncHttpClientConfigDefaults.defaultMaxRedirects();
-    private Boolean removeQueryParamOnRedirect = AsyncHttpClientConfigDefaults.defaultRemoveQueryParamOnRedirect();
     private Boolean strict302Handling = AsyncHttpClientConfigDefaults.defaultStrict302Handling();
 
     public ClientConfig() {
@@ -80,7 +79,6 @@ public class ClientConfig {
         this.maxRequestRetry = maxRequestRetry;
         this.pooledConnectionIdleTimeout = pooledConnectionIdleTimeout;
         this.readTimeout = readTimeout;
-        this.removeQueryParamOnRedirect = removeQueryParamOnRedirect;
         this.requestTimeout = requestTimeout;
         this.strict302Handling = strict302Handling;
         this.webSocketTimeout = webSocketTimeout;
@@ -184,14 +182,6 @@ public class ClientConfig {
 
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
-    }
-
-    public Boolean getRemoveQueryParamOnRedirect() {
-        return removeQueryParamOnRedirect;
-    }
-
-    public void setRemoveQueryParamOnRedirect(Boolean removeQueryParamOnRedirect) {
-        this.removeQueryParamOnRedirect = removeQueryParamOnRedirect;
     }
 
     public int getRequestTimeout() {

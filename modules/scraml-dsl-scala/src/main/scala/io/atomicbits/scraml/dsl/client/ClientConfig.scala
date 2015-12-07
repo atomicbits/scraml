@@ -40,6 +40,5 @@ case class ClientConfig(requestTimeout: Int = AsyncHttpClientConfigDefaults.defa
                         acceptAnyCertificate: Boolean = AsyncHttpClientConfigDefaults.defaultAcceptAnyCertificate(),
                         followRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultFollowRedirect(),
                         maxRedirects: Int = AsyncHttpClientConfigDefaults.defaultMaxRedirects(),
-                        removeQueryParamOnRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultRemoveQueryParamOnRedirect(),
                         strict302Handling: Boolean = AsyncHttpClientConfigDefaults.defaultStrict302Handling(),
                         responseCharset: Charset = Charset.defaultCharset)
