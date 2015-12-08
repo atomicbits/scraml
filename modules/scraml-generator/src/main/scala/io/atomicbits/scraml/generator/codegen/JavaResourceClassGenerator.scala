@@ -226,7 +226,10 @@ object JavaResourceClassGenerator {
 
 
     def generateResourceDslField(resource: RichResource): String = {
-      val cleanUrlSegment = CleanNameUtil.cleanMethodName(resource.urlSegment)
+
+      import CleanNameUtil._
+
+      val cleanUrlSegment = escapeJavaKeyword(cleanMethodName(resource.urlSegment))
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)

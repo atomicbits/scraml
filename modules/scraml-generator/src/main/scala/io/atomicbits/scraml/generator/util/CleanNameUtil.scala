@@ -49,12 +49,7 @@ object CleanNameUtil {
   }
 
 
-  def cleanMethodName(dirtyName: String): String = {
-    // capitalize after special characters and drop those characters along the way
-    List('-', '_', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
-      cleaned.split(dropChar).filter(_.nonEmpty).mkString("")
-    }
-  }
+  def cleanMethodName: String => String = cleanFieldName
 
 
   def cleanFieldName(dirtyName: String): String = {
