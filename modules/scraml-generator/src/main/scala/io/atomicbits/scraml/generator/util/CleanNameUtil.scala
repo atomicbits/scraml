@@ -49,7 +49,12 @@ object CleanNameUtil {
   }
 
 
-  def cleanMethodName(dirtyName: String): String = camelCased(cleanClassName(dirtyName))
+  def cleanMethodName(dirtyName: String): String = {
+    // capitalize after special characters and drop those characters along the way
+    List('-', '_', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
+      cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
+    }
+  }
 
 
   def cleanFieldName(dirtyName: String): String = {
@@ -77,8 +82,8 @@ object CleanNameUtil {
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
-  
-  
+
+
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 
     val javaReservedWords =

@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model.{Language, ClassReference, ClassRep, RichResource}
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
 /**
@@ -216,18 +217,20 @@ object ScalaResourceClassGenerator {
     }
 
 
-    def generateResourceDslField(resource: RichResource): String =
+    def generateResourceDslField(resource: RichResource): String = {
+      val cleanUrlSegment = CleanNameUtil.cleanMethodName(resource.urlSegment)
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""def ${resource.urlSegment}(value: $paramType) = new ${
+          s"""def $cleanUrlSegment(value: $paramType) = new ${
             resource.classRep.fullyQualifiedName
           }(value, requestBuilder.withAddedPathSegment(value))"""
         case None            =>
-          s"""def ${resource.urlSegment} = new ${resource.classRep.fullyQualifiedName}(requestBuilder.withAddedPathSegment("${
+          s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(requestBuilder.withAddedPathSegment("${
             resource.urlSegment
           }"))"""
       }
+    }
 
 
     generateClientClass(resources) ::: resources.flatMap(generateResourceClassesHelper)
