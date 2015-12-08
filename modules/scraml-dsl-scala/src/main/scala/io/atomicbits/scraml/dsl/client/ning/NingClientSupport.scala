@@ -229,7 +229,7 @@ case class NingClientSupport(protocol: String,
 
 
   private def applyConfiguration(builder: AsyncHttpClientConfig.Builder): AsyncHttpClientConfig.Builder = {
-    builder.setReadTimeout(config.requestTimeout)
+    builder.setReadTimeout(config.readTimeout)
     builder.setMaxConnections(config.maxConnections)
     builder.setRequestTimeout(config.requestTimeout)
     builder.setMaxRequestRetry(config.maxRequestRetry)
@@ -243,7 +243,6 @@ case class NingClientSupport(protocol: String,
     builder.setAcceptAnyCertificate(config.acceptAnyCertificate)
     builder.setFollowRedirect(config.followRedirect)
     builder.setMaxRedirects(config.maxRedirects)
-    builder.setRemoveQueryParamsOnRedirect(config.removeQueryParamOnRedirect)
     builder.setStrict302Handling(config.strict302Handling)
   }
 

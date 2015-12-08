@@ -31,7 +31,7 @@ trait Dependencies { this:Build =>
   // val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
 
   // val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
-  val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.0"
+  val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.31"
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
 
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"

@@ -49,7 +49,7 @@ object CleanNameUtil {
   }
 
 
-  def cleanMethodName(dirtyName: String): String = camelCased(cleanClassName(dirtyName))
+  def cleanMethodName: String => String = cleanFieldName
 
 
   def cleanFieldName(dirtyName: String): String = {
@@ -59,11 +59,9 @@ object CleanNameUtil {
       List('-', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).mkString("")
       }
-    // we cannot begin with a number
-    dropCharred.toList.foldLeft(List.empty[Char]) { (collected, nextChar) =>
-      if (collected.isEmpty && (0 to 9).map(_.toString.head).contains(nextChar)) collected
-      else collected :+ nextChar
-    } mkString ""
+    // we cannot begin with a number, so we prepend a '$' when the first character is a number
+    if((0 to 9).map(number => dropCharred.startsWith(number.toString)).reduce(_ || _)) "$" + dropCharred
+    else dropCharred
   }
 
 
@@ -77,8 +75,8 @@ object CleanNameUtil {
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
-  
-  
+
+
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 
     val javaReservedWords =

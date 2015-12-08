@@ -225,21 +225,26 @@ object JavaResourceClassGenerator {
     }
 
 
-    def generateResourceDslField(resource: RichResource): String =
+    def generateResourceDslField(resource: RichResource): String = {
+
+      import CleanNameUtil._
+
+      val cleanUrlSegment = escapeJavaKeyword(cleanMethodName(resource.urlSegment))
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
           s"""
-             public ${resource.classRep.fullyQualifiedName} ${resource.urlSegment}($paramType value) {
+             public ${resource.classRep.fullyQualifiedName} $cleanUrlSegment($paramType value) {
                return new ${resource.classRep.fullyQualifiedName}(value, this.getRequestBuilder());
              }
             """
         case None            =>
           s"""
-              public ${resource.classRep.fullyQualifiedName} ${resource.urlSegment} =
+              public ${resource.classRep.fullyQualifiedName} $cleanUrlSegment =
                 new ${resource.classRep.fullyQualifiedName}(this.requestBuilder);
             """
       }
+    }
 
     generateClientClass(resources) ::: resources.flatMap(generateResourceClassesHelper)
   }
