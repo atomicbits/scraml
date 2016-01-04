@@ -193,25 +193,25 @@ case class TypedClassReference(classReference: ClassReference,
 
 object StringClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "String", predef = true)
+  def apply(): ClassReference = ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
 
 }
 
 case object BooleanClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Boolean", predef = true)
+  def apply(): ClassReference = ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
 
 }
 
 case object DoubleClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Double", predef = true)
+  def apply(): ClassReference = ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
 
 }
 
 case object LongClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Long", predef = true)
+  def apply(): ClassReference = ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
 
 }
 
