@@ -38,8 +38,12 @@ class Ning19ClientFactory extends ClientFactory {
     Try{
       new Ning19Client(protocol, host, port, prefix, config, defaultHeaders)
     } recoverWith {
-      case cnfe: ClassNotFoundException =>
-        Failure(new ClassNotFoundException(s"The Scraml ning client factory cannot find the necessary ning dependencies to instantiate its client. Did you add the necessary ning dependencies to your project?", cnfe))
+      case cnfe: NoClassDefFoundError =>
+        Failure(
+          new NoClassDefFoundError(
+            s"${cnfe.getMessage}} The Scraml ning client factory cannot find the necessary ning dependencies to instantiate its client. Did you add the necessary ning dependencies to your project?"
+          )
+        )
       case e => Failure(e)
     }
   }

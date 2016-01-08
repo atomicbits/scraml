@@ -22,7 +22,9 @@ package io.atomicbits.scraml.dsl.client
 import java.nio.charset.Charset
 
 /**
- * Created by peter on 24/08/15. 
+ * Created by peter on 24/08/15.
+ *
+ * Time is in ms.
  */
 case class ClientConfig(requestTimeout: Int = 60 * 1000,
                         maxRequestRetry: Int = 5,

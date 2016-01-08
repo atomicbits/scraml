@@ -35,8 +35,12 @@ object FactoryLoader {
     Try {
       Class.forName(factoryClass).newInstance().asInstanceOf[ClientFactory]
     } recoverWith {
-      case cnfe: ClassNotFoundException =>
-        Failure(new ClassNotFoundException(s"The scraml FactoryLoader cannot load factory class $factoryClass. Did you add the dependency to this factory?", cnfe))
+      case cnfe: NoClassDefFoundError =>
+        Failure(
+          new NoClassDefFoundError(
+            s"${cnfe.getMessage} The scraml FactoryLoader cannot load factory class $factoryClass. Did you add the dependency to this factory?"
+          )
+        )
       case e                            => Failure(e)
     }
   }
