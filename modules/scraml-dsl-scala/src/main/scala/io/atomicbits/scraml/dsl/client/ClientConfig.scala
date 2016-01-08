@@ -21,24 +21,22 @@ package io.atomicbits.scraml.dsl.client
 
 import java.nio.charset.Charset
 
-import com.ning.http.client.AsyncHttpClientConfigDefaults
-
 /**
  * Created by peter on 24/08/15. 
  */
-case class ClientConfig(requestTimeout: Int = AsyncHttpClientConfigDefaults.defaultRequestTimeout(),
-                        maxRequestRetry: Int = AsyncHttpClientConfigDefaults.defaultMaxRequestRetry(),
-                        connectTimeout: Int = AsyncHttpClientConfigDefaults.defaultConnectTimeout(),
-                        connectionTTL: Int = AsyncHttpClientConfigDefaults.defaultConnectionTTL(),
-                        readTimeout: Int = AsyncHttpClientConfigDefaults.defaultReadTimeout(),
-                        webSocketTimeout: Int = AsyncHttpClientConfigDefaults.defaultWebSocketTimeout(),
-                        maxConnections: Int = AsyncHttpClientConfigDefaults.defaultMaxConnections(),
-                        maxConnectionsPerHost: Int = AsyncHttpClientConfigDefaults.defaultMaxConnectionsPerHost(),
-                        allowPoolingConnections: Boolean = AsyncHttpClientConfigDefaults.defaultAllowPoolingConnections(),
-                        allowPoolingSslConnections: Boolean = AsyncHttpClientConfigDefaults.defaultAllowPoolingSslConnections(),
-                        pooledConnectionIdleTimeout: Int = AsyncHttpClientConfigDefaults.defaultPooledConnectionIdleTimeout(),
-                        acceptAnyCertificate: Boolean = AsyncHttpClientConfigDefaults.defaultAcceptAnyCertificate(),
-                        followRedirect: Boolean = AsyncHttpClientConfigDefaults.defaultFollowRedirect(),
-                        maxRedirects: Int = AsyncHttpClientConfigDefaults.defaultMaxRedirects(),
-                        strict302Handling: Boolean = AsyncHttpClientConfigDefaults.defaultStrict302Handling(),
-                        responseCharset: Charset = Charset.defaultCharset)
+case class ClientConfig(requestTimeout: Int = 60 * 1000,
+                        maxRequestRetry: Int = 5,
+                        connectTimeout: Int = 5 * 1000,
+                        connectionTTL: Int = -1,
+                        readTimeout: Int = 60 * 1000,
+                        webSocketTimeout: Int = 15 * 60 * 1000,
+                        maxConnections: Int = -1,
+                        maxConnectionsPerHost: Int = -1,
+                        allowPoolingConnections: Boolean = true,
+                        allowPoolingSslConnections: Boolean = true,
+                        pooledConnectionIdleTimeout: Int = 60 * 1000,
+                        acceptAnyCertificate: Boolean = false,
+                        followRedirect: Boolean = false,
+                        maxRedirects: Int = 5,
+                        strict302Handling: Boolean = false,
+                        responseCharset: Charset = Charset.forName("UTF-8"))

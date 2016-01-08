@@ -32,6 +32,7 @@ trait Dependencies { this:Build =>
 
   // val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
   val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.31"
+  val asyncClientProvided =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "provided"
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
 
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
@@ -44,6 +45,7 @@ trait Dependencies { this:Build =>
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.57"     % "test"
   val junit               =   "junit"                       %     "junit"               % "4.12"     % "test"
+  val asyncClientTest     =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "test"
 
 
   // inclusion of the above dependencies in the modules
@@ -73,7 +75,9 @@ trait Dependencies { this:Build =>
   val scramlDslDepsScala = Seq(
     slf4j,
     playJson,
-    asyncClient
+    asyncClientProvided
+//    ,
+//    asyncClient
   )
 
   val scramlDslDepsJava = Seq(
@@ -90,7 +94,8 @@ trait Dependencies { this:Build =>
 
   val testDeps = Seq(
     scalaTest,
-    wiremock
+    wiremock,
+    asyncClientTest
   )
 
   val allDeps = mainDeps ++ testDeps
