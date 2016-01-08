@@ -52,6 +52,9 @@ object CleanNameUtil {
   def cleanMethodName: String => String = cleanFieldName
 
 
+  def cleanEnumName: String => String = cleanFieldName
+
+
   def cleanFieldName(dirtyName: String): String = {
     // an underscore is allowed!
     // we don't do capitalization on field names, we keep them as close to the original as possible!
