@@ -22,6 +22,7 @@ package io.atomicbits.scraml.generator.codegen
 import io.atomicbits.scraml.generator.codegen.CaseClassGenerator._
 import io.atomicbits.scraml.generator.model.{Field, EnumValuesClassRep, ClassRep}
 import io.atomicbits.scraml.generator.model.ClassRep._
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 /**
  * Created by peter on 30/09/15.
@@ -114,16 +115,48 @@ object PojoGenerator {
 
   private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
 
+    // Accompany the enum names with their 'Java-safe' name.
+    val enumsWithSafeName =
+      classRep.values map { value =>
+        val safeName = CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanEnumName(value))
+        s"""$safeName("$value")""" // e.g. spa$ce("spa ce")
+      }
+
+    val classNameCamel = CleanNameUtil.camelCased(classRep.name)
+
     val source =
       s"""
         package ${classRep.packageName};
 
+        import com.fasterxml.jackson.annotation.*;
+
         public enum ${classRep.name} {
 
-          ${classRep.values.mkString(",\n")}
+          ${enumsWithSafeName.mkString("", ",\n", ";\n")}
+
+          private final String value;
+
+          private ${classRep.name}(final String value) {
+                  this.value = value;
+          }
+
+          @JsonValue
+          final String value() {
+            return this.value;
+          }
+
+          @JsonCreator
+          public static ${classRep.name} fromValue(String value) {
+            for (${classRep.name} $classNameCamel : ${classRep.name}.values()) {
+              if (value.equals($classNameCamel.value())) {
+                return $classNameCamel;
+              }
+            }
+            throw new IllegalArgumentException("Cannot instantiate a ${classRep.name} enum element from " + value);
+          }
 
         }
-     """
+       """
 
     println(s"Generating enum for: ${classRep.classDefinitionJava}")
     classRep.withContent(content = source)
