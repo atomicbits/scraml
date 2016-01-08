@@ -94,7 +94,8 @@ case class ClassReference(name: String,
 
   // package parts need to be escaped in Java for Java keywords, Scala doesn't mind if you use keywords in a package name.
   // ToDo: only rename package parts that are keywords if we're generating Java.
-  def safePackageParts: List[String] = packageParts.map(CleanNameUtil.escapeJavaKeyword(_, "esc"))
+  def safePackageParts: List[String] =
+    packageParts.map(part => CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanPackageName(part), "esc"))
 
   /**
    * The class definition as a string.

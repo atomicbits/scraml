@@ -33,8 +33,9 @@ object CleanNameUtil {
 
   def cleanClassName(dirtyName: String): String = {
     // capitalize after special characters and drop those characters along the way
+    // todo: instead of filtering out by listing the 'bad' characters, make a filter that is based on the 'good' characters.
     val capitalizedAfterDropChars =
-      List('-', '_', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
+      List('-', '_', '+', ' ', '/', '.', '~').foldLeft(dirtyName) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).map(_.capitalize).mkString("")
       }
     // capitalize after numbers 0 to 9, but keep the numbers
@@ -58,8 +59,9 @@ object CleanNameUtil {
   def cleanFieldName(dirtyName: String): String = {
     // an underscore is allowed!
     // we don't do capitalization on field names, we keep them as close to the original as possible!
+    // todo: instead of filtering out by listing the 'bad' characters, make a filter that is based on the 'good' characters.
     val dropCharred =
-      List('-', '+', ' ', '/', '.').foldLeft(dirtyName) { (cleaned, dropChar) =>
+      List('-', '+', ' ', '/', '.', '~').foldLeft(dirtyName) { (cleaned, dropChar) =>
         cleaned.split(dropChar).filter(_.nonEmpty).mkString("")
       }
     // we cannot begin with a number, so we prepend a '$' when the first character is a number
