@@ -85,7 +85,7 @@ trait Dependencies { this:Build =>
     jacksonCore,
     jacksonAnnotations,
     jacksonDatabind,
-    asyncClient
+    asyncClientProvided
   )
 
   val mainDeps = Seq(

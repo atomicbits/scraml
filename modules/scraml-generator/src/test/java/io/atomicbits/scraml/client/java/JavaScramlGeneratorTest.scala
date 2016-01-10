@@ -77,7 +77,7 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
 
       When("we execute some restful requests using the DSL")
 
-      val client: JXoClient = new JXoClient(host, port, "http", null, new ClientConfig(), new util.HashMap[String, String]())
+      val client: JXoClient = new JXoClient(host, port, "http", null, new ClientConfig(), new util.HashMap[String, String](), null)
       val resource = client.rest.some.webservice
 
       val request1 = resource.pathparam("foo").addHeader("Cookie", "mjam")

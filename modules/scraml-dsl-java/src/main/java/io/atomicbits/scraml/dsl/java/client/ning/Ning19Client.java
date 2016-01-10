@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,7 @@ import java.util.function.Function;
  * Created by peter on 20/09/15.
  * Copyright Atomic BITS b.v.b.a.
  */
-public class NingClientSupport implements Client {
+public class Ning19Client implements Client {
 
     private String protocol;
     private String host;
@@ -57,7 +56,7 @@ public class NingClientSupport implements Client {
 
     private AsyncHttpClient ningClient;
 
-    private Logger LOGGER = LoggerFactory.getLogger(NingClientSupport.class);
+    private Logger LOGGER = LoggerFactory.getLogger(Ning19Client.class);
 
     /**
      * Reuse of ObjectMapper and JsonFactory is very easy: they are thread-safe provided that configuration is done before any use
@@ -67,12 +66,12 @@ public class NingClientSupport implements Client {
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
-    public NingClientSupport(String host,
-                             Integer port,
-                             String protocol,
-                             String prefix,
-                             ClientConfig config,
-                             Map<String, String> defaultHeaders) {
+    public Ning19Client(String host,
+                        Integer port,
+                        String protocol,
+                        String prefix,
+                        ClientConfig config,
+                        Map<String, String> defaultHeaders) {
         if (host != null) {
             this.host = host;
         } else {

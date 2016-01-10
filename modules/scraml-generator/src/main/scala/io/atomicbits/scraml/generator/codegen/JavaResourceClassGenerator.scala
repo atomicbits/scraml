@@ -55,7 +55,8 @@ object JavaResourceClassGenerator {
 
            import io.atomicbits.scraml.dsl.java.RequestBuilder;
            import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-           import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
+           import io.atomicbits.scraml.dsl.java.client.FactoryLoader;
+           import io.atomicbits.scraml.dsl.java.Client;
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
@@ -69,18 +70,31 @@ object JavaResourceClassGenerator {
 
                RequestBuilder requestBuilder = new RequestBuilder();
 
+
                public $apiClassName(String host,
                                     int port,
                                     String protocol,
                                     String prefix,
                                     ClientConfig clientConfig,
                                     Map<String, String> defaultHeaders) {
+                   this(host, port, protocol, prefix, clientConfig, defaultHeaders, null);
+               }
+
+
+               public $apiClassName(String host,
+                                    int port,
+                                    String protocol,
+                                    String prefix,
+                                    ClientConfig clientConfig,
+                                    Map<String, String> defaultHeaders,
+                                    String clientFactory) {
                    this.host = host;
                    this.port = port;
                    this.protocol = protocol;
                    this.defaultHeaders = defaultHeaders;
 
-                   this.requestBuilder.setClient(new NingClientSupport(host, port, protocol, prefix, clientConfig, defaultHeaders));
+                   Client client = FactoryLoader.load(clientFactory).createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
+                   this.requestBuilder.setClient(client);
                    this.requestBuilder.initializeChildren();
                }
 
