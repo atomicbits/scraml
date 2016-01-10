@@ -39,14 +39,14 @@ import scala.collection.JavaConverters._
 /**
  * Created by peter on 28/10/15.
  */
-case class NingClientSupport(protocol: String,
-                             host: String,
-                             port: Int,
-                             prefix: Option[String],
-                             config: ClientConfig,
-                             defaultHeaders: Map[String, String]) extends Client {
+case class Ning19Client(protocol: String,
+                      host: String,
+                      port: Int,
+                      prefix: Option[String],
+                      config: ClientConfig,
+                      defaultHeaders: Map[String, String]) extends Client {
 
-  val LOGGER: Logger = LoggerFactory.getLogger(classOf[NingClientSupport])
+  val LOGGER: Logger = LoggerFactory.getLogger(classOf[Ning19Client])
 
   private val cleanPrefix = prefix.map { pref =>
     val strippedPref = pref.stripPrefix("/").stripSuffix("/")
@@ -112,7 +112,7 @@ case class NingClientSupport(protocol: String,
       ningRb
     }
 
-    (HeaderMap() ++ (defaultHeaders.toSeq:_*) ++ requestBuilder.headers).foreach { element =>
+    (HeaderMap() ++ (defaultHeaders.toSeq: _*) ++ requestBuilder.headers).foreach { element =>
       val (key, values) = element
       values.foreach { value =>
         ningBuilder.addHeader(key, value)

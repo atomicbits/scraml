@@ -57,7 +57,7 @@ object ScalaResourceClassGenerator {
         s"""
          package ${apiPackageName.mkString(".")}
 
-         import io.atomicbits.scraml.dsl.client.ClientConfig
+         import io.atomicbits.scraml.dsl.client.{FactoryLoader, ClientConfig}
          import java.net.URL
          import play.api.libs.json._
 
@@ -69,12 +69,13 @@ object ScalaResourceClassGenerator {
                              protocol: String,
                              prefix: Option[String],
                              config: ClientConfig,
-                             defaultHeaders: Map[String, String]) {
+                             defaultHeaders: Map[String, String],
+                             clientFactory: Option[String]) {
 
            import io.atomicbits.scraml.dsl._
-           import io.atomicbits.scraml.dsl.client.ning.NingClientSupport
 
-           private val requestBuilder = RequestBuilder(new NingClientSupport(protocol, host, port, prefix, config, defaultHeaders))
+           private val requestBuilder =
+             RequestBuilder(FactoryLoader.load(clientFactory).flatMap(_.createClient(protocol, host, port, prefix, config, defaultHeaders)).get)
 
            ${dslFields.mkString("\n\n")}
 
@@ -92,14 +93,15 @@ object ScalaResourceClassGenerator {
            import scala.concurrent.ExecutionContext.Implicits.global
            import scala.concurrent.Future
 
-           def apply(url:URL, config:ClientConfig=ClientConfig(), defaultHeaders:Map[String,String] = Map()) : $apiClassName = {
+           def apply(url:URL, config:ClientConfig=ClientConfig(), defaultHeaders:Map[String,String] = Map(), clientFactory: Option[String] = None) : $apiClassName = {
              new $apiClassName(
                host = url.getHost,
                port = if(url.getPort == -1) url.getDefaultPort else url.getPort,
                prefix = if(url.getPath.isEmpty) None else Some(url.getPath),
                protocol = url.getProtocol,
                config = config,
-               defaultHeaders = defaultHeaders
+               defaultHeaders = defaultHeaders,
+               clientFactory = clientFactory
              )
            }
 

@@ -19,9 +19,10 @@
 
 package io.atomicbits.scraml.client.java;
 
+import io.atomicbits.scraml.dsl.java.Client;
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
+import io.atomicbits.scraml.dsl.java.client.FactoryLoader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,27 +40,37 @@ public class JXoClient {
     // It's important that the requestBuilder is package-accessible so that it's not visible in the DSL.
     RequestBuilder requestBuilder = new RequestBuilder();
 
+
     public JXoClient(String host,
                      int port,
                      String protocol,
                      String prefix,
                      ClientConfig clientConfig,
                      Map<String, String> defaultHeaders) {
+        this(host, port, protocol, prefix, clientConfig, defaultHeaders, null);
+    }
+
+    public JXoClient(String host,
+                     int port,
+                     String protocol,
+                     String prefix,
+                     ClientConfig clientConfig,
+                     Map<String, String> defaultHeaders,
+                     String clientFactory) {
         this.host = host;
         this.port = port;
         this.protocol = protocol;
         this.defaultHeaders = defaultHeaders;
 
         // Have a look at how the field 'rest' is initialized. That's why we have to reuse the existing (empty) RequestBuilder.
-        this.requestBuilder.setClient(new NingClientSupport(host, port, protocol, prefix, clientConfig, new HashMap<>()));
+        Client client = FactoryLoader.load(clientFactory).createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
+        this.requestBuilder.setClient(client);
         this.requestBuilder.initializeChildren();
         System.out.println(this.requestBuilder.toString());
     }
 
 
-
     public RestResource rest = new RestResource(this.requestBuilder);
-
 
 
     public Map<String, String> getDefaultHeaders() {

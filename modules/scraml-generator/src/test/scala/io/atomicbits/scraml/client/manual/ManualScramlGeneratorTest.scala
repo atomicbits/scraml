@@ -25,7 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
-import io.atomicbits.scraml.dsl.client.ClientConfig
+import io.atomicbits.scraml.dsl.client.{FactoryLoader, ClientConfig}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -39,12 +39,13 @@ case class XoClient(host: String,
                     protocol: String = "http",
                     prefix: Option[String] = None,
                     config: ClientConfig = ClientConfig(),
-                    defaultHeaders: Map[String, String] = Map()) {
+                    defaultHeaders: Map[String, String] = Map(),
+                    clientFactory: Option[String] = None) {
 
   import io.atomicbits.scraml.dsl._
-  import io.atomicbits.scraml.dsl.client.ning.NingClientSupport
 
-  private val requestBuilder = RequestBuilder(new NingClientSupport(protocol, host, port, prefix, config, defaultHeaders))
+  private val requestBuilder =
+    RequestBuilder(FactoryLoader.load(clientFactory).flatMap(_.createClient(protocol, host, port, prefix, config, defaultHeaders)).get)
 
   def close() = requestBuilder.client.close()
 
