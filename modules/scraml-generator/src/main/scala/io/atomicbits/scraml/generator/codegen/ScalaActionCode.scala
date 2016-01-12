@@ -28,7 +28,7 @@ import io.atomicbits.scraml.parser.model._
 object ScalaActionCode extends ActionCode {
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
-    s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(requestBuilder)"""
+    s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(_requestBuilder)"""
   }
 
 
@@ -42,7 +42,7 @@ object ScalaActionCode extends ActionCode {
          ${imports.mkString("\n")}
 
 
-         class ${headerSegmentClassRef.name}(req: RequestBuilder) extends HeaderSegment(req) {
+         class ${headerSegmentClassRef.name}(_req: RequestBuilder) extends HeaderSegment(_req) {
 
            ${methods.mkString("\n")}
 
@@ -170,7 +170,7 @@ object ScalaActionCode extends ActionCode {
            multipartParams = $multipartParamsValue,
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
-           req = requestBuilder
+           req = _requestBuilder
          ).call()
      """
   }

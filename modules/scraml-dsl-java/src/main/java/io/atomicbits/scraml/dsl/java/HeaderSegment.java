@@ -24,18 +24,18 @@ package io.atomicbits.scraml.dsl.java;
  */
 public class HeaderSegment extends Segment {
 
-    protected RequestBuilder requestBuilder = new RequestBuilder();
+    protected RequestBuilder _requestBuilder = new RequestBuilder();
 
     public HeaderSegment(){}
 
     public HeaderSegment(RequestBuilder parentRequestBuilder) {
-        parentRequestBuilder.addChild(this.requestBuilder);
+        parentRequestBuilder.addChild(this._requestBuilder);
         parentRequestBuilder.initializeChildren();
     }
 
     @Override
     protected RequestBuilder getRequestBuilder() {
-        return this.requestBuilder;
+        return this._requestBuilder;
     }
 
 }

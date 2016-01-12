@@ -27,7 +27,7 @@ import scala.language.reflectiveCalls
 
 sealed trait Segment {
 
-  protected def requestBuilder: RequestBuilder
+  protected def _requestBuilder: RequestBuilder
 
 }
 
@@ -35,21 +35,21 @@ sealed trait Segment {
 /**
  * We DON'T use case classes here to hide the internals from the resulting DSL.
  */
-class PlainSegment(pathElement: String, req: RequestBuilder) extends Segment {
+class PlainSegment(pathElement: String, _req: RequestBuilder) extends Segment {
 
-  protected val requestBuilder = req
-
-}
-
-class ParamSegment[T](value: T, req: RequestBuilder) extends Segment {
-
-  protected val requestBuilder = req
+  protected val _requestBuilder = _req
 
 }
 
-class HeaderSegment(req: RequestBuilder) extends Segment {
+class ParamSegment[T](value: T, _req: RequestBuilder) extends Segment {
 
-  protected val requestBuilder = req
+  protected val _requestBuilder = _req
+
+}
+
+class HeaderSegment(_req: RequestBuilder) extends Segment {
+
+  protected val _requestBuilder = _req
 
 }
 
@@ -69,7 +69,7 @@ abstract class MethodSegment[B, R](method: Method,
 
   protected val formParameterMap = formParams.collect { case (key, Some(value)) => (key, value) }
 
-  protected val requestBuilder = {
+  protected val _requestBuilder = {
     val reqUpdated =
       req.copy(
         method = method,
@@ -102,7 +102,7 @@ class StringMethodSegment[B](method: Method,
   extends MethodSegment[B, String](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[String]): Future[Response[String]] =
-    requestBuilder.callToStringResponse[B](body)
+    _requestBuilder.callToStringResponse[B](body)
 
 }
 
@@ -118,7 +118,7 @@ class JsonMethodSegment[B](method: Method,
   extends MethodSegment[B, JsValue](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[JsValue]): Future[Response[JsValue]] =
-    requestBuilder.callToJsonResponse[B](body)
+    _requestBuilder.callToJsonResponse[B](body)
 
 }
 
@@ -134,6 +134,6 @@ class TypeMethodSegment[B, R](method: Method,
   extends MethodSegment[B, R](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
-    requestBuilder.callToTypeResponse[B, R](body)
+    _requestBuilder.callToTypeResponse[B, R](body)
 
 }

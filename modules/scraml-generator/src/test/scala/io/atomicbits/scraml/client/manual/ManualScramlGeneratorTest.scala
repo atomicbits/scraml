@@ -19,13 +19,17 @@
 
 package io.atomicbits.scraml.client.manual
 
+import java.net.URL
+
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
-import io.atomicbits.scraml.dsl.client.{FactoryLoader, ClientConfig}
+import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
+import io.atomicbits.scraml.dsl.RequestBuilder
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -34,22 +38,11 @@ import scala.language.{postfixOps, reflectiveCalls}
 /**
  * The client in this test is manually written to understand what kind of code we need to generate to support the DSL.
  */
-case class XoClient(host: String,
-                    port: Int = 80,
-                    protocol: String = "http",
-                    prefix: Option[String] = None,
-                    config: ClientConfig = ClientConfig(),
-                    defaultHeaders: Map[String, String] = Map(),
-                    clientFactory: Option[String] = None) {
+class XoClient(private val _requestBuilder: RequestBuilder) {
 
-  import io.atomicbits.scraml.dsl._
+  def rest = new RestResource(_requestBuilder.withAddedPathSegment("rest"))
 
-  private val requestBuilder =
-    RequestBuilder(FactoryLoader.load(clientFactory).flatMap(_.createClient(protocol, host, port, prefix, config, defaultHeaders)).get)
-
-  def close() = requestBuilder.client.close()
-
-  def rest = new RestResource(requestBuilder.withAddedPathSegment("rest"))
+  def _close() = _requestBuilder.client.close()
 
 }
 
@@ -61,6 +54,50 @@ object XoClient {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.Future
+
+  def apply(url: URL,
+            config: ClientConfig = ClientConfig(),
+            defaultHeaders: Map[String, String] = Map(),
+            clientFactory: Option[ClientFactory] = None): XoClient = {
+
+    val requestBuilder =
+      RequestBuilder(
+        clientFactory.getOrElse(new Ning19ClientFactory())
+          .createClient(
+            protocol = url.getProtocol,
+            host = url.getHost,
+            port = if (url.getPort == -1) url.getDefaultPort else url.getPort,
+            prefix = if (url.getPath.isEmpty) None else Some(url.getPath),
+            config = config,
+            defaultHeaders = defaultHeaders
+          ).get
+      )
+
+    new XoClient(requestBuilder)
+  }
+
+  def apply(host: String,
+            port: Int,
+            protocol: String,
+            prefix: Option[String],
+            config: ClientConfig,
+            defaultHeaders: Map[String, String],
+            clientFactory: Option[ClientFactory]) = {
+    val requestBuilder =
+      RequestBuilder(
+        clientFactory.getOrElse(new Ning19ClientFactory())
+          .createClient(
+            protocol = protocol,
+            host = host,
+            port = port,
+            prefix = prefix,
+            config = config,
+            defaultHeaders = defaultHeaders
+          ).get
+      )
+
+    new XoClient(requestBuilder)
+  }
 
   implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
 
@@ -137,14 +174,16 @@ class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
       When("we execute some restful requests using the DSL")
 
       val futureResultGet: Future[User] =
-        XoClient(protocol = "http", host = host, port = port)
+        XoClient(protocol = "http", host = host, port = port, prefix = None, config = ClientConfig(), defaultHeaders = Map
+          .empty, clientFactory = None)
           .rest.some.webservice.pathparam("pathparamvalue")
           .withHeaders("Accept" -> "application/json")
           .get(queryparX = 2.0, queryparY = 50, queryParZ = Option(123))
           .call().asType
 
       val futureResultPut: Future[Address] =
-        XoClient(protocol = "http", host = host, port = port)
+        XoClient(protocol = "http", host = host, port = port, prefix = None, config = ClientConfig(), defaultHeaders = Map
+          .empty, clientFactory = None)
           .rest.some.webservice.pathparam("pathparamvalue")
           .withHeaders(
             "Content-Type" -> "application/json",

@@ -101,7 +101,7 @@ class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Before
       persoon2.setAge(2L)
       assertResult(persoon2)(response2.getBody)
 
-      client.close()
+      client._close()
     }
 
   }

@@ -26,10 +26,10 @@ import play.api.libs.json.JsValue
 /**
  * Created by peter on 17/08/15. 
  */
-class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment[String](value, req) {
+class PathparamResource(_value: String, private val _req: RequestBuilder) extends ParamSegment[String](_value, _req) {
 
   def withHeaders(newHeaders: (String, String)*) =
-    new PathparamResource(value, requestBuilder.withAddedHeaders(newHeaders: _*))
+    new PathparamResource(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))
 
   def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new TypeMethodSegment[String, User](
     method = Get,
@@ -39,7 +39,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       "queryParZ" -> queryParZ.map(HttpParam(_))
     ),
     expectedAcceptHeader = Some("application/json"),
-    req = requestBuilder
+    req = _requestBuilder
   )
 
   def put(body: String) =
@@ -48,7 +48,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       theBody = Some(body),
       expectedAcceptHeader = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = requestBuilder
+      req = _requestBuilder
     )
 
   def put(body: JsValue) =
@@ -57,7 +57,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       theBody = Some(body),
       expectedAcceptHeader = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = requestBuilder
+      req = _requestBuilder
     )
 
   def put(body: User) =
@@ -66,7 +66,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       theBody = Some(body),
       expectedAcceptHeader = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = requestBuilder)
+      req = _requestBuilder)
 
   def post(formparX: Int, formParY: Double, formParZ: Option[String]) =
     new TypeMethodSegment(
@@ -80,7 +80,7 @@ class PathparamResource(value: String, req: RequestBuilder) extends ParamSegment
       multipartParams = List.empty,
       expectedAcceptHeader = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = requestBuilder
+      req = _requestBuilder
     )
 
 }

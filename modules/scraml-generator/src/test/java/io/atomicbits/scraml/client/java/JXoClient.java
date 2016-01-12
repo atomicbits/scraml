@@ -22,9 +22,9 @@ package io.atomicbits.scraml.client.java;
 import io.atomicbits.scraml.dsl.java.Client;
 import io.atomicbits.scraml.dsl.java.RequestBuilder;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-import io.atomicbits.scraml.dsl.java.client.FactoryLoader;
+import io.atomicbits.scraml.dsl.java.client.ClientFactory;
+import io.atomicbits.scraml.dsl.java.client.ning.Ning19ClientFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,14 +32,8 @@ import java.util.Map;
  */
 public class JXoClient {
 
-    private String host;
-    private int port;
-    private String protocol;
-    private Map<String, String> defaultHeaders;
-
     // It's important that the requestBuilder is package-accessible so that it's not visible in the DSL.
-    RequestBuilder requestBuilder = new RequestBuilder();
-
+    protected RequestBuilder _requestBuilder = new RequestBuilder();
 
     public JXoClient(String host,
                      int port,
@@ -56,41 +50,18 @@ public class JXoClient {
                      String prefix,
                      ClientConfig clientConfig,
                      Map<String, String> defaultHeaders,
-                     String clientFactory) {
-        this.host = host;
-        this.port = port;
-        this.protocol = protocol;
-        this.defaultHeaders = defaultHeaders;
-
-        // Have a look at how the field 'rest' is initialized. That's why we have to reuse the existing (empty) RequestBuilder.
-        Client client = FactoryLoader.load(clientFactory).createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
-        this.requestBuilder.setClient(client);
-        this.requestBuilder.initializeChildren();
-        System.out.println(this.requestBuilder.toString());
+                     ClientFactory clientFactory) {
+        ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
+        Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
+        this._requestBuilder.setClient(client);
+        this._requestBuilder.initializeChildren();
+        System.out.println(this._requestBuilder.toString());
     }
 
+    public RestResource rest = new RestResource(this._requestBuilder);
 
-    public RestResource rest = new RestResource(this.requestBuilder);
-
-
-    public Map<String, String> getDefaultHeaders() {
-        return defaultHeaders;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public void close() {
-        this.requestBuilder.getClient().close();
+    public void _close() {
+        this._requestBuilder.getClient().close();
     }
 
 }

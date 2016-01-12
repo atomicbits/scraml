@@ -125,6 +125,10 @@ public class Ning19Client implements Client {
         return prefix;
     }
 
+    public Map<String, String> getDefaultHeaders() {
+        return defaultHeaders;
+    }
+
     public String getCleanPrefix() {
         if (prefix != null) {
             String cleanPrefix = prefix;
@@ -140,10 +144,6 @@ public class Ning19Client implements Client {
         }
     }
 
-    @Override
-    public Map<String, String> defaultHeaders() {
-        return defaultHeaders;
-    }
 
     private AsyncHttpClient getClient() {
         return ningClient;

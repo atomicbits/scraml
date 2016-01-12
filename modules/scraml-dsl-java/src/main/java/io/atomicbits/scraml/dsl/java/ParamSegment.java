@@ -24,28 +24,28 @@ package io.atomicbits.scraml.dsl.java;
  */
 public abstract class ParamSegment<T> extends Segment {
 
-    protected T value;
+    protected T _value;
     // We have to initialize it empty and fill it in later to get the resource segments initialized as fields and not methods.
-    protected RequestBuilder requestBuilder = new RequestBuilder();
+    protected RequestBuilder _requestBuilder = new RequestBuilder();
 
     public ParamSegment(){}
 
     public ParamSegment(T value, RequestBuilder parentRequestBuilder) {
-        this.value = value;
+        this._value = value;
         // The preceding part of the path will be prepended later.
-        this.requestBuilder.appendPathElement(value.toString());
-        parentRequestBuilder.addChild(this.requestBuilder);
+        this._requestBuilder.appendPathElement(value.toString());
+        parentRequestBuilder.addChild(this._requestBuilder);
         // A paramsegment is initialized later than the client, so it needs to trigger the initialization of its uninitialized children.
         parentRequestBuilder.initializeChildren();
     }
 
     protected T getValue() {
-        return this.value;
+        return this._value;
     }
 
     @Override
     protected RequestBuilder getRequestBuilder() {
-        return this.requestBuilder;
+        return this._requestBuilder;
     }
 
 }

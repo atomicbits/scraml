@@ -26,6 +26,6 @@ import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
  */
 class SomeResource(req: RequestBuilder) extends PlainSegment("some", req) {
 
-  def webservice = new WebserviceResource(requestBuilder.withAddedPathSegment("webservice"))
+  def webservice = new WebserviceResource(_requestBuilder.withAddedPathSegment("webservice"))
 
 }

@@ -57,31 +57,24 @@ object ScalaResourceClassGenerator {
         s"""
          package ${apiPackageName.mkString(".")}
 
-         import io.atomicbits.scraml.dsl.client.{FactoryLoader, ClientConfig}
+         import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
+         import io.atomicbits.scraml.dsl.RequestBuilder
+         import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
 
          ${imports.mkString("\n")}
 
 
-         case class $apiClassName(host: String,
-                             port: Int,
-                             protocol: String,
-                             prefix: Option[String],
-                             config: ClientConfig,
-                             defaultHeaders: Map[String, String],
-                             clientFactory: Option[String]) {
+         class $apiClassName(private val _requestBuilder: RequestBuilder) {
 
            import io.atomicbits.scraml.dsl._
-
-           private val requestBuilder =
-             RequestBuilder(FactoryLoader.load(clientFactory).flatMap(_.createClient(protocol, host, port, prefix, config, defaultHeaders)).get)
 
            ${dslFields.mkString("\n\n")}
 
            ${actionFunctions.mkString("\n\n")}
 
-           def close() = requestBuilder.client.close()
+           def close() = _requestBuilder.client.close()
 
          }
 
@@ -93,17 +86,49 @@ object ScalaResourceClassGenerator {
            import scala.concurrent.ExecutionContext.Implicits.global
            import scala.concurrent.Future
 
-           def apply(url:URL, config:ClientConfig=ClientConfig(), defaultHeaders:Map[String,String] = Map(), clientFactory: Option[String] = None) : $apiClassName = {
-             new $apiClassName(
-               host = url.getHost,
-               port = if(url.getPort == -1) url.getDefaultPort else url.getPort,
-               prefix = if(url.getPath.isEmpty) None else Some(url.getPath),
-               protocol = url.getProtocol,
-               config = config,
-               defaultHeaders = defaultHeaders,
-               clientFactory = clientFactory
-             )
+           def apply(url:URL, config:ClientConfig=ClientConfig(), defaultHeaders:Map[String,String] = Map(), clientFactory: Option[ClientFactory] = None) : $apiClassName = {
+
+             val requestBuilder =
+               RequestBuilder(
+                 clientFactory.getOrElse(new Ning19ClientFactory())
+                   .createClient(
+                     protocol = url.getProtocol,
+                     host = url.getHost,
+                     port = if (url.getPort == -1) url.getDefaultPort else url.getPort,
+                     prefix = if (url.getPath.isEmpty) None else Some(url.getPath),
+                     config = config,
+                     defaultHeaders = defaultHeaders
+                   ).get
+               )
+
+             new $apiClassName(requestBuilder)
            }
+
+
+           def apply(host: String,
+                     port: Int,
+                     protocol: String,
+                     prefix: Option[String],
+                     config: ClientConfig,
+                     defaultHeaders: Map[String, String],
+                     clientFactory: Option[ClientFactory]) = {
+
+             val requestBuilder =
+               RequestBuilder(
+                 clientFactory.getOrElse(new Ning19ClientFactory())
+                   .createClient(
+                     protocol = protocol,
+                     host = host,
+                     port = port,
+                     prefix = prefix,
+                     config = config,
+                     defaultHeaders = defaultHeaders
+                   ).get
+               )
+
+             new $apiClassName(requestBuilder)
+             }
+
 
            implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
 
@@ -145,7 +170,6 @@ object ScalaResourceClassGenerator {
 
       val classDefinition = generateClassDefinition(resource)
 
-      // val fieldImports = resource.resources.flatMap(generateResourceFieldImports(_, resource.classRep.packageParts)).toSet
       val dslFields = resource.resources.map(generateResourceDslField)
 
       val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode).generateActionFunctions(resource)
@@ -166,8 +190,8 @@ object ScalaResourceClassGenerator {
 
            $classDefinition
 
-             def addHeaders(newHeaders: (String, String)*) =
-               new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
+           def addHeaders(newHeaders: (String, String)*) =
+             new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
 
            ${dslFields.mkString("\n\n")}
 
@@ -186,9 +210,9 @@ object ScalaResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""class ${resource.classRep.name}(value: $paramType, req: RequestBuilder) extends ParamSegment[$paramType](value, req) { """
+          s"""class ${resource.classRep.name}(_value: $paramType, _req: RequestBuilder) extends ParamSegment[$paramType](_value, _req) { """
         case None            =>
-          s"""class ${resource.classRep.name}(req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", req) { """
+          s"""class ${resource.classRep.name}(private val _req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", _req) { """
       }
 
 
@@ -196,9 +220,9 @@ object ScalaResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          ("(value, requestBuilder.withAddedHeaders(header))", "(value, requestBuilder.withAddedHeaders(newHeaders: _*))")
+          ("(_value, _requestBuilder.withAddedHeaders(header))", "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))")
         case None            =>
-          ("(requestBuilder.withAddedHeaders(header))", "(requestBuilder.withAddedHeaders(newHeaders: _*))")
+          ("(_requestBuilder.withAddedHeaders(header))", "(_requestBuilder.withAddedHeaders(newHeaders: _*))")
       }
 
 
@@ -227,11 +251,11 @@ object ScalaResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""def $cleanUrlSegment(value: $paramType) = new ${
+          s"""def $cleanUrlSegment(_value: $paramType) = new ${
             resource.classRep.fullyQualifiedName
-          }(value, requestBuilder.withAddedPathSegment(value))"""
+          }(_value, _requestBuilder.withAddedPathSegment(_value))"""
         case None            =>
-          s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(requestBuilder.withAddedPathSegment("${
+          s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(_requestBuilder.withAddedPathSegment("${
             resource.urlSegment
           }"))"""
       }
