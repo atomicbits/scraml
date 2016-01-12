@@ -90,7 +90,7 @@ object ScalaResourceClassGenerator {
 
              val requestBuilder =
                RequestBuilder(
-                 clientFactory.getOrElse(new Ning19ClientFactory())
+                 clientFactory.getOrElse(Ning19ClientFactory)
                    .createClient(
                      protocol = url.getProtocol,
                      host = url.getHost,
@@ -115,7 +115,7 @@ object ScalaResourceClassGenerator {
 
              val requestBuilder =
                RequestBuilder(
-                 clientFactory.getOrElse(new Ning19ClientFactory())
+                 clientFactory.getOrElse(Ning19ClientFactory)
                    .createClient(
                      protocol = protocol,
                      host = host,

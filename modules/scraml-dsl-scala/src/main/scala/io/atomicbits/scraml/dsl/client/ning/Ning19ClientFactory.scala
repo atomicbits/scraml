@@ -27,7 +27,7 @@ import scala.util.{Failure, Try}
 /**
  * Created by peter on 8/01/16.
  */
-class Ning19ClientFactory extends ClientFactory {
+object Ning19ClientFactory extends ClientFactory {
 
   override def createClient(protocol: String,
                             host: String,
