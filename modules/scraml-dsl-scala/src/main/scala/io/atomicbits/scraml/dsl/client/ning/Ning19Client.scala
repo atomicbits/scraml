@@ -115,16 +115,15 @@ case class Ning19Client(protocol: String,
       ningRb
     }
 
-    (HeaderMap() ++ (defaultHeaders.toSeq: _*) ++ requestBuilder.headers).foreach { element =>
-      val (key, values) = element
-      values.foreach { value =>
-        ningBuilder.addHeader(key, value)
-      }
+    (HeaderMap() ++ (defaultHeaders.toSeq: _*) ++ requestBuilder.headers).foreach {
+      case (key, values) =>
+        values.foreach { value =>
+          ningBuilder.addHeader(key, value)
+        }
     }
 
     requestBuilder.queryParameters.foreach {
-      element =>
-        val (key, value) = element
+      case (key, value) =>
         value match {
           case SingleHttpParam(parameter)    => ningBuilder.addQueryParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
@@ -145,8 +144,7 @@ case class Ning19Client(protocol: String,
     }
 
     requestBuilder.formParameters.foreach {
-      element =>
-        val (key, value) = element
+      case (key, value) =>
         value match {
           case SingleHttpParam(parameter)    => ningBuilder.addFormParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
@@ -192,9 +190,6 @@ case class Ning19Client(protocol: String,
     }
 
     val ningRequest: Request = ningBuilder.build()
-
-    // ToDo: logging s"client request: $ningRequest"
-
     LOGGER.debug(s"Executing request: $ningRequest")
 
     val promise = Promise[Response[String]] ()
