@@ -41,6 +41,7 @@ sealed trait ClassPointer {
       case typedClassReference: TypedClassReference => typedClassReference
       case generic: GenericClassPointer             =>
         sys.error(s"A generic object pointer cannot be transformed to a class pointer: $generic")
+      case javaArray: JavaArray                     => sys.error("Typed version of a java array does not exist.")
     }
   }
 
@@ -53,6 +54,8 @@ sealed trait ClassPointer {
   def canonicalNameScala: String
 
   def canonicalNameJava: String
+
+  def isJavaArray: Boolean = false
 
 }
 
@@ -81,6 +84,12 @@ case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
 /**
  * A unique reference to a class. E.g. List[T].
+ *
+ * @param name The name of the class.
+ * @param packageParts The package parts that comprise the full package name.
+ * @param typeVariables The type variables ths class reference holds.
+ * @param predef Indicates that the class is a predefined class that doesn't need to be imported to be used.
+ * @param library Indicates that the class is located in an existing library (and doesn't need to be generated).
  */
 case class ClassReference(name: String,
                           packageParts: List[String] = List.empty,
@@ -228,6 +237,18 @@ case object JsObjectClassReference {
 
 }
 
+case object FileClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "File", packageParts = List("java", "io"), library = true)
+
+}
+
+case object InputStreamClassReference {
+
+  def apply(): ClassReference = ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
+
+}
+
 case object JsonNodeClassReference {
 
   def apply(): ClassReference =
@@ -236,6 +257,15 @@ case object JsonNodeClassReference {
       packageParts = List("com", "fasterxml", "jackson", "databind"),
       library = true
     )
+
+}
+
+object ByteClassReference {
+
+  def apply()(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "Byte", packageParts = List("scala"), predef = true)
+    case Java  => ClassReference(name = "Byte", packageParts = List("java", "lang"), predef = true)
+  }
 
 }
 
@@ -251,3 +281,40 @@ object ListClassReference {
 
 }
 
+object ArrayClassReference {
+
+  def typed(arrayType: ClassReference)(implicit lang: Language): TypedClassReference = lang match {
+    case Scala =>
+      val typeVariable = "T"
+      val classRef = ClassReference(name = "Array", typeVariables = List(), predef = true)
+      TypedClassReference(classReference = classRef, types = Map("T" -> arrayType.asTypedClassReference))
+    case Java  => throw new IllegalArgumentException("Java has no typed array representation.")
+  }
+
+}
+
+case class JavaArray(name: String,
+                     packageParts: List[String] = List.empty,
+                     predef: Boolean = false) extends ClassPointer {
+
+  def library: Boolean = true
+
+  override def canonicalNameJava: String =
+    if (packageName.nonEmpty) s"$packageName.$classDefinitionJava" else classDefinitionJava
+
+  override def classDefinitionJava: String = s"$name[]"
+
+  override def safePackageParts: List[String] =
+    packageParts.map(part => CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanPackageName(part), "esc"))
+
+  override def classDefinitionScala: String = ???
+
+  override def canonicalNameScala: String = ???
+
+  override def fullyQualifiedName: String = if (packageName.nonEmpty) s"$packageName.$name" else name
+
+  override def packageName: String = safePackageParts.mkString(".")
+
+  override def isJavaArray: Boolean = true
+
+}

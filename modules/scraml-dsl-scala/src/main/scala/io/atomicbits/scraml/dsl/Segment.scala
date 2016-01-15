@@ -59,6 +59,7 @@ abstract class MethodSegment[B, R](method: Method,
                                    queryParams: Map[String, Option[HttpParam]],
                                    formParams: Map[String, Option[HttpParam]],
                                    multipartParams: List[BodyPart],
+                                   binaryParam: Option[BinaryBody] = None,
                                    expectedAcceptHeader: Option[String],
                                    expectedContentTypeHeader: Option[String],
                                    req: RequestBuilder) extends Segment {
@@ -96,10 +97,11 @@ class StringMethodSegment[B](method: Method,
                              queryParams: Map[String, Option[HttpParam]],
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
                              multipartParams: List[BodyPart] = List.empty,
+                             binaryParam: Option[BinaryBody] = None,
                              expectedAcceptHeader: Option[String] = None,
                              expectedContentTypeHeader: Option[String] = None,
                              req: RequestBuilder)
-  extends MethodSegment[B, String](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
+  extends MethodSegment[B, String](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[String]): Future[Response[String]] =
     _requestBuilder.callToStringResponse[B](body)
@@ -112,10 +114,11 @@ class JsonMethodSegment[B](method: Method,
                            queryParams: Map[String, Option[HttpParam]],
                            formParams: Map[String, Option[HttpParam]] = Map.empty,
                            multipartParams: List[BodyPart] = List.empty,
+                           binaryParam: Option[BinaryBody] = None,
                            expectedAcceptHeader: Option[String] = None,
                            expectedContentTypeHeader: Option[String] = None,
                            req: RequestBuilder)
-  extends MethodSegment[B, JsValue](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
+  extends MethodSegment[B, JsValue](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[JsValue]): Future[Response[JsValue]] =
     _requestBuilder.callToJsonResponse[B](body)
@@ -128,10 +131,11 @@ class TypeMethodSegment[B, R](method: Method,
                               queryParams: Map[String, Option[HttpParam]] = Map.empty,
                               formParams: Map[String, Option[HttpParam]] = Map.empty,
                               multipartParams: List[BodyPart] = List.empty,
+                              binaryParam: Option[BinaryBody] = None,
                               expectedAcceptHeader: Option[String] = None,
                               expectedContentTypeHeader: Option[String] = None,
                               req: RequestBuilder)
-  extends MethodSegment[B, R](method, theBody, queryParams, formParams, multipartParams, expectedAcceptHeader, expectedContentTypeHeader, req) {
+  extends MethodSegment[B, R](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
     _requestBuilder.callToTypeResponse[B, R](body)

@@ -151,10 +151,11 @@ object JavaActionCode extends ActionCode {
   def generateAction(action: RichAction,
                      segmentType: String,
                      actionParameters: List[String] = List.empty,
-                     bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None,
+                     typedBodyParam: Boolean = false,
+                     multipartParams: Boolean = false,
+                     binaryParam: Boolean = false,
                      contentType: ContentType,
                      responseType: ResponseType): String = {
 
@@ -162,8 +163,6 @@ object JavaActionCode extends ActionCode {
     val actionTypeMethod: String = actionType.toString.toLowerCase(Locale.ENGLISH)
 
     val method = s"Method.${actionType.toString.toUpperCase(Locale.ENGLISH)}"
-
-    val bodyFieldValue = if (bodyField) "body" else "null"
 
     val (queryParamMap, queryParams) =
       if (queryParameterMapEntries.nonEmpty) {
@@ -191,7 +190,9 @@ object JavaActionCode extends ActionCode {
         ("", "null")
       }
 
-    val multipartParamsValue = multipartParams.getOrElse("null")
+    val bodyFieldValue = if (typedBodyParam) "body" else "null"
+    val multipartParamsValue = if (multipartParams) "parts" else "null"
+    val binaryParamValue = if (binaryParam) "body" else "null"
 
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt

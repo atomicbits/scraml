@@ -22,6 +22,8 @@ package io.atomicbits.scraml.dsl.client.ning
 import java.util.concurrent.CompletionStage
 import java.util.function.{BiConsumer, Function ⇒ JFunction}
 
+import com.ning.http.client.generators.InputStreamBodyGenerator
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.ning.http.client.{AsyncCompletionHandler, Request, AsyncHttpClient, AsyncHttpClientConfig}
@@ -40,11 +42,11 @@ import scala.collection.JavaConverters._
  * Created by peter on 28/10/15.
  */
 case class Ning19Client(protocol: String,
-                      host: String,
-                      port: Int,
-                      prefix: Option[String],
-                      config: ClientConfig,
-                      defaultHeaders: Map[String, String]) extends Client {
+                        host: String,
+                        port: Int,
+                        prefix: Option[String],
+                        config: ClientConfig,
+                        defaultHeaders: Map[String, String]) extends Client {
 
   val LOGGER: Logger = LoggerFactory.getLogger(classOf[Ning19Client])
 
@@ -81,6 +83,7 @@ case class Ning19Client(protocol: String,
         response.map(responseFormat.reads)
       } else {
         // We hijack the 'JsError(Nil)' type here to mark the non-200 case that has to result in a successful future with empty body.
+        // Mind that the empty body only means that the requested type is None, the stringBody and jsonBody fields are present as well.
         response.map(_ => JsError(Nil))
       }
     } flatMap {
@@ -129,11 +132,16 @@ case class Ning19Client(protocol: String,
         }
     }
 
-    // ToDo: support for different body types (Array[Byte]), streaming,
-
     body.foreach {
       body =>
         ningBuilder.setBody(bodyFormat.writes(body).toString())
+    }
+
+    requestBuilder.binaryBody.foreach {
+      case FileBinaryBody(file)               => ningBuilder.setBody(file)
+      case InputStreamBinaryBody(inputStream) => ningBuilder.setBody(new InputStreamBodyGenerator(inputStream))
+      case ByteArrayBinaryBody(byteArray)     => ningBuilder.setBody(byteArray)
+      case StringBinaryBody(text)             => ningBuilder.setBody(text)
     }
 
     requestBuilder.formParameters.foreach {

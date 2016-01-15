@@ -27,6 +27,9 @@ import io.atomicbits.scraml.parser.model._
  */
 object ScalaActionCode extends ActionCode {
 
+  implicit val language: Language = Scala
+
+
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
     s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(_requestBuilder)"""
   }
@@ -65,6 +68,21 @@ object ScalaActionCode extends ActionCode {
       case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()), Some(JsValueClassReference()))
       case TypedContentType(contentTypeHeader, classRef) =>
         List(Some(StringClassReference()), Some(JsValueClassReference()), Some(classRef))
+      case BinaryContentType(contentTypeHeader)          =>
+        List(
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(ArrayClassReference.typed(arrayType = ByteClassReference()))
+        )
+      case AnyContentType(contentTypeHeader)             =>
+        List(
+          None,
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(ArrayClassReference.typed(arrayType = ByteClassReference()))
+        )
       case NoContentType                                 => List(None)
       case x                                             => List(Some(StringClassReference()))
     }
@@ -136,10 +154,11 @@ object ScalaActionCode extends ActionCode {
   def generateAction(action: RichAction,
                      segmentType: String,
                      actionParameters: List[String] = List.empty,
-                     bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None,
+                     typedBodyParam: Boolean = false,
+                     multipartParams: Boolean = false,
+                     binaryParam: Boolean = false,
                      contentType: ContentType,
                      responseType: ResponseType): String = {
 
@@ -152,9 +171,10 @@ object ScalaActionCode extends ActionCode {
     val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
 
-    val bodyFieldValue = if (bodyField) "Some(body)" else "None"
-
-    val multipartParamsValue = multipartParams.getOrElse("List.empty")
+    // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
+    val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"
+    val multipartParamsValue = if (multipartParams) "parts" else "List.empty"
+    val binaryParamValue = if (binaryParam) "Some(body)" else "None"
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
@@ -168,6 +188,7 @@ object ScalaActionCode extends ActionCode {
              ${formParameterMapEntries.mkString(",")}
            ),
            multipartParams = $multipartParamsValue,
+           binaryParam = $binaryParamValue,
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = _requestBuilder
