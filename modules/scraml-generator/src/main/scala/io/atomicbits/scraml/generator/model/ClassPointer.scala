@@ -286,7 +286,7 @@ object ArrayClassReference {
   def typed(arrayType: ClassReference)(implicit lang: Language): TypedClassReference = lang match {
     case Scala =>
       val typeVariable = "T"
-      val classRef = ClassReference(name = "Array", typeVariables = List(), predef = true)
+      val classRef = ClassReference(name = "Array", typeVariables = List(typeVariable), predef = true)
       TypedClassReference(classReference = classRef, types = Map("T" -> arrayType.asTypedClassReference))
     case Java  => throw new IllegalArgumentException("Java has no typed array representation.")
   }

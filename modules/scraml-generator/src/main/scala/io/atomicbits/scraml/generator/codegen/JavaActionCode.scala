@@ -29,6 +29,8 @@ import io.atomicbits.scraml.parser.model._
  */
 object JavaActionCode extends ActionCode {
 
+  implicit val language: Language = Java
+
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
     s"""public ${headerSegment.classRef.fullyQualifiedName} $contentHeaderMethodName =
@@ -73,7 +75,22 @@ object JavaActionCode extends ActionCode {
       case StringContentType(contentTypeHeader)          => List(Some(StringClassReference()))
       case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()))
       case TypedContentType(contentTypeHeader, classRef) => List(Some(StringClassReference()), Some(classRef))
-      case NoContentType                                 => List(None, Some(StringClassReference()))
+      case BinaryContentType(contentTypeHeader)          =>
+        List(
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(JavaArray(name = "byte", packageParts = List("java", "lang"), predef = true))
+        )
+      case AnyContentType(contentTypeHeader)             =>
+        List(
+          None,
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(JavaArray(name = "byte", packageParts = List("java", "lang"), predef = true))
+        )
+      case NoContentType                                 => List(None)
       case x                                             => List(Some(StringClassReference()))
     }
 
@@ -192,7 +209,7 @@ object JavaActionCode extends ActionCode {
 
     val bodyFieldValue = if (typedBodyParam) "body" else "null"
     val multipartParamsValue = if (multipartParams) "parts" else "null"
-    val binaryParamValue = if (binaryParam) "body" else "null"
+    val binaryParamValue = if (binaryParam) "BinaryBody.create(body)" else "null"
 
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
@@ -219,6 +236,7 @@ object JavaActionCode extends ActionCode {
            $queryParams,
            $formParams,
            $multipartParamsValue,
+           $binaryParamValue,
            $acceptHeader,
            $contentHeader,
            this.getRequestBuilder(),

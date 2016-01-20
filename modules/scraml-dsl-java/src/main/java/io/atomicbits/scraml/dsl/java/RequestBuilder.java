@@ -38,6 +38,7 @@ public class RequestBuilder {
     private Map<String, HttpParam> queryParameters = new HashMap<String, HttpParam>();
     private Map<String, HttpParam> formParameters = new HashMap<String, HttpParam>();
     private List<BodyPart> multipartParams = new ArrayList<BodyPart>();
+    private BinaryBody binaryBody = null;
     private HeaderMap headers = new HeaderMap();
 
     // Java makes it hard for us to get the initialization of the requestbuilders right.
@@ -59,6 +60,7 @@ public class RequestBuilder {
                            Map<String, HttpParam> queryParameters,
                            Map<String, HttpParam> formParameters,
                            List<BodyPart> multipartParams,
+                           BinaryBody binaryBody,
                            HeaderMap headers) {
 
         setClient(client);
@@ -67,6 +69,7 @@ public class RequestBuilder {
         setQueryParameters(queryParameters);
         setFormParameters(formParameters);
         setMultipartParams(multipartParams);
+        setBinaryBody(binaryBody);
         setHeaders(headers);
     }
 
@@ -92,6 +95,14 @@ public class RequestBuilder {
 
     public List<BodyPart> getMultipartParams() {
         return multipartParams;
+    }
+
+    public BinaryBody getBinaryBody() {
+        return binaryBody;
+    }
+
+    public void setBinaryBody(BinaryBody binaryBody) {
+        this.binaryBody = binaryBody;
     }
 
     public Map<String, HttpParam> getQueryParameters() {
@@ -190,6 +201,7 @@ public class RequestBuilder {
                         this.queryParameters,
                         this.formParameters,
                         this.multipartParams,
+                        this.binaryBody,
                         this.headers
                 );
         rb.childRequestBuilders = new ArrayList<RequestBuilder>(this.childRequestBuilders);

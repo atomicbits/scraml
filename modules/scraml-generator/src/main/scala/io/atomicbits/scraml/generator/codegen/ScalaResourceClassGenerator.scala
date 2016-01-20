@@ -62,6 +62,7 @@ object ScalaResourceClassGenerator {
          import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
+         import java.io._
 
          ${imports.mkString("\n")}
 
@@ -185,6 +186,7 @@ object ScalaResourceClassGenerator {
            import io.atomicbits.scraml.dsl._
 
            import play.api.libs.json._
+           import java.io._
 
            ${imports.mkString("\n")}
 

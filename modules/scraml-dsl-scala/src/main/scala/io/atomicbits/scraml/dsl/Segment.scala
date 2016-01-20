@@ -59,7 +59,7 @@ abstract class MethodSegment[B, R](method: Method,
                                    queryParams: Map[String, Option[HttpParam]],
                                    formParams: Map[String, Option[HttpParam]],
                                    multipartParams: List[BodyPart],
-                                   binaryParam: Option[BinaryBody] = None,
+                                   binaryBody: Option[BinaryBody] = None,
                                    expectedAcceptHeader: Option[String],
                                    expectedContentTypeHeader: Option[String],
                                    req: RequestBuilder) extends Segment {
@@ -76,7 +76,8 @@ abstract class MethodSegment[B, R](method: Method,
         method = method,
         queryParameters = queryParameterMap,
         formParameters = formParameterMap,
-        multipartParams = multipartParams
+        multipartParams = multipartParams,
+        binaryBody = binaryBody
       )
 
     val reqWithAccept =

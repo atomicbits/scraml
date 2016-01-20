@@ -174,7 +174,7 @@ object ScalaActionCode extends ActionCode {
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
     val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"
     val multipartParamsValue = if (multipartParams) "parts" else "List.empty"
-    val binaryParamValue = if (binaryParam) "Some(body)" else "None"
+    val binaryParamValue = if (binaryParam) "Some(BinaryBody(body))" else "None"
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =

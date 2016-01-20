@@ -34,3 +34,16 @@ case class InputStreamBinaryBody(inputStream: InputStream) extends BinaryBody
 case class ByteArrayBinaryBody(byteArray: Array[Byte]) extends BinaryBody
 
 case class StringBinaryBody(text: String) extends BinaryBody
+
+
+object BinaryBody {
+
+  def apply(file: File): BinaryBody = FileBinaryBody(file)
+
+  def apply(inputStream: InputStream): BinaryBody = InputStreamBinaryBody(inputStream)
+
+  def apply(byteArray: Array[Byte]): BinaryBody = ByteArrayBinaryBody(byteArray)
+
+  def apply(text: String): BinaryBody = StringBinaryBody(text)
+
+}

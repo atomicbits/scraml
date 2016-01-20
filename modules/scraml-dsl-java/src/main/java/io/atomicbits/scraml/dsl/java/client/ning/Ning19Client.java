@@ -26,6 +26,7 @@ import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Request;
+import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.dsl.java.*;
 import io.atomicbits.scraml.dsl.java.ByteArrayPart;
 import io.atomicbits.scraml.dsl.java.FilePart;
@@ -34,7 +35,9 @@ import io.atomicbits.scraml.dsl.java.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -221,6 +224,26 @@ public class Ning19Client implements Client {
             ningRb.setBody(writeBodyToString(canonicalContentType, body));
         }
 
+        if (requestBuilder.getBinaryBody() != null) {
+            BinaryBody binaryBody = requestBuilder.getBinaryBody();
+            if (binaryBody.isFile()) {
+                File file = ((FileBinaryBody) binaryBody).getFile();
+                ningRb.setBody(file);
+            }
+            if (binaryBody.isInputStream()) {
+                InputStream stream = ((InputStreamBinaryBody) binaryBody).getInputStream();
+                ningRb.setBody(new InputStreamBodyGenerator(stream));
+            }
+            if (binaryBody.isByteArray()) {
+                byte[] bytes = ((ByteArrayBinaryBody) binaryBody).getBytes();
+                ningRb.setBody(bytes);
+            }
+            if (binaryBody.isString()) {
+                String text = ((StringBinaryBody) binaryBody).getText();
+                ningRb.setBody(text);
+            }
+        }
+
         for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
             if (formParam.getValue().isSingle()) {
                 SingleHttpParam param = (SingleHttpParam) formParam.getValue();
@@ -289,7 +312,7 @@ public class Ning19Client implements Client {
         // CompletableFuture is present in the JDK since 1.8
         final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
 
-        LOGGER.debug("Executing request: " + ningRequest + "\nWith body: " + ningRequest.getStringData());
+        LOGGER.debug("Executing request: " + ningRequest + "\nWith 'string' body: " + ningRequest.getStringData());
 
         getClient().executeRequest(ningRequest, new AsyncCompletionHandler<String>() {
 

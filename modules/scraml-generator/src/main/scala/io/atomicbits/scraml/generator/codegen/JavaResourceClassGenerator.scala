@@ -61,6 +61,8 @@ object JavaResourceClassGenerator {
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
+           import java.io.*;
+
 
            public class $apiClassName {
 
@@ -139,6 +141,7 @@ object JavaResourceClassGenerator {
            import io.atomicbits.scraml.dsl.java.*;
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
+           import java.io.*;
 
            ${imports.mkString("", ";\n", ";")}
 
