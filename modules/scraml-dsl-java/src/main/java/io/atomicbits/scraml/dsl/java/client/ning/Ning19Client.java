@@ -224,22 +224,22 @@ public class Ning19Client implements Client {
             ningRb.setBody(writeBodyToString(canonicalContentType, body));
         }
 
-        if (requestBuilder.getBinaryBody() != null) {
-            BinaryBody binaryBody = requestBuilder.getBinaryBody();
-            if (binaryBody.isFile()) {
-                File file = ((FileBinaryBody) binaryBody).getFile();
+        if (requestBuilder.getBinaryRequest() != null) {
+            BinaryRequest binaryRequest = requestBuilder.getBinaryRequest();
+            if (binaryRequest.isFile()) {
+                File file = ((FileBinaryRequest) binaryRequest).getFile();
                 ningRb.setBody(file);
             }
-            if (binaryBody.isInputStream()) {
-                InputStream stream = ((InputStreamBinaryBody) binaryBody).getInputStream();
+            if (binaryRequest.isInputStream()) {
+                InputStream stream = ((InputStreamBinaryRequest) binaryRequest).getInputStream();
                 ningRb.setBody(new InputStreamBodyGenerator(stream));
             }
-            if (binaryBody.isByteArray()) {
-                byte[] bytes = ((ByteArrayBinaryBody) binaryBody).getBytes();
+            if (binaryRequest.isByteArray()) {
+                byte[] bytes = ((ByteArrayBinaryRequest) binaryRequest).getBytes();
                 ningRb.setBody(bytes);
             }
-            if (binaryBody.isString()) {
-                String text = ((StringBinaryBody) binaryBody).getText();
+            if (binaryRequest.isString()) {
+                String text = ((StringBinaryRequest) binaryRequest).getText();
                 ningRb.setBody(text);
             }
         }

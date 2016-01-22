@@ -25,7 +25,7 @@ import java.io.InputStream;
 /**
  * Created by peter on 17/01/16.
  */
-public abstract class BinaryBody {
+public abstract class BinaryRequest {
 
     public boolean isFile() {
         return false;
@@ -43,20 +43,20 @@ public abstract class BinaryBody {
         return false;
     }
 
-    public static BinaryBody create(File file) {
-        return new FileBinaryBody(file);
+    public static BinaryRequest create(File file) {
+        return new FileBinaryRequest(file);
     }
 
-    public static BinaryBody create(InputStream inputStream) {
-        return new InputStreamBinaryBody(inputStream);
+    public static BinaryRequest create(InputStream inputStream) {
+        return new InputStreamBinaryRequest(inputStream);
     }
 
-    public static BinaryBody create(byte[] bytes) {
-        return new ByteArrayBinaryBody(bytes);
+    public static BinaryRequest create(byte[] bytes) {
+        return new ByteArrayBinaryRequest(bytes);
     }
 
-    public static BinaryBody create(String text) {
-        return new StringBinaryBody(text);
+    public static BinaryRequest create(String text) {
+        return new StringBinaryRequest(text);
     }
 
 }

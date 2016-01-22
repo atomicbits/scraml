@@ -24,22 +24,22 @@ import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
 /**
- * Created by peter on 23/08/15. 
- */
+  * Created by peter on 23/08/15.
+  */
 case class ActionGenerator(actionCode: ActionCode) {
 
 
   /**
-   * The reason why we treat all actions of a resource together is that certain paths towards the actual action
-   * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
-   * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
-   * so we pass all actions of a single resource together.
-   *
-   * @param resource The resource whose actions are going to be processed (NOT recursively!)
-   * @return A list of action function definitions or action paths that lead to the action function. Action paths will only be
-   *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
-   *         don't support those yet, but we will do so in the future).
-   */
+    * The reason why we treat all actions of a resource together is that certain paths towards the actual action
+    * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
+    * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
+    * so we pass all actions of a single resource together.
+    *
+    * @param resource The resource whose actions are going to be processed (NOT recursively!)
+    * @return A list of action function definitions or action paths that lead to the action function. Action paths will only be
+    *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
+    *         don't support those yet, but we will do so in the future).
+    */
   def generateActionFunctions(resource: RichResource)(implicit lang: Language): ActionFunctionResult = {
 
     val actions: List[RichAction] = resource.actions
@@ -187,7 +187,7 @@ case class ActionGenerator(actionCode: ActionCode) {
   }
 
 
-  private def generateActionImports(action: RichAction): Set[String] = {
+  private def generateActionImports(action: RichAction)(implicit lang: Language): Set[String] = {
 
     def nonPredefinedImports(classReps: List[TypedClassReference]): Set[String] = {
       classReps match {
@@ -200,12 +200,14 @@ case class ActionGenerator(actionCode: ActionCode) {
 
     val contentTypeImports =
       action.selectedContentType match {
+        case BinaryContentType(contentTypeHeader)          => nonPredefinedImports(List(BinaryDataClassReference().asTypedClassReference))
         case TypedContentType(contentTypeHeader, classRep) => nonPredefinedImports(List(classRep))
         case _                                             => Set.empty[String]
       }
 
     val responseTypeImports =
       action.selectedResponsetype match {
+        case BinaryResponseType(acceptHeader)          => nonPredefinedImports(List(BinaryDataClassReference().asTypedClassReference))
         case TypedResponseType(acceptHeader, classRep) => nonPredefinedImports(List(classRep))
         case _                                         => Set.empty[String]
       }

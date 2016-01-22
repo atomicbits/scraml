@@ -19,24 +19,22 @@
 
 package io.atomicbits.scraml.dsl.java;
 
-import java.io.File;
-
 /**
  * Created by peter on 17/01/16.
  */
-public class FileBinaryBody extends BinaryBody {
+public class ByteArrayBinaryRequest extends BinaryRequest {
 
-    private final File file;
+    private final byte[] bytes;
 
-    public FileBinaryBody(File file) {
-        this.file = file;
+    public ByteArrayBinaryRequest(byte[] bytes) {
+        this.bytes = bytes;
     }
 
-    public File getFile() {
-        return file;
+    public byte[] getBytes() {
+        return bytes;
     }
 
-    public boolean isFile() {
+    public boolean isByteArray() {
         return true;
     }
 

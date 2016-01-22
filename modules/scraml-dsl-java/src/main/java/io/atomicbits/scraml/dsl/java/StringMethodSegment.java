@@ -35,13 +35,13 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
                                Map<String, HttpParam> queryParams,
                                Map<String, HttpParam> formParams,
                                List<BodyPart> multipartParams,
-                               BinaryBody binaryBody,
+                               BinaryRequest binaryRequest,
                                String expectedAcceptHeader,
                                String expectedContentTypeHeader,
                                RequestBuilder req,
                                String canonicalContentType,
                                String canonicalResponseType) {
-        super(method, theBody, queryParams, formParams, multipartParams, binaryBody, expectedAcceptHeader, expectedContentTypeHeader, req);
+        super(method, theBody, queryParams, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
     }

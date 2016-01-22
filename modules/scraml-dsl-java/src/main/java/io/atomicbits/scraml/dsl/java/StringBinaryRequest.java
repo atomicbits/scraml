@@ -19,24 +19,22 @@
 
 package io.atomicbits.scraml.dsl.java;
 
-import java.io.InputStream;
-
 /**
  * Created by peter on 17/01/16.
  */
-public class InputStreamBinaryBody extends BinaryBody {
+public class StringBinaryRequest extends BinaryRequest {
 
-    private final InputStream inputStream;
+    private final String text;
 
-    public InputStreamBinaryBody(InputStream inputStream) {
-        this.inputStream = inputStream;
+    public StringBinaryRequest(String text) {
+        this.text = text;
     }
 
-    public InputStream getInputStream() {
-        return inputStream;
+    public String getText() {
+        return text;
     }
 
-    public boolean isInputStream() {
+    public boolean isString() {
         return true;
     }
 

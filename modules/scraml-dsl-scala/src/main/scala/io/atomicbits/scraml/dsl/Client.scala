@@ -24,8 +24,8 @@ import play.api.libs.json._
 import scala.concurrent.Future
 
 /**
- * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
- */
+  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
+  */
 trait Client {
 
   def defaultHeaders: Map[String, String]
@@ -38,6 +38,9 @@ trait Client {
 
   def callToTypeResponse[B, R](request: RequestBuilder, body: Option[B])
                               (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]]
+
+  def callToBinaryResponse[B](request: RequestBuilder, body: Option[B])
+                             (implicit bodyFormat: Format[B]): Future[Response[BinaryData]]
 
   def close(): Unit
 

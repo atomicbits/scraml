@@ -33,7 +33,7 @@ case class RequestBuilder(client: Client,
                           queryParameters: Map[String, HttpParam] = Map.empty,
                           formParameters: Map[String, HttpParam] = Map.empty,
                           multipartParams: List[BodyPart] = List.empty,
-                          binaryBody: Option[BinaryBody] = None,
+                          binaryBody: Option[BinaryRequest] = None,
                           headers: HeaderMap = HeaderMap()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
@@ -54,6 +54,9 @@ case class RequestBuilder(client: Client,
 
   def callToTypeResponse[B, R](body: Option[B])(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
     client.callToTypeResponse(this, body)
+
+  def callToBinaryResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] =
+    client.callToBinaryResponse(this, body)
 
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 

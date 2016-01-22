@@ -209,7 +209,7 @@ object JavaActionCode extends ActionCode {
 
     val bodyFieldValue = if (typedBodyParam) "body" else "null"
     val multipartParamsValue = if (multipartParams) "parts" else "null"
-    val binaryParamValue = if (binaryParam) "BinaryBody.create(body)" else "null"
+    val binaryParamValue = if (binaryParam) "BinaryRequest.create(body)" else "null"
 
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt

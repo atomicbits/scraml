@@ -23,8 +23,8 @@ import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.parser.model._
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 30/09/15.
+  */
 object ScalaActionCode extends ActionCode {
 
   implicit val language: Language = Scala
@@ -91,6 +91,7 @@ object ScalaActionCode extends ActionCode {
   def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
     val bodyType = optBodyType.map(_.classDefinitionScala).getOrElse("String")
     responseType match {
+      case BinaryResponseType(acceptHeader)          => s"BinaryMethodSegment[$bodyType]"
       case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
       case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment[$bodyType, ${classPtr.classDefinitionScala}]"
       case x                                         => s"StringMethodSegment[$bodyType]"
@@ -99,6 +100,7 @@ object ScalaActionCode extends ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String = {
     responseType match {
+      case BinaryResponseType(acceptHeader)          => "BinaryData"
       case JsonResponseType(acceptHeader)            => "String"
       case TypedResponseType(acceptHeader, classPtr) => classPtr.classDefinitionScala
       case x                                         => "String"
@@ -174,7 +176,7 @@ object ScalaActionCode extends ActionCode {
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
     val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"
     val multipartParamsValue = if (multipartParams) "parts" else "List.empty"
-    val binaryParamValue = if (binaryParam) "Some(BinaryBody(body))" else "None"
+    val binaryParamValue = if (binaryParam) "Some(BinaryRequest(body))" else "None"
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =

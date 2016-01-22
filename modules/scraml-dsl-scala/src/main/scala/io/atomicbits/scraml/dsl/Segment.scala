@@ -33,8 +33,8 @@ sealed trait Segment {
 
 
 /**
- * We DON'T use case classes here to hide the internals from the resulting DSL.
- */
+  * We DON'T use case classes here to hide the internals from the resulting DSL.
+  */
 class PlainSegment(pathElement: String, _req: RequestBuilder) extends Segment {
 
   protected val _requestBuilder = _req
@@ -59,7 +59,7 @@ abstract class MethodSegment[B, R](method: Method,
                                    queryParams: Map[String, Option[HttpParam]],
                                    formParams: Map[String, Option[HttpParam]],
                                    multipartParams: List[BodyPart],
-                                   binaryBody: Option[BinaryBody] = None,
+                                   binaryBody: Option[BinaryRequest] = None,
                                    expectedAcceptHeader: Option[String],
                                    expectedContentTypeHeader: Option[String],
                                    req: RequestBuilder) extends Segment {
@@ -98,7 +98,7 @@ class StringMethodSegment[B](method: Method,
                              queryParams: Map[String, Option[HttpParam]],
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
                              multipartParams: List[BodyPart] = List.empty,
-                             binaryParam: Option[BinaryBody] = None,
+                             binaryParam: Option[BinaryRequest] = None,
                              expectedAcceptHeader: Option[String] = None,
                              expectedContentTypeHeader: Option[String] = None,
                              req: RequestBuilder)
@@ -115,7 +115,7 @@ class JsonMethodSegment[B](method: Method,
                            queryParams: Map[String, Option[HttpParam]],
                            formParams: Map[String, Option[HttpParam]] = Map.empty,
                            multipartParams: List[BodyPart] = List.empty,
-                           binaryParam: Option[BinaryBody] = None,
+                           binaryParam: Option[BinaryRequest] = None,
                            expectedAcceptHeader: Option[String] = None,
                            expectedContentTypeHeader: Option[String] = None,
                            req: RequestBuilder)
@@ -132,7 +132,7 @@ class TypeMethodSegment[B, R](method: Method,
                               queryParams: Map[String, Option[HttpParam]] = Map.empty,
                               formParams: Map[String, Option[HttpParam]] = Map.empty,
                               multipartParams: List[BodyPart] = List.empty,
-                              binaryParam: Option[BinaryBody] = None,
+                              binaryParam: Option[BinaryRequest] = None,
                               expectedAcceptHeader: Option[String] = None,
                               expectedContentTypeHeader: Option[String] = None,
                               req: RequestBuilder)
@@ -140,5 +140,22 @@ class TypeMethodSegment[B, R](method: Method,
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
     _requestBuilder.callToTypeResponse[B, R](body)
+
+}
+
+
+class BinaryMethodSegment[B](method: Method,
+                             theBody: Option[B] = None,
+                             queryParams: Map[String, Option[HttpParam]],
+                             formParams: Map[String, Option[HttpParam]] = Map.empty,
+                             multipartParams: List[BodyPart] = List.empty,
+                             binaryParam: Option[BinaryRequest] = None,
+                             expectedAcceptHeader: Option[String] = None,
+                             expectedContentTypeHeader: Option[String] = None,
+                             req: RequestBuilder)
+  extends MethodSegment[B, BinaryData](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
+
+  def call()(implicit bodyFormat: Format[B], responseFormat: Format[String]): Future[Response[BinaryData]] =
+    _requestBuilder.callToBinaryResponse[B](body)
 
 }

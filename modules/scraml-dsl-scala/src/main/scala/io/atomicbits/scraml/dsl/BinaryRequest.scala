@@ -25,25 +25,29 @@ import _root_.java.io.{InputStream, File}
 /**
  * Created by peter on 15/01/16.
  */
-sealed trait BinaryBody
 
-case class FileBinaryBody(file: File) extends BinaryBody
+/**
+ * The Binary Request object is an internal type of the DSL and is not directly visible for the user.
+ */
+sealed trait BinaryRequest
 
-case class InputStreamBinaryBody(inputStream: InputStream) extends BinaryBody
+case class FileBinaryRequest(file: File) extends BinaryRequest
 
-case class ByteArrayBinaryBody(byteArray: Array[Byte]) extends BinaryBody
+case class InputStreamBinaryRequest(inputStream: InputStream) extends BinaryRequest
 
-case class StringBinaryBody(text: String) extends BinaryBody
+case class ByteArrayBinaryRequest(byteArray: Array[Byte]) extends BinaryRequest
+
+case class StringBinaryRequest(text: String) extends BinaryRequest
 
 
-object BinaryBody {
+object BinaryRequest {
 
-  def apply(file: File): BinaryBody = FileBinaryBody(file)
+  def apply(file: File): BinaryRequest = FileBinaryRequest(file)
 
-  def apply(inputStream: InputStream): BinaryBody = InputStreamBinaryBody(inputStream)
+  def apply(inputStream: InputStream): BinaryRequest = InputStreamBinaryRequest(inputStream)
 
-  def apply(byteArray: Array[Byte]): BinaryBody = ByteArrayBinaryBody(byteArray)
+  def apply(byteArray: Array[Byte]): BinaryRequest = ByteArrayBinaryRequest(byteArray)
 
-  def apply(text: String): BinaryBody = StringBinaryBody(text)
+  def apply(text: String): BinaryRequest = StringBinaryRequest(text)
 
 }

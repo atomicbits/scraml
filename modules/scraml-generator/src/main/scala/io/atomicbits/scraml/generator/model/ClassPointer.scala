@@ -22,13 +22,13 @@ package io.atomicbits.scraml.generator.model
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 /**
- * Created by peter on 11/09/15.
- *
- */
+  * Created by peter on 11/09/15.
+  *
+  */
 
 /**
- * Represents an abstract pointer to a class.
- */
+  * Represents an abstract pointer to a class.
+  */
 sealed trait ClassPointer {
 
   def classDefinitionScala: String
@@ -61,9 +61,9 @@ sealed trait ClassPointer {
 
 
 /**
- * A generic class pointer points to a class via a variable, while not knowing what the actual class is it points to.
- * E.g. "T" in List[T]
- */
+  * A generic class pointer points to a class via a variable, while not knowing what the actual class is it points to.
+  * E.g. "T" in List[T]
+  */
 case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
   def classDefinitionScala: String = typeVariable
@@ -83,14 +83,14 @@ case class GenericClassPointer(typeVariable: String) extends ClassPointer {
 
 
 /**
- * A unique reference to a class. E.g. List[T].
- *
- * @param name The name of the class.
- * @param packageParts The package parts that comprise the full package name.
- * @param typeVariables The type variables ths class reference holds.
- * @param predef Indicates that the class is a predefined class that doesn't need to be imported to be used.
- * @param library Indicates that the class is located in an existing library (and doesn't need to be generated).
- */
+  * A unique reference to a class. E.g. List[T].
+  *
+  * @param name          The name of the class.
+  * @param packageParts  The package parts that comprise the full package name.
+  * @param typeVariables The type variables ths class reference holds.
+  * @param predef        Indicates that the class is a predefined class that doesn't need to be imported to be used.
+  * @param library       Indicates that the class is located in an existing library (and doesn't need to be generated).
+  */
 case class ClassReference(name: String,
                           packageParts: List[String] = List.empty,
                           typeVariables: List[String] = List.empty,
@@ -107,30 +107,30 @@ case class ClassReference(name: String,
     packageParts.map(part => CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanPackageName(part), "esc"))
 
   /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List[T]"
-   *
-   */
+    * The class definition as a string.
+    * Todo: extract this Scala vs. Java code in the code generation
+    *
+    * E.g.:
+    * "Boolean"
+    * "User"
+    * "List[T]"
+    *
+    */
   def classDefinitionScala: String =
     if (typeVariables.isEmpty) name
     else s"$name[${typeVariables.mkString(",")}]"
 
 
   /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List<T>"
-   *
-   */
+    * The class definition as a string.
+    * Todo: extract this Scala vs. Java code in the code generation
+    *
+    * E.g.:
+    * "Boolean"
+    * "User"
+    * "List<T>"
+    *
+    */
   def classDefinitionJava: String =
     if (typeVariables.isEmpty) name
     else s"$name<${typeVariables.mkString(",")}>"
@@ -145,38 +145,38 @@ case class ClassReference(name: String,
 
 
 /**
- * A class reference is like 'List[T]'
- * A typed class reference defines what the type variables are, e.g. 'List[String]'
- */
+  * A class reference is like 'List[T]'
+  * A typed class reference defines what the type variables are, e.g. 'List[String]'
+  */
 case class TypedClassReference(classReference: ClassReference,
                                types: Map[String, TypedClassReference] = Map.empty) extends ClassPointer {
 
   /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List[User]"
-   * "List[List[User]]"
-   */
+    * The class definition as a string.
+    * Todo: extract this Scala vs. Java code in the code generation
+    *
+    * E.g.:
+    * "Boolean"
+    * "User"
+    * "List[User]"
+    * "List[List[User]]"
+    */
   def classDefinitionScala: String =
     if (classReference.typeVariables.isEmpty) classReference.name
     else s"${classReference.name}[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
 
 
   /**
-   * The class definition as a string.
-   * Todo: extract this Scala vs. Java code in the code generation
-   *
-   * E.g.:
-   * "Boolean"
-   * "User"
-   * "List<User>"
-   * "List<List<User>>"
-   *
-   */
+    * The class definition as a string.
+    * Todo: extract this Scala vs. Java code in the code generation
+    *
+    * E.g.:
+    * "Boolean"
+    * "User"
+    * "List<User>"
+    * "List<List<User>>"
+    *
+    */
   def classDefinitionJava: String =
     if (classReference.typeVariables.isEmpty) classReference.name
     else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionJava).mkString(",")}>"
@@ -268,6 +268,17 @@ object ByteClassReference {
   }
 
 }
+
+
+object BinaryDataClassReference {
+
+  def apply()(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
+    case Java  => ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl", "java"), library = true)
+  }
+
+}
+
 
 object ListClassReference {
 
