@@ -108,7 +108,7 @@ object JavaActionCode extends ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String = {
     responseType match {
-      case BinaryResponseType(acceptHeader)          => "BinaryData"
+      case BinaryResponseType(acceptHeader)          => "CompletableFuture<Response<BinaryData>>"
       case JsonResponseType(acceptHeader)            => "CompletableFuture<Response<String>>"
       case TypedResponseType(acceptHeader, classPtr) => s"CompletableFuture<Response<${classPtr.classDefinitionJava}>>"
       case x                                         => "CompletableFuture<Response<String>>"
