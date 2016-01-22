@@ -22,14 +22,13 @@ package io.atomicbits.scraml.dsl.java.client.ning;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
-import com.ning.http.client.Request;
+import com.ning.http.client.*;
 import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.dsl.java.*;
 import io.atomicbits.scraml.dsl.java.ByteArrayPart;
 import io.atomicbits.scraml.dsl.java.FilePart;
+import io.atomicbits.scraml.dsl.java.RequestBuilder;
+import io.atomicbits.scraml.dsl.java.Response;
 import io.atomicbits.scraml.dsl.java.StringPart;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
 import org.slf4j.Logger;
@@ -38,10 +37,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -173,21 +174,34 @@ public class Ning19Client implements Client {
 
 
     @Override
-    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder, B body, String canonicalContentType) {
-        return callToTransformedResponse(requestBuilder, body, canonicalContentType, (result) -> result);
+    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder,
+                                                                        B body,
+                                                                        String canonicalContentType) {
+        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToStringBody);
     }
 
 
     @Override
-    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder, B body, String canonicalContentType, String canonicalResponseType) {
-        return callToTransformedResponse(requestBuilder, body, canonicalContentType, (result) -> parseBodyToObject(canonicalResponseType, result));
+    public <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder requestBuilder,
+                                                                            B body,
+                                                                            String canonicalContentType) {
+        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToBinaryBody);
     }
 
 
-    protected <B, R> CompletableFuture<Response<R>> callToTransformedResponse(RequestBuilder requestBuilder,
-                                                                              B body,
-                                                                              String canonicalContentType,
-                                                                              Function<String, R> transformer) {
+    @Override
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder,
+                                                                    B body,
+                                                                    String canonicalContentType,
+                                                                    String canonicalResponseType) {
+        return callToResponse(requestBuilder, body, canonicalContentType, (result) -> transformToTypedBody(result, canonicalResponseType));
+    }
+
+
+    protected <B, R> CompletableFuture<Response<R>> callToResponse(RequestBuilder requestBuilder,
+                                                                   B body,
+                                                                   String canonicalContentType,
+                                                                   Function<com.ning.http.client.Response, Response<R>> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -319,15 +333,7 @@ public class Ning19Client implements Client {
             @Override
             public String onCompleted(com.ning.http.client.Response response) throws Exception {
                 try {
-                    String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
-
-                    Response<R> resp =
-                            new Response<R>(
-                                    responseBody,
-                                    transformer.apply(responseBody),
-                                    response.getStatusCode(),
-                                    response.getHeaders()
-                            );
+                    Response<R> resp = transformer.apply(response);
                     future.complete(resp);
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -344,6 +350,48 @@ public class Ning19Client implements Client {
         });
 
         return future;
+    }
+
+
+    private Response<String> transformToStringBody(com.ning.http.client.Response response) {
+        try {
+            String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+            return new Response<String>(
+                    responseBody,
+                    responseBody,
+                    response.getStatusCode(),
+                    response.getHeaders()
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+
+    private Response<BinaryData> transformToBinaryBody(com.ning.http.client.Response response) {
+        BinaryData binaryData = new Ning19BinaryData(response);
+        return new Response<BinaryData>(
+                null,
+                binaryData,
+                response.getStatusCode(),
+                response.getHeaders()
+        );
+    }
+
+
+    private <R> Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
+        try {
+            String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+
+            return new Response<R>(
+                    responseBody,
+                    parseBodyToObject(responseBody, canonicalResponseType),
+                    response.getStatusCode(),
+                    response.getHeaders()
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 
@@ -389,7 +437,7 @@ public class Ning19Client implements Client {
     }
 
 
-    private <R> R parseBodyToObject(String canonicalResponseType, String body) {
+    private <R> R parseBodyToObject(String body, String canonicalResponseType) {
         JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);
         try {
             return this.objectMapper.readValue(body, javaType);

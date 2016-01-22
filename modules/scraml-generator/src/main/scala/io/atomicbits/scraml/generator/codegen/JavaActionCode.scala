@@ -98,6 +98,7 @@ object JavaActionCode extends ActionCode {
   def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
     val bodyType = optBodyType.map(_.classDefinitionJava).getOrElse("String")
     responseType match {
+      case BinaryResponseType(acceptHeader)          => s"BinaryMethodSegment<$bodyType>"
       case JsonResponseType(acceptHeader)            => s"StringMethodSegment<$bodyType>"
       case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment<$bodyType, ${classPtr.classDefinitionJava}>"
       case x                                         => s"StringMethodSegment<$bodyType>"
@@ -107,6 +108,7 @@ object JavaActionCode extends ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String = {
     responseType match {
+      case BinaryResponseType(acceptHeader)          => "BinaryData"
       case JsonResponseType(acceptHeader)            => "CompletableFuture<Response<String>>"
       case TypedResponseType(acceptHeader, classPtr) => s"CompletableFuture<Response<${classPtr.classDefinitionJava}>>"
       case x                                         => "CompletableFuture<Response<String>>"
@@ -116,6 +118,7 @@ object JavaActionCode extends ActionCode {
 
   def canonicalResponseType(responseType: ResponseType): Option[String] = {
     responseType match {
+      case BinaryResponseType(acceptHeader)          => None
       case JsonResponseType(acceptHeader)            => None
       case TypedResponseType(acceptHeader, classPtr) => Some(classPtr.canonicalNameJava)
       case x                                         => None

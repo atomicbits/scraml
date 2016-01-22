@@ -188,6 +188,10 @@ public class RequestBuilder {
         return client.callToStringResponse(this, body, canonicalContentType);
     }
 
+    public <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(B body, String canonicalContentType) {
+        return client.callToBinaryResponse(this, body, canonicalContentType);
+    }
+
     public <B, R> CompletableFuture<Response<R>> callToTypeResponse(B body, String canonicalContentType, String canonicalResponseType) {
         return client.callToTypeResponse(this, body, canonicalContentType, canonicalResponseType);
     }
