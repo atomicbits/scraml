@@ -24,33 +24,31 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by peter on 23/09/15.
+ * Created by peter on 22/01/16.
  */
-public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
+public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
 
     private String canonicalContentType;
-    private String canonicalResponseType;
 
-    public TypeMethodSegment(Method method,
-                             B theBody,
-                             Map<String, HttpParam> queryParams,
-                             Map<String, HttpParam> formParams,
-                             List<BodyPart> multipartParams,
-                             BinaryRequest binaryRequest,
-                             String expectedAcceptHeader,
-                             String expectedContentTypeHeader,
-                             RequestBuilder req,
-                             String canonicalContentType,
-                             String canonicalResponseType) {
+    public BinaryMethodSegment(Method method,
+                               B theBody,
+                               Map<String, HttpParam> queryParams,
+                               Map<String, HttpParam> formParams,
+                               List<BodyPart> multipartParams,
+                               BinaryRequest binaryRequest,
+                               String expectedAcceptHeader,
+                               String expectedContentTypeHeader,
+                               RequestBuilder req,
+                               String canonicalContentType,
+                               String canonicalResponseType) {
         super(method, theBody, queryParams, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
-        this.canonicalResponseType = canonicalResponseType;
     }
 
 
-    public CompletableFuture<Response<R>> call() {
-        return getRequestBuilder().callToTypeResponse(getBody(), canonicalContentType, canonicalResponseType);
+    public CompletableFuture<Response<BinaryData>> call() {
+        return getRequestBuilder().callToBinaryResponse(getBody(), canonicalContentType);
     }
 
 }

@@ -17,21 +17,25 @@
  *
  */
 
-package io.atomicbits.scraml.dsl
-
-import play.api.libs.json.JsValue
+package io.atomicbits.scraml.dsl.java;
 
 /**
- * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
+ * Created by peter on 17/01/16.
  */
-case class Response[T](status: Int,
-                       stringBody: Option[String],
-                       jsonBody: Option[JsValue] = None,
-                       body: Option[T] = None,
-                       headers: Map[String, List[String]] = Map.empty) {
+public class StringBinaryRequest extends BinaryRequest {
 
-  def map[S](f: T => S) = {
-    this.copy(body = body.map(f))
-  }
+    private final String text;
+
+    public StringBinaryRequest(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public boolean isString() {
+        return true;
+    }
 
 }

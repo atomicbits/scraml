@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.client.java
 
 import java.util
-import java.util.concurrent.{TimeUnit, Future}
+import java.util.concurrent.{Future, TimeUnit}
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -29,7 +29,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.java.Response
 import io.atomicbits.scraml.dsl.java.client.ClientConfig
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
 /**
  * Created by peter on 19/08/15. 

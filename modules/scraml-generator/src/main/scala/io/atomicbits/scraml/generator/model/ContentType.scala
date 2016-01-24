@@ -42,6 +42,10 @@ case class FormPostContentType(contentTypeHeaderValue: String, formParameters: M
 
 case class MultipartFormContentType(contentTypeHeaderValue: String) extends ContentType
 
+case class BinaryContentType(contentTypeHeaderValue: String) extends ContentType
+
+case class AnyContentType(contentTypeHeaderValue: String) extends ContentType
+
 case object NoContentType extends ContentType {
 
   val contentTypeHeaderValue = ""
@@ -64,8 +68,12 @@ object ContentType {
       TypedContentType(contentTypeHeader, classReference.get)
     } else if (contentTypeHeader.toLowerCase.contains("json")) {
       JsonContentType(contentTypeHeader)
-    } else {
+    } else if (contentTypeHeader.toLowerCase.contains("text")) {
       StringContentType(contentTypeHeader)
+    } else if (contentTypeHeader.toLowerCase.contains("octet-stream")) {
+      BinaryContentType(contentTypeHeader)
+    } else {
+      AnyContentType(contentTypeHeader)
     }
   }
 

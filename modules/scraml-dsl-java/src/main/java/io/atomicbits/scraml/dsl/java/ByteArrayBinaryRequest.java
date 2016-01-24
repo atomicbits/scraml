@@ -17,24 +17,25 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
-
-import io.atomicbits.scraml.client.manual.*;
-import io.atomicbits.scraml.client.manual.PathparamResource;
-import io.atomicbits.scraml.dsl.RequestBuilder;
-import io.atomicbits.scraml.dsl.Response;
-import scala.concurrent.Future;
+package io.atomicbits.scraml.dsl.java;
 
 /**
- * Created by peter on 28/08/15.
+ * Created by peter on 17/01/16.
  */
-public class JavaScalaExperiment {
+public class ByteArrayBinaryRequest extends BinaryRequest {
 
-    public void test() {
-        PathparamResource resource = new
-                PathparamResource("foo", new RequestBuilder(null, null, null, null, null, null, null));
-        Future<Response<User>> user = resource.get(3, 2, null).call(null, null);
+    private final byte[] bytes;
 
+    public ByteArrayBinaryRequest(byte[] bytes) {
+        this.bytes = bytes;
+    }
+
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public boolean isByteArray() {
+        return true;
     }
 
 }

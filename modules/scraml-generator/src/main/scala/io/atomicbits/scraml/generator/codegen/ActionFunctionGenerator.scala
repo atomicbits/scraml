@@ -33,7 +33,9 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     action.selectedContentType match {
       case x: FormPostContentType      => generateFormAction(action, x)
       case _: MultipartFormContentType => generateMultipartFormPostAction(action)
-      case x                           => generateBodyAction(action)
+      case _: BinaryContentType        => generateBodyAction(action, binary = true)
+      case _: AnyContentType           => generateBodyAction(action, binary = true)
+      case x                           => generateBodyAction(action, binary = false)
     }
 
   }
@@ -80,14 +82,14 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateMultipartFormPostAction(action: RichAction)(implicit lang: Language): List[String] = {
 
-    val multipartResponseType = actionCode.createSegmentType(action.selectedResponsetype)(None)
+    val responseType = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val multipartAction: String =
       actionCode.generateAction(
         action = action,
         actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference("BodyPart"))),
-        multipartParams = Some("parts"),
-        segmentType = multipartResponseType,
+        multipartParams = true,
+        segmentType = responseType,
         contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
@@ -96,7 +98,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   }
 
 
-  def generateBodyAction(action: RichAction): List[String] = {
+  def generateBodyAction(action: RichAction, binary: Boolean): List[String] = {
 
     /**
      * In scala, we can get compiler issues with default values on overloaded action methods. That's why we don't add
@@ -115,17 +117,20 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
     bodyTypes.map { bodyType =>
 
-      val actionBodyParameters =
+      val actionBodyParameter =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
-      val allActionParameters = actionBodyParameters ++ queryParameterMethodParameters
+      val allActionParameters = actionBodyParameter ++ queryParameterMethodParameters
+
+      val segmentBodyType = if (binary) None else bodyType
 
       actionCode.generateAction(
         action = action,
         actionParameters = allActionParameters,
         queryParameterMapEntries = queryParameterMapEntries,
-        segmentType = segmentTypeFactory(bodyType),
-        bodyField = actionBodyParameters.nonEmpty,
+        segmentType = segmentTypeFactory(segmentBodyType),
+        typedBodyParam = actionBodyParameter.nonEmpty && !binary,
+        binaryParam = actionBodyParameter.nonEmpty && binary,
         contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )

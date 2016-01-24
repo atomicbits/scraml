@@ -62,6 +62,7 @@ object ScalaResourceClassGenerator {
          import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
+         import java.io._
 
          ${imports.mkString("\n")}
 
@@ -132,7 +133,14 @@ object ScalaResourceClassGenerator {
 
            implicit class FutureResponseOps[T](val futureResponse: Future[Response[T]]) extends AnyVal {
 
-             def asString: Future[String] = futureResponse.map(_.stringBody)
+             def asString: Future[String] = futureResponse.map { resp =>
+               resp.stringBody getOrElse {
+                 val message =
+                   if (resp.status != 200) s"The response has no string body because the request was not successful (status = $${resp.status})."
+                   else "The response has no string body despite status 200."
+                 throw new IllegalArgumentException(message)
+               }
+             }
 
              def asJson: Future[JsValue] =
                futureResponse.map { resp =>
@@ -185,6 +193,7 @@ object ScalaResourceClassGenerator {
            import io.atomicbits.scraml.dsl._
 
            import play.api.libs.json._
+           import java.io._
 
            ${imports.mkString("\n")}
 

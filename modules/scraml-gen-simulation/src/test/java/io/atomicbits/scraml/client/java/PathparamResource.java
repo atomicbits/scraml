@@ -55,6 +55,7 @@ public class PathparamResource extends ParamSegment<String> {
                 queryParams,
                 null,
                 null,
+                null,
                 "application/json",
                 null,
                 this.getRequestBuilder(),

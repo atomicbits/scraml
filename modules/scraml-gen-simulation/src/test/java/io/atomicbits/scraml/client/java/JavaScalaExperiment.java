@@ -17,21 +17,24 @@
  *
  */
 
-package io.atomicbits.scraml.dsl
+package io.atomicbits.scraml.client.java;
 
-import play.api.libs.json.JsValue
+import io.atomicbits.scraml.client.manual.*;
+import io.atomicbits.scraml.client.manual.PathparamResource;
+import io.atomicbits.scraml.dsl.RequestBuilder;
+import io.atomicbits.scraml.dsl.Response;
+import scala.concurrent.Future;
 
 /**
- * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
+ * Created by peter on 28/08/15.
  */
-case class Response[T](status: Int,
-                       stringBody: Option[String],
-                       jsonBody: Option[JsValue] = None,
-                       body: Option[T] = None,
-                       headers: Map[String, List[String]] = Map.empty) {
+public class JavaScalaExperiment {
 
-  def map[S](f: T => S) = {
-    this.copy(body = body.map(f))
-  }
+    public void test() {
+        PathparamResource resource = new
+                PathparamResource("foo", new RequestBuilder(null, null, null, null, null, null, null, null));
+        Future<Response<User>> user = resource.get(3, 2, null).call(null, null);
+
+    }
 
 }
