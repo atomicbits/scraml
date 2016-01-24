@@ -20,14 +20,12 @@
 package io.atomicbits.scraml.client.java
 
 import java.util
-
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.`type`.TypeFactory
-import com.fasterxml.jackson.databind.{ObjectWriter, JavaType, ObjectMapper}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
 import java.util.{List => JList}
+
+import com.fasterxml.jackson.databind.`type`.TypeFactory
+import com.fasterxml.jackson.databind.{JavaType, ObjectMapper, ObjectWriter}
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
 /**
  * Created by peter on 12/10/15.
