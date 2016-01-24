@@ -36,6 +36,8 @@ case class JsonResponseType(acceptHeaderValue: String) extends ResponseType
 
 case class TypedResponseType(acceptHeaderValue: String, classReference: TypedClassReference) extends ResponseType
 
+case class BinaryResponseType(acceptHeaderValue: String) extends ResponseType
+
 case object NoResponseType extends ResponseType {
 
   val acceptHeaderValue = ""
@@ -53,8 +55,12 @@ object ResponseType {
       TypedResponseType(acceptHeader, classReference.get)
     } else if (acceptHeader.toLowerCase.contains("json")) {
       JsonResponseType(acceptHeader)
-    } else {
+    } else if (acceptHeader.toLowerCase.contains("text")) {
       StringResponseType(acceptHeader)
+    } else if (acceptHeader.toLowerCase.contains("octet-stream")) {
+      BinaryResponseType(acceptHeader)
+    } else {
+      BinaryResponseType(acceptHeader)
     }
 
   }

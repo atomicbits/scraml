@@ -55,19 +55,18 @@ object JavaResourceClassGenerator {
 
            import io.atomicbits.scraml.dsl.java.RequestBuilder;
            import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-           import io.atomicbits.scraml.dsl.java.client.ning.NingClientSupport;
+           import io.atomicbits.scraml.dsl.java.client.ClientFactory;
+           import io.atomicbits.scraml.dsl.java.Client;
+           import io.atomicbits.scraml.dsl.java.client.ning.Ning19ClientFactory;
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
+           import java.io.*;
+
 
            public class $apiClassName {
 
-               private String host;
-               private int port;
-               private String protocol;
-               private Map<String, String> defaultHeaders;
-
-               RequestBuilder requestBuilder = new RequestBuilder();
+               private RequestBuilder _requestBuilder = new RequestBuilder();
 
                public $apiClassName(String host,
                                     int port,
@@ -75,13 +74,21 @@ object JavaResourceClassGenerator {
                                     String prefix,
                                     ClientConfig clientConfig,
                                     Map<String, String> defaultHeaders) {
-                   this.host = host;
-                   this.port = port;
-                   this.protocol = protocol;
-                   this.defaultHeaders = defaultHeaders;
+                   this(host, port, protocol, prefix, clientConfig, defaultHeaders, null);
+               }
 
-                   this.requestBuilder.setClient(new NingClientSupport(host, port, protocol, prefix, clientConfig, defaultHeaders));
-                   this.requestBuilder.initializeChildren();
+
+               public $apiClassName(String host,
+                                    int port,
+                                    String protocol,
+                                    String prefix,
+                                    ClientConfig clientConfig,
+                                    Map<String, String> defaultHeaders,
+                                    ClientFactory clientFactory) {
+                   ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
+                   Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
+                   this._requestBuilder.setClient(client);
+                   this._requestBuilder.initializeChildren();
                }
 
 
@@ -89,25 +96,12 @@ object JavaResourceClassGenerator {
 
                ${actionFunctions.mkString("\n\n")}
 
-
-               public Map<String, String> getDefaultHeaders() {
-                   return defaultHeaders;
-               }
-
-               public String getHost() {
-                   return host;
-               }
-
-               public int getPort() {
-                   return port;
-               }
-
-               public String getProtocol() {
-                   return protocol;
+               public RequestBuilder getRequestBuilder() {
+                   return this._requestBuilder;
                }
 
                public void close() {
-                   this.requestBuilder.getClient().close();
+                   this._requestBuilder.getClient().close();
                }
 
            }
@@ -137,7 +131,7 @@ object JavaResourceClassGenerator {
       val resourceConstructor = generateResourceConstructor(resource)
 
       val shallowCloneValueAssignment =
-        if (isParameterized(resource)) s"$classNameCamel.value = this.value;"
+        if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
         else ""
 
       val sourcecode =
@@ -147,6 +141,7 @@ object JavaResourceClassGenerator {
            import io.atomicbits.scraml.dsl.java.*;
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
+           import java.io.*;
 
            ${imports.mkString("", ";\n", ";")}
 
@@ -159,7 +154,7 @@ object JavaResourceClassGenerator {
 
              public $className addHeader(String key, String value) {
                $className $classNameCamel = this.shallowClone();
-               $classNameCamel.requestBuilder = $classNameCamel.requestBuilder.cloneAddHeader(key, value);
+               $classNameCamel._requestBuilder = $classNameCamel._requestBuilder.cloneAddHeader(key, value);
                return $classNameCamel;
              }
 
@@ -170,7 +165,7 @@ object JavaResourceClassGenerator {
              private $className shallowClone() {
                $className $classNameCamel = new $className();
                $shallowCloneValueAssignment
-               $classNameCamel.requestBuilder = this.requestBuilder;
+               $classNameCamel._requestBuilder = this._requestBuilder;
                return $classNameCamel;
              }
 
@@ -241,7 +236,7 @@ object JavaResourceClassGenerator {
         case None            =>
           s"""
               public ${resource.classRep.fullyQualifiedName} $cleanUrlSegment =
-                new ${resource.classRep.fullyQualifiedName}(this.requestBuilder);
+                new ${resource.classRep.fullyQualifiedName}(this.getRequestBuilder());
             """
       }
     }

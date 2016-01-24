@@ -37,6 +37,7 @@ public abstract class MethodSegment<B, R> extends Segment {
                             Map<String, HttpParam> queryParams,
                             Map<String, HttpParam> formParams,
                             List<BodyPart> multipartParams,
+                            BinaryRequest binaryRequest,
                             String expectedAcceptHeader,
                             String expectedContentTypeHeader,
                             RequestBuilder req) {
@@ -48,6 +49,7 @@ public abstract class MethodSegment<B, R> extends Segment {
         requestBuilder.setQueryParameters(removeNullParams(queryParams));
         requestBuilder.setFormParameters(removeNullParams(formParams));
         requestBuilder.setMultipartParams(multipartParams);
+        requestBuilder.setBinaryRequest(binaryRequest);
 
         if (expectedAcceptHeader != null && !requestBuilder.getHeaders().hasKey("Accept")) {
             requestBuilder.addHeader("Accept", expectedAcceptHeader);

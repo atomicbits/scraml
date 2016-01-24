@@ -33,13 +33,14 @@ case class RequestBuilder(client: Client,
                           queryParameters: Map[String, HttpParam] = Map.empty,
                           formParameters: Map[String, HttpParam] = Map.empty,
                           multipartParams: List[BodyPart] = List.empty,
+                          binaryBody: Option[BinaryRequest] = None,
                           headers: HeaderMap = HeaderMap()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
 
   def defaultHeaders = client.defaultHeaders
 
-  def allHeaders = HeaderMap() ++ (defaultHeaders.toList:_*) ++ headers // headers last to overwrite defaults!
+  def allHeaders = HeaderMap() ++ (defaultHeaders.toList: _*) ++ headers // headers last to overwrite defaults!
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 
@@ -54,10 +55,13 @@ case class RequestBuilder(client: Client,
   def callToTypeResponse[B, R](body: Option[B])(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
     client.callToTypeResponse(this, body)
 
+  def callToBinaryResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] =
+    client.callToBinaryResponse(this, body)
+
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 
   def withAddedHeaders(additionalHeaders: (String, String)*): RequestBuilder = {
-    this.copy(headers = this.headers ++ (additionalHeaders:_*))
+    this.copy(headers = this.headers ++ (additionalHeaders: _*))
   }
 
   def withAddedPathSegment(additionalPathSegment: Any): RequestBuilder = {

@@ -27,13 +27,23 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface Client {
 
-    Map<String, String> defaultHeaders();
-
     <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body, String canonicalContentType);
+
+    <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder request, B body, String canonicalContentType);
 
     // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
 
     <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalContentType, String canonicalResponseType);
+
+    Map<String, String> getDefaultHeaders();
+
+    String getHost();
+
+    int getPort();
+
+    String getProtocol();
+
+    String getPrefix();
 
     void close();
 

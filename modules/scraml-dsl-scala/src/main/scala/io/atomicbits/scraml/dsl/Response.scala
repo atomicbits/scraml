@@ -25,7 +25,7 @@ import play.api.libs.json.JsValue
  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
  */
 case class Response[T](status: Int,
-                       stringBody: String,
+                       stringBody: Option[String],
                        jsonBody: Option[JsValue] = None,
                        body: Option[T] = None,
                        headers: Map[String, List[String]] = Map.empty) {

@@ -27,11 +27,13 @@ import io.atomicbits.scraml.parser.model.Parameter
  */
 trait ActionCode {
 
-
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String
 
   def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String
 
+  /**
+   * The list of body types that need to be available on a specific action function.
+   */
   def bodyTypes(action: RichAction): List[Option[ClassPointer]]
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
@@ -51,10 +53,11 @@ trait ActionCode {
   def generateAction(action: RichAction,
                      segmentType: String,
                      actionParameters: List[String] = List.empty,
-                     bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None,
+                     typedBodyParam: Boolean = false,
+                     multipartParams: Boolean = false,
+                     binaryParam: Boolean = false,
                      contentType: ContentType,
                      responseType: ResponseType): String
 

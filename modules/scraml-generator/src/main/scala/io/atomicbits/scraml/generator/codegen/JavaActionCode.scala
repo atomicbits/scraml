@@ -29,6 +29,8 @@ import io.atomicbits.scraml.parser.model._
  */
 object JavaActionCode extends ActionCode {
 
+  implicit val language: Language = Java
+
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
     s"""public ${headerSegment.classRef.fullyQualifiedName} $contentHeaderMethodName =
@@ -73,7 +75,22 @@ object JavaActionCode extends ActionCode {
       case StringContentType(contentTypeHeader)          => List(Some(StringClassReference()))
       case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()))
       case TypedContentType(contentTypeHeader, classRef) => List(Some(StringClassReference()), Some(classRef))
-      case NoContentType                                 => List(None, Some(StringClassReference()))
+      case BinaryContentType(contentTypeHeader)          =>
+        List(
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(JavaArray(name = "byte", packageParts = List("java", "lang"), predef = true))
+        )
+      case AnyContentType(contentTypeHeader)             =>
+        List(
+          None,
+          Some(StringClassReference()),
+          Some(FileClassReference()),
+          Some(InputStreamClassReference()),
+          Some(JavaArray(name = "byte", packageParts = List("java", "lang"), predef = true))
+        )
+      case NoContentType                                 => List(None)
       case x                                             => List(Some(StringClassReference()))
     }
 
@@ -81,6 +98,7 @@ object JavaActionCode extends ActionCode {
   def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
     val bodyType = optBodyType.map(_.classDefinitionJava).getOrElse("String")
     responseType match {
+      case BinaryResponseType(acceptHeader)          => s"BinaryMethodSegment<$bodyType>"
       case JsonResponseType(acceptHeader)            => s"StringMethodSegment<$bodyType>"
       case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment<$bodyType, ${classPtr.classDefinitionJava}>"
       case x                                         => s"StringMethodSegment<$bodyType>"
@@ -90,6 +108,7 @@ object JavaActionCode extends ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String = {
     responseType match {
+      case BinaryResponseType(acceptHeader)          => "CompletableFuture<Response<BinaryData>>"
       case JsonResponseType(acceptHeader)            => "CompletableFuture<Response<String>>"
       case TypedResponseType(acceptHeader, classPtr) => s"CompletableFuture<Response<${classPtr.classDefinitionJava}>>"
       case x                                         => "CompletableFuture<Response<String>>"
@@ -99,6 +118,7 @@ object JavaActionCode extends ActionCode {
 
   def canonicalResponseType(responseType: ResponseType): Option[String] = {
     responseType match {
+      case BinaryResponseType(acceptHeader)          => None
       case JsonResponseType(acceptHeader)            => None
       case TypedResponseType(acceptHeader, classPtr) => Some(classPtr.canonicalNameJava)
       case x                                         => None
@@ -151,10 +171,11 @@ object JavaActionCode extends ActionCode {
   def generateAction(action: RichAction,
                      segmentType: String,
                      actionParameters: List[String] = List.empty,
-                     bodyField: Boolean = false,
                      queryParameterMapEntries: List[String] = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     multipartParams: Option[String] = None,
+                     typedBodyParam: Boolean = false,
+                     multipartParams: Boolean = false,
+                     binaryParam: Boolean = false,
                      contentType: ContentType,
                      responseType: ResponseType): String = {
 
@@ -162,8 +183,6 @@ object JavaActionCode extends ActionCode {
     val actionTypeMethod: String = actionType.toString.toLowerCase(Locale.ENGLISH)
 
     val method = s"Method.${actionType.toString.toUpperCase(Locale.ENGLISH)}"
-
-    val bodyFieldValue = if (bodyField) "body" else "null"
 
     val (queryParamMap, queryParams) =
       if (queryParameterMapEntries.nonEmpty) {
@@ -191,7 +210,9 @@ object JavaActionCode extends ActionCode {
         ("", "null")
       }
 
-    val multipartParamsValue = multipartParams.getOrElse("null")
+    val bodyFieldValue = if (typedBodyParam) "body" else "null"
+    val multipartParamsValue = if (multipartParams) "parts" else "null"
+    val binaryParamValue = if (binaryParam) "BinaryRequest.create(body)" else "null"
 
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
@@ -218,6 +239,7 @@ object JavaActionCode extends ActionCode {
            $queryParams,
            $formParams,
            $multipartParamsValue,
+           $binaryParamValue,
            $acceptHeader,
            $contentHeader,
            this.getRequestBuilder(),
