@@ -30,6 +30,9 @@ trait Dependencies { this:Build =>
   val jacksonDatabind     =   "com.fasterxml.jackson.core"  %     "jackson-databind"    % "2.5.4"
   // val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
 
+  val snakeYaml           =   "org.yaml"                    %     "snakeyaml"           % "1.16"
+//  val jerkson             =   "com.codahale"                %%     "jerkson"             % "0.5.0"
+
   // val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
   val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.31"
   val asyncClientProvided =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "provided"
@@ -47,6 +50,13 @@ trait Dependencies { this:Build =>
   val junit               =   "junit"                       %     "junit"               % "4.12"     % "test"
   val asyncClientTest     =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "test"
 
+
+  val scramlRamlParserDeps = Seq(
+    playJson,
+    snakeYaml
+//    ,
+//    jerkson
+  )
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
