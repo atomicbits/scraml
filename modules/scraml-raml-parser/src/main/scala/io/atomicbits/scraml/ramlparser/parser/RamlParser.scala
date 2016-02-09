@@ -19,65 +19,82 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import java.io.{FileReader, StringReader, File}
+import java.net.{URI, URL}
 import java.nio.file.{Paths, Files}
 
 import io.atomicbits.scraml.ramlparser.model.Include
 import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.constructor.SafeConstructor
-import play.api.libs.json.Json.JsValueWrapper
 
 import play.api.libs.json._
-import play.api.libs.json.Json._
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions.mapAsScalaMap
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 6/02/16.
   */
-object RamlParser {
+case class RamlParser(ramlSource: String, charsetName: String) {
 
-  def run: JsValue = {
-    val encoded: Array[Byte] = Files.readAllBytes(Paths.get(this.getClass.getResource("/test001.raml").toURI))
-    val ramlContent = new String(encoded, "UTF-8")
-    val yaml = new Yaml(SimpleRamlConstructor())
-    val ramlMap: java.util.Map[String, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[String, Any]]
-    mapToJson(ramlMap)
+  def parse: JsObject = {
+    val ramlJson = parseToJson(ramlSource)
+    val parsed =
+      ramlJson match {
+        case ramlJsObj: JsObject => ramlJsObj // parseRamlJsonDocument(ramlJsObj)
+        case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
+      }
+    parsed
   }
 
 
-  /**
-    * types:
-    * String
-    * Boolean
-    * Integer
-    * Double
-    * ArrayList
-    * LinkedHashMap
-    * Include
-    *
-    */
+  private def parseRamlJsonDocument(raml: JsObject): Unit = {
 
 
-  def mapToJson(ramlMap: java.util.Map[String, Any]): JsValue = {
 
-    def anyToJson(value: Any): JsValueWrapper = {
+  }
+
+
+  private def parseToJson(source: String): JsValue = {
+    Try {
+      val ramlContent = read(source)
+      val yaml = new Yaml(SimpleRamlConstructor())
+      val ramlMap: java.util.Map[String, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[String, Any]]
+      anyToJson(ramlMap)
+    } match {
+      case Success(jsvalue) => jsvalue
+      case Failure(ex)      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
+    }
+  }
+
+
+  private def read(source: String): String = {
+
+    val resource = Try(this.getClass.getResource(source).toURI).toOption
+    val file = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
+    val url = Try(new URL(source).toURI).toOption
+
+    val uris: List[Option[URI]] = List(resource, file, url)
+
+    val uri: URI = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
+
+    val encoded: Array[Byte] = Files.readAllBytes(Paths.get(uri))
+    new String(encoded, charsetName) // ToDo: encoding detection via the file's BOM
+  }
+
+
+  private def anyToJson(value: Any): JsValue = {
       value match {
         case s: String                       => Json.toJson(s)
         case b: Boolean                      => Json.toJson(b)
         case i: java.lang.Integer            => Json.toJson(i.doubleValue())
         case d: Double                       => Json.toJson(d)
-        case list: java.util.ArrayList[Any]  => Json.arr(list.asScala.map(anyToJson): _*)
-        case map: java.util.Map[String, Any] => mapToJson(map)
+        case list: java.util.ArrayList[Any]  => JsArray(list.asScala.map(anyToJson)) //  Json.arr(list.asScala.map(anyToJson): _*)
+        case map: java.util.Map[String, Any] => JsObject(mapAsScalaMap(map).mapValues(anyToJson).toSeq) // Json.obj(mapAsScalaMap(map).mapValues(anyToJson).toSeq: _*)
         case include: Include                => Json.toJson(include)
         case null                            => JsNull
         case x                               => sys.error(s"Cannot parse unknown type $x")
       }
     }
 
-    Json.obj(mapAsScalaMap(ramlMap).mapValues(anyToJson).toSeq: _*)
-  }
 
 }

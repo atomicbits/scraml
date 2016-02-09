@@ -21,10 +21,7 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
-import play.api.libs.json.{JsString, JsNull, Json}
 
-import scala.collection.JavaConverters._
-import scala.collection.JavaConversions.mapAsScalaMap
 
 /**
   * Created by peter on 6/02/16.
@@ -43,14 +40,8 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
       When("we parse the specification")
 
-      val result = RamlParser.run
+      val result = RamlParser("/test001.raml", "UTF-8").parse
       println(s"Parsed raml: $result")
-
-
-
-
-      //      val json =  Json.toJson(result) // generate(result)
-//      println(s"Json: $json")
 
       Then("we get a ...")
 
