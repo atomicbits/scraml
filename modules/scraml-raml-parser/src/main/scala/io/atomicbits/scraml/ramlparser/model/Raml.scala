@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, ParseContext}
 import play.api.libs.json.{JsString, JsObject}
 
 import scala.util.{Failure, Success, Try}
@@ -35,16 +35,28 @@ object Raml {
   def apply(ramlJson: JsObject)(implicit parseContext: ParseContext): Try[Raml] = {
 
     // Process the properties
-    val title =
+    val title: Try[String] =
       (ramlJson \ "title").toOption.collect {
         case JsString(t) => Success(t)
-        case x           => Failure(new IllegalArgumentException(s"File ${parseContext.source} has a title field that is not a string value."))
-      } getOrElse Failure(new IllegalArgumentException(s"File ${parseContext.source} does not contain the mandatory title field."))
+        case x           =>
+          Failure(RamlParseException(s"File ${parseContext.source} has a title field that is not a string value."))
+      } getOrElse Failure(RamlParseException(s"File ${parseContext.source} does not contain the mandatory title field."))
 
-    val traits =
+    val traits: Try[Traits] =
       (ramlJson \ "traits").toOption.map(Traits(_)).getOrElse(Success(Traits()))
 
-    val types = ???
+    val types: Try[Types] = {
+      List((ramlJson \ "types").toOption, (ramlJson \ "schemas").toOption).flatten match {
+        case List(ts, ss) =>
+          Failure(
+            RamlParseException(
+              s"File ${parseContext.source} contains both a 'types' and a 'schemas' field. You should only use a 'types' field."
+            )
+          )
+        case List(t)      => Types(t)
+        case Nil          => Success(Types())
+      }
+    }
 
     /**
       * title

@@ -17,29 +17,18 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
-
-import io.atomicbits.scraml.ramlparser.parser.RamlJsonParser
-import play.api.libs.json.{JsString, JsValue}
+package io.atomicbits.scraml.ramlparser.parser
 
 /**
   * Created by peter on 10/02/16.
   */
-object JsInclude {
+class RamlParseException(message: String) extends RuntimeException(message) {
 
-  /**
-    * @param includeLinkObj e.g. { "!include": "types/collection.raml" }
-    */
-  def unapply(includeLinkObj: JsValue): Option[(JsValue, String)] = {
+}
 
-    (includeLinkObj \ "!include").toOption.collect {
-      case JsString(includeFile) =>
-        RamlJsonParser.parseToJson(includeFile) match {
-          case JsInclude(jsValWithSource) => jsValWithSource // handle recursive inclusions (although no sane person will ever use that)
-          case x                          => (x, includeFile)
-        }
-    }
 
-  }
+object RamlParseException {
+
+  def apply(message: String): RamlParseException = new RamlParseException(message)
 
 }
