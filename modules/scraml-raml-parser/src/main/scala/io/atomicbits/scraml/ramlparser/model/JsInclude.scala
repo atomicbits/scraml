@@ -17,42 +17,31 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.parser
+package io.atomicbits.scraml.ramlparser.model
 
-
-import io.atomicbits.scraml.ramlparser.model.Raml
-import play.api.libs.json._
-
+import io.atomicbits.scraml.ramlparser.parser.RamlJsonParser
+import play.api.libs.json.{JsString, JsValue}
 
 /**
-  * Created by peter on 6/02/16.
+  * Created by peter on 10/02/16.
   */
-case class RamlParser(ramlSource: String, charsetName: String) {
+object JsInclude {
 
+  /**
+    *
+    * @param includeLinkObj e.g. { "!include": "types/collection.raml" }
+    * @return
+    */
+  def unapply(includeLinkObj: JsValue): Option[JsValue] = {
 
-  def parse = {
-    val ramlJson = RamlJsonParser.parseToJson(ramlSource, charsetName)
-    val parsed =
-      ramlJson match {
-        case ramlJsObj: JsObject => ramlJsObj // parseRamlJsonDocument(ramlJsObj)
-        case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
-      }
-    parsed
-//    Raml(parsed)
-  }
-
-
-  private def parseRamlJsonDocument(raml: JsObject): Unit = {
-
-    def parseNested(doc: JsValue) = {
-
+    (includeLinkObj \ "!include").toOption.collect {
+      case JsString(includeFile) =>
+        RamlJsonParser.parseToJson(includeFile) match {
+          case JsInclude(jsVal) => jsVal // handle recursive inclusions (although no sane person will ever use that)
+          case x                => x
+        }
     }
 
-
-
   }
-
-
-
 
 }

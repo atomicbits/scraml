@@ -19,40 +19,20 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-
-import io.atomicbits.scraml.ramlparser.model.Raml
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 
 /**
   * Created by peter on 6/02/16.
   */
-case class RamlParser(ramlSource: String, charsetName: String) {
+case class Include(include: String)
 
 
-  def parse = {
-    val ramlJson = RamlJsonParser.parseToJson(ramlSource, charsetName)
-    val parsed =
-      ramlJson match {
-        case ramlJsObj: JsObject => ramlJsObj // parseRamlJsonDocument(ramlJsObj)
-        case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
-      }
-    parsed
-//    Raml(parsed)
-  }
+object Include {
 
-
-  private def parseRamlJsonDocument(raml: JsObject): Unit = {
-
-    def parseNested(doc: JsValue) = {
-
-    }
-
-
-
-  }
-
-
+  implicit def formatter2: Format[Include] =
+    (JsPath \ "!include").format[String].inmap(Include.apply, unlift(Include.unapply))
 
 
 }

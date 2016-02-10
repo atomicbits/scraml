@@ -19,21 +19,19 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json._
-
-import play.api.libs.functional.syntax._
-
-
 /**
-  * Created by peter on 6/02/16.
+  * Created by peter on 10/02/16.
   */
-case class Include(include: String)
+case class Action(actionType: ActionType,
+                  headers: Map[String, Parameter],
+                  queryParameters: Map[String, Parameter],
+                  body: Map[String, MimeType],
+                  responses: Map[String, Response])
 
+object Action {
 
-object Include {
-
-  implicit def formatter2: Format[Include] =
-    (JsPath \ "!include").format[String].inmap(Include.apply, unlift(Include.unapply))
-
+  def apply(): Action = {
+    ???
+  }
 
 }

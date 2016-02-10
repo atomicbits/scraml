@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import io.atomicbits.scraml.ramlparser.model.Include
+import io.atomicbits.scraml.ramlparser.parser.Include
 import org.yaml.snakeyaml.constructor.{Construct, AbstractConstruct, SafeConstructor}
 import org.yaml.snakeyaml.nodes.{ScalarNode, Node, Tag}
 
