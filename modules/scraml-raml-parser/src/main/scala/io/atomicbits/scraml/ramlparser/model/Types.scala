@@ -41,7 +41,9 @@ object Types {
 
     def doApply(tpsJson: JsValue): Try[Types] = {
       tpsJson match {
-        case JsInclude(included, source) => doApply(included)
+        case JsInclude(included, source) =>
+          implicit val newParseContext = parseContext.copy(source = source)
+          doApply(included)
         case typesJsObj: JsObject        => typesJsObjToTraitMap(typesJsObj)
         case typesJsArr: JsArray         =>
           val tryTypes = typesJsArr.value.collect {

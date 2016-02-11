@@ -30,12 +30,12 @@ trait Type {
 
   def name: String
 
-  def baseType: String
+  def baseType: List[String]
 
 }
 
 case class ObjectType(name: String,
-                      baseType: String,
+                      baseType: List[String],
                       properties: Map[String, PropertyDeclaration],
                       facets: Option[String]) extends Type
 
@@ -44,14 +44,17 @@ case class PropertyDeclaration(typeName: String, required: Boolean = true)
 
 
 case class ArrayType(name: String,
-                     baseType: String,  // e.g. "array", "Persion[]", "Persion[Dog[]]"
+                     baseType: List[String],  // e.g. "array", "Person[]", "Person[Dog[]]"
                      items: Option[String],  // e.g. Some(Person)
-                     minItems: Int = 0,
+                     minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false) extends Type
 
 
-case class ScalarType(name: String, baseType: String, enum: List[String], facets: Option[String]) extends Type
+case class ScalarType(name: String, baseType: List[String], enum: List[String], facets: Option[String]) extends Type
+
+
+case class MapType(name: String, baseType: List[String], elementType: String) extends Type
 
 
 object Type {
