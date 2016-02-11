@@ -32,14 +32,18 @@ public class PathparamResource extends ParamSegment<String> {
     public PathparamResource(){
     }
 
+    public PathparamResource(RequestBuilder requestBuilder, Boolean noPath) {
+        super(requestBuilder);
+    }
+
     public PathparamResource(String value, RequestBuilder requestBuilder) {
         super(value, requestBuilder);
     }
 
     public PathparamResource addHeader(String key, String value) {
-        PathparamResource pathparamResource = this.shallowClone();
+        PathparamResource pathparamResource = new PathparamResource(getRequestBuilder(), true);
         // At this point, the request builder has been initialized, so we can clone it and go on.
-        pathparamResource._requestBuilder = pathparamResource._requestBuilder.cloneAddHeader(key, value);
+        pathparamResource._requestBuilder.addHeader(key, value);
         return pathparamResource;
     }
 
@@ -64,12 +68,11 @@ public class PathparamResource extends ParamSegment<String> {
         );
     }
 
-    private PathparamResource shallowClone() {
-        // We cannot go through the normal constructor, or we'll change the path of the requestBuilder again.
-        PathparamResource pathparamResource = new PathparamResource();
-        pathparamResource._value = this._value;
-        pathparamResource._requestBuilder = this._requestBuilder;
-        return pathparamResource;
-    }
+//    private PathparamResource shallowClone() {
+//        // We cannot go through the normal constructor, or we'll change the path of the requestBuilder again.
+//        PathparamResource pathparamResource = new PathparamResource();
+//        pathparamResource._requestBuilder = this._requestBuilder;
+//        return pathparamResource;
+//    }
 
 }
