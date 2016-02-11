@@ -88,7 +88,6 @@ object JavaResourceClassGenerator {
                    ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
                    Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
                    this._requestBuilder.setClient(client);
-                   this._requestBuilder.initializeChildren();
                }
 
 
@@ -128,7 +127,7 @@ object JavaResourceClassGenerator {
 
       val classDefinition = generateClassDefinition(resource)
 
-      val resourceConstructor = generateResourceConstructor(resource)
+      val resourceConstructors = generateResourceConstructors(resource)
 
       val shallowCloneValueAssignment =
         if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
@@ -150,24 +149,17 @@ object JavaResourceClassGenerator {
              public $className(){
              }
 
-             $resourceConstructor
+             ${resourceConstructors.mkString("\n\n")}
 
              public $className addHeader(String key, String value) {
-               $className $classNameCamel = this.shallowClone();
-               $classNameCamel._requestBuilder = $classNameCamel._requestBuilder.cloneAddHeader(key, value);
+               $className $classNameCamel = new $className(getRequestBuilder(), true);
+               $classNameCamel._requestBuilder.addHeader(key, value);
                return $classNameCamel;
              }
 
              ${dslFields.mkString("\n\n")}
 
              ${actionFunctions.mkString("\n\n")}
-
-             private $className shallowClone() {
-               $className $classNameCamel = new $className();
-               $shallowCloneValueAssignment
-               $classNameCamel._requestBuilder = this._requestBuilder;
-               return $classNameCamel;
-             }
 
            }
          """
@@ -178,21 +170,35 @@ object JavaResourceClassGenerator {
     }
 
 
-    def generateResourceConstructor(resource: RichResource): String =
+    def generateResourceConstructors(resource: RichResource): List[String] =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""
-             public ${resource.classRep.name}($paramType value, RequestBuilder requestBuilder) {
-               super(value, requestBuilder);
-             }
-           """
+          List(
+            s"""
+               public ${resource.classRep.name}($paramType value, RequestBuilder requestBuilder) {
+                 super(value, requestBuilder);
+               }
+             """,
+            s"""
+               public ${resource.classRep.name}(RequestBuilder requestBuilder, Boolean noPath) {
+                 super(requestBuilder);
+               }
+             """
+          )
         case None            =>
-          s"""
-             public ${resource.classRep.name}(RequestBuilder requestBuilder) {
-               super("${resource.urlSegment}", requestBuilder);
+          List(
+            s"""
+               public ${resource.classRep.name}(RequestBuilder requestBuilder) {
+                 super("${resource.urlSegment}", requestBuilder);
+               }
+             """,
+            s"""
+             public ${resource.classRep.name}(RequestBuilder requestBuilder, Boolean noPath) {
+               super(requestBuilder);
              }
            """
+          )
       }
 
 

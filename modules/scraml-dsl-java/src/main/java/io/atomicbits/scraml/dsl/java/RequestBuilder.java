@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.dsl.java;
 
 import io.atomicbits.scraml.dsl.java.util.ListUtils;
+import jdk.nashorn.internal.ir.RuntimeNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,11 +42,8 @@ public class RequestBuilder {
     private BinaryRequest binaryRequest = null;
     private HeaderMap headers = new HeaderMap();
 
-    // Java makes it hard for us to get the initialization of the requestbuilders right.
-    // We need to do some 'reverse initialization' in order to work with fields instead of methods to point
-    // to our REST path segments.
-    List<RequestBuilder> childRequestBuilders = new ArrayList<RequestBuilder>();
-    private boolean initialized;
+    RequestBuilder parentRequestBuilder;
+
 
     public RequestBuilder() {
     }
@@ -54,23 +52,32 @@ public class RequestBuilder {
         this.client = client;
     }
 
-    private RequestBuilder(Client client,
-                           List<String> path,
-                           Method method,
-                           Map<String, HttpParam> queryParameters,
-                           Map<String, HttpParam> formParameters,
-                           List<BodyPart> multipartParams,
-                           BinaryRequest binaryRequest,
-                           HeaderMap headers) {
 
-        setClient(client);
-        setPath(path);
-        setMethod(method);
-        setQueryParameters(queryParameters);
-        setFormParameters(formParameters);
-        setMultipartParams(multipartParams);
-        setBinaryRequest(binaryRequest);
-        setHeaders(headers);
+    /**
+     * Fold all properties of this requestbuilder's parents and itself recursively into a new requestbuilder.
+     */
+    public RequestBuilder fold() {
+        RequestBuilder folded;
+        if (getParentRequestBuilder() != null) {
+            folded = getParentRequestBuilder().fold();
+        } else {
+            folded = new RequestBuilder();
+        }
+        if (getClient() != null) {
+            folded.setClient(getClient());
+        }
+        path.forEach(folded::appendPathElement);
+        if (method != null) {
+            folded.setMethod(method);
+        }
+        queryParameters.forEach(folded::addQueryParameter);
+        formParameters.forEach(folded::addFormParameter);
+        multipartParams.forEach(folded::addMultipartParameter);
+        if (binaryRequest != null) {
+            folded.setBinaryRequest(binaryRequest);
+        }
+        folded.addHeaders(getHeaders());
+        return folded;
     }
 
     public Client getClient() {
@@ -87,6 +94,10 @@ public class RequestBuilder {
 
     public void addHeader(String key, String value) {
         this.headers.addHeader(key, value);
+    }
+
+    public void addHeaders(HeaderMap headMap) {
+        getHeaders().addHeaders(headMap);
     }
 
     public Method getMethod() {
@@ -113,8 +124,12 @@ public class RequestBuilder {
         return path;
     }
 
-    public void setChildRequestBuilders(List<RequestBuilder> childRequestBuilders) {
-        this.childRequestBuilders = childRequestBuilders;
+    public RequestBuilder getParentRequestBuilder() {
+        return parentRequestBuilder;
+    }
+
+    public void setParentRequestBuilder(RequestBuilder parentRequestBuilder) {
+        this.parentRequestBuilder = parentRequestBuilder;
     }
 
     public void setClient(Client client) {
@@ -165,23 +180,24 @@ public class RequestBuilder {
         }
     }
 
+    public void addQueryParameter(String key, HttpParam value) {
+        getQueryParameters().put(key, value);
+    }
+
+    public void addFormParameter(String key, HttpParam value) {
+        getFormParameters().put(key, value);
+    }
+
+    public void addMultipartParameter(BodyPart bodyPart) {
+        getMultipartParams().add(bodyPart);
+    }
+
     public String getRelativePath() {
         return ListUtils.mkString(path, "/");
     }
 
     public void appendPathElement(String pathElement) {
         this.path.add(pathElement);
-    }
-
-    public void prependPathElements(List<String> pathElements) {
-        this.path.addAll(0, pathElements);
-    }
-
-    public RequestBuilder cloneAddHeader(String key, String value) {
-        RequestBuilder clone = this.shallowClone();
-        clone.headers = this.headers.cloned();
-        clone.addHeader(key, value);
-        return clone;
     }
 
     public <B> CompletableFuture<Response<String>> callToStringResponse(B body, String canonicalContentType) {
@@ -196,49 +212,12 @@ public class RequestBuilder {
         return client.callToTypeResponse(this, body, canonicalContentType, canonicalResponseType);
     }
 
-    public RequestBuilder shallowClone() {
-        RequestBuilder rb =
-                new RequestBuilder(
-                        this.client,
-                        this.path,
-                        this.method,
-                        this.queryParameters,
-                        this.formParameters,
-                        this.multipartParams,
-                        this.binaryRequest,
-                        this.headers
-                );
-        rb.childRequestBuilders = new ArrayList<RequestBuilder>(this.childRequestBuilders);
-        return rb;
-    }
-
-    public void addChild(RequestBuilder requestBuilder) {
-        childRequestBuilders.add(requestBuilder);
-    }
-
-    public void initializeChildren() {
-        for (RequestBuilder child : childRequestBuilders) {
-            child.initializeFromParent(this);
-        }
-    }
-
-    protected void initializeFromParent(RequestBuilder parent) {
-        if (isNotInitialized()) {
-            client = parent.client;
-            prependPathElements(parent.path);
-            initializeChildren();
-            setInitialized();
-        }
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("client:\t\t" + client + "\n");
         sb.append("path:\t\t" + listToString(path) + "\n");
-        for (RequestBuilder child : childRequestBuilders) {
-            sb.append(child.toString());
-        }
+        sb.append("parent:\t\t" + parentRequestBuilder);
         return sb.toString();
     }
 
@@ -248,14 +227,6 @@ public class RequestBuilder {
             txt += o.toString() + ", ";
         }
         return txt;
-    }
-
-    public boolean isNotInitialized() {
-        return !initialized;
-    }
-
-    private void setInitialized() {
-        this.initialized = true;
     }
 
 }

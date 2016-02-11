@@ -44,7 +44,7 @@ public abstract class MethodSegment<B, R> extends Segment {
 
         this.body = theBody;
 
-        RequestBuilder requestBuilder = req.shallowClone();
+        RequestBuilder requestBuilder = req.fold(); // We're at the end of the resource path, we can fold the resource here.
         requestBuilder.setMethod(method);
         requestBuilder.setQueryParameters(removeNullParams(queryParams));
         requestBuilder.setFormParameters(removeNullParams(formParams));

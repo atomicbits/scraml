@@ -29,8 +29,7 @@ public class HeaderSegment extends Segment {
     public HeaderSegment(){}
 
     public HeaderSegment(RequestBuilder parentRequestBuilder) {
-        parentRequestBuilder.addChild(this._requestBuilder);
-        parentRequestBuilder.initializeChildren();
+        this._requestBuilder.setParentRequestBuilder(parentRequestBuilder);
     }
 
     @Override
