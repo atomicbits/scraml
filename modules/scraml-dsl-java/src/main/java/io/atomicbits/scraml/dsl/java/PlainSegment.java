@@ -24,18 +24,20 @@ package io.atomicbits.scraml.dsl.java;
  */
 public class PlainSegment extends Segment {
 
-    protected String _pathElement;
     // We have to initialize it empty and fill it in later to get the resource segments initialized as fields and not methods.
     protected RequestBuilder _requestBuilder = new RequestBuilder();
 
     public PlainSegment(){}
 
+    public PlainSegment(RequestBuilder parentRequestBuilder){
+        this._requestBuilder.setParentRequestBuilder(parentRequestBuilder);
+    }
+
     public PlainSegment(String pathElement, RequestBuilder parentRequestBuilder) {
-        this._pathElement = pathElement;
         // The parent will be initialized later, so we have to wait to initialize our request builder until the parent
         // has been initialized.
         this._requestBuilder.appendPathElement(pathElement);
-        parentRequestBuilder.addChild(this._requestBuilder);
+        this._requestBuilder.setParentRequestBuilder(parentRequestBuilder);
     }
 
     @Override

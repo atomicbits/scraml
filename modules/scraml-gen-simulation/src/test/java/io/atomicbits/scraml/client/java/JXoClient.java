@@ -54,7 +54,6 @@ public class JXoClient {
         ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
         Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
         this._requestBuilder.setClient(client);
-        this._requestBuilder.initializeChildren();
         System.out.println(this._requestBuilder.toString());
     }
 

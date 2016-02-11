@@ -31,6 +31,17 @@ public class SomeResource extends PlainSegment {
         super("some", requestBuilder);
     }
 
+    public SomeResource(RequestBuilder requestBuilder, Boolean noPath) {
+        super(requestBuilder);
+    }
+
     public WebserviceResource webservice = new WebserviceResource(this.getRequestBuilder());
+
+    public SomeResource addHeader(String key, String value) {
+        SomeResource someResource = new SomeResource(getRequestBuilder(), true);
+        // At this point, the request builder has been initialized, so we can clone it and go on.
+        someResource._requestBuilder.addHeader(key, value);
+        return someResource;
+    }
 
 }
