@@ -87,6 +87,7 @@ object PojoGenerator {
         package ${topLevelClass.packageName};
 
         import com.fasterxml.jackson.annotation.*;
+        import io.atomicbits.scraml.dsl.java.NonNull;
 
         ${topLevelImports.mkString("", ";\n", ";")};
 
@@ -129,6 +130,7 @@ object PojoGenerator {
         package ${classRep.packageName};
 
         import com.fasterxml.jackson.annotation.*;
+        import io.atomicbits.scraml.dsl.java.NonNull;
 
         public enum ${classRep.name} {
 
@@ -177,6 +179,7 @@ object PojoGenerator {
 
         import java.util.*;
         import com.fasterxml.jackson.annotation.*;
+        import io.atomicbits.scraml.dsl.java.NonNull;
 
         ${generatePojoSource(classRep, parentClassRep, skipField)}
      """
@@ -213,7 +216,7 @@ object PojoGenerator {
              return ${fieldRep.safeFieldNameJava};
            }
 
-           public void set$fieldNameCap(${classPointer.classDefinitionJava} ${fieldRep.safeFieldNameJava}) {
+           public void set$fieldNameCap(${fieldRep.fieldExpressionJavaNonNulMarked}) {
              this.${fieldRep.safeFieldNameJava} = ${fieldRep.safeFieldNameJava};
            }
 
@@ -232,7 +235,7 @@ object PojoGenerator {
       s"this.set$fieldNameCap(${sf.safeFieldNameJava});"
     }
 
-    val fieldExpressions = fieldsWithParentFields.map(_.fieldExpressionJava)
+    val fieldExpressions = fieldsWithParentFields.map(_.fieldExpressionJavaNonNulMarked)
 
     val fieldConstructor =
       if (fieldExpressions.nonEmpty)

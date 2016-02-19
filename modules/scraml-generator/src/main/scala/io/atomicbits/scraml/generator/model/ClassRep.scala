@@ -171,6 +171,11 @@ case class Field(fieldName: String, classPointer: ClassPointer, required: Boolea
 
   def fieldExpressionJava: String = s"${classPointer.classDefinitionJava} $safeFieldNameJava"
 
+  def fieldExpressionJavaNonNulMarked: String = {
+    val nonNullMarker = if(required) "@NonNull " else ""
+    s"$nonNullMarker${classPointer.classDefinitionJava} $safeFieldNameJava"
+  }
+
   lazy val safeFieldNameJava: String = {
 
     val cleanName = CleanNameUtil.cleanFieldName(fieldName)
