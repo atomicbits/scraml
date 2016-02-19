@@ -8,8 +8,8 @@ notifications:
   email:
     recipients:
     - peter.rigole@atomicbits.io
-after_success:
-- '[[ $TRAVIS_BRANCH == "develop" ]] && { sbt "+ publish" ; };'
+#after_success:
+#- '[[ $TRAVIS_BRANCH == "develop" ]] && { sbt "+ publish" ; };'
 
 env:
   global:
