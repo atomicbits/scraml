@@ -20,7 +20,6 @@
 package io.atomicbits.scraml.dsl.java.client.ning;
 
 import io.atomicbits.scraml.dsl.java.Client;
-import io.atomicbits.scraml.dsl.java.NonNull;
 import io.atomicbits.scraml.dsl.java.client.ClientConfig;
 import io.atomicbits.scraml.dsl.java.client.ClientFactory;
 
