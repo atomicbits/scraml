@@ -17,22 +17,35 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
+package io.atomicbits.scraml.jdsl;
 
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by peter on 19/08/15.
  */
-public class WebserviceResource extends PlainSegment {
+public class RepeatedHttpParam implements HttpParam {
 
-    public WebserviceResource(RequestBuilder requestBuilder) {
-        super("webservice", requestBuilder);
+    private List<String> parameters;
+
+    public RepeatedHttpParam(List parameters) {
+        List<String> stringParams = new ArrayList<String>(parameters.size());
+        if (parameters != null) {
+            for (Object param : parameters) {
+                stringParams.add(param.toString());
+            }
+        }
+        this.parameters = stringParams;
     }
 
-    public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.getRequestBuilder());
+    public List<String> getParameters() {
+        return parameters;
+    }
+
+    @Override
+    public Boolean isSingle() {
+        return false;
     }
 
 }

@@ -17,22 +17,25 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
-
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+package io.atomicbits.scraml.jdsl;
 
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 17/01/16.
  */
-public class WebserviceResource extends PlainSegment {
+public class ByteArrayBinaryRequest extends BinaryRequest {
 
-    public WebserviceResource(RequestBuilder requestBuilder) {
-        super("webservice", requestBuilder);
+    private final byte[] bytes;
+
+    public ByteArrayBinaryRequest(byte[] bytes) {
+        this.bytes = bytes;
     }
 
-    public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.getRequestBuilder());
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public boolean isByteArray() {
+        return true;
     }
 
 }
