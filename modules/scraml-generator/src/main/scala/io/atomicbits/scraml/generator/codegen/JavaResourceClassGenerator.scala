@@ -53,11 +53,11 @@ object JavaResourceClassGenerator {
         s"""
            package ${apiPackageName.mkString(".")};
 
-           import io.atomicbits.scraml.dsl.java.RequestBuilder;
-           import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-           import io.atomicbits.scraml.dsl.java.client.ClientFactory;
-           import io.atomicbits.scraml.dsl.java.Client;
-           import io.atomicbits.scraml.dsl.java.client.ning.Ning19ClientFactory;
+           import io.atomicbits.scraml.jdsl.RequestBuilder;
+           import io.atomicbits.scraml.jdsl.client.ClientConfig;
+           import io.atomicbits.scraml.jdsl.client.ClientFactory;
+           import io.atomicbits.scraml.jdsl.Client;
+           import io.atomicbits.scraml.jdsl.client.ning.Ning19ClientFactory;
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
@@ -137,7 +137,7 @@ object JavaResourceClassGenerator {
         s"""
            package ${resource.classRep.packageName};
 
-           import io.atomicbits.scraml.dsl.java.*;
+           import io.atomicbits.scraml.jdsl.*;
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
            import java.io.*;

@@ -17,22 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
+package io.atomicbits.scraml.jdsl.client;
 
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+import io.atomicbits.scraml.jdsl.Client;
+
+import java.util.Map;
 
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 10/01/16.
  */
-public class WebserviceResource extends PlainSegment {
+public interface ClientFactory {
 
-    public WebserviceResource(RequestBuilder requestBuilder) {
-        super("webservice", requestBuilder);
-    }
-
-    public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.getRequestBuilder());
-    }
+    Client createClient(String host,
+                        Integer port,
+                        String protocol,
+                        String prefix,
+                        ClientConfig config,
+                        Map<String, String> defaultHeaders);
 
 }

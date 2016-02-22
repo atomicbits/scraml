@@ -26,8 +26,8 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import io.atomicbits.scraml.dsl.java.Response
-import io.atomicbits.scraml.dsl.java.client.ClientConfig
+import io.atomicbits.scraml.jdsl.Response
+import io.atomicbits.scraml.jdsl.client.ClientConfig
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 

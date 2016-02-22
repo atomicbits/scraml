@@ -17,22 +17,21 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
-
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+package io.atomicbits.scraml.jdsl;
 
 /**
  * Created by peter on 19/08/15.
  */
-public class WebserviceResource extends PlainSegment {
+public enum Method {
 
-    public WebserviceResource(RequestBuilder requestBuilder) {
-        super("webservice", requestBuilder);
-    }
-
-    public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.getRequestBuilder());
-    }
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    HEAD,
+    OPTIONS,
+    PATCH,
+    TRACE,
+    CONNECT
 
 }
