@@ -1,3 +1,5 @@
+modules/scraml-dsl-java/src/main/resources/dsl
+modules/scraml-dsl-scala/src/main/resources/dsl
 modules/scramlgen-parser/target
 modules/scramlgen-test/target
 modules/scramlgen-testdef/target

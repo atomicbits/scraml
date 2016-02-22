@@ -33,6 +33,8 @@ trait BuildSettings {
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
+//  val dslGen = taskKey[Seq[File]]("DSL code generation")
+
   def projectSettings(extraDependencies: Seq[ModuleID]) = Seq(
     organization := Organization,
     version := Version,
@@ -44,6 +46,14 @@ trait BuildSettings {
     // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
     // resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= extraDependencies
+//    ,
+//    dslGen := {
+//      val file = new File("test.txt", "foopath")
+//      IO.write(file, "foobar")
+//            Seq.empty[File]
+//      Seq(file)
+//    },
+//    sourceGenerators in Compile += (dslGen in Compile).taskValue
   )
 
   val publishingCredentials = (for {
