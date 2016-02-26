@@ -274,7 +274,7 @@ object BinaryDataClassReference {
 
   def apply()(implicit lang: Language): ClassReference = lang match {
     case Scala => ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
-    case Java  => ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl", "java"), library = true)
+    case Java  => ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
   }
 
 }

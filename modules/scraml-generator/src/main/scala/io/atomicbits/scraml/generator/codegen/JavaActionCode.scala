@@ -42,7 +42,7 @@ object JavaActionCode extends ActionCode {
     s"""
          package ${headerSegmentClassRef.packageName};
 
-         import io.atomicbits.scraml.dsl.java.*;
+         import io.atomicbits.scraml.jdsl.*;
          import java.util.*;
          import java.util.concurrent.CompletableFuture;
 

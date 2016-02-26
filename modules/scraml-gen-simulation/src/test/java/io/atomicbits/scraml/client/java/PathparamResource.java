@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.client.java;
 
-import io.atomicbits.scraml.dsl.java.*;
+import io.atomicbits.scraml.jdsl.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,12 +67,5 @@ public class PathparamResource extends ParamSegment<String> {
                 "io.atomicbits.scraml.client.java.Person"
         );
     }
-
-//    private PathparamResource shallowClone() {
-//        // We cannot go through the normal constructor, or we'll change the path of the requestBuilder again.
-//        PathparamResource pathparamResource = new PathparamResource();
-//        pathparamResource._requestBuilder = this._requestBuilder;
-//        return pathparamResource;
-//    }
 
 }

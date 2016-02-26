@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.client.java;
 
-import io.atomicbits.scraml.dsl.java.Client;
-import io.atomicbits.scraml.dsl.java.RequestBuilder;
-import io.atomicbits.scraml.dsl.java.client.ClientConfig;
-import io.atomicbits.scraml.dsl.java.client.ClientFactory;
-import io.atomicbits.scraml.dsl.java.client.ning.Ning19ClientFactory;
+import io.atomicbits.scraml.jdsl.Client;
+import io.atomicbits.scraml.jdsl.RequestBuilder;
+import io.atomicbits.scraml.jdsl.client.ClientConfig;
+import io.atomicbits.scraml.jdsl.client.ClientFactory;
+import io.atomicbits.scraml.jdsl.client.ning.Ning19ClientFactory;
 
 import java.util.Map;
 

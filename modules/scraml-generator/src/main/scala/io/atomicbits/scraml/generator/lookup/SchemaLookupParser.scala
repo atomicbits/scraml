@@ -19,9 +19,11 @@
 
 package io.atomicbits.scraml.generator.lookup
 
+import java.util.UUID
+
 import io.atomicbits.scraml.generator.model.Language
 import io.atomicbits.scraml.jsonschemaparser.model._
-import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, JsonSchemaParseException, RootId}
+import io.atomicbits.scraml.jsonschemaparser.{ImplicitId, AbsoluteId, JsonSchemaParseException, RootId}
 
 import scala.annotation.tailrec
 
@@ -40,22 +42,22 @@ object SchemaLookupParser {
 
 
   /**
-   * Expand all relative ids to absolute ids and register them in the schema lookup and also expand all $ref pointers.
-   *
-   * @param schema
-   * @return
-   */
+    * Expand all relative ids to absolute ids and register them in the schema lookup and also expand all $ref pointers.
+    *
+    * @param schema
+    * @return
+    */
   def expandRelativeToAbsoluteIds(schema: Schema): Schema = {
 
     /**
-     * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
-     *
-     * @param schema the schema whose ids need expanding
-     * @param root the nearest (original) root id that was found in the enclosing schemas
-     * @param expandingRoot the root that we're expanding (creating) based on the seed (the nearest original root id)
-     * @param path the fragment path we're on
-     * @return a copy of the original schema in which all ids are replaced by root ids
-     */
+      * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
+      *
+      * @param schema        the schema whose ids need expanding
+      * @param root          the nearest (original) root id that was found in the enclosing schemas
+      * @param expandingRoot the root that we're expanding (creating) based on the seed (the nearest original root id)
+      * @param path          the fragment path we're on
+      * @return a copy of the original schema in which all ids are replaced by root ids
+      */
     def expandWithRootAndPath(schema: Schema, root: RootId, expandingRoot: RootId, path: List[String] = List.empty): Schema = {
 
       val currentRoot =
@@ -78,7 +80,8 @@ object SchemaLookupParser {
             objEl.copy(
               fragments = objEl.fragments.map(expandFragment),
               properties = objEl.properties.map(expandFragment),
-              selection = objEl.selection.map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
+              selection = objEl.selection
+                .map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
           case frag: Fragment       => frag.copy(fragments = frag.fragments.map(expandFragment))
           case arr: ArrayEl         =>
@@ -106,6 +109,11 @@ object SchemaLookupParser {
 
     schema.id match {
       case rootId: RootId => expandWithRootAndPath(schema, rootId, rootId)
+      case ImplicitId     =>
+        // We assume we hit an inline schema without an id, so we may just invent a random unique one since it will never be referenced.
+        val uniqueName = UUID.randomUUID().toString
+        val rootId = RootId(s"http://atomicbits.io/schema/$uniqueName.json")
+        expandWithRootAndPath(schema.updated(rootId), rootId, rootId)
       case _              => throw JsonSchemaParseException("We cannot expand the ids in a schema that has no absolute root id.")
     }
 
@@ -113,12 +121,12 @@ object SchemaLookupParser {
 
 
   /**
-   *
-   * @param lookup The schema lookup
-   * @param linkedSchema A tuple containing a field name and the schema the field refers to. Nothing is done with the
-   *                     field name, it is there to make folding easier on schema fragments and object properties.
-   * @return The schema lookup with added object references.
-   */
+    *
+    * @param lookup       The schema lookup
+    * @param linkedSchema A tuple containing a field name and the schema the field refers to. Nothing is done with the
+    *                     field name, it is there to make folding easier on schema fragments and object properties.
+    * @return The schema lookup with added object references.
+    */
   def updateLookupTableAndObjectMap(lookup: SchemaLookup, linkedSchema: (String, Schema)): SchemaLookup = {
 
 
@@ -176,9 +184,9 @@ object SchemaLookupParser {
 
 
   /**
-   * For each unprocessed object, lookup the selection references and collect al selection objects recursively and
-   * fill in the parent-child relations.
-   */
+    * For each unprocessed object, lookup the selection references and collect al selection objects recursively and
+    * fill in the parent-child relations.
+    */
   def updateObjectHierarchy(schemaLookup: SchemaLookup): SchemaLookup = {
 
     @tailrec
@@ -213,9 +221,9 @@ object SchemaLookupParser {
 
 
   /**
-   * Check if there is a type field present in each leaf-object that is an EnumEl with one element and fill in the
-   * typeDiscriminatorValue field in each of them.
-   */
+    * Check if there is a type field present in each leaf-object that is an EnumEl with one element and fill in the
+    * typeDiscriminatorValue field in each of them.
+    */
   def updateTypeDiscriminatorFields(schemaLookup: SchemaLookup): SchemaLookup = {
 
     schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>

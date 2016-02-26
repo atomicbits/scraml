@@ -27,7 +27,7 @@ trait BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-  val Version = "0.4.9" + snapshotSuffix
+  val Version = "0.4.10" + snapshotSuffix
 
   val ScalaVersion = "2.10.5"
 
@@ -63,7 +63,7 @@ trait BuildSettings {
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)
-        Some("snapshots" at nexus + "content/repositories/snapshots")
+        None // Some("snapshots" at nexus + "content/repositories/snapshots")
       else
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     },
