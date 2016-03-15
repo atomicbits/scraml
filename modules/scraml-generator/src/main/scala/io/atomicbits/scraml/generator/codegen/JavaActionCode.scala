@@ -45,6 +45,7 @@ object JavaActionCode extends ActionCode {
          import io.atomicbits.scraml.jdsl.*;
          import java.util.*;
          import java.util.concurrent.CompletableFuture;
+         import java.io.*;
 
          ${imports.mkString(";\n")};
 
