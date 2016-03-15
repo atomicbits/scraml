@@ -34,17 +34,17 @@ import scala.util.{Failure, Success, Try}
   */
 object RamlJsonParser {
 
-  def parseToJson(source: String): JsValue = {
+  def parseToJson(source: String): JsObject = {
     parseToJson(source, "UTF-8")
   }
 
 
-  def parseToJson(source: String, charsetName: String): JsValue = {
+  def parseToJson(source: String, charsetName: String): JsObject = {
     Try {
       val ramlContent = read(source, charsetName)
       val yaml = new Yaml(SimpleRamlConstructor())
       val ramlMap: java.util.Map[String, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[String, Any]]
-      anyToJson(ramlMap)
+      anyToJson(ramlMap).asInstanceOf[JsObject]
     } match {
       case Success(jsvalue) => jsvalue
       case Failure(ex)      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")

@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.parser.RamlJsonParser
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 /**
   * Created by peter on 10/02/16.
@@ -30,7 +30,7 @@ object JsInclude {
   /**
     * @param includeLinkObj e.g. { "!include": "types/collection.raml" }
     */
-  def unapply(includeLinkObj: JsValue): Option[(JsValue, String)] = {
+  def unapply(includeLinkObj: JsValue): Option[(JsObject, String)] = {
 
     (includeLinkObj \ "!include").toOption.collect {
       case JsString(includeFile) =>

@@ -32,6 +32,7 @@ case class Raml(resources: List[Resource], schemas: Map[String, String])
 
 object Raml {
 
+
   def apply(ramlJson: JsObject)(implicit parseContext: ParseContext): Try[Raml] = {
 
     // Process the properties
@@ -39,8 +40,8 @@ object Raml {
       (ramlJson \ "title").toOption.collect {
         case JsString(t) => Success(t)
         case x           =>
-          Failure(RamlParseException(s"File ${parseContext.source} has a title field that is not a string value."))
-      } getOrElse Failure(RamlParseException(s"File ${parseContext.source} does not contain the mandatory title field."))
+          Failure(RamlParseException(s"File ${parseContext.sourceTrail} has a title field that is not a string value."))
+      } getOrElse Failure(RamlParseException(s"File ${parseContext.sourceTrail} does not contain the mandatory title field."))
 
     val traits: Try[Traits] =
       (ramlJson \ "traits").toOption.map(Traits(_)).getOrElse(Success(Traits()))
@@ -50,7 +51,7 @@ object Raml {
         case List(ts, ss) =>
           Failure(
             RamlParseException(
-              s"File ${parseContext.source} contains both a 'types' and a 'schemas' field. You should only use a 'types' field."
+              s"File ${parseContext.sourceTrail} contains both a 'types' and a 'schemas' field. You should only use a 'types' field."
             )
           )
         case List(t)      => Types(t)

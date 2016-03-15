@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, ParseContext}
+import io.atomicbits.scraml.ramlparser.parser.{Sourced, KeyedList, RamlParseException, ParseContext}
 import play.api.libs.json.{JsString, JsArray, JsObject, JsValue}
 
 import scala.util.{Failure, Success, Try}
@@ -39,36 +39,33 @@ object Types {
 
   def apply(typesJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
 
-    def doApply(tpsJson: JsValue): Try[Types] = {
+    def doApply(tpsJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
       tpsJson match {
-        case JsInclude(included, source) =>
-          implicit val newParseContext = parseContext.copy(source = source)
+        case Sourced(included, source) =>
+          implicit val newParseContext = parseContext.addSource(source)
           doApply(included)
         case typesJsObj: JsObject        => typesJsObjToTraitMap(typesJsObj)
-        case typesJsArr: JsArray         =>
-          val tryTypes = typesJsArr.value.collect {
-            case typesJsObj: JsObject => typesJsObjToTraitMap(typesJsObj)
-          }
-          foldTryTypes(tryTypes)
+        case typesJsArr: JsArray         => typesJsObjToTraitMap(KeyedList.toJsObject(typesJsArr))
         case x                           =>
-          Failure(RamlParseException(s"The types (or schemas) definition in ${parseContext.source} is malformed."))
+          Failure(RamlParseException(s"The types (or schemas) definition in ${parseContext.head} is malformed."))
       }
     }
 
 
-    def typesJsObjToTraitMap(typesJsObj: JsObject): Try[Types] = {
+    def typesJsObjToTraitMap(typesJsObj: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
-          case (key: String, JsInclude(JsString(included), source)) => Success(Types(external = Map(key -> included)))
-          case (key: String, JsInclude(included: JsObject, source)) => typeObjectToNativeTypes(key, included)
-          case (key: String, JsString(value))                       => Success(Types(external = Map(key -> value)))
-          case (key: String, value: JsObject)                       => typeObjectToNativeTypes(key, value)
+          case (key: String, Sourced(included, source)) =>
+            implicit val newParseContext = parseContext.addSource(source)
+            typeObjectToNativeTypes(key, included)
+          case (key: String, JsString(value))           => Success(Types(external = Map(key -> value)))
+          case (key: String, value: JsObject)           => typeObjectToNativeTypes(key, value)
         }
       foldTryTypes(tryTypes)
     }
 
 
-    def foldTryTypes(tryTypes: Seq[Try[Types]]): Try[Types] = {
+    def foldTryTypes(tryTypes: Seq[Try[Types]])(implicit parseContext: ParseContext): Try[Types] = {
       tryTypes.foldLeft[Try[Types]](Success(Types())) {
         case (Success(aggr), Success(types))   => Success(aggr ++ types)
         case (fail@Failure(e), _)              => fail
@@ -78,10 +75,9 @@ object Types {
     }
 
 
-    def typeObjectToNativeTypes(name: String, typeDefinition: JsObject): Try[Types] = {
+    def typeObjectToNativeTypes(name: String, typeDefinition: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
       Type(name, typeDefinition).map(tp => Types(nativeTypes = List(tp)))
     }
-
 
     doApply(typesJson)
   }

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, ParseContext}
+import io.atomicbits.scraml.ramlparser.parser.{KeyedList, Sourced, RamlParseException, ParseContext}
 import play.api.libs.json.{JsArray, JsObject, JsValue}
 
 import scala.util.{Success, Failure, Try}
@@ -32,6 +32,7 @@ case class Traits(traitsMap: Map[String, JsObject])
 
 object Traits {
 
+
   def apply(): Traits = Traits(Map.empty[String, JsObject])
 
 
@@ -39,23 +40,17 @@ object Traits {
 
     def doApply(trsJson: JsValue): Try[Traits] = {
       trsJson match {
-        case JsInclude(included, source) => doApply(included)
-        case traitsJsObj: JsObject       => Success(Traits(traitsJsObjToTraitMap(traitsJsObj)))
-        case traitsJsArr: JsArray        =>
-          val maps = traitsJsArr.value.collect {
-            case traitsJsObj: JsObject => traitsJsObjToTraitMap(traitsJsObj)
-          } reduce (_ ++ _)
-          Success(Traits(maps))
-        case x                           =>
-          Failure(RamlParseException(s"The traits definition in ${parseContext.source} is malformed."))
+        case traitsJsObj: JsObject => Success(Traits(traitsJsObjToTraitMap(traitsJsObj)))
+        case traitsJsArr: JsArray  => Success(Traits(traitsJsObjToTraitMap(KeyedList.toJsObject(traitsJsArr))))
+        case x                     =>
+          Failure(RamlParseException(s"The traits definition in ${parseContext.head} is malformed."))
       }
     }
 
 
     def traitsJsObjToTraitMap(traitsJsObj: JsObject): Map[String, JsObject] = {
       traitsJsObj.fields.collect {
-        case (key: String, JsInclude(included: JsObject, source)) => key -> included
-        case (key: String, value: JsObject)                       => key -> value
+        case (key: String, value: JsObject) => key -> value
       }.toMap
     }
 

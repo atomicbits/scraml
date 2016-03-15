@@ -19,15 +19,23 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import io.atomicbits.scraml.ramlparser.model.Traits
+import play.api.libs.json.{JsString, JsValue, JsObject}
 
 /**
-  * Created by peter on 10/02/16.
+  * Created by peter on 26/02/16.
   */
-case class ParseContext(sourceTrail: List[String], traits: Traits = Traits()) {
+object Sourced {
 
-  def addSource(source: String): ParseContext = copy(sourceTrail = source :: this.sourceTrail)
+  val sourcefield = "_source"
 
-  def head = sourceTrail.head
+  /**
+    * Unwraps a JSON object that has a "_source" field into the source value and the original json object.
+    */
+  def unapply(json: JsValue): Option[(JsObject, String)] = {
+
+    (json \ sourcefield).toOption.collect {
+      case JsString(includeFile) => (json.asInstanceOf[JsObject], includeFile)
+    }
+  }
 
 }
