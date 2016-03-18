@@ -41,6 +41,7 @@ object ScalaActionCode extends ActionCode {
 
          import io.atomicbits.scraml.dsl._
          import play.api.libs.json._
+         import java.io._
 
          ${imports.mkString("\n")}
 
