@@ -119,7 +119,7 @@ object PojoGenerator {
     val enumsWithSafeName =
       classRep.values map { value =>
         val safeName = CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanEnumName(value))
-        s"""$safeName("$value")""" // e.g. spa$ce("spa ce")
+        s"""$safeName("$value")""" // e.g. space("spa ce")
       }
 
     val classNameCamel = CleanNameUtil.camelCased(classRep.name)
