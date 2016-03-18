@@ -46,7 +46,7 @@ object CleanNameUtil {
         cleanedWorker.split(numberChar).map(_.capitalize).mkString(numberChar.toString).stripSuffix(" ")
       }
     // final cleanup of all strange characters
-    capitalized.replaceAll("[^A-Za-z0-9]", "")
+    prepend$IfStartsWithNumber(dropInvalidCharacters(capitalized))
   }
 
 
@@ -57,17 +57,17 @@ object CleanNameUtil {
 
 
   def cleanFieldName(dirtyName: String): String = {
-    // an underscore is allowed!
     // we don't do capitalization on field names, we keep them as close to the original as possible!
-    // todo: instead of filtering out by listing the 'bad' characters, make a filter that is based on the 'good' characters.
-    val dropCharred =
-      List('-', '+', ' ', '/', '.', '~').foldLeft(dirtyName) { (cleaned, dropChar) =>
-        cleaned.split(dropChar).filter(_.nonEmpty).mkString("")
-      }
     // we cannot begin with a number, so we prepend a '$' when the first character is a number
-    if((0 to 9).map(number => dropCharred.startsWith(number.toString)).reduce(_ || _)) "$" + dropCharred
-    else dropCharred
+    prepend$IfStartsWithNumber(dropInvalidCharacters(dirtyName))
   }
+
+  private def prepend$IfStartsWithNumber(name: String): String = {
+    if((0 to 9).map(number => name.startsWith(number.toString)).reduce(_ || _)) "$" + name
+    else name
+  }
+
+  private def dropInvalidCharacters(name: String): String = name.replaceAll("[^A-Za-z0-9$_]", "")
 
 
   def camelCased(dirtyName: String): String = {
