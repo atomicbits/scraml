@@ -4,12 +4,12 @@ version: v3
 baseUri: https://api.github.com
 mediaType:  application/json
 securitySchemes:
-  - oauth_2_0: !include securitySchemes/oauth_2_0.raml
+  - oauth_2_0:
 types:
-    Gist:  !include types/gist.raml
-    Gists: !include types/gists.raml
+    Gist:
+    Gists:
 resourceTypes:
-    collection: !include types/collection.raml
+    collection: 
 traits:
   secured:
     usage: Apply this to any method that needs to be secured
@@ -20,8 +20,8 @@ traits:
         example: 5757gh76
         required: true
 traits2:
-   - secured: !include traits/secured.raml
-   - rateLimited: !include traits/rate-limited.raml
+   - secured:
+   - rateLimited:
 securedBy: [ oauth_2_0 ]
 /search/code:
   description: Create a new <<resourcePathName|!singularize>>
