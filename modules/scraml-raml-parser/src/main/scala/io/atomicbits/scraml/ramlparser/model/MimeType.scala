@@ -22,5 +22,5 @@ package io.atomicbits.scraml.ramlparser.model
 /**
   * Created by peter on 10/02/16.
   */
-case class MimeType(mimeType: String, schema: Option[String], formParameters: Map[String, List[Parameter]])
+case class MimeType(mimeType: String, schema: Option[String] = None, formParameters: Map[String, List[Parameter]] = Map.empty)
 

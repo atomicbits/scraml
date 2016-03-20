@@ -44,21 +44,23 @@ object Types {
         case Sourced(included, source) =>
           implicit val newParseContext = parseContext.addSource(source)
           doApply(included)
-        case typesJsObj: JsObject        => typesJsObjToTraitMap(typesJsObj)
-        case typesJsArr: JsArray         => typesJsObjToTraitMap(KeyedList.toJsObject(typesJsArr))
+        case typesJsObj: JsObject        => typesJsObjToTypes(typesJsObj)
+        case typesJsArr: JsArray         => typesJsObjToTypes(KeyedList.toJsObject(typesJsArr))
         case x                           =>
           Failure(RamlParseException(s"The types (or schemas) definition in ${parseContext.head} is malformed."))
       }
     }
 
 
-    def typesJsObjToTraitMap(typesJsObj: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
+    def typesJsObjToTypes(typesJsObj: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
           case (key: String, Sourced(included, source)) =>
             implicit val newParseContext = parseContext.addSource(source)
             typeObjectToNativeTypes(key, included)
-          case (key: String, JsString(value))           => Success(Types(external = Map(key -> value)))
+          case (key: String, JsString(value))           =>
+            // json-schema is parsed as a single string because it was not in a yaml file
+            Success(Types(external = Map(key -> value)))
           case (key: String, value: JsObject)           => typeObjectToNativeTypes(key, value)
         }
       foldTryTypes(tryTypes)

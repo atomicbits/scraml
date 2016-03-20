@@ -44,8 +44,8 @@ case class PropertyDeclaration(typeName: String, required: Boolean = true)
 
 
 case class ArrayType(name: String,
-                     baseType: List[String],  // e.g. "array", "Person[]", "Person[Dog[]]"
-                     items: Option[String],  // e.g. Some(Person)
+                     baseType: List[String], // e.g. "array", "Person[]", "Person[Dog[]]"
+                     items: Option[String], // e.g. Some(Person)
                      minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false) extends Type
@@ -60,7 +60,7 @@ case class MapType(name: String, baseType: List[String], elementType: String) ex
 object Type {
 
   def apply(name: String, typeDefinition: JsObject): Try[Type] = {
-    ???
+    throw new RuntimeException("RAML 1.0 types are not yet supported.")
   }
 
 }
