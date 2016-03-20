@@ -22,7 +22,7 @@ package io.atomicbits.scraml.ramlparser.parser
 /**
   * Created by peter on 10/02/16.
   */
-class RamlParseException(messages: List[String]) extends RuntimeException(messages.mkString("\n")) {
+class RamlParseException(val messages: List[String]) extends RuntimeException(messages.mkString("\n")) {
 
   def ++(ramlParseException: RamlParseException): RamlParseException = new RamlParseException(messages ++ ramlParseException.messages)
 

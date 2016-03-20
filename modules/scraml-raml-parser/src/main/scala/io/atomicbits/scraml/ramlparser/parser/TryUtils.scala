@@ -35,7 +35,11 @@ object TryUtils {
     if (errors.isEmpty) {
       Success(successes.map(_.get))
     } else {
-      Failure(errors.reduce(addExceptions))
+      val errorsTyped =
+        errors.collect {
+          case Failure(exc) => exc
+        }
+      Failure(errorsTyped.reduce(addExceptions))
     }
   }
 

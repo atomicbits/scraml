@@ -123,9 +123,6 @@ object Raml {
     }
 
 
-    val baseUriParameters: Try[Map[String, Parameter]] = readUriParameters((ramlJson \ "baseUriParameters").toOption)
-
-
     def readUriParameters(jsParams: Option[JsValue]): Try[Map[String, Parameter]] = {
       jsParams.collect {
         case JsObject(jsObj) =>
@@ -146,6 +143,10 @@ object Raml {
         case x               => Failure(RamlParseException(s"The 'baseUriParameters' field should not be empty if present."))
       } getOrElse Success(Map.empty)
     }
+
+
+    val baseUriParameters: Try[Map[String, Parameter]] = readUriParameters((ramlJson \ "baseUriParameters").toOption)
+
 
 
     val resources: Try[List[Resource]] = Success(List.empty)

@@ -21,7 +21,6 @@ package io.atomicbits.scraml.ramlparser.parser
 
 import java.net.{URI, URL}
 import java.nio.file.{Files, Paths}
-import io.atomicbits.scraml.ramlparser.parser.Include
 import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
 
