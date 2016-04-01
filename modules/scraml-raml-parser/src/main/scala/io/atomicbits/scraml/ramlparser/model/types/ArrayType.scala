@@ -43,7 +43,7 @@ case class ArrayType(id: Id,
 
 object ArrayType {
 
-  def apply(schema: JsObject): Try[ArrayType] = {
+  def apply(schema: JsObject)(implicit nameToId: String => Id): Try[ArrayType] = {
 
     // Process the id
     val id = schema match {

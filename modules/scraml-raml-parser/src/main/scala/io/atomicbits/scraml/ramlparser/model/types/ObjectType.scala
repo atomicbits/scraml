@@ -44,10 +44,11 @@ case class ObjectType(id: Id,
 }
 
 
+
 object ObjectType {
 
 
-  def apply(schema: JsObject, nameOpt: Option[String] = None)(implicit nameToIdOpt: String => Id): Try[ObjectType] = {
+  def apply(schema: JsObject, nameOpt: Option[String])(implicit nameToIdOpt: String => Id): Try[ObjectType] = {
 
     // Process the id
     val id: Id = {
@@ -152,7 +153,8 @@ object ObjectType {
   }
 
 
-  private def tryToInterpretOneOfSelectionAsObjectType(schema: JsObject, parentId: Id, typeDiscriminator: String): Try[Type] = {
+  private def tryToInterpretOneOfSelectionAsObjectType(schema: JsObject, parentId: Id, typeDiscriminator: String)
+                                                      (implicit nameToId: String => Id): Try[Type] = {
 
     def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
       oneOfFragment.fragments.get("properties") collect {

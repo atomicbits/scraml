@@ -19,7 +19,13 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
+import io.atomicbits.scraml.ramlparser.model.Id
+
 /**
   * Created by peter on 25/03/16.
   */
-case class MapType(name: String, baseType: List[String], elementType: String) extends Type
+case class MapType(id: Id, baseType: List[String], elementType: String) extends Type {
+
+  def updated(updatedId: Id): Type = copy(id = updatedId)
+
+}

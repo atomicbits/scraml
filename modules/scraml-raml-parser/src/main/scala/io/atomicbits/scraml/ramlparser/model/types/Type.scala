@@ -65,7 +65,7 @@ object Type {
 
     typeOpt match {
       case Some("object")  =>
-        (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema)
+        (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema, nameOpt)
       case Some("array")   => ArrayType(schema)
       case Some("string")  =>
         enumOpt match {
@@ -84,7 +84,7 @@ object Type {
         val enumOpt = (schema \ "enum").asOpt[List[String]]
         (propertiesOpt, referenceOpt, enumOpt) match {
           case (Some(properties), _, _)   =>
-            (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema)
+            (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema, None)
           case (None, Some(reference), _) => TypeReference(schema)
           case (None, None, Some(enum))   => EnumType(schema)
           case _                          =>
@@ -96,7 +96,7 @@ object Type {
   }
 
 
-  def collectFragments(schemaObject: JsObject): Map[String, Try[Type]] = {
+  def collectFragments(schemaObject: JsObject)(implicit nameToId: String => Id): Map[String, Try[Type]] = {
     // Process the fragments and exclude the json-schema fields that we don't need to consider
     // (should be only objects as other fields are ignored as fragmens) ToDo: check this
     val keysToExclude =

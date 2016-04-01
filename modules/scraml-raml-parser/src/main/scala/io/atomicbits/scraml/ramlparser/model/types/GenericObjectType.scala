@@ -75,7 +75,7 @@ case class GenericObjectType(id: Id,
 
 object GenericObjectType {
 
-  def apply(schema: JsObject): Try[GenericObjectType] = {
+  def apply(schema: JsObject)(implicit nameToId: String => Id): Try[GenericObjectType] = {
 
     // Process the id
     val id: Id = schema match {
