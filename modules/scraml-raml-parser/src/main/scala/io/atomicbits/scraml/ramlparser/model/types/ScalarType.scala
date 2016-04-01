@@ -17,25 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.parser
-
-import play.api.libs.json.{JsString, JsValue}
+package io.atomicbits.scraml.ramlparser.model.types
 
 /**
-  * Created by peter on 26/02/16.
+  * Created by peter on 25/03/16.
   */
-object Sourced {
-
-  val sourcefield = "_source"
-
-  /**
-    * Unwraps a JSON object that has a "_source" field into the source value and the original json object.
-    */
-  def unapply(json: JsValue): Option[(JsValue, String)] = {
-
-    (json \ sourcefield).toOption.collect {
-      case JsString(includeFile) => (json, includeFile)
-    }
-  }
-
-}
+case class ScalarType(name: String, baseType: List[String], enum: List[String], facets: Option[String]) extends Type

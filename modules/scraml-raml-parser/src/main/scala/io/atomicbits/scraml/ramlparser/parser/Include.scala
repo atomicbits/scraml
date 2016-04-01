@@ -34,5 +34,4 @@ object Include {
   implicit def formatter2: Format[Include] =
     (JsPath \ "!include").format[String].inmap(Include.apply, unlift(Include.unapply))
 
-
 }

@@ -40,7 +40,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
       When("we parse the specification")
 
-      val result = RamlParser("/test001.raml", "UTF-8").parse
+      val result = RamlParser("/raml08/TestApi.raml", "UTF-8").parse
       println(s"Parsed raml: $result")
 
       Then("we get a ...")

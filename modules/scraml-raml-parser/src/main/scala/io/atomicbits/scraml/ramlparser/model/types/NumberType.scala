@@ -17,25 +17,33 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.parser
+package io.atomicbits.scraml.ramlparser.model.types
 
-import play.api.libs.json.{JsString, JsValue}
+import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
+import play.api.libs.json.JsObject
+
+import scala.util.{Success, Try}
 
 /**
-  * Created by peter on 26/02/16.
+  * Created by peter on 1/04/16.
   */
-object Sourced {
+case class NumberType(id: Id, required: Boolean = false) extends PrimitiveType with AllowedAsObjectField {
 
-  val sourcefield = "_source"
+  override def updated(updatedId: Id): Type = copy(id = updatedId)
 
-  /**
-    * Unwraps a JSON object that has a "_source" field into the source value and the original json object.
-    */
-  def unapply(json: JsValue): Option[(JsValue, String)] = {
+}
 
-    (json \ sourcefield).toOption.collect {
-      case JsString(includeFile) => (json, includeFile)
+object NumberType {
+
+  def apply(schema: JsObject): Try[NumberType] = {
+
+    val id = schema match {
+      case IdExtractor(schemaId) => schemaId
     }
+
+    val required = (schema \ "required").asOpt[Boolean]
+
+    Success(NumberType(id, required.getOrElse(false)))
   }
 
 }

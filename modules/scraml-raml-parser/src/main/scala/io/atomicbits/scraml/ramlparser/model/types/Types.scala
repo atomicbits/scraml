@@ -17,10 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
+package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.parser.{Sourced, KeyedList, RamlParseException, ParseContext}
-import play.api.libs.json.{JsString, JsArray, JsObject, JsValue}
+import io.atomicbits.scraml.ramlparser.model.Id
+import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException, Sourced}
+import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 import scala.util.{Failure, Success, Try}
 
@@ -37,14 +38,14 @@ case class Types(nativeTypes: List[Type] = List.empty, external: Map[String, Str
 
 object Types {
 
-  def apply(typesJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
+  def apply(typesJson: JsValue)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Types] = {
 
     def doApply(tpsJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
       tpsJson match {
         case Sourced(included, source) => doApply(included)(parseContext.addSource(source))
-        case typesJsObj: JsObject        => typesJsObjToTypes(typesJsObj)
-        case typesJsArr: JsArray         => typesJsObjToTypes(KeyedList.toJsObject(typesJsArr))
-        case x                           =>
+        case typesJsObj: JsObject      => typesJsObjToTypes(typesJsObj)
+        case typesJsArr: JsArray       => typesJsObjToTypes(KeyedList.toJsObject(typesJsArr))
+        case x                         =>
           Failure(RamlParseException(s"The types (or schemas) definition in ${parseContext.head} is malformed."))
       }
     }
@@ -53,7 +54,11 @@ object Types {
     def typesJsObjToTypes(typesJsObj: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
-          case (key: String, Sourced(included, source)) => typeObjectToNativeTypes(key, included)(parseContext.addSource(source))
+          case (key: String, Sourced(included, source)) =>
+            included match {
+              case incl: JsObject  => typeObjectToNativeTypes(key, incl)(parseContext.addSource(source))
+              case JsString(value) => Success(Types(external = Map(key -> value)))
+            }
           case (key: String, JsString(value))           =>
             // json-schema is parsed as a single string because it was not in a yaml file
             Success(Types(external = Map(key -> value)))
@@ -74,7 +79,7 @@ object Types {
 
 
     def typeObjectToNativeTypes(name: String, typeDefinition: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
-      Type(name, typeDefinition).map(tp => Types(nativeTypes = List(tp)))
+      Type(typeDefinition, Some(name)).map(tp => Types(nativeTypes = List(tp)))
     }
 
     doApply(typesJson)

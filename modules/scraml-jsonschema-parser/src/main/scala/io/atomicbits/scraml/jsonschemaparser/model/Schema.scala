@@ -39,6 +39,9 @@ trait Schema {
 
 trait PrimitiveSchema extends Schema
 
+/**
+  * Only used in json-schema.
+  */
 trait FragmentedSchema extends Schema {
 
   def fragments: Map[String, Schema]

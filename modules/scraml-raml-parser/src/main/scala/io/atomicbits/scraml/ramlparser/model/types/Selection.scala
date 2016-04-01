@@ -17,25 +17,32 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.parser
-
-import play.api.libs.json.{JsString, JsValue}
+package io.atomicbits.scraml.ramlparser.model.types
 
 /**
-  * Created by peter on 26/02/16.
+  * Created by peter on 25/03/16.
   */
-object Sourced {
+sealed trait Selection {
 
-  val sourcefield = "_source"
+  def selection: List[Type]
 
-  /**
-    * Unwraps a JSON object that has a "_source" field into the source value and the original json object.
-    */
-  def unapply(json: JsValue): Option[(JsValue, String)] = {
+  def map(f: Type => Type): Selection
 
-    (json \ sourcefield).toOption.collect {
-      case JsString(includeFile) => (json, includeFile)
-    }
-  }
+}
+
+case class OneOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+}
+
+case class AnyOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+
+}
+
+case class AllOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
 
 }

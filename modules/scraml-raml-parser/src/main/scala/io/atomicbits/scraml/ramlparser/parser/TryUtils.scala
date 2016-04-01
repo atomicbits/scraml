@@ -44,6 +44,23 @@ object TryUtils {
   }
 
 
+  def accumulate[U, T](tryMap: Map[U, Try[T]]): Try[Map[U, T]] = {
+    val (keys, values) = tryMap.toSeq.unzip
+    accumulate(values) map { successfulValues =>
+      keys.zip(successfulValues).toMap
+    }
+  }
+
+
+  def accumulate[T](tryOption: Option[Try[T]]): Try[Option[T]] = {
+    tryOption match {
+      case Some(Failure(ex)) => Failure[Option[T]](ex)
+      case Some(Success(t))  => Success(Option(t))
+      case None              => Success(None)
+    }
+  }
+
+
   def addExceptions(exc1: Throwable, exc2: Throwable): Throwable = {
     (exc1, exc2) match {
       case (e1: RamlParseException, e2: RamlParseException) => e1 ++ e2

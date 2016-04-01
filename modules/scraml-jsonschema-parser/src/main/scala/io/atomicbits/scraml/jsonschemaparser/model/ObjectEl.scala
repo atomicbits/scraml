@@ -40,7 +40,7 @@ case class ObjectEl(id: Id,
 
 }
 
-// ToDo: handle the oneOf, anyOf and allOf fields
+
 object ObjectEl {
 
 

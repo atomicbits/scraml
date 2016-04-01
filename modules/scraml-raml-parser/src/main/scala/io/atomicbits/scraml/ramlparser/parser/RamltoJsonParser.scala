@@ -31,27 +31,27 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 10/02/16.
   */
-object RamlJsonParser {
+object RamlToJsonParser {
 
-  def parseToJson(source: String): JsObject = {
+  def parseToJson(source: String): (String, JsValue) = {
     parseToJson(source, "UTF-8")
   }
 
 
-  def parseToJson(source: String, charsetName: String): JsObject = {
+  def parseToJson(source: String, charsetName: String): (String, JsValue) = {
     Try {
-      val ramlContent = read(source, charsetName)
+      val (path, ramlContent) = read(source, charsetName)
       val yaml = new Yaml(SimpleRamlConstructor())
       val ramlMap: java.util.Map[String, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[String, Any]]
-      anyToJson(ramlMap).asInstanceOf[JsObject]
+      (path, anyToJson(ramlMap))
     } match {
-      case Success(jsvalue) => jsvalue
-      case Failure(ex)      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
+      case Success((path: String, jsvalue)) => (path, jsvalue)
+      case Failure(ex)                      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
 
 
-  private def read(source: String, charsetName: String): String = {
+  private def read(source: String, charsetName: String): (String, String) = {
 
     val resource = Try(this.getClass.getResource(source).toURI).toOption
     val file = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
@@ -61,8 +61,9 @@ object RamlJsonParser {
 
     val uri: URI = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
 
+    val path = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
     val encoded: Array[Byte] = Files.readAllBytes(Paths.get(uri))
-    new String(encoded, charsetName) // ToDo: encoding detection via the file's BOM
+    (path, new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
   }
 
 

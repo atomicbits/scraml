@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/method.json#",
+  "required": true,
+  "enum": [ "GET", "PUT", "POST", "DELETE", "HEAD", "CONNECT", "TRACE", "OPTIONS" ]
+}

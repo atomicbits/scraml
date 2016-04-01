@@ -20,24 +20,30 @@
 package io.atomicbits.scraml.ramlparser.parser
 
 
-import io.atomicbits.scraml.ramlparser.model.{JsInclude, Raml}
+import io.atomicbits.scraml.ramlparser.model.{RootId, Id, JsInclude, Raml}
 import play.api.libs.json._
 
 
 /**
   * Created by peter on 6/02/16.
   */
-case class RamlParser(ramlSource: String, charsetName: String) {
+case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
 
 
   def parse = {
-    val ramlJson = RamlJsonParser.parseToJson(ramlSource, charsetName)
+    val (path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
     val parsed =
       ramlJson match {
-        case ramlJsObj: JsObject => parseRamlJsonDocument(ramlJsObj)
+        case ramlJsObj: JsObject => parseRamlJsonDocument(path, ramlJsObj)
         case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
       }
 
+    require(defaultPackage.length > 1, s"The default package should contain at least 2 fragments.")
+
+    val host = defaultPackage.take(2).reverse.mkString(".")
+    val urlPath = defaultPackage.drop(2).mkString("/")
+
+    implicit val nameToId: String => Id = name => RootId(s"http://$host/$urlPath/$name.json")
     implicit val parseContext = ParseContext(List(ramlSource))
 
     Raml(parsed)
@@ -49,18 +55,23 @@ case class RamlParser(ramlSource: String, charsetName: String) {
     *
     * @param raml
     */
-  private def parseRamlJsonDocument(raml: JsObject): JsObject = {
+  private def parseRamlJsonDocument(basePath: String, raml: JsObject): JsObject = {
 
-    def parseNested(doc: JsValue): JsValue = {
+    def parseNested(doc: JsValue, currentBasePath: String = basePath): JsValue = {
       doc match {
-        case JsInclude(included, source) => parseNested(included + (Sourced.sourcefield -> JsString(source)))
-        case jsObj: JsObject             =>
+        case JsInclude(source) =>
+          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$basePath/$source")
+          included match {
+            case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
+            case x              => parseNested(x, newBasePath)
+          }
+        case jsObj: JsObject   =>
           val mappedFields = jsObj.fields.collect {
-            case (key, value) => key -> parseNested(value)
+            case (key, value) => key -> parseNested(value, currentBasePath)
           }
           JsObject(mappedFields)
-        case jsArr: JsArray              => JsArray(jsArr.value.map(parseNested))
-        case x                           => x
+        case jsArr: JsArray    => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
+        case x                 => x
       }
     }
 

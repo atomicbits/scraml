@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.types.Types
 import io.atomicbits.scraml.ramlparser.parser.{TryUtils, RamlParseException, ParseContext}
 import play.api.libs.json.{JsValue, JsArray, JsString, JsObject}
 
@@ -44,7 +45,7 @@ case class Raml(title: String,
 object Raml {
 
 
-  def apply(ramlJson: JsObject)(implicit parseContext: ParseContext): Try[Raml] = {
+  def apply(ramlJson: JsObject)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Raml] = {
 
     // Process the properties
     val title: Try[String] =
