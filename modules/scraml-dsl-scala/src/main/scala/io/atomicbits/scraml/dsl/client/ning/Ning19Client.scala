@@ -79,7 +79,9 @@ case class Ning19Client(protocol: String,
     // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
     // in that case we violate the RAML specs.
     callToJsonResponse[B](requestBuilder, body) map { response =>
-      if (response.status == 200) {
+      if (response.status >= 200 && response.status < 300) {
+        // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+        // there are many responses in the 200 range with different typed responses.
         response.map(responseFormat.reads)
       } else {
         // We hijack the 'JsError(Nil)' type here to mark the non-200 case that has to result in a successful future with empty body.
