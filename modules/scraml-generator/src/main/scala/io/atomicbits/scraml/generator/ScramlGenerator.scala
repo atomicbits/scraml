@@ -21,21 +21,19 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
-import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ScalaResourceClassGenerator, CaseClassGenerator}
+import io.atomicbits.scraml.generator.codegen._
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
-import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
+import io.atomicbits.scraml.generator.lookup.{SchemaLookup, SchemaLookupParser}
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
-
 import io.atomicbits.scraml.parser._
 import io.atomicbits.scraml.parser.model._
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps
-
 import java.util.{Map => JMap}
 
 import scala.util.Try
@@ -113,13 +111,17 @@ object ScramlGenerator {
         println(s"Case classes generated")
         val resources: Seq[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
-        caseClasses ++ resources
+        val dslClasses: Seq[ClassRep] = DslProvider.generateDslClasses(Scala, packageBasePath)
+        println(s"DSL support classes generated")
+        caseClasses ++ resources ++ dslClasses
       case Java  =>
         val pojos: Seq[ClassRep] = PojoGenerator.generatePojos(classMap)
         println(s"POJOs generated")
         val resources: Seq[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
-        pojos ++ resources
+        val dslClasses: Seq[ClassRep] = DslProvider.generateDslClasses(Java, packageBasePath)
+        println(s"DSL support classes generated")
+        pojos ++ resources ++ dslClasses
     }
 
   }

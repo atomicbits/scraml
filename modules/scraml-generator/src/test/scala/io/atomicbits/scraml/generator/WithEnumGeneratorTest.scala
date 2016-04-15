@@ -33,7 +33,24 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
           "withenum.rest.RestResource",
           "withenum.rest.withenum.WithEnumResource",
           "withenum.schema.WithEnum",
-          "withenum.schema.WithEnumMethod"
+          "withenum.schema.WithEnumMethod",
+          "io.atomicbits.scraml.dsl.BinaryData",
+          "io.atomicbits.scraml.dsl.BinaryRequest",
+          "io.atomicbits.scraml.dsl.BodyPart",
+          "io.atomicbits.scraml.dsl.Client",
+          "io.atomicbits.scraml.dsl.HeaderMap",
+          "io.atomicbits.scraml.dsl.HttpParam",
+          "io.atomicbits.scraml.dsl.Method",
+          "io.atomicbits.scraml.dsl.RequestBuilder",
+          "io.atomicbits.scraml.dsl.Response",
+          "io.atomicbits.scraml.dsl.Segment",
+          "io.atomicbits.scraml.dsl.json.TypedJson",
+          "io.atomicbits.scraml.dsl.client.ClientConfig",
+          "io.atomicbits.scraml.dsl.client.ClientFactory",
+          "io.atomicbits.scraml.dsl.client.FactoryLoader",
+          "io.atomicbits.scraml.dsl.client.ning.Ning19BinaryData",
+          "io.atomicbits.scraml.dsl.client.ning.Ning19Client",
+          "io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory"
         )
 
         classRepsByFullName.keys.foreach { key =>

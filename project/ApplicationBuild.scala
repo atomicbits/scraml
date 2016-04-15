@@ -62,7 +62,8 @@ with Dependencies {
     id = "scraml-generator",
     base = file("modules/scraml-generator"),
     settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-  ) dependsOn(scramlParser, scramlJsonSchemaParser)
+  ) dependsOn(scramlParser, scramlJsonSchemaParser, scramlDslJava, scramlDslScala)
+  // depends on scramlDslJava and scramlDslScala to be able to find the DSL source files
 
   val scramlGenSimulation = Project(
     id = "scraml-gen-simulation",
