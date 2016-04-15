@@ -31,8 +31,8 @@ trait Dependencies { this:Build =>
   // val rxHttpClientJava    =   "be.wegenenverkeer"           %     "rxhttpclient-java"   % "0.2.0"
 
   // val rxHttpClientScala   =   "be.wegenenverkeer"           %%    "rxhttpclient-scala"  % "0.2.0"
-  val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.31"
-  val asyncClientProvided =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "provided"
+  val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.36"
+  val asyncClientProvided =   "com.ning"                    %     "async-http-client"   % "1.9.36"   % "provided"
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
 
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
@@ -45,7 +45,7 @@ trait Dependencies { this:Build =>
   val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
   val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.57"     % "test"
   val junit               =   "junit"                       %     "junit"               % "4.12"     % "test"
-  val asyncClientTest     =   "com.ning"                    %     "async-http-client"   % "1.9.31"   % "test"
+  val asyncClientTest     =   "com.ning"                    %     "async-http-client"   % "1.9.36"   % "test"
 
 
   // inclusion of the above dependencies in the modules

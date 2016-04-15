@@ -17,22 +17,17 @@
  *
  */
 
-package io.atomicbits.scraml.client.java;
-
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+package io.atomicbits.scraml.jdsl;
 
 /**
  * Created by peter on 19/08/15.
  */
-public class WebserviceResource extends PlainSegment {
+public interface BodyPart {
 
-    public WebserviceResource(RequestBuilder requestBuilder) {
-        super("webservice", requestBuilder);
-    }
+    Boolean isString();
 
-    public PathparamResource pathparam(String value) {
-        return new PathparamResource(value, this.getRequestBuilder());
-    }
+    Boolean isFile();
+
+    Boolean isByteArray();
 
 }
