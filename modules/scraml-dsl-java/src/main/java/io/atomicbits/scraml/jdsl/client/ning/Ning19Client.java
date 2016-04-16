@@ -362,26 +362,52 @@ public class Ning19Client implements Client {
 
 
     private io.atomicbits.scraml.jdsl.Response<BinaryData> transformToBinaryBody(com.ning.http.client.Response response) {
-        BinaryData binaryData = new Ning19BinaryData(response);
-        return new io.atomicbits.scraml.jdsl.Response<BinaryData>(
-                null,
-                binaryData,
-                response.getStatusCode(),
-                response.getHeaders()
-        );
+        try {
+            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+                // there are many responses in the 200 range with different typed responses.
+                BinaryData binaryData = new Ning19BinaryData(response);
+                return new io.atomicbits.scraml.jdsl.Response<BinaryData>(
+                        null,
+                        binaryData,
+                        response.getStatusCode(),
+                        response.getHeaders()
+                );
+            } else {
+                String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+                return new io.atomicbits.scraml.jdsl.Response<BinaryData>(
+                        responseBody,
+                        null,
+                        response.getStatusCode(),
+                        response.getHeaders()
+                );
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 
     private <R> io.atomicbits.scraml.jdsl.Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
         try {
             String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
-
-            return new io.atomicbits.scraml.jdsl.Response<R>(
-                    responseBody,
-                    parseBodyToObject(responseBody, canonicalResponseType),
-                    response.getStatusCode(),
-                    response.getHeaders()
-            );
+            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+                // there are many responses in the 200 range with different typed responses.
+                return new io.atomicbits.scraml.jdsl.Response<R>(
+                        responseBody,
+                        parseBodyToObject(responseBody, canonicalResponseType),
+                        response.getStatusCode(),
+                        response.getHeaders()
+                );
+            } else {
+                return new io.atomicbits.scraml.jdsl.Response<R>(
+                        responseBody,
+                        null,
+                        response.getStatusCode(),
+                        response.getHeaders()
+                );
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
