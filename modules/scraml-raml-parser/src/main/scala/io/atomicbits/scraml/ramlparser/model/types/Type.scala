@@ -20,9 +20,9 @@
 package io.atomicbits.scraml.ramlparser.model.types
 
 import io.atomicbits.scraml.ramlparser.model.Id
-import play.api.libs.json.{JsValue, JsObject}
+import play.api.libs.json.{JsObject, JsValue}
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
 /**
   * Created by peter on 10/02/16.
@@ -88,9 +88,13 @@ object Type {
           case (None, Some(reference), _) => TypeReference(schema)
           case (None, None, Some(enum))   => EnumType(schema)
           case _                          =>
-            // According to the RAML 1.0 defaults if no 'type' field and no 'properties' field is present, it defaults to a string type.
-            // This, however, conflicts with nested json-schema schemas.
-            Fragment(schema)
+            // According to the RAML 1.0 defaults, if no 'type' field and no 'properties' field is present, the type defaults to a
+            // string type. This, however, conflicts with the possibility of having nested json-schema schemas. We decided to only
+            // interpret the type as a string if the fragment alternative (meaning we have nested schemas) is empty.
+            Fragment(schema).flatMap { fragment =>
+              if (fragment.isEmpty) StringType(schema)
+              else Success(fragment)
+            }
         }
     }
   }

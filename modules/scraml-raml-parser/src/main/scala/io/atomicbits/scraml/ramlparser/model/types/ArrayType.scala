@@ -54,7 +54,8 @@ object ArrayType {
     val items =
       schema \ "items" toOption match {
         case Some(obj: JsObject) => Type(obj)
-        case _                   =>
+        case Some(_)             => StringType() // RAML 1.0 default type is a String.
+        case None                =>
           Failure[Type](RamlParseException(s"An array type must have an 'items' field that refers to a JsObject in $schema"))
       }
 

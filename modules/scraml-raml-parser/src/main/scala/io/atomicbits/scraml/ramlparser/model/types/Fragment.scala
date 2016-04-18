@@ -32,6 +32,8 @@ case class Fragment(id: Id, fragments: Map[String, Type]) extends FragmentedType
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
 
+  def isEmpty: Boolean = fragments.isEmpty
+
 }
 
 

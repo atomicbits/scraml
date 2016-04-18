@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
+import play.api.libs.json.{JsObject, Json}
 
 import scala.util.{Success, Try}
 
@@ -47,6 +47,11 @@ object StringType {
     val required = (schema \ "required").asOpt[Boolean]
 
     Success(StringType(id, format, required.getOrElse(false)))
+  }
+
+
+  def apply(): Try[StringType] = {
+    apply(Json.obj())
   }
 
 }
