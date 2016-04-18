@@ -22,8 +22,8 @@ package io.atomicbits.scraml.dsl
 import play.api.libs.json.JsValue
 
 /**
- * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
- */
+  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
+  */
 case class Response[T](status: Int,
                        stringBody: Option[String],
                        jsonBody: Option[JsValue] = None,
@@ -32,6 +32,10 @@ case class Response[T](status: Int,
 
   def map[S](f: T => S) = {
     this.copy(body = body.map(f))
+  }
+
+  def flatMap[S](f: T => Option[S]) = {
+    this.copy(body = body.flatMap(f))
   }
 
 }

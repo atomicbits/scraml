@@ -63,11 +63,17 @@ case class Ning19Client(protocol: String,
 
   def callToJsonResponse[B](requestBuilder: RequestBuilder, body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
     callToStringResponse[B](requestBuilder, body).map { response =>
-      if (response.status == 200) {
-        val respJson = response.map(Json.parse)
+      if (response.status >= 200 && response.status < 300) {
+        // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+        // there are many responses in the 200 range with different typed responses.
+        // if (response.status == 200) {
+        val respJson = response.flatMap { responseString =>
+          if (responseString != null && responseString.nonEmpty) Some(Json.parse(responseString))
+          else None
+        }
         respJson.copy(jsonBody = respJson.body)
       } else {
-        response.map(_ => JsNull).copy(body = None)
+        response.copy(jsonBody = None, body = None)
       }
     }
   }
@@ -90,9 +96,9 @@ case class Ning19Client(protocol: String,
       }
     } flatMap {
       case response@Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
-      case response@Response(_, _, _, Some(JsError(Nil)), _) => Future.successful(response.copy(body = None))
-      case response@Response(_, _, _, None, _) => Future.successful(response.copy(body = None))
-      case Response(_, _, _, Some(JsError(e)), _) =>
+      case response@Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
+      case response@Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
+      case Response(_, _, _, Some(JsError(e)), _)                  =>
         val validationMessages: Seq[String] = {
           e flatMap {
             errorsByPath =>
@@ -128,7 +134,7 @@ case class Ning19Client(protocol: String,
 
 
   def callToBinaryResponse[B](requestBuilder: RequestBuilder, body: Option[B])
-                                         (implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
+                             (implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
 
     val transformer: com.ning.http.client.Response => Response[BinaryData] = { response =>
 
@@ -148,9 +154,9 @@ case class Ning19Client(protocol: String,
 
 
   private def callToResponse[B, T](requestBuilder: RequestBuilder,
-                           body: Option[B],
-                           transformer: com.ning.http.client.Response => Response[T])
-                          (implicit bodyFormat: Format[B]): Future[Response[T]] = {
+                                   body: Option[B],
+                                   transformer: com.ning.http.client.Response => Response[T])
+                                  (implicit bodyFormat: Format[B]): Future[Response[T]] = {
     val ningBuilder = {
       // Create builder
       val ningRb: com.ning.http.client.RequestBuilder = new com.ning.http.client.RequestBuilder
@@ -170,7 +176,7 @@ case class Ning19Client(protocol: String,
     requestBuilder.queryParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter) => ningBuilder.addQueryParam(key, parameter)
+          case SingleHttpParam(parameter)    => ningBuilder.addQueryParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addQueryParam(key, parameter))
         }
@@ -182,16 +188,16 @@ case class Ning19Client(protocol: String,
     }
 
     requestBuilder.binaryBody.foreach {
-      case FileBinaryRequest(file) => ningBuilder.setBody(file)
+      case FileBinaryRequest(file)               => ningBuilder.setBody(file)
       case InputStreamBinaryRequest(inputStream) => ningBuilder.setBody(new InputStreamBodyGenerator(inputStream))
-      case ByteArrayBinaryRequest(byteArray) => ningBuilder.setBody(byteArray)
-      case StringBinaryRequest(text) => ningBuilder.setBody(text)
+      case ByteArrayBinaryRequest(byteArray)     => ningBuilder.setBody(byteArray)
+      case StringBinaryRequest(text)             => ningBuilder.setBody(text)
     }
 
     requestBuilder.formParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter) => ningBuilder.addFormParam(key, parameter)
+          case SingleHttpParam(parameter)    => ningBuilder.addFormParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addFormParam(key, parameter))
         }
@@ -209,7 +215,7 @@ case class Ning19Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
-      case part: FilePart =>
+      case part: FilePart      =>
         ningBuilder.addBodyPart(
           new com.ning.http.client.multipart.FilePart(
             part.name,
@@ -221,7 +227,7 @@ case class Ning19Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
-      case part: StringPart =>
+      case part: StringPart    =>
         ningBuilder.addBodyPart(
           new com.ning.http.client.multipart.StringPart(
             part.name,
