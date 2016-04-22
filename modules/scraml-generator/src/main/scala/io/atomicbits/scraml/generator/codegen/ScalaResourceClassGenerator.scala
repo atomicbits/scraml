@@ -24,8 +24,8 @@ import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
 /**
- * Created by peter on 22/08/15. 
- */
+  * Created by peter on 22/08/15.
+  */
 object ScalaResourceClassGenerator {
 
 
@@ -44,7 +44,8 @@ object ScalaResourceClassGenerator {
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode).generateActionFunctions(oneRoot)
+            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode)
+              .generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
           case manyRoots                                    =>
             val imports = Set.empty[String]
@@ -180,11 +181,13 @@ object ScalaResourceClassGenerator {
 
       val dslFields = resource.resources.map(generateResourceDslField)
 
-      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode).generateActionFunctions(resource)
+      val ActionFunctionResult(actionImports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode)
+        .generateActionFunctions(resource)
 
       val imports = actionImports
 
-      val (oneAddedHeaderConstructorArgs, manyAddedHeaderConstructorArgs) = generateConstructorArguments(resource)
+      val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resource)
+      val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resource)
 
       val sourcecode =
         s"""
@@ -199,8 +202,17 @@ object ScalaResourceClassGenerator {
 
            $classDefinition
 
+           /**
+            * addHeaders will add the given headers and append the values for existing headers.
+            */
            def addHeaders(newHeaders: (String, String)*) =
-             new ${resource.classRep.name}$manyAddedHeaderConstructorArgs
+             new ${resource.classRep.name}$addHeaderConstructorArgs
+
+           /**
+            * setHeaders will add the given headers and set (overwrite) the values for existing headers.
+            */
+           def setHeaders(newHeaders: (String, String)*) =
+             new ${resource.classRep.name}$setHeaderConstructorArgs
 
            ${dslFields.mkString("\n\n")}
 
@@ -225,13 +237,21 @@ object ScalaResourceClassGenerator {
       }
 
 
-    def generateConstructorArguments(resource: RichResource): (String, String) =
+    def generateAddHeaderConstructorArguments(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          ("(_value, _requestBuilder.withAddedHeaders(header))", "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))")
-        case None            =>
-          ("(_requestBuilder.withAddedHeaders(header))", "(_requestBuilder.withAddedHeaders(newHeaders: _*))")
+          "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))"
+        case None            => "(_requestBuilder.withAddedHeaders(newHeaders: _*))"
+      }
+
+
+    def generateSetHeaderConstructorArguments(resource: RichResource): String =
+      resource.urlParameter match {
+        case Some(parameter) =>
+          val paramType = generateParameterType(parameter.parameterType)
+          "(_value, _requestBuilder.withSetHeaders(newHeaders: _*))"
+        case None            => "(_requestBuilder.withSetHeaders(newHeaders: _*))"
       }
 
 

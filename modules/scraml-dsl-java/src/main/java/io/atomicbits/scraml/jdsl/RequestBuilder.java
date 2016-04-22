@@ -37,9 +37,10 @@ public class RequestBuilder {
     private Method method = Method.GET;
     private Map<String, HttpParam> queryParameters = new HashMap<String, HttpParam>();
     private Map<String, HttpParam> formParameters = new HashMap<String, HttpParam>();
-    private List<BodyPart> multipartParams = new ArrayList<BodyPart>();
+    private List<BodyPart> multipartParams = new ArrayList<BodyPart>(1);
     private BinaryRequest binaryRequest = null;
-    private HeaderMap headers = new HeaderMap();
+    private HeaderMap headerMap = new HeaderMap();
+    private List<HeaderOp> headerOps = new ArrayList<>(1);
 
     RequestBuilder parentRequestBuilder;
 
@@ -75,7 +76,9 @@ public class RequestBuilder {
         if (binaryRequest != null) {
             folded.setBinaryRequest(binaryRequest);
         }
-        folded.addHeaders(getHeaders());
+        for (HeaderOp headerOp : this.getHeaderOps()) {
+            headerOp.process(folded.getHeaderMap());
+        }
         return folded;
     }
 
@@ -87,16 +90,22 @@ public class RequestBuilder {
         return formParameters;
     }
 
-    public HeaderMap getHeaders() {
-        return headers;
+    public HeaderMap getHeaderMap() {
+        return headerMap;
+    }
+
+    public List<HeaderOp> getHeaderOps() {
+        return headerOps;
     }
 
     public void addHeader(String key, String value) {
-        this.headers.addHeader(key, value);
+        HeaderAdd headerAdd = new HeaderAdd(key, value);
+        getHeaderOps().add(headerAdd);
     }
 
-    public void addHeaders(HeaderMap headMap) {
-        getHeaders().addHeaders(headMap);
+    public void setHeader(String key, String value) {
+        HeaderSet headerSet = new HeaderSet(key, value);
+        getHeaderOps().add(headerSet);
     }
 
     public Method getMethod() {
@@ -143,13 +152,6 @@ public class RequestBuilder {
         }
     }
 
-    public void setHeaders(HeaderMap headers) {
-        if (headers == null) {
-            this.headers = new HeaderMap();
-        } else {
-            this.headers = headers;
-        }
-    }
 
     public void setMethod(Method method) {
         this.method = method;

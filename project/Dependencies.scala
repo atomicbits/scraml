@@ -92,6 +92,7 @@ trait Dependencies { this:Build =>
 
   val scramlDslDepsJava = Seq(
     slf4j,
+    junit,
     jacksonCore,
     jacksonAnnotations,
     jacksonDatabind,

@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
  */
 public class ClientConfig {
 
+    private Charset requestCharset = Charset.defaultCharset();
     private Charset responseCharset = Charset.defaultCharset();
     private int requestTimeout = AsyncHttpClientConfigDefaults.defaultRequestTimeout();
     private int maxRequestRetry = AsyncHttpClientConfigDefaults.defaultMaxRequestRetry();
@@ -48,7 +49,8 @@ public class ClientConfig {
     public ClientConfig() {
     }
 
-    public ClientConfig(Charset responseCharset,
+    public ClientConfig(Charset requestCharset,
+                        Charset responseCharset,
                         Boolean acceptAnyCertificate,
                         Boolean allowPoolingConnections,
                         Boolean allowPoolingSslConnections,
@@ -66,6 +68,7 @@ public class ClientConfig {
                         Boolean strict302Handling,
                         int webSocketTimeout) {
 
+        this.requestCharset = requestCharset;
         this.responseCharset = responseCharset;
         this.acceptAnyCertificate = acceptAnyCertificate;
         this.allowPoolingConnections = allowPoolingConnections;
@@ -84,8 +87,20 @@ public class ClientConfig {
         this.webSocketTimeout = webSocketTimeout;
     }
 
+    public Charset getRequestCharset() {
+        return requestCharset;
+    }
+
+    public void setRequestCharset(Charset requestCharset) {
+        this.requestCharset = requestCharset;
+    }
+
     public Charset getResponseCharset() {
         return responseCharset;
+    }
+
+    public void setResponseCharset(Charset responseCharset) {
+        this.responseCharset = responseCharset;
     }
 
     public Boolean getAcceptAnyCertificate() {

@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.dsl
 
+import io.atomicbits.scraml.dsl.client.ClientConfig
 import play.api.libs.json._
 
 import scala.concurrent.Future
@@ -27,6 +28,8 @@ import scala.concurrent.Future
   * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
   */
 trait Client {
+
+  def config: ClientConfig
 
   def defaultHeaders: Map[String, String]
 

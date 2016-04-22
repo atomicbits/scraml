@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.client.manual
 
 import java.net.URL
+import java.nio.charset.Charset
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -28,7 +29,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
-import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
+import io.atomicbits.scraml.dsl.client.{ClientConfig, ClientFactory}
 import io.atomicbits.scraml.dsl.RequestBuilder
 
 import scala.concurrent._
@@ -169,7 +170,7 @@ class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
       stubFor(
         put(urlEqualTo(s"/rest/some/webservice/pathparamvalue"))
-          .withHeader("Content-Type", equalTo("application/json"))
+          .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
           .withHeader("Accept", equalTo("application/json"))
           .withRequestBody(equalTo( """{"firstName":"John","lastName":"Doe","age":21}"""))
           .willReturn(
@@ -189,11 +190,11 @@ class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
           .call().asType
 
       val futureResultPut: Future[Address] =
-        XoClient(protocol = "http", host = host, port = port, prefix = None, config = ClientConfig(), defaultHeaders = Map
+        XoClient(protocol = "http", host = host, port = port, prefix = None, config = ClientConfig(requestCharset = Charset.forName("UTF-8")), defaultHeaders = Map
           .empty, clientFactory = None)
           .rest.some.webservice.pathparam("pathparamvalue")
           .withHeaders(
-            "Content-Type" -> "application/json",
+            "Content-Type" -> "application/json; charset=UTF-8",
             "Accept" -> "application/json"
           )
           .put(User("John", "Doe", 21))
