@@ -182,9 +182,9 @@ case class Ning19Client(protocol: String,
         }
     }
 
-    body.foreach {
-      body =>
-        ningBuilder.setBody(bodyFormat.writes(body).toString())
+    val bodyToSend = body.map(bodyFormat.writes(_).toString())
+    bodyToSend.foreach {
+      body => ningBuilder.setBody(body)
     }
 
     requestBuilder.binaryBody.foreach {
@@ -242,6 +242,8 @@ case class Ning19Client(protocol: String,
 
     val ningRequest: Request = ningBuilder.build()
     LOGGER.debug(s"Executing request: $ningRequest")
+    LOGGER.trace(s"Request body encoding: ${ningRequest.getBodyEncoding}")
+    LOGGER.trace(s"Request body: $bodyToSend")
 
     val promise = Promise[Response[T]]()
 
