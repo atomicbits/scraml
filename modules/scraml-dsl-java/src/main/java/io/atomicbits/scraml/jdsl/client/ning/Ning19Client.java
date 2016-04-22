@@ -476,8 +476,8 @@ public class Ning19Client implements Client {
     }
 
 
-    private String getResponseCharsetFromHeaders(Iterable<Map.Entry<String, List<String>>> headers, String defaultCharset) {
-        for (Map.Entry<String, List<String>> entry : headers) {
+    String getResponseCharsetFromHeaders(Map<String, List<String>> headers, String defaultCharset) {
+        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
             if ("content-type".equals(entry.getKey().toLowerCase())) {
                 for (String value : entry.getValue()) {
                     String[] parts = value.toLowerCase().split(";");

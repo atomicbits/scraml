@@ -289,7 +289,7 @@ case class Ning19Client(protocol: String,
   }
 
 
-  private def getResponseCharsetFromHeaders(headers: Map[String, List[String]]): Option[String] = {
+  private[ning] def getResponseCharsetFromHeaders(headers: Map[String, List[String]]): Option[String] = {
 
     val contentTypeValuesOpt =
       headers.map { keyValues =>
