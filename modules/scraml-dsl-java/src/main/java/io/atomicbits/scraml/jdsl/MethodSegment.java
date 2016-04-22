@@ -51,12 +51,12 @@ public abstract class MethodSegment<B, R> extends Segment {
         requestBuilder.setMultipartParams(multipartParams);
         requestBuilder.setBinaryRequest(binaryRequest);
 
-        if (expectedAcceptHeader != null && !requestBuilder.getHeaders().hasKey("Accept")) {
-            requestBuilder.addHeader("Accept", expectedAcceptHeader);
+        if (expectedAcceptHeader != null && !requestBuilder.getHeaderMap().hasKey("Accept")) {
+            requestBuilder.getHeaderMap().addHeader("Accept", expectedAcceptHeader);
         }
 
-        if (expectedContentTypeHeader != null && !requestBuilder.getHeaders().hasKey("Content-Type")) {
-            requestBuilder.addHeader("Content-Type", expectedContentTypeHeader);
+        if (expectedContentTypeHeader != null && !requestBuilder.getHeaderMap().hasKey("Content-Type")) {
+            requestBuilder.getHeaderMap().addHeader("Content-Type", expectedContentTypeHeader);
         }
 
         this.requestBuilder = requestBuilder;
