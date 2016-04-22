@@ -44,7 +44,7 @@ public class HeaderMap {
         }
 
         String keyOriginal = key.trim();
-        String keyLower = keyOriginal.toLowerCase(Locale.ENGLISH);
+        String keyNormalized = normalizeKey(key);
         List<String> valuesOriginal = new ArrayList<>();
         for (String value : values) {
             if (value != null) valuesOriginal.add(value.trim());
@@ -54,11 +54,11 @@ public class HeaderMap {
             return;
         }
 
-        originalKeys.put(keyLower, keyOriginal);
-        List<String> currentValues = headers.get(keyLower);
+        originalKeys.put(keyNormalized, keyOriginal);
+        List<String> currentValues = headers.get(keyNormalized);
         if (currentValues == null) {
             currentValues = new ArrayList<>();
-            headers.put(keyLower, currentValues);
+            headers.put(keyNormalized, currentValues);
         }
         currentValues.addAll(valuesOriginal);
     }
@@ -94,7 +94,7 @@ public class HeaderMap {
         }
 
         String keyOriginal = key.trim();
-        String keyLower = keyOriginal.toLowerCase(Locale.ENGLISH);
+        String keyNormalized = normalizeKey(key);
         List<String> valuesOriginal = new ArrayList<>();
         for (String value : values) {
             if (value != null) valuesOriginal.add(value.trim());
@@ -104,8 +104,8 @@ public class HeaderMap {
             return;
         }
 
-        originalKeys.put(keyLower, keyOriginal);
-        headers.put(keyLower, valuesOriginal);
+        originalKeys.put(keyNormalized, keyOriginal);
+        headers.put(keyNormalized, valuesOriginal);
     }
 
 
@@ -147,8 +147,21 @@ public class HeaderMap {
         if (key == null) {
             return false;
         }
-        String keyLower = key.toLowerCase(Locale.ENGLISH);
-        return originalKeys.get(keyLower) != null;
+        String keyNormalized = normalizeKey(key);
+        return originalKeys.get(keyNormalized) != null;
+    }
+
+    public List<String> getValues(String key) {
+        if (key == null) {
+            return new ArrayList<>();
+        }
+        String keyNormalized = normalizeKey(key);
+        List<String> values = headers.get(keyNormalized);
+        if (values != null) {
+            return values;
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     private <T> List<T> cloneList(List<T> list) {
@@ -173,5 +186,9 @@ public class HeaderMap {
         return cloneMap;
     }
 
+    private String normalizeKey(String key) {
+        String keyOriginal = key.trim();
+        return keyOriginal.toLowerCase(Locale.ENGLISH);
+    }
 
 }

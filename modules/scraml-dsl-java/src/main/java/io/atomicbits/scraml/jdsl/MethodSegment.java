@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.jdsl;
 
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,13 +53,19 @@ public abstract class MethodSegment<B, R> extends Segment {
         requestBuilder.setMultipartParams(multipartParams);
         requestBuilder.setBinaryRequest(binaryRequest);
 
-        if (expectedAcceptHeader != null && !requestBuilder.getHeaderMap().hasKey("Accept")) {
-            requestBuilder.getHeaderMap().addHeader("Accept", expectedAcceptHeader);
+        String accept = "Accept";
+        String contentType = "Content-Type";
+
+        if (expectedAcceptHeader != null && !requestBuilder.getHeaderMap().hasKey(accept)) {
+            requestBuilder.getHeaderMap().addHeader(accept, expectedAcceptHeader);
         }
 
-        if (expectedContentTypeHeader != null && !requestBuilder.getHeaderMap().hasKey("Content-Type")) {
-            requestBuilder.getHeaderMap().addHeader("Content-Type", expectedContentTypeHeader);
+        if (expectedContentTypeHeader != null && !requestBuilder.getHeaderMap().hasKey(contentType)) {
+            requestBuilder.getHeaderMap().addHeader(contentType, expectedContentTypeHeader);
         }
+
+        // set request charset if necessary
+        setRequestCharset(requestBuilder, contentType);
 
         this.requestBuilder = requestBuilder;
     }
@@ -77,6 +85,38 @@ public abstract class MethodSegment<B, R> extends Segment {
 
     protected RequestBuilder getRequestBuilder() {
         return requestBuilder;
+    }
+
+
+    /**
+     * see https://www.w3.org/Protocols/rfc1341/4_Content-Type.html
+     * charset is case-insensitive:
+     *  * http://stackoverflow.com/questions/7718476/are-http-headers-content-type-c-case-sensitive
+     *  * https://www.w3.org/TR/html4/charset.html#h-5.2.1
+     */
+    private void setRequestCharset(RequestBuilder requestBuilder, String contentType) {
+        if (requestBuilder.getHeaderMap().hasKey(contentType)) {
+            List<String> contentTypeValues = requestBuilder.getHeaderMap().getValues(contentType);
+            Boolean hasCharset = false;
+            Boolean isBinary = false;
+            for (String value : contentTypeValues) {
+                if (value.toLowerCase().contains("charset")) {
+                    hasCharset = true;
+                }
+                if (value.toLowerCase().contains("octet-stream")) {
+                    isBinary = true;
+                }
+            }
+            if (!isBinary && !hasCharset && !contentTypeValues.isEmpty()) {
+                Charset defaultCharset = requestBuilder.getClient().getConfig().getRequestCharset();
+                if (defaultCharset != null) {
+                    String value = contentTypeValues.get(0);
+                    String updatedValue = value + "; charset=" + defaultCharset.name();
+                    contentTypeValues.set(0, updatedValue);
+                    requestBuilder.getHeaderMap().setHeader(contentType, contentTypeValues);
+                }
+            }
+        }
     }
 
     private Map<String, HttpParam> removeNullParams(Map<String, HttpParam> map) {

@@ -19,22 +19,21 @@
 
 package io.atomicbits.scraml.dsl.client.ning
 
+import java.nio.charset.Charset
 import java.util.concurrent.CompletionStage
-import java.util.function.{BiConsumer, Function ⇒ JFunction}
+import java.util.function.{BiConsumer, Function => JFunction}
 
 import com.ning.http.client.generators.InputStreamBodyGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
-import com.ning.http.client.{AsyncCompletionHandler, Request, AsyncHttpClient, AsyncHttpClientConfig}
+import com.ning.http.client.{AsyncCompletionHandler, AsyncHttpClient, AsyncHttpClientConfig, Request}
 import io.atomicbits.scraml.dsl.client.ClientConfig
 import io.atomicbits.scraml.dsl._
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
 
-import scala.concurrent.{Promise, Future}
-import scala.util.{Try, Failure, Success}
-
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -118,13 +117,15 @@ case class Ning19Client(protocol: String,
 
     val transformer: com.ning.http.client.Response => Response[String] = { response =>
 
-      val stringResponseBody: Option[String] = Option(response.getResponseBody(config.responseCharset.displayName))
-
       val headers: Map[String, List[String]] =
         mapAsScalaMap(response.getHeaders).foldLeft(Map.empty[String, List[String]]) { (map, headerPair) =>
           val (key, value) = headerPair
           map + (key -> value.asScala.toList)
         }
+
+      val responseCharset: String = getResponseCharsetFromHeaders(headers).getOrElse(config.responseCharset.displayName)
+
+      val stringResponseBody: Option[String] = Option(response.getResponseBody(responseCharset))
 
       Response[String](response.getStatusCode, stringResponseBody, None, stringResponseBody, headers)
     }
@@ -285,6 +286,31 @@ case class Ning19Client(protocol: String,
     builder.setFollowRedirect(config.followRedirect)
     builder.setMaxRedirects(config.maxRedirects)
     builder.setStrict302Handling(config.strict302Handling)
+  }
+
+
+  private[ning] def getResponseCharsetFromHeaders(headers: Map[String, List[String]]): Option[String] = {
+
+    val contentTypeValuesOpt =
+      headers.map { keyValues =>
+        val (key, values) = keyValues
+        key.toLowerCase() -> values
+      } get "content-type"
+
+    for {
+      contentTypeValues <- contentTypeValuesOpt
+      contentTypeValueWithCharset <- contentTypeValues.find(_.toLowerCase().contains("charset"))
+      charsetPart <- contentTypeValueWithCharset.toLowerCase().split(";").toList.find(_.contains("charset"))
+      splitOnCharset = charsetPart.split("charset").toList
+      charsetString <- {
+        splitOnCharset match {
+          case _ :: value :: other =>
+            val cleanValue = value.trim.stripPrefix("=").trim
+            Try(Charset.forName(cleanValue)).toOption.map(_.name())
+          case _                   => None
+        }
+      }
+    } yield charsetString
   }
 
 

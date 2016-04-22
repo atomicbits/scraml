@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -348,7 +349,10 @@ public class Ning19Client implements Client {
 
     private io.atomicbits.scraml.jdsl.Response<String> transformToStringBody(com.ning.http.client.Response response) {
         try {
-            String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+            String responseBody =
+                    response.getResponseBody(
+                            getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
+                    );
             return new io.atomicbits.scraml.jdsl.Response<String>(
                     responseBody,
                     responseBody,
@@ -374,7 +378,10 @@ public class Ning19Client implements Client {
                         response.getHeaders()
                 );
             } else {
-                String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+                String responseBody =
+                        response.getResponseBody(
+                                getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
+                        );
                 return new io.atomicbits.scraml.jdsl.Response<BinaryData>(
                         responseBody,
                         null,
@@ -390,7 +397,10 @@ public class Ning19Client implements Client {
 
     private <R> io.atomicbits.scraml.jdsl.Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
         try {
-            String responseBody = response.getResponseBody(config.getResponseCharset().displayName());
+            String responseBody =
+                    response.getResponseBody(
+                            getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
+                    );
             if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
                 // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
                 // there are many responses in the 200 range with different typed responses.
@@ -463,6 +473,32 @@ public class Ning19Client implements Client {
         } catch (IOException e) {
             throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
         }
+    }
+
+
+    String getResponseCharsetFromHeaders(Map<String, List<String>> headers, String defaultCharset) {
+        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+            if ("content-type".equals(entry.getKey().toLowerCase())) {
+                for (String value : entry.getValue()) {
+                    String[] parts = value.toLowerCase().split(";");
+                    for (String part : parts) {
+                        if (part.contains("charset")) {
+                            String[] charsetSplit = value.toLowerCase().split("charset");
+                            if (charsetSplit.length > 1) {
+                                String charsetValue = charsetSplit[1];
+                                String cleanValue = charsetValue.replace('=', ' ').trim();
+                                try {
+                                    return Charset.forName(cleanValue).name();
+                                } catch (Throwable e) {
+                                    // ignore, we'll fallback to the default charset
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return defaultCharset;
     }
 
 }
