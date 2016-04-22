@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.jdsl;
 
+import io.atomicbits.scraml.jdsl.client.ClientConfig;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,6 +36,8 @@ public interface Client {
     // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
 
     <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalContentType, String canonicalResponseType);
+
+    ClientConfig getConfig();
 
     Map<String, String> getDefaultHeaders();
 

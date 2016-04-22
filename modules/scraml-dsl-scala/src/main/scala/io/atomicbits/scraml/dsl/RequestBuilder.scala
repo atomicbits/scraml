@@ -64,6 +64,10 @@ case class RequestBuilder(client: Client,
     this.copy(headers = this.headers ++ (additionalHeaders: _*))
   }
 
+  def withSetHeaders(additionalHeaders: (String, String)*): RequestBuilder = {
+    this.copy(headers = this.headers set (additionalHeaders: _*))
+  }
+
   def withAddedPathSegment(additionalPathSegment: Any): RequestBuilder = {
     this.copy(reversePath = additionalPathSegment.toString :: this.reversePath)
   }

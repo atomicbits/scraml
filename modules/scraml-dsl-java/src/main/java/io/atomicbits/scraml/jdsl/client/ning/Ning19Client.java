@@ -203,8 +203,8 @@ public class Ning19Client implements Client {
 
 
         HeaderMap requestHeaders = new HeaderMap();
-        requestHeaders.addHeaders(defaultHeaders);
-        requestHeaders.addHeaders(requestBuilder.getHeaders());
+        requestHeaders.setHeaders(defaultHeaders);
+        requestHeaders.setHeaders(requestBuilder.getHeaderMap());
         for (Map.Entry<String, List<String>> header : requestHeaders.getHeaders().entrySet()) {
             for (String value : header.getValue()) {
                 ningRb.addHeader(header.getKey(), value);

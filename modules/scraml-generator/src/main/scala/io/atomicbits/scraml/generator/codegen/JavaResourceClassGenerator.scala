@@ -157,6 +157,12 @@ object JavaResourceClassGenerator {
                return $classNameCamel;
              }
 
+             public $className setHeader(String key, String value) {
+               $className $classNameCamel = new $className(getRequestBuilder(), true);
+               $classNameCamel._requestBuilder.setHeader(key, value);
+               return $classNameCamel;
+             }
+
              ${dslFields.mkString("\n\n")}
 
              ${actionFunctions.mkString("\n\n")}

@@ -31,16 +31,26 @@ public class HeaderMap {
 
 
     public void addHeader(String key, String value) {
+        List<String> values = new ArrayList<>(1);
+        values.add(value);
+        addHeader(key, values);
+    }
 
-        if (key == null || value == null) {
+
+    public void addHeader(String key, List<String> values) {
+
+        if (key == null || values == null) {
             return;
         }
 
         String keyOriginal = key.trim();
         String keyLower = keyOriginal.toLowerCase(Locale.ENGLISH);
-        String valueOriginal = value.trim();
+        List<String> valuesOriginal = new ArrayList<>();
+        for (String value : values) {
+            if (value != null) valuesOriginal.add(value.trim());
+        }
 
-        if (keyOriginal.isEmpty() || valueOriginal.isEmpty()) {
+        if (keyOriginal.isEmpty() || valuesOriginal.isEmpty()) {
             return;
         }
 
@@ -50,7 +60,7 @@ public class HeaderMap {
             currentValues = new ArrayList<>();
             headers.put(keyLower, currentValues);
         }
-        currentValues.add(valueOriginal);
+        currentValues.addAll(valuesOriginal);
     }
 
 
@@ -66,6 +76,49 @@ public class HeaderMap {
             for (String value : header.getValue()) {
                 addHeader(header.getKey(), value);
             }
+        }
+    }
+
+
+    public void setHeader(String key, String value) {
+        List<String> values = new ArrayList<>();
+        values.add(value);
+        setHeader(key, values);
+    }
+
+
+    void setHeader(String key, List<String> values) {
+
+        if (key == null || values == null) {
+            return;
+        }
+
+        String keyOriginal = key.trim();
+        String keyLower = keyOriginal.toLowerCase(Locale.ENGLISH);
+        List<String> valuesOriginal = new ArrayList<>();
+        for (String value : values) {
+            if (value != null) valuesOriginal.add(value.trim());
+        }
+
+        if (keyOriginal.isEmpty() || valuesOriginal.isEmpty()) {
+            return;
+        }
+
+        originalKeys.put(keyLower, keyOriginal);
+        headers.put(keyLower, valuesOriginal);
+    }
+
+
+    public void setHeaders(Map<String, String> headers) {
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            setHeader(header.getKey(), header.getValue());
+        }
+    }
+
+
+    public void setHeaders(HeaderMap headerMap) {
+        for (Map.Entry<String, List<String>> header : headerMap.getHeaders().entrySet()) {
+            setHeader(header.getKey(), header.getValue());
         }
     }
 
