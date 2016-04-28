@@ -41,4 +41,5 @@ case class ClientConfig(requestTimeout: Int = 60 * 1000,
                         followRedirect: Boolean = false,
                         maxRedirects: Int = 5,
                         strict302Handling: Boolean = false,
-                        responseCharset: Charset = Charset.forName("UTF-8"))
+                        responseCharset: Charset = Charset.defaultCharset(),
+                        requestCharset: Charset = Charset.defaultCharset())

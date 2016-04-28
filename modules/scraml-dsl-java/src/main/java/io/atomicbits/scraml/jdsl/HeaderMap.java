@@ -31,26 +31,36 @@ public class HeaderMap {
 
 
     public void addHeader(String key, String value) {
+        List<String> values = new ArrayList<>(1);
+        values.add(value);
+        addHeader(key, values);
+    }
 
-        if (key == null || value == null) {
+
+    public void addHeader(String key, List<String> values) {
+
+        if (key == null || values == null) {
             return;
         }
 
         String keyOriginal = key.trim();
-        String keyLower = keyOriginal.toLowerCase(Locale.ENGLISH);
-        String valueOriginal = value.trim();
+        String keyNormalized = normalizeKey(key);
+        List<String> valuesOriginal = new ArrayList<>();
+        for (String value : values) {
+            if (value != null) valuesOriginal.add(value.trim());
+        }
 
-        if (keyOriginal.isEmpty() || valueOriginal.isEmpty()) {
+        if (keyOriginal.isEmpty() || valuesOriginal.isEmpty()) {
             return;
         }
 
-        originalKeys.put(keyLower, keyOriginal);
-        List<String> currentValues = headers.get(keyLower);
+        originalKeys.put(keyNormalized, keyOriginal);
+        List<String> currentValues = headers.get(keyNormalized);
         if (currentValues == null) {
             currentValues = new ArrayList<>();
-            headers.put(keyLower, currentValues);
+            headers.put(keyNormalized, currentValues);
         }
-        currentValues.add(valueOriginal);
+        currentValues.addAll(valuesOriginal);
     }
 
 
@@ -66,6 +76,49 @@ public class HeaderMap {
             for (String value : header.getValue()) {
                 addHeader(header.getKey(), value);
             }
+        }
+    }
+
+
+    public void setHeader(String key, String value) {
+        List<String> values = new ArrayList<>();
+        values.add(value);
+        setHeader(key, values);
+    }
+
+
+    void setHeader(String key, List<String> values) {
+
+        if (key == null || values == null) {
+            return;
+        }
+
+        String keyOriginal = key.trim();
+        String keyNormalized = normalizeKey(key);
+        List<String> valuesOriginal = new ArrayList<>();
+        for (String value : values) {
+            if (value != null) valuesOriginal.add(value.trim());
+        }
+
+        if (keyOriginal.isEmpty() || valuesOriginal.isEmpty()) {
+            return;
+        }
+
+        originalKeys.put(keyNormalized, keyOriginal);
+        headers.put(keyNormalized, valuesOriginal);
+    }
+
+
+    public void setHeaders(Map<String, String> headers) {
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            setHeader(header.getKey(), header.getValue());
+        }
+    }
+
+
+    public void setHeaders(HeaderMap headerMap) {
+        for (Map.Entry<String, List<String>> header : headerMap.getHeaders().entrySet()) {
+            setHeader(header.getKey(), header.getValue());
         }
     }
 
@@ -94,8 +147,21 @@ public class HeaderMap {
         if (key == null) {
             return false;
         }
-        String keyLower = key.toLowerCase(Locale.ENGLISH);
-        return originalKeys.get(keyLower) != null;
+        String keyNormalized = normalizeKey(key);
+        return originalKeys.get(keyNormalized) != null;
+    }
+
+    public List<String> getValues(String key) {
+        if (key == null) {
+            return new ArrayList<>();
+        }
+        String keyNormalized = normalizeKey(key);
+        List<String> values = headers.get(keyNormalized);
+        if (values != null) {
+            return values;
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     private <T> List<T> cloneList(List<T> list) {
@@ -120,5 +186,9 @@ public class HeaderMap {
         return cloneMap;
     }
 
+    private String normalizeKey(String key) {
+        String keyOriginal = key.trim();
+        return keyOriginal.toLowerCase(Locale.ENGLISH);
+    }
 
 }

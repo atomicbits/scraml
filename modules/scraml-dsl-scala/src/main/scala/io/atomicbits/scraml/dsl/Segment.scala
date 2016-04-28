@@ -82,12 +82,38 @@ abstract class MethodSegment[B, R](method: Method,
 
     val reqWithAccept =
       expectedAcceptHeader map { acceptHeader =>
-        reqUpdated.copy(headers = reqUpdated.headers + ("Accept" -> acceptHeader))
+        if (reqUpdated.headers.get("Accept").isEmpty)
+          reqUpdated.copy(headers = reqUpdated.headers + ("Accept" -> acceptHeader))
+        else reqUpdated
       } getOrElse reqUpdated
 
-    expectedContentTypeHeader map { contentHeader =>
-      reqWithAccept.copy(headers = reqWithAccept.headers + ("Content-Type" -> contentHeader))
-    } getOrElse reqWithAccept
+    val reqWithContentType =
+      expectedContentTypeHeader map { contentHeader =>
+        if (reqWithAccept.headers.get("Content-Type").isEmpty)
+          reqWithAccept.copy(headers = reqWithAccept.headers + ("Content-Type" -> contentHeader))
+        else reqWithAccept
+      } getOrElse reqWithAccept
+
+    /**
+      * add default request charset if necessary
+      *
+      * see https://www.w3.org/Protocols/rfc1341/4_Content-Type.html
+      * charset is case-insensitive:
+      * * http://stackoverflow.com/questions/7718476/are-http-headers-content-type-c-case-sensitive
+      * * https://www.w3.org/TR/html4/charset.html#h-5.2.1
+      */
+    val reqWithRequestCharset =
+      reqWithContentType.headers.get("Content-Type").map { headerValues =>
+        val hasCharset = !headerValues.exists(_.toLowerCase.contains("charset"))
+        val isBinary = headerValues.exists(_.toLowerCase.contains("octet-stream"))
+        if (hasCharset && !isBinary && headerValues.nonEmpty) {
+          val newFirstHeaderValue = s"${headerValues.head}; charset=${reqWithContentType.client.config.requestCharset.name}"
+          val updatedHeaders = reqWithContentType.headers setMany ("Content-Type", newFirstHeaderValue :: headerValues.tail)
+          reqWithContentType.copy(headers = updatedHeaders)
+        } else reqWithContentType
+      } getOrElse reqWithContentType
+
+    reqWithRequestCharset
   }
 
 }

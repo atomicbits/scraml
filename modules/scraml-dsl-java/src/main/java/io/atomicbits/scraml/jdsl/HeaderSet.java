@@ -17,25 +17,26 @@
  *
  */
 
-package io.atomicbits.scraml.dsl
+package io.atomicbits.scraml.jdsl;
 
-import play.api.libs.json.JsValue
+import java.util.List;
 
 /**
-  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
-  */
-case class Response[T](status: Int,
-                       stringBody: Option[String],
-                       jsonBody: Option[JsValue] = None,
-                       body: Option[T] = None,
-                       headers: Map[String, List[String]] = Map.empty) {
+ * Created by peter on 22/04/16.
+ */
+public class HeaderSet extends HeaderOp {
 
-  def map[S](f: T => S) = {
-    this.copy(body = body.map(f))
-  }
+    public HeaderSet(String key, String value) {
+        super(key, value);
+    }
 
-  def flatMap[S](f: T => Option[S]) = {
-    this.copy(body = body.flatMap(f))
-  }
+    public HeaderSet(String key, List<String> values) {
+        super(key, values);
+    }
+
+    @Override
+    public void process(HeaderMap headerMap) {
+        headerMap.setHeader(getKey(), getValues());
+    }
 
 }
