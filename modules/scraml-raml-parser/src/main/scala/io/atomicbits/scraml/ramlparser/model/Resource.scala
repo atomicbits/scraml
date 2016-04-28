@@ -19,6 +19,10 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import play.api.libs.json.JsValue
+
+import scala.util.Try
+
 /**
   * Created by peter on 10/02/16.
   */
@@ -27,3 +31,12 @@ case class Resource(urlSegment: String,
                     actions: List[Action] = List.empty,
                     resources: List[Resource] = List.empty,
                     parent: Option[Resource] = None)
+
+
+object Resource {
+
+  def apply(key: String, jsValue: JsValue): Try[Resource] = {
+    ???
+  }
+
+}

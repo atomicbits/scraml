@@ -48,6 +48,7 @@ object Raml {
   def apply(ramlJson: JsObject)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Raml] = {
 
     // Process the properties
+
     val title: Try[String] =
       (ramlJson \ "title").toOption.collect {
         case JsString(t) => Success(t)
@@ -96,14 +97,15 @@ object Raml {
       def toProtocolString(protocolString: JsValue): Try[String] = {
         protocolString match {
           case JsString(pString) => Success(pString)
-          case x                 => Failure(RamlParseException(s"One of the protocols is not a string value."))
+          case x                 =>
+            Failure(RamlParseException(s"One of the protocols in ${parseContext.sourceTrail} is not a string value."))
         }
       }
 
       (ramlJson \ "protocols").toOption.collect {
         case JsArray(pcols) => accumulate(pcols.map(toProtocolString)).map(Some(_))
         case x              =>
-          Failure(RamlParseException(s"The documentation field in ${parseContext.sourceTrail} must be a string value."))
+          Failure(RamlParseException(s"The protocols field in ${parseContext.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
 
@@ -150,7 +152,25 @@ object Raml {
 
 
 
-    val resources: Try[List[Resource]] = Success(List.empty)
+    /**
+      * According to the specs on https://github.com/raml-org/raml-spec/blob/raml-10/versions/raml-10/raml-10.md#scalar-type-specialization
+      *
+      * "The resources of the API, identified as relative URIs that begin with a slash (/). Every property whose key begins with a
+      * slash (/), and is either at the root of the API definition or is the child property of a resource property, is a resource
+      * property, e.g.: /users, /{groupId}, etc."
+      *
+      */
+    val resources: Try[List[Resource]] = {
+
+      val resourceFields: List[(String, JsValue)] =
+        ramlJson.fieldSet.collect {
+          case (field, jsValue) if field.startsWith("/") => Resource(field, jsValue)
+        } toList
+
+
+      Success(List.empty)
+    }
+
 
     //    val resourceTypes: Try[]
     //    val annotationTypes: Try[]
@@ -186,7 +206,7 @@ object Raml {
       traits,
       types,
       resources
-    ) (Raml(_, _, _, _, _, _, _, _, _, _))
+    )(Raml(_, _, _, _, _, _, _, _, _, _))
   }
 
 }

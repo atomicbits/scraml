@@ -20,8 +20,10 @@
 package io.atomicbits.scraml.ramlparser.parser
 
 
-import io.atomicbits.scraml.ramlparser.model.{RootId, Id, JsInclude, Raml}
+import io.atomicbits.scraml.ramlparser.model.{Id, JsInclude, Raml, RootId}
 import play.api.libs.json._
+
+import scala.util.Try
 
 
 /**
@@ -30,15 +32,18 @@ import play.api.libs.json._
 case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
 
 
-  def parse = {
+  def parse: Try[Raml] = {
     val (path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
-    val parsed =
+    val parsed: JsObject =
       ramlJson match {
         case ramlJsObj: JsObject => parseRamlJsonDocument(path, ramlJsObj)
         case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
       }
 
-    require(defaultPackage.length > 1, s"The default package should contain at least 2 fragments.")
+    require(
+      defaultPackage.length > 1,
+      s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
+    )
 
     val host = defaultPackage.take(2).reverse.mkString(".")
     val urlPath = defaultPackage.drop(2).mkString("/")
@@ -51,7 +56,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
 
   /**
     * Recursively parse all RAML documents by following all include statements and packing everything in one big JSON object.
-    * The source reference will be injected under the "_source" field so that we can trace the origin al all documents later on.
+    * The source references will be injected under the "_source" fields so that we can trace the origin of all documents later on.
     *
     * @param raml
     */
