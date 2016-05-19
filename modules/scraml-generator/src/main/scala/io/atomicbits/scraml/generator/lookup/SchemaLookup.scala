@@ -92,9 +92,9 @@ case class SchemaLookup(lookupTable: Map[RootId, Schema] = Map.empty,
           case itemsSchema               => ListClassReference.typed(schemaAsClassReference(arrEl.items))
         }
       case stringEl: StringEl         => StringClassReference()
-      case numberEl: NumberEl         => DoubleClassReference()
-      case integerEl: IntegerEl       => LongClassReference()
-      case booleanEl: BooleanEl       => BooleanClassReference()
+      case numberEl: NumberEl         => DoubleClassReference(numberEl.required)
+      case integerEl: IntegerEl       => LongClassReference(integerEl.required)
+      case booleanEl: BooleanEl       => BooleanClassReference(booleanEl.required)
       case schemaRef: SchemaReference =>
         schemaAsClassReference(
           lookupSchema(schemaRef.refersTo),
