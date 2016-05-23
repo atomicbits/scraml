@@ -144,6 +144,9 @@ object JavaActionCode extends ActionCode {
 
     val nameTermName = queryParameterName
     val typeTypeName = parameter.parameterType match {
+      case IntegerType if parameter.required => "long"
+      case NumberType  if parameter.required => "double"
+      case BooleanType if parameter.required => "boolean"
       case StringType  => "String"
       case IntegerType => "Long"
       case NumberType  => "Double"

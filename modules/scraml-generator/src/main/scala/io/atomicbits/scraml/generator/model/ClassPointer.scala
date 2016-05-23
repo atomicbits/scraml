@@ -209,19 +209,30 @@ object StringClassReference {
 
 case object BooleanClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
+  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
+    case Scala            => ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
+    case Java if required => ClassReference(name = "boolean", packageParts = List("java", "lang"), predef = true)
+    case Java             => ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
+  }
 
 }
 
 case object DoubleClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
-
+  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
+      case Scala            => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+      case Java if required => ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
+      case Java             => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+  }
 }
 
 case object LongClassReference {
 
-  def apply(): ClassReference = ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
+  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
+    case Scala            => ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
+    case Java if required => ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
+    case Java             => ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
+  }
 
 }
 
