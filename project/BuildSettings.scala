@@ -32,7 +32,7 @@ trait BuildSettings {
   val scala2_10 = "2.10.5"
   val scala2_11 = "2.11.8"
 
-  val ScalaVersion = scala2_10
+  val ScalaVersion = scala2_11
 
 
   val defaultCrossScalaVersions = Seq(scala2_10, scala2_11)
