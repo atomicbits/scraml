@@ -51,7 +51,8 @@ trait Dependencies { this:Build =>
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    scalariform
+    scalariform,
+    junit
   )
 
   val scramlGeneratorTestDefDeps = Seq (
