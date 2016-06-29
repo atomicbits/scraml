@@ -21,48 +21,67 @@ package io.atomicbits.scraml.generator
 
 import java.io.File
 
-import io.atomicbits.scraml.generator.codegen.{JavaResourceClassGenerator, PojoGenerator, ScalaResourceClassGenerator, CaseClassGenerator}
+import io.atomicbits.scraml.generator.codegen.{CaseClassGenerator, JavaResourceClassGenerator, PojoGenerator, ScalaResourceClassGenerator}
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
-import io.atomicbits.scraml.generator.lookup.{SchemaLookupParser, SchemaLookup}
+import io.atomicbits.scraml.generator.lookup.{SchemaLookup, SchemaLookupParser}
 import io.atomicbits.scraml.jsonschemaparser.model.Schema
 import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 import org.raml.parser.rule.ValidationResult
-
 import io.atomicbits.scraml.parser._
 import io.atomicbits.scraml.parser.model._
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps
-
 import java.util.{Map => JMap}
+
+import io.atomicbits.scraml.generator.license.{LicenseData, LicenseVerifier}
 
 import scala.util.Try
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences._
 
-
+/**
+  * The main Scraml generator class.
+  * This class is thread-safe and may be used by mutiple threads simultaneously.
+  */
 object ScramlGenerator {
 
 
-  def generateScalaCode(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] =
-    generateFor(Scala, ramlApiPath, apiPackageName, apiClassName)
+  def generateScalaCode(ramlApiPath: String,
+                        apiPackageName: String,
+                        apiClassName: String,
+                        licenseKey: Option[String],
+                        thirdPartyLicenseHeader: Option[String]): JMap[String, String] =
+    generateFor(Scala, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyLicenseHeader)
 
 
-  def generateJavaCode(ramlApiPath: String, apiPackageName: String, apiClassName: String): JMap[String, String] =
-    generateFor(Java, ramlApiPath, apiPackageName, apiClassName)
+  def generateJavaCode(ramlApiPath: String,
+                       apiPackageName: String,
+                       apiClassName: String,
+                       licenseKey: Option[String],
+                       thirdPartyLicenseHeader: Option[String]): JMap[String, String] =
+    generateFor(Java, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyLicenseHeader)
 
 
   private[generator] def generateFor(language: Language,
                                      ramlApiPath: String,
                                      apiPackageName: String,
-                                     apiClassName: String): JMap[String, String] = {
+                                     apiClassName: String,
+                                     licenseKey: Option[String],
+                                     thirdPartyLicenseHeader: Option[String]): JMap[String, String] = {
+
     println(s"Generating $language client.")
+
+    val licenseData: Option[LicenseData] = licenseKey.flatMap(LicenseVerifier.validateLicense)
+
+    val licenseHeader: String = deferLicenseHeader(licenseData, thirdPartyLicenseHeader)
+
     val tupleList =
       generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
         .collect { case clRep if clRep.content.isDefined => clRep }
-        .map(addLicenseAndFormat(_, language))
+        .map(addLicenseAndFormat(_, language, licenseHeader))
         .map(classRepToFilePathAndContent(_, language))
 
     mapAsJavaMap[String, String](tupleList.toMap)
@@ -134,8 +153,8 @@ object ScramlGenerator {
       .setPreference(IndentSpaces, 2)
 
 
-  private def addLicenseAndFormat(classRep: ClassRep, language: Language): ClassRep = {
-    val content = s"$classHeaderLicense\n${classRep.content.get}"
+  private def addLicenseAndFormat(classRep: ClassRep, language: Language, licenseHeader: String): ClassRep = {
+    val content = s"$licenseHeader\n${classRep.content.get}"
     val formattedContent = language match {
       case Scala => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
       case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
@@ -144,19 +163,16 @@ object ScramlGenerator {
   }
 
 
-  private val classHeaderLicense =
-
-    s""" | /**
-       |*  All rights reserved. This program and the accompanying materials
-       |*  are made available under the terms of the GNU Affero General Public License
-       |*  (AGPL) version 3.0 which accompanies this distribution, and is available in
-       |*  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
-       |*
-       |*  This library is distributed in the hope that it will be useful,
-       |*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-       |*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-       |*  Affero General Public License for more details.
-       |*/
+  private val agplClassHeader =
+    s"""|All rights reserved. This program and the accompanying materials
+        |are made available under the terms of the GNU Affero General Public License
+        |(AGPL) version 3.0 which accompanies this distribution, and is available in
+        |the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+        |
+        |This library is distributed in the hope that it will be useful,
+        |but WITHOUT ANY WARRANTY; without even the implied warranty of
+        |MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        |Affero General Public License for more details.
      """.stripMargin
 
 
@@ -177,6 +193,15 @@ object ScramlGenerator {
     val filePath = s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.$extension"
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
+  }
+
+
+  private def deferLicenseHeader(licenseKey: Option[LicenseData], thirdPartyLicenseHeader: Option[String]): String = {
+    val classHeader =
+      licenseKey.flatMap { licenseData =>
+        thirdPartyLicenseHeader
+      } getOrElse agplClassHeader
+    classHeader.split('\n').map(line => s" $line").mkString("/**\n * ", "\n *", "/")
   }
 
 }
