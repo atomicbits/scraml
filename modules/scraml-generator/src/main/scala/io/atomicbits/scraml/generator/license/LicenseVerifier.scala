@@ -55,11 +55,12 @@ object LicenseVerifier {
 
 
   def validateLicense(licenseKey: String): Option[LicenseData] = {
+    val cleanKey = cleanLicenseKey(licenseKey)
     // Make sure decodeAndRegister is only executed if the key is not yet contained in validatedLicenses!
     // Do not simply the expression below with validatedLicenses.getOrElse(licenseKey, decodeAndRegister(licenseKey)) !
-    validatedLicenses.get(licenseKey) match {
-      case Some(optionalLicenseData) => optionalLicenseData
-      case None                      => decodeVerifyAndRegister(licenseKey)
+    validatedLicenses.get(cleanKey) match {
+      case Some(optionalLicenseData) => optionalLicenseData.flatMap(checkExpiryDate)
+      case None                      => decodeVerifyAndRegister(cleanKey)
     }
   }
 
@@ -88,11 +89,11 @@ object LicenseVerifier {
               licenseId = licenseId,
               organization = org,
               licenseType = licenseType,
-              period = Try(purchaseDateString.toLong).getOrElse(0),
+              period = Try(periodString.toLong).getOrElse(0),
               purchaseDate =
                 Try(LocalDate.parse(purchaseDateString, DateTimeFormatter.ofPattern(datePattern))).getOrElse(LocalDate.ofYearDay(1950, 1))
             )
-          println(s"Scraml license $licenseId is licensed to the organization with group ID $org.")
+          println(s"Scraml license $licenseId is licensed to the owner of the package $org.")
           Some(licenseData)
         case x                                                                               =>
           println(s"Invalid license key. Falling back to default AGPL license.")
@@ -114,7 +115,7 @@ object LicenseVerifier {
       println(
         s"""
            |
-           |Warning: your scraml license key expired on ${expiryDate.format(DateTimeFormatter.RFC_1123_DATE_TIME)}.
+           |Warning: your scraml license key expired on ${expiryDate.format(DateTimeFormatter.ISO_DATE)}.
            |
            |We will now fall back to the default AGPL license!
            |
@@ -125,7 +126,7 @@ object LicenseVerifier {
       println(
         s"""
            |
-           |Warning: your scraml license key expires on ${expiryDate.format(DateTimeFormatter.RFC_1123_DATE_TIME)}.
+           |Warning: your scraml license key expires on ${expiryDate.format(DateTimeFormatter.ISO_DATE)}.
            |
            |""".stripMargin
       )
@@ -158,6 +159,11 @@ object LicenseVerifier {
     LicenseVerifier.synchronized {
       validatedLicenses += licenseKey -> licenseData
     }
+  }
+
+
+  private def cleanLicenseKey(licenseKey: String): String = {
+    licenseKey.split('\n').map(line => line.trim).mkString("\n")
   }
 
 
