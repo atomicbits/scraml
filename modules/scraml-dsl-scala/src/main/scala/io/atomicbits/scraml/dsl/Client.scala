@@ -27,7 +27,7 @@ import scala.concurrent.Future
 /**
   * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
   */
-trait Client {
+trait Client extends AutoCloseable {
 
   def config: ClientConfig
 

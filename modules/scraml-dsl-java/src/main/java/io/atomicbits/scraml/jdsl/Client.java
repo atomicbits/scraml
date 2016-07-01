@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by peter on 19/08/15.
  */
-public interface Client {
+public interface Client extends AutoCloseable {
 
     <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body, String canonicalContentType);
 

@@ -27,9 +27,15 @@ trait BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-  val Version = "0.4.14" // + snapshotSuffix
+  val Version = "0.4.15" // + snapshotSuffix
 
-  val ScalaVersion = "2.10.5"
+  val scala2_10 = "2.10.5"
+  val scala2_11 = "2.11.8"
+
+  val ScalaVersion = scala2_11
+
+
+  val defaultCrossScalaVersions = Seq(scala2_10, scala2_11)
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
@@ -38,7 +44,7 @@ trait BuildSettings {
     version := Version,
     isSnapshot := Version.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
-    crossScalaVersions := Seq("2.10.5", "2.11.7"),
+    crossScalaVersions := defaultCrossScalaVersions,
     scalacOptions := scalacBuildOptions,
     parallelExecution := false,
     // Sonatype snapshot resolver is needed to fetch rxhttpclient-scala_2.11:0.2.0-SNAPSHOT.
