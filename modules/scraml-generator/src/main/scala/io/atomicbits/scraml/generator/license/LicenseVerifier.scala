@@ -82,18 +82,18 @@ object LicenseVerifier {
     }
     if (verifySignature(unsignedKey, signature)) {
       unsignedKey.split(';').toList match {
-        case List(licenseType, customerId, licenseId, org, purchaseDateString, periodString) =>
+        case List(licenseType, customerId, licenseId, owner, purchaseDateString, periodString) =>
           val licenseData =
             LicenseData(
               customerId = customerId,
               licenseId = licenseId,
-              organization = org,
+              owner = owner,
               licenseType = licenseType,
               period = Try(periodString.toLong).getOrElse(0),
               purchaseDate =
                 Try(LocalDate.parse(purchaseDateString, DateTimeFormatter.ofPattern(datePattern))).getOrElse(LocalDate.ofYearDay(1950, 1))
             )
-          println(s"Scraml license $licenseId is licensed to the owner of the package $org.")
+          println(s"Scraml license $licenseId is licensed to $owner.")
           Some(licenseData)
         case x                                                                               =>
           println(s"Invalid license key. Falling back to default AGPL license.")
