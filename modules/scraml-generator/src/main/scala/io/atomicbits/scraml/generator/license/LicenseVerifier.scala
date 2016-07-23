@@ -110,7 +110,7 @@ object LicenseVerifier {
     val today = LocalDate.now()
     val expiryDate = licenseKey.purchaseDate.plusDays(licenseKey.period)
     val warningDate = licenseKey.purchaseDate.plusDays(licenseKey.period - 31)
-    
+
     if (licenseKey.period < 0) {
       // Key with unlimited period.
       Some(licenseKey)
