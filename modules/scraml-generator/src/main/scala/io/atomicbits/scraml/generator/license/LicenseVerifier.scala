@@ -95,7 +95,7 @@ object LicenseVerifier {
             )
           println(s"Scraml license $licenseId is licensed to $owner.")
           Some(licenseData)
-        case x                                                                               =>
+        case x                                                                                 =>
           println(s"Invalid license key. Falling back to default AGPL license.")
           None
       }
@@ -110,8 +110,11 @@ object LicenseVerifier {
     val today = LocalDate.now()
     val expiryDate = licenseKey.purchaseDate.plusDays(licenseKey.period)
     val warningDate = licenseKey.purchaseDate.plusDays(licenseKey.period - 31)
-
-    if (today.isAfter(expiryDate)) {
+    
+    if (licenseKey.period < 0) {
+      // Key with unlimited period.
+      Some(licenseKey)
+    } else if (today.isAfter(expiryDate)) {
       println(
         s"""
            |
