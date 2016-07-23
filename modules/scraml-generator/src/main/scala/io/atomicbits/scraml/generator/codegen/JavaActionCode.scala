@@ -22,6 +22,7 @@ package io.atomicbits.scraml.generator.codegen
 import java.util.Locale
 
 import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.parser.model._
 
 /**
@@ -142,7 +143,7 @@ object JavaActionCode extends ActionCode {
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
-    val nameTermName = queryParameterName
+    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     val typeTypeName = parameter.parameterType match {
       case IntegerType if parameter.required => "long"
       case NumberType  if parameter.required => "double"
@@ -156,18 +157,19 @@ object JavaActionCode extends ActionCode {
     }
 
     if (parameter.repeated) {
-      s"List<$typeTypeName> $nameTermName"
+      s"List<$typeTypeName> $sanitizedParameterName"
     } else {
-      s"$typeTypeName $nameTermName"
+      s"$typeTypeName $sanitizedParameterName"
     }
   }
 
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
+    val sanitizedQueryParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     parameter match {
-      case Parameter(_, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($queryParameterName));"""
-      case Parameter(_, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($queryParameterName));"""
+      case Parameter(_, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
+      case Parameter(_, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
     }
   }
 

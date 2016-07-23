@@ -27,6 +27,6 @@ import java.time.LocalDate
 case class LicenseData(customerId: String,
                        licenseId: String,
                        licenseType: String,
-                       organization: String,
+                       owner: String,
                        period: Long,
                        purchaseDate: LocalDate)
