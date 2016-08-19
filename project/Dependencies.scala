@@ -37,6 +37,7 @@ trait Dependencies { this:Build =>
   val asyncClient         =   "com.ning"                    %     "async-http-client"   % "1.9.36"
   val asyncClientProvided =   "com.ning"                    %     "async-http-client"   % "1.9.36"   % "provided"
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
+  val play25Json          =   "com.typesafe.play"           %%    "play-json"           % "2.5.3"
 
   val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
 
@@ -45,7 +46,7 @@ trait Dependencies { this:Build =>
   val slf4j               =   "org.slf4j"                   %    "slf4j-api"            % "1.7.12"
 
   // test dependencies
-  val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.4"    % "test"
+  val scalaTest           =   "org.scalatest"               %%    "scalatest"           % "2.2.6"    % "test"
   val wiremock            =   "com.github.tomakehurst"      %     "wiremock"            % "1.57"     % "test"
   val junit               =   "junit"                       %     "junit"               % "4.12"     % "test"
   val asyncClientTest     =   "com.ning"                    %     "async-http-client"   % "1.9.36"   % "test"
@@ -60,14 +61,12 @@ trait Dependencies { this:Build =>
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq (
-    asyncClient,
-    playJson,
-    wiremock,
-    junit,
-    scalariform
+    scalariform,
+    junit
   )
 
   val scramlGeneratorTestDefDeps = Seq (
+    junit,
     asyncClient,
     playJson,
     wiremock
@@ -86,8 +85,12 @@ trait Dependencies { this:Build =>
     slf4j,
     playJson,
     asyncClientProvided
-//    ,
-//    asyncClient
+  )
+
+  val scramlDslPlay25DepsScala = Seq(
+    slf4j,
+    play25Json,
+    asyncClientProvided
   )
 
   val scramlDslDepsJava = Seq(

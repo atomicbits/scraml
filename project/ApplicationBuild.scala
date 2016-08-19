@@ -18,7 +18,7 @@
 
 import sbt.Keys._
 import sbt._
-
+import sbtdoge.CrossPerProjectPlugin
 
 object ApplicationBuild extends Build
 with BuildSettings
@@ -41,6 +41,20 @@ with Dependencies {
     base = file("modules/scraml-dsl-scala"),
     settings = buildSettings(dependencies = scramlDslDepsScala ++ testDeps)
   )
+
+  // builds the dsl but against play25
+  val scramlDslPlay25Scala = {
+    //if I choose just the module dir, the test sources get build in the main compile too :/
+    val sourceDir = (baseDirectory in ThisBuild)( b => Seq( b / "modules/scraml-dsl-scala" / "src" /  "main" / "scala"))
+
+    Project(
+      id = "scraml-dsl-play25-scala",
+      base = file("modules/scraml-dsl-play25-scala"),
+      settings = buildSettings(dependencies = scramlDslPlay25DepsScala ++ testDeps)
+    ).settings( unmanagedSourceDirectories in Compile <<= sourceDir )
+      // play25 is enkel scala 2.11
+     .settings(crossScalaVersions := Seq(scala2_11))
+  }
 
   val scramlDslJava = Project(
     id = "scraml-dsl-java",
@@ -84,9 +98,12 @@ with Dependencies {
     id = "scraml-project",
     base = file("."),
     settings = buildSettings(dependencies = allDeps)
-  ) settings(
+  ).enablePlugins(CrossPerProjectPlugin)
+   .settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlRamlParser, scramlJsonSchemaParser, scramlDslScala, scramlDslJava, scramlGenSimulation, scramlGenerator)
+    ) aggregate(scramlParser, scramlRamlParser, scramlJsonSchemaParser,
+    scramlDslScala, scramlDslPlay25Scala, scramlDslJava, scramlGenSimulation, scramlGenerator
+    )
 
 }
