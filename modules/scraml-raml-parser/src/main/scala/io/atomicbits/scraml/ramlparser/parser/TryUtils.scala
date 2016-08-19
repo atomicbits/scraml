@@ -72,7 +72,10 @@ object TryUtils {
     }
   }
 
-
+  
+  /**
+    * withSuccess collects all failure cases in an applicative way according to the 'addExceptions' specs.
+    */
   def withSuccess[A, RES](a: Try[A])(fn: A => RES): Try[RES] = {
     a.map(fn)
   }

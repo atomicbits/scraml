@@ -40,6 +40,10 @@ object Types {
 
   def apply(typesJson: JsValue)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Types] = {
 
+    // todo: check if we have to unapply the Sourced inclusion like this, or can we just use
+    //  implicit val newParseContext = parseContext.updateFrom(typesJson)
+    // here?
+
     def doApply(tpsJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
       tpsJson match {
         case Sourced(included, source) => doApply(included)(parseContext.addSource(source))

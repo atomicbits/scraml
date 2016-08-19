@@ -19,7 +19,52 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import play.api.libs.json.{JsObject, JsValue}
+
+import scala.util.{Failure, Try}
+
 /**
   * Created by peter on 10/02/16.
   */
-case class Parameter(parameterType: ParameterType, required: Boolean, repeated: Boolean = false)
+case class Parameter(parameterType: ParameterType, repeated: Boolean = false)
+
+
+case object Parameter {
+
+  def apply(jsValue: JsValue)(implicit parseContext: ParseContext): Try[Parameter] = {
+
+
+    def jsObjectToParameter(jsObject: JsObject): Try[Parameter] = {
+
+      jsObject match {
+        case StringType(stringType)                   => Try(Parameter(stringType))
+        case NumberType(numberType)                   => Try(Parameter(numberType))
+        case IntegerType(integerType)                 => Try(Parameter(integerType))
+        case BooleanType(booleanType)                 => Try(Parameter(booleanType))
+        case DateOnlyType(dateOnlyType)               => Try(Parameter(dateOnlyType))
+        case TimeOnlyType(timeOnlyType)               => Try(Parameter(timeOnlyType))
+        case DateTimeOnlyType(dateTimeOnlyType)       => Try(Parameter(dateTimeOnlyType))
+        case DateTimeDefaultType(dateTimeDefaultType) => Try(Parameter(dateTimeDefaultType))
+        case DateTimeRFC2616Type(dateTimeRfc2616Type) => Try(Parameter(dateTimeRfc2616Type))
+        case ArrayType(arrayType)                     => Try(Parameter(parameterType = arrayType.items, repeated = true))
+        case _                                        =>
+          Failure(RamlParseException(s"Unable to parse parameter ${jsObject.toString()} in ${parseContext.head}."))
+      }
+
+    }
+
+    jsValue match {
+      case jsObj: JsObject => jsObjectToParameter(jsObj)
+      case _               => Try(Parameter(parameterType = StringType()))
+    }
+
+  }
+
+
+  def asUriParameter(jsValue: JsValue): Try[Parameter] = {
+    // URI parameters are always required!
+    Parameter(jsValue).map(param => param.copy(parameterType = param.parameterType.asRequired))
+  }
+
+}

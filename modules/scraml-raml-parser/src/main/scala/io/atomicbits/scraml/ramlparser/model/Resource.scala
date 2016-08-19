@@ -19,9 +19,13 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json.JsValue
+import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
+import play.api.libs.json.{JsArray, JsObject}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
+
+import io.atomicbits.scraml.ramlparser.parser.TryUtils._
+
 
 /**
   * Created by peter on 10/02/16.
@@ -35,8 +39,29 @@ case class Resource(urlSegment: String,
 
 object Resource {
 
-  def apply(key: String, jsValue: JsValue): Try[Resource] = {
-    ???
+  def apply(resourceUrl: String, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Resource] = {
+
+    implicit val newParseContext = parseContext.updateFrom(jsObject)
+
+
+    def uriParamObjToParamMap(uriParamObj: JsObject): Try[Map[String, Parameter]] = {
+      val paramMap =
+        uriParamObj.value.toMap.collect {
+          case (paramName, paramProperties: JsObject) => paramName -> Parameter.asUriParameter(paramProperties)
+          case (paramName, paramProperties)           => paramName -> Try(Parameter(parameterType = StringType().asRequired))
+        }
+      accumulate(paramMap)
+    }
+
+    val uriParameterMap: Try[Map[String, Parameter]] =
+      (jsObject \ "uriParameters").toOption.collect {
+        case uriParamObj: JsObject => uriParamObjToParamMap(uriParamObj)
+        case uriParamArr: JsArray  => uriParamObjToParamMap(KeyedList.toJsObject(uriParamArr))
+        case x                     => Failure(RamlParseException(s"Empty uriParameters field given in ${parseContext.head}."))
+      } getOrElse Success(Map.empty[String, Parameter])
+
+    
+
   }
 
 }

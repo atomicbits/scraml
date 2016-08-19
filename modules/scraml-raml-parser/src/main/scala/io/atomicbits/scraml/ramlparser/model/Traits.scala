@@ -38,12 +38,16 @@ object Traits {
 
   def apply(traitsJson: JsValue)(implicit parseContext: ParseContext): Try[Traits] = {
 
+    implicit val newParseContext = parseContext.updateFrom(traitsJson)
+
     def doApply(trsJson: JsValue): Try[Traits] = {
       trsJson match {
         case traitsJsObj: JsObject => Success(Traits(traitsJsObjToTraitMap(traitsJsObj)))
         case traitsJsArr: JsArray  => Success(Traits(traitsJsObjToTraitMap(KeyedList.toJsObject(traitsJsArr))))
         case x                     =>
-          Failure(RamlParseException(s"The traits definition in ${parseContext.head} is malformed."))
+          Failure(
+            RamlParseException(s"The traits definition in ${parseContext.head} is malformed.")
+          )
       }
     }
 

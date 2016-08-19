@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 /**
   * Created by peter on 26/02/16.
@@ -33,9 +33,14 @@ object Sourced {
     */
   def unapply(json: JsValue): Option[(JsValue, String)] = {
 
-    (json \ sourcefield).toOption.collect {
-      case JsString(includeFile) => (json, includeFile)
+    json match {
+      case jsObj: JsObject =>
+        (jsObj \ sourcefield).toOption.collect {
+          case JsString(includeFile) => (jsObj - sourcefield, includeFile)
+        }
+      case _               => None
     }
+
   }
 
 }

@@ -130,4 +130,4 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
  */
 case object ImplicitId extends Id
 
-case class NameId extends Id
+case class NameId() extends Id
