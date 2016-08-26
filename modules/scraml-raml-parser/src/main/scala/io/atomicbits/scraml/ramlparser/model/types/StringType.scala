@@ -24,11 +24,18 @@ import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 import scala.util.{Success, Try}
 
+import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+
 
 /**
   * Created by peter on 1/04/16.
   */
-case class StringType(id: Id = ImplicitId, format: Option[String] = None, required: Option[Boolean] = None)
+case class StringType(id: Id = ImplicitId,
+                      format: Option[String] = None,
+                      pattern: Option[String] = None,
+                      minLength: Option[Int] = None,
+                      maxLength: Option[Int] = None,
+                      required: Option[Boolean] = None)
   extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
@@ -41,17 +48,22 @@ object StringType {
   val value = "string"
 
 
-  def apply(schema: JsValue): Try[StringType] = {
+  def apply(json: JsValue): Try[StringType] = {
 
-    val id = schema match {
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val format = (schema \ "format").asOpt[String]
-
-    val required = (schema \ "required").asOpt[Boolean]
-
-    Success(StringType(id, format, required))
+    Success(
+      StringType(
+        id = id,
+        format = json.fieldStringValue("pattern"),
+        pattern = json.fieldStringValue("format"),
+        minLength = json.fieldIntValue("minLength"),
+        maxLength = json.fieldIntValue("maxLength"),
+        required = json.fieldBooleanValue("required")
+      )
+    )
   }
 
 

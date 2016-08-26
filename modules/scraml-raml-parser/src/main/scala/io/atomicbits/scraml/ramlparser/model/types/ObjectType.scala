@@ -70,7 +70,7 @@ object ObjectType {
       case props: JsObject =>
         val propertyTryMap =
           props.value collect {
-            case (fieldName, fragment: JsObject) => (fieldName, Type(fragment))
+            case (fieldName, Type(fieldType)) => (fieldName, fieldType)
           }
         TryUtils.accumulate(propertyTryMap.toMap)
     } getOrElse Success(Map.empty[String, Type])
@@ -116,8 +116,8 @@ object ObjectType {
       (schema \ "anyOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
-            case jsObj: JsObject => jsObj
-          } map (Type(_))
+            case Type(theType) => theType
+          }
           TryUtils.accumulate(selectionSchemas.toList).map(selections => AnyOf(selections.toList))
       }
 
@@ -125,8 +125,8 @@ object ObjectType {
       (schema \ "allOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
-            case jsObj: JsObject => jsObj
-          } map (Type(_))
+            case Type(theType) => theType
+          }
           TryUtils.accumulate(selectionSchemas.toList).map(selections => AllOf(selections.toList))
       }
 
@@ -188,14 +188,19 @@ object ObjectType {
       }
     }
 
-    Type(schema).flatMap {
-      case objectType: ObjectType => Success(objectType)
-      case frag: Fragment         =>
-        typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
-          Type(schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)))
-        } getOrElse Success(frag)
-      case x                      => Success(x)
+    schema match {
+      case ObjectType(objectType) => objectType
+      case Fragment(fragment)     =>
+        fragment.flatMap { frag =>
+          typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
+            schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)) match {
+              case Type(x) => x
+            }
+          } getOrElse Success(frag)
+        }
+      case Type(x)                => x
     }
+
   }
 
 }

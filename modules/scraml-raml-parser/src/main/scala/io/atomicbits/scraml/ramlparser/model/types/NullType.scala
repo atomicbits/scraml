@@ -24,6 +24,9 @@ import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
+import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+
+
 /**
   * Created by peter on 1/04/16.
   */
@@ -39,15 +42,18 @@ object NullType {
   val value = "null"
 
 
-  def apply(schema: JsValue): Try[NullType] = {
+  def apply(json: JsValue): Try[NullType] = {
 
-    val id = schema match {
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val required = (schema \ "required").asOpt[Boolean]
-
-    Success(new NullType(id, required))
+    Success(
+      NullType(
+        id = id,
+        required = json.fieldBooleanValue("required")
+      )
+    )
   }
 
 

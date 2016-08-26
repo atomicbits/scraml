@@ -24,11 +24,18 @@ import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
+import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+
 
 /**
   * Created by peter on 1/04/16.
   */
-case class IntegerType(id: Id = ImplicitId, required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
+case class IntegerType(id: Id = ImplicitId,
+                       format: Option[String] = None,
+                       minimum: Option[Int] = None,
+                       maximum: Option[Int] = None,
+                       multipleOf: Option[Int] = None,
+                       required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
 
@@ -39,15 +46,23 @@ object IntegerType {
 
   val value = "integer"
 
-  def apply(schema: JsValue): Try[IntegerType] = {
 
-    val id = schema match {
+  def apply(json: JsValue): Try[IntegerType] = {
+
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val required = (schema \ "required").asOpt[Boolean]
-
-    Success(new IntegerType(id, required))
+    Success(
+      IntegerType(
+        id = id,
+        format = json.fieldStringValue("format"),
+        minimum = json.fieldIntValue("minimum"),
+        maximum = json.fieldIntValue("maximum"),
+        multipleOf = json.fieldIntValue("multipleOf"),
+        required = json.fieldBooleanValue("required")
+      )
+    )
   }
 
 
