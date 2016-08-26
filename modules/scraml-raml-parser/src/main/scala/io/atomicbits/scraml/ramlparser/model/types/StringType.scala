@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 import scala.util.{Success, Try}
 
+
 /**
   * Created by peter on 1/04/16.
   */
@@ -38,6 +39,7 @@ case class StringType(id: Id = ImplicitId, format: Option[String] = None, requir
 object StringType {
 
   val value = "string"
+
 
   def apply(schema: JsValue): Try[StringType] = {
 
@@ -55,9 +57,10 @@ object StringType {
 
   def unapply(json: JsValue): Option[Try[StringType]] = {
 
-    (Type.typeDeclaration(json), (json \ EnumType.value).toOption) match {
-      case (Some(JsString(StringType.value)), None) => Some(StringType(json))
-      case _                                        => None
+    (Type.typeDeclaration(json), (json \ EnumType.value).toOption, json) match {
+      case (Some(JsString(StringType.value)), None, _) => Some(StringType(json))
+      case (_, _, JsString(StringType.value))          => Some(Success(new StringType()))
+      case _                                           => None
     }
 
   }

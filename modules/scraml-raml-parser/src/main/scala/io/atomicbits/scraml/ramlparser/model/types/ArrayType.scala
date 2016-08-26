@@ -108,12 +108,10 @@ object ArrayType {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ArrayType]] = {
 
-    json match {
-      case JsString(arrayTypeExpression) if arrayTypeExpression.endsWith("[]") => Some(ArrayType(arrayTypeExpression))
-      case _                                                                   =>
-        Type.typeDeclaration(json).collect {
-          case JsString(ArrayType.value) => ArrayType(json)
-        }
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(ArrayType.value)), _)                                     => Some(ArrayType(json))
+      case (_, JsString(arrayTypeExpression)) if arrayTypeExpression.endsWith("[]") => Some(ArrayType(arrayTypeExpression))
+      case _                                                                        => None
     }
 
   }

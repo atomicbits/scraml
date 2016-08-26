@@ -53,9 +53,10 @@ object NullType {
 
   def unapply(json: JsValue): Option[Try[NullType]] = {
 
-    Type.typeDeclaration(json) match {
-      case Some(JsString(NullType.value)) => Some(NullType(json))
-      case _                              => None
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(NullType.value)), _) => Some(NullType(json))
+      case (_, JsString(NullType.value))       => Some(Success(new NullType()))
+      case _                                   => None
     }
 
   }

@@ -52,9 +52,10 @@ object BooleanType {
 
   def unapply(json: JsValue): Option[Try[BooleanType]] = {
 
-    Type.typeDeclaration(json) match {
-      case Some(JsString(BooleanType.value)) => Some(BooleanType(json))
-      case _                                 => None
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(BooleanType.value)), _) => Some(BooleanType(json))
+      case (_, JsString(BooleanType.value))       => Some(Success(new BooleanType()))
+      case _                                      => None
     }
 
   }

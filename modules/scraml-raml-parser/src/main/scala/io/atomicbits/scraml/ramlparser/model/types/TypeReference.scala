@@ -80,13 +80,18 @@ object TypeReference {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[TypeReference]] = {
 
-    (Type.typeDeclaration(json), (json \ TypeReference.value).toOption) match {
-      case (None, Some(_))                   => Some(TypeReference(json))
-      case (Some(JsString(otherType)), None) =>
-        Type(otherType) match {
-          case typeRef: Try[TypeReference] => Some(typeRef)
-        }
-      case _                                 => None
+    def checkOtherType(theOtherType: String): Option[Try[TypeReference]] = {
+      Type(theOtherType) match {
+        case typeRef: Try[TypeReference] => Some(typeRef)
+        case _                           => None
+      }
+    }
+
+    (Type.typeDeclaration(json), (json \ TypeReference.value).toOption, json) match {
+      case (None, Some(_), _)                   => Some(TypeReference(json))
+      case (Some(JsString(otherType)), None, _) => checkOtherType(otherType)
+      case (_, _, JsString(otherType))          => checkOtherType(otherType)
+      case _                                    => None
     }
 
   }

@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
+
 /**
   * Created by peter on 1/04/16.
   */
@@ -52,9 +53,10 @@ object NumberType {
 
   def unapply(json: JsValue): Option[Try[NumberType]] = {
 
-    Type.typeDeclaration(json) match {
-      case Some(JsString(NumberType.value)) => Some(NumberType(json))
-      case _                                => None
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(NumberType.value)), _) => Some(NumberType(json))
+      case (_, JsString(NumberType.value))       => Some(Success(new NumberType()))
+      case _                                     => None
     }
 
   }

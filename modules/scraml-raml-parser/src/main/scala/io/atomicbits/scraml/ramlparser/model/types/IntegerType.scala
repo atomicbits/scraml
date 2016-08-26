@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
+
 /**
   * Created by peter on 1/04/16.
   */
@@ -52,9 +53,10 @@ object IntegerType {
 
   def unapply(json: JsValue): Option[Try[IntegerType]] = {
 
-    Type.typeDeclaration(json) match {
-      case Some(JsString(IntegerType.value)) => Some(IntegerType(json))
-      case _                                 => None
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(IntegerType.value)), _) => Some(IntegerType(json))
+      case (_, JsString(IntegerType.value))       => Some(Success(new IntegerType()))
+      case _                                      => None
     }
 
   }
