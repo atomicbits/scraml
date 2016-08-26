@@ -19,18 +19,19 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
-import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, TryUtils}
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException, TryUtils}
+import play.api.libs.json.{JsObject, JsString, JsValue}
+import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 25/03/16.
   */
-case class ArrayType(id: Id,
-                     items: Type,
-                     required: Boolean = false,
+case class ArrayType(items: Type,
+                     id: Id = ImplicitId,
+                     required: Option[Boolean] = None,
                      minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
@@ -38,12 +39,33 @@ case class ArrayType(id: Id,
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
 
+  def asRequired = copy(required = Some(true))
+
 }
 
 
 object ArrayType {
 
-  def apply(schema: JsObject)(implicit nameToId: String => Id): Try[ArrayType] = {
+  val value = "array"
+
+
+  def apply(arrayExpression: String)(implicit parseContext: ParseContext): Try[ArrayType] = {
+
+    if (arrayExpression.endsWith("[]")) {
+      val typeName = arrayExpression.stripSuffix("[]")
+      Type(typeName).map(ArrayType(_))
+    } else {
+      Failure(
+        RamlParseException(
+          s"Expression $arrayExpression in ${parseContext.head} is not an array expression, it should end with '[]'."
+        )
+      )
+    }
+
+  }
+
+
+  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[ArrayType] = {
 
     // Process the id
     val id = schema match {
@@ -52,27 +74,48 @@ object ArrayType {
 
     // Process the items type
     val items =
-      schema \ "items" toOption match {
-        case Some(obj: JsObject) => Type(obj)
-        case Some(_)             => StringType() // RAML 1.0 default type is a String.
-        case None                =>
-          Failure[Type](RamlParseException(s"An array type must have an 'items' field that refers to a JsObject in $schema"))
-      }
+    (schema \ "items").toOption.collect {
+      case Type(someType) => someType
+    } getOrElse
+      Failure(
+        RamlParseException(
+          s"An array definition in ${parseContext.head} has either no 'items' field or an 'items' field with an invalid type declaration."
+        )
+      )
 
     // Process the required field
-    val required = (schema \ "required").asOpt[Boolean]
+    val required = schema.fieldBooleanValue("required")
 
     val fragments = TryUtils.accumulate(Type.collectFragments(schema))
 
     TryUtils.withSuccess(
-      Success(id),
       items,
-      Success(required.getOrElse(false)),
+      Success(id),
+      Success(required),
       Success(None),
       Success(None),
       Success(false),
       fragments
     )(ArrayType(_, _, _, _, _, _, _))
+  }
+
+
+  def unapply(arrayTypeExpression: String)(implicit parseContext: ParseContext): Option[Try[ArrayType]] = {
+    if (arrayTypeExpression.endsWith("[]")) Some(ArrayType(arrayTypeExpression))
+    else None
+  }
+
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ArrayType]] = {
+
+    json match {
+      case JsString(arrayTypeExpression) if arrayTypeExpression.endsWith("[]") => Some(ArrayType(arrayTypeExpression))
+      case _                                                                   =>
+        Type.typeDeclaration(json).collect {
+          case JsString(ArrayType.value) => ArrayType(json)
+        }
+    }
+
   }
 
 }

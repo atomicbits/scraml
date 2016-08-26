@@ -19,18 +19,18 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{RefExtractor, IdExtractor, Id}
-import io.atomicbits.scraml.ramlparser.parser.TryUtils
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId, RefExtractor}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
 /**
   * Created by peter on 1/04/16.
   */
-case class TypeReference(id: Id,
-                         refersTo: Id,
-                         required: Boolean = false,
+case class TypeReference(refersTo: Id,
+                         id: Id = ImplicitId,
+                         required: Option[Boolean] = None,
                          genericTypes: Map[String, Type] = Map.empty,
                          fragments: Map[String, Type] = Map.empty) extends PrimitiveType with AllowedAsObjectField {
 
@@ -41,7 +41,10 @@ case class TypeReference(id: Id,
 
 object TypeReference {
 
-  def apply(schema: JsObject)(implicit nameToIdOpt: String => Id): Try[TypeReference] = {
+  val value = "$ref"
+
+
+  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[TypeReference] = {
 
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
@@ -66,12 +69,26 @@ object TypeReference {
     val fragments = TryUtils.accumulate(Type.collectFragments(schema))
 
     TryUtils.withSuccess(
-      Success(id),
       Success(ref),
-      Success(required.getOrElse(false)),
+      Success(id),
+      Success(required),
       genericTypes,
       fragments
     )(new TypeReference(_, _, _, _, _))
+  }
+
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[TypeReference]] = {
+
+    (Type.typeDeclaration(json), (json \ TypeReference.value).toOption) match {
+      case (None, Some(_))                   => Some(TypeReference(json))
+      case (Some(JsString(otherType)), None) =>
+        Type(otherType) match {
+          case typeRef: Try[TypeReference] => Some(typeRef)
+        }
+      case _                                 => None
+    }
+
   }
 
 }

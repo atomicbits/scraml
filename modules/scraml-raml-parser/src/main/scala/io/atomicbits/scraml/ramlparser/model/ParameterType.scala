@@ -19,8 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json.{JsString, JsValue}
-
+import play.api.libs.json.{JsNull, JsString, JsValue}
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 /**
@@ -61,7 +60,7 @@ object ParameterType {
 case class StringType(pattern: Option[String] = None,
                       minLength: Option[Int] = None,
                       maxLength: Option[Int] = None,
-                      required: Boolean = false) extends ParameterType {
+                      required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -72,14 +71,18 @@ case object StringType {
   val value = "string"
 
   def unapply(json: JsValue): Option[StringType] = {
-    (json \ "type").toOption.collect {
-      case JsString(StringType.value) =>
-        StringType(
-          pattern = json.fieldStringValue("pattern"),
-          minLength = json.fieldIntValue("minLength"),
-          maxLength = json.fieldIntValue("maxLength"),
-          required = json.fieldBooleanValue("required").getOrElse(false)
-        )
+    json match {
+      case JsNull => Some(StringType())
+      case _      =>
+        (json \ "type").toOption.collect {
+          case JsString(StringType.value) =>
+            StringType(
+              pattern = json.fieldStringValue("pattern"),
+              minLength = json.fieldIntValue("minLength"),
+              maxLength = json.fieldIntValue("maxLength"),
+              required = json.fieldBooleanValue("required").getOrElse(false)
+            )
+        }
     }
   }
 
@@ -90,7 +93,7 @@ case class NumberType(format: Option[String] = None,
                       minimum: Option[Int] = None,
                       maximum: Option[Int] = None,
                       multipleOf: Option[Int] = None,
-                      required: Boolean = false) extends ParameterType {
+                      required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -120,7 +123,7 @@ case class IntegerType(format: Option[String] = None,
                        minimum: Option[Int] = None,
                        maximum: Option[Int] = None,
                        multipleOf: Option[Int] = None,
-                       required: Boolean = false) extends ParameterType {
+                       required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -146,7 +149,7 @@ case object IntegerType {
 }
 
 
-case class BooleanType(required: Boolean = false) extends ParameterType {
+case class BooleanType(required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -168,7 +171,7 @@ case object BooleanType {
 case class FileType(fileTypes: Option[Seq[String]] = None,
                     minLength: Option[Int] = None,
                     maxLength: Option[Int] = None,
-                    required: Boolean = false) extends ParameterType {
+                    required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -193,7 +196,7 @@ case object FileType {
 }
 
 
-case class ObjectType(required: Boolean = false) extends ParameterType {
+case class ObjectType(required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -212,7 +215,7 @@ case object ObjectType {
 }
 
 case class ArrayType(items: ParameterType,
-                     required: Boolean = false) extends ParameterType {
+                     required: Boolean = true) extends ParameterType {
 
   def asRequired = copy(required = true)
 
@@ -252,7 +255,7 @@ sealed trait DateType extends ParameterType {
   *
   * example: 2015-05-23
   */
-case class DateOnlyType(required: Boolean = false) extends DateType {
+case class DateOnlyType(required: Boolean = true) extends DateType {
 
   val format = RFC3339FullDate
 
@@ -277,7 +280,7 @@ case object DateOnlyType {
   *
   * example: 12:30:00
   */
-case class TimeOnlyType(required: Boolean = false) extends DateType {
+case class TimeOnlyType(required: Boolean = true) extends DateType {
 
   val format = RFC3339PartialTime
 
@@ -303,7 +306,7 @@ case object TimeOnlyType {
   *
   * example: 2015-07-04T21:00:00
   */
-case class DateTimeOnlyType(required: Boolean = false) extends DateType {
+case class DateTimeOnlyType(required: Boolean = true) extends DateType {
 
   val format = DateOnlyTimeOnly
 
@@ -342,7 +345,7 @@ object DateTimeType {
 }
 
 
-case class DateTimeDefaultType(required: Boolean = false) extends DateTimeType {
+case class DateTimeDefaultType(required: Boolean = true) extends DateTimeType {
 
   val format = RFC3339DateTime
 
@@ -364,7 +367,7 @@ case object DateTimeDefaultType {
 }
 
 
-case class DateTimeRFC2616Type(required: Boolean = false) extends DateTimeType {
+case class DateTimeRFC2616Type(required: Boolean = true) extends DateTimeType {
 
   val format = RFC2616
 

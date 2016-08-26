@@ -19,10 +19,15 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import play.api.libs.json.{JsObject, JsValue}
+
+import scala.util.{Failure, Success, Try}
+
 /**
   * Created by peter on 10/02/16.
   */
-case class Action(actionType: ActionType,
+case class Action(actionType: Method,
                   headers: Map[String, Parameter],
                   queryParameters: Map[String, Parameter],
                   body: Map[String, MimeType],
@@ -30,8 +35,29 @@ case class Action(actionType: ActionType,
 
 object Action {
 
-  def apply(): Action = {
-    ???
+  def unapply(actionMap: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[Action]] = {
+
+    val actionMapOpt =
+      actionMap match {
+        case (Method(method), jsObj: JsObject) => Some((method, jsObj))
+        case _                                 => None
+      }
+
+    actionMapOpt.collect {
+      case (method, jsObj) => createAction(method, jsObj)
+    }
+
+  }
+
+
+  private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
+
+    parseContext.traits.applyTo(jsObject) { jsObj =>
+
+
+
+    }
+
   }
 
 }

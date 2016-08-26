@@ -19,24 +19,27 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
-import play.api.libs.json.{JsObject, Json}
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 import scala.util.{Success, Try}
 
 /**
   * Created by peter on 1/04/16.
   */
-case class StringType(id: Id, format: Option[String] = None, required: Boolean = false)
+case class StringType(id: Id = ImplicitId, format: Option[String] = None, required: Option[Boolean] = None)
   extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
 
 }
 
+
 object StringType {
 
-  def apply(schema: JsObject): Try[StringType] = {
+  val value = "string"
+
+  def apply(schema: JsValue): Try[StringType] = {
 
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
@@ -46,12 +49,17 @@ object StringType {
 
     val required = (schema \ "required").asOpt[Boolean]
 
-    Success(StringType(id, format, required.getOrElse(false)))
+    Success(StringType(id, format, required))
   }
 
 
-  def apply(): Try[StringType] = {
-    apply(Json.obj())
+  def unapply(json: JsValue): Option[Try[StringType]] = {
+
+    (Type.typeDeclaration(json), (json \ EnumType.value).toOption) match {
+      case (Some(JsString(StringType.value)), None) => Some(StringType(json))
+      case _                                        => None
+    }
+
   }
 
 }

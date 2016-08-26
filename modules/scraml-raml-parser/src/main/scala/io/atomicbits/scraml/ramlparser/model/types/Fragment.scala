@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
 import io.atomicbits.scraml.ramlparser.parser.TryUtils
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
-import scala.util.{Try, Success}
+import scala.util.{Success, Try}
 
 /**
   * Created by peter on 1/04/16.
@@ -51,6 +51,16 @@ object Fragment {
       Success(id),
       TryUtils.accumulate(fragments.toMap)
     )(Fragment(_, _))
+  }
+
+
+  def unapply(json: JsValue): Option[Try[Fragment]] = {
+
+    json match {
+      case jsObject: JsObject => Some(Fragment(jsObject))
+      case _                  => None
+    }
+
   }
 
 }

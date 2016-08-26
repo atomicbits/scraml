@@ -45,7 +45,7 @@ case class Raml(title: String,
 object Raml {
 
 
-  def apply(ramlJson: JsObject)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Raml] = {
+  def apply(ramlJson: JsObject)(implicit parseContext: ParseContext): Try[Raml] = {
 
     // Process the properties
 

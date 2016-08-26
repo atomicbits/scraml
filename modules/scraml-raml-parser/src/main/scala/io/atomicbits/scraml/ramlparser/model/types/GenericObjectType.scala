@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
-import io.atomicbits.scraml.ramlparser.parser.{TryUtils, RamlParseException}
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException, TryUtils}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Failure, Success, Try}
 
@@ -64,8 +64,8 @@ import scala.util.{Failure, Success, Try}
   *
   */
 case class GenericObjectType(id: Id,
-                             required: Boolean,
                              typeVariable: String,
+                             required: Option[Boolean] = None,
                              fragments: Map[String, Type] = Map.empty) extends FragmentedType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
@@ -75,7 +75,9 @@ case class GenericObjectType(id: Id,
 
 object GenericObjectType {
 
-  def apply(schema: JsObject)(implicit nameToId: String => Id): Try[GenericObjectType] = {
+  val value = "genericType"
+
+  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[GenericObjectType] = {
 
     // Process the id
     val id: Id = schema match {
@@ -92,10 +94,19 @@ object GenericObjectType {
 
     TryUtils.withSuccess(
       Success(id),
-      Success(required.getOrElse(false)),
       genericType,
+      Success(required),
       fragments
     )(GenericObjectType(_, _, _, _))
+  }
+
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[GenericObjectType]] = {
+    (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
+      case (Some(JsString(ObjectType.value)), _, Some(JsString(genT))) => Some(GenericObjectType(json))
+      case (None, Some(jsObj), Some(JsString(genT)))                   => Some(GenericObjectType(json))
+      case _                                                           => None
+    }
   }
 
 }

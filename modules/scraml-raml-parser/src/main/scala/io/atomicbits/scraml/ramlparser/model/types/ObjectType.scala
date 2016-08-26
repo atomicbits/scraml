@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, ImplicitId, RelativeId, Id}
-import io.atomicbits.scraml.ramlparser.parser.TryUtils
-import play.api.libs.json.{JsBoolean, JsString, JsArray, JsObject}
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId, RelativeId}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
+import play.api.libs.json._
 
 import scala.util.{Success, Try}
 
@@ -32,7 +32,7 @@ case class ObjectType(id: Id,
                       baseType: List[Id],
                       properties: Map[String, Type],
                       // facets: Option[String],
-                      required: Boolean,
+                      required: Option[Boolean] = None,
                       requiredFields: List[String] = List.empty,
                       selection: Option[Selection] = None,
                       fragments: Map[String, Type] = Map.empty,
@@ -44,11 +44,12 @@ case class ObjectType(id: Id,
 }
 
 
-
 object ObjectType {
 
+  val value = "object"
 
-  def apply(schema: JsObject, nameOpt: Option[String])(implicit nameToIdOpt: String => Id): Try[ObjectType] = {
+
+  def apply(schema: JsValue, nameOpt: Option[String])(implicit parseContext: ParseContext): Try[ObjectType] = {
 
     // Process the id
     val id: Id = {
@@ -57,7 +58,7 @@ object ObjectType {
           case IdExtractor(schemaId) => schemaId
         }
       // If there is no explicit id field set, then use the given name (if there is one) to create the id.
-      (provisionaryId, nameOpt.map(nameToIdOpt)) match {
+      (provisionaryId, nameOpt.map(parseContext.nameToId)) match {
         case (ImplicitId, Some(nameBasedId)) => nameBasedId
         case (otherId, _)                    => otherId
       }
@@ -65,42 +66,42 @@ object ObjectType {
 
     // Process the properties
     val properties: Try[Map[String, Type]] =
-      (schema \ "properties").toOption.collect {
-        case props: JsObject =>
-          val propertyTryMap =
-            props.value collect {
-              case (fieldName, fragment: JsObject) => (fieldName, Type(fragment))
-            }
-          TryUtils.accumulate(propertyTryMap.toMap)
-      } getOrElse Success(Map.empty[String, Type])
+    (schema \ "properties").toOption.collect {
+      case props: JsObject =>
+        val propertyTryMap =
+          props.value collect {
+            case (fieldName, fragment: JsObject) => (fieldName, Type(fragment))
+          }
+        TryUtils.accumulate(propertyTryMap.toMap)
+    } getOrElse Success(Map.empty[String, Type])
 
     val fragments = Type.collectFragments(schema)
 
     // Process the required field
     val (required, requiredFields) =
-      schema \ "required" toOption match {
-        case Some(req: JsArray) =>
-          (None, Some(req.value.toList collect {
-            case JsString(value) => value
-          }))
-        case Some(JsBoolean(b)) => (Some(b), None)
-        case _                  => (None, None)
-      }
+    schema \ "required" toOption match {
+      case Some(req: JsArray) =>
+        (None, Some(req.value.toList collect {
+          case JsString(value) => value
+        }))
+      case Some(JsBoolean(b)) => (Some(b), None)
+      case _                  => (None, None)
+    }
 
 
     // Process the typeVariables field
     val typeVariables: List[String] =
-      schema \ "typeVariables" toOption match {
-        case Some(typeVars: JsArray) => typeVars.value.toList.collect { case JsString(value) => value }
-        case _                       => List.empty[String]
-      }
+    schema \ "typeVariables" toOption match {
+      case Some(typeVars: JsArray) => typeVars.value.toList.collect { case JsString(value) => value }
+      case _                       => List.empty[String]
+    }
 
     // Process the typeDiscriminator field
     val typeDiscriminator: Option[String] =
-      schema \ "typeDiscriminator" toOption match {
-        case Some(JsString(value)) => Some(value)
-        case _                     => None
-      }
+    schema \ "typeDiscriminator" toOption match {
+      case Some(JsString(value)) => Some(value)
+      case _                     => None
+    }
 
     val oneOf =
       (schema \ "oneOf").toOption collect {
@@ -136,13 +137,29 @@ object ObjectType {
       Success(id),
       Success(List.empty[Id]),
       properties,
-      Success(required.getOrElse(false)),
+      Success(required),
       Success(requiredFields.getOrElse(List.empty[String])),
       TryUtils.accumulate(selection),
       TryUtils.accumulate(fragments),
       Success(typeVariables),
       Success(typeDiscriminator)
     )(new ObjectType(_, _, _, _, _, _, _, _, _))
+  }
+
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ObjectType]] = unapply((None, json))
+
+
+  def unapply(nameAndJsVal: (Option[String], JsValue))(implicit parseContext: ParseContext): Option[Try[ObjectType]] = {
+
+    val (name, json) = nameAndJsVal
+
+    (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
+      case (Some(JsString(ObjectType.value)), _, None) => Some(ObjectType(json, name))
+      case (None, Some(jsObj), None)                   => Some(ObjectType(json, name))
+      case _                                           => None
+    }
+
   }
 
 

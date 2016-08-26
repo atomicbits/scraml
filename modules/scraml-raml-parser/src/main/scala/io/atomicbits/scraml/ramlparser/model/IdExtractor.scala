@@ -19,20 +19,21 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model.types.TypeReference
+import play.api.libs.json.{JsObject, JsValue}
 
 /**
   * Created by peter on 25/03/16.
   */
 object IdExtractor {
 
-  def unapply(schema: JsObject): Option[Id] = IdAnalyser.idFromField(schema, "id")
+  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, "id")
 
 }
 
 object RefExtractor {
 
-  def unapply(schema: JsObject): Option[Id] = IdAnalyser.idFromField(schema, "$ref")
+  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, TypeReference.value)
 
 }
 
@@ -45,7 +46,7 @@ object IdAnalyser {
     * @param field The id field
     * @return The Id
     */
-  def idFromField(schema: JsObject, field: String): Option[Id] = {
+  def idFromField(schema: JsValue, field: String): Option[Id] = {
 
     val idType = (schema \ field).asOpt[String] match {
       case Some(idOrRef) => idFromString(idOrRef)

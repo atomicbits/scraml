@@ -36,6 +36,7 @@ case class Types(nativeTypes: List[Type] = List.empty, external: Map[String, Str
 
 }
 
+
 object Types {
 
   def apply(typesJson: JsValue)(implicit parseContext: ParseContext, nameToId: String => Id): Try[Types] = {

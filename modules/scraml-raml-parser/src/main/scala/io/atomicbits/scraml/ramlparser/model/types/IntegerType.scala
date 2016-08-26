@@ -19,15 +19,15 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{IdExtractor, Id}
-import play.api.libs.json.JsObject
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
 
 /**
   * Created by peter on 1/04/16.
   */
-case class IntegerType(id: Id, required: Boolean = false) extends PrimitiveType with AllowedAsObjectField {
+case class IntegerType(id: Id = ImplicitId, required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): Type = copy(id = updatedId)
 
@@ -36,7 +36,9 @@ case class IntegerType(id: Id, required: Boolean = false) extends PrimitiveType 
 
 object IntegerType {
 
-  def apply(schema: JsObject): Try[IntegerType] = {
+  val value = "integer"
+
+  def apply(schema: JsValue): Try[IntegerType] = {
 
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
@@ -44,7 +46,17 @@ object IntegerType {
 
     val required = (schema \ "required").asOpt[Boolean]
 
-    Success(new IntegerType(id, required.getOrElse(false)))
+    Success(new IntegerType(id, required))
+  }
+
+
+  def unapply(json: JsValue): Option[Try[IntegerType]] = {
+
+    Type.typeDeclaration(json) match {
+      case Some(JsString(IntegerType.value)) => Some(IntegerType(json))
+      case _                                 => None
+    }
+
   }
 
 }
