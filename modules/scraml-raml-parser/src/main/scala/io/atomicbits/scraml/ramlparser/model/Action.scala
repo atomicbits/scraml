@@ -28,10 +28,10 @@ import scala.util.{Failure, Success, Try}
   * Created by peter on 10/02/16.
   */
 case class Action(actionType: Method,
-                  headers: Map[String, Parameter],
-                  queryParameters: Map[String, Parameter],
-                  body: Map[String, MimeType],
-                  responses: Map[String, Response])
+                  headers: Parameters,
+                  queryParameters: Parameters,
+                  body: Body,
+                  responses: Responses)
 
 object Action {
 
@@ -52,10 +52,28 @@ object Action {
 
   private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
 
-    parseContext.traits.applyTo(jsObject) { jsObj =>
+    parseContext.traits.applyTo(jsObject) { json =>
 
+      val tryQueryParameters = Parameters((json \ "queryParameters").toOption)
 
+      val tryHeaders = Parameters((json \ "headers").toOption)
 
+      val tryBody = Body(json)
+
+      val tryResponses = Responses(json)
+
+      for {
+        queryParameters <- tryQueryParameters
+        headers <- tryHeaders
+        body <- tryBody
+        responses <- tryResponses
+      } yield Action(
+        actionType = actionType,
+        headers = headers,
+        queryParameters = queryParameters,
+        body = body,
+        responses = responses
+      )
     }
 
   }

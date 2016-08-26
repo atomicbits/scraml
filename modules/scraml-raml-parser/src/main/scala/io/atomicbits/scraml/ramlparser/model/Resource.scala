@@ -78,12 +78,12 @@ object Resource {
 
       // Actions
 
-      val actionsTries =
+      val tryActions =
         jsObj.fields.collect {
           case Action(action) => action
         }
 
-      val actions = accumulate(actionsTries)
+      val actions = accumulate(tryActions)
 
 
       // Subresources

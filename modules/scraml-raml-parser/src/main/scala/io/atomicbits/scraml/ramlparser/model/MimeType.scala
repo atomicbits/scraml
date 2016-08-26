@@ -19,9 +19,44 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.types.Type
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import play.api.libs.json.JsValue
+
+import scala.util.Try
+
+import io.atomicbits.scraml.ramlparser.parser.TryUtils._
+
+
 /**
   * Created by peter on 10/02/16.
   */
-case class MimeType(mimeType: String,
-                    schema: Option[String] = None,
-                    formParameters: Map[String, List[Parameter]] = Map.empty)
+case class MimeType(header: Header,
+                    bodyType: Option[Type] = None,
+                    formParameters: Parameters = Parameters())
+
+
+object MimeType {
+
+  def unapply(mimeTypeAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[MimeType]] = {
+
+    val (mimeType, json) = mimeTypeAndJsValue
+
+    val tryFormParameters = Parameters((json \ "formParameters").toOption)
+
+    val bodyType =
+      json match {
+        case Type(bType) => Some(bType)
+        case _           => None
+      }
+
+    val mime =
+      for {
+        bType <- accumulate(bodyType)
+        formParameters <- tryFormParameters
+      } yield MimeType(Header(mimeType), bType, formParameters)
+
+    Some(mime)
+  }
+
+}

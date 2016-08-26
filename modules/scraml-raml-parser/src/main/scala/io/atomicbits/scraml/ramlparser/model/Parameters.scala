@@ -30,20 +30,23 @@ import io.atomicbits.scraml.ramlparser.parser.TryUtils._
 import scala.language.postfixOps
 
 
-case class Parameters(valueMap: Map[String, Parameter]) {
+case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
   def byName(name: String): Option[Parameter] = valueMap.get(name)
 
   val values: List[Parameter] = valueMap.values.toList
 
+  val isEmpty = valueMap.isEmpty
+
 }
+
 
 /**
   * Created by peter on 26/08/16.
   */
 object Parameters {
 
-  def apply(jsValue: JsValue)(implicit parseContext: ParseContext): Try[Parameters] = {
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
 
 
     def jsObjectToParameters(jsObject: JsObject): Try[Parameters] = {
@@ -64,18 +67,9 @@ object Parameters {
       accumulate(valueMap).map(vm => Parameters(vm))
     }
 
-    jsValue match {
+    jsValueOpt.collect {
       case jsObj: JsObject => jsObjectToParameters(jsObj)
-      case x               => Failure(RamlParseException(s"Cannot parse parameters from a non-object field $x in ${parseContext.head}"))
-    }
-  }
-
-
-  def unapply(jsValue: JsValue)(implicit parseContext: ParseContext): Option[Try[Parameters]] = {
-    jsValue match {
-      case jsObj: JsObject => Some(Parameters(jsObj))
-      case _               => None
-    }
+    } getOrElse Success(Parameters())
   }
 
 }

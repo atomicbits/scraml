@@ -19,37 +19,13 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json.JsValue
-
-import scala.util.Try
-
 /**
-  * Created by peter on 10/02/16.
+  * Created by peter on 26/08/16.
   */
-case class Response(status: StatusCode, headers: Parameters, body: Body)
+case class Header(value: String)
 
+object Header {
 
-object Response {
-
-  def unapply(statusAndJsValue: (String, JsValue)): Option[Try[Response]] = {
-
-    val (statusString, json) = statusAndJsValue
-
-    val status = StatusCode(statusString)
-
-    val tryHeaders = Parameters((json \ "headers").toOption)
-
-    val tryBody = json match {
-      case Body(tryBody) => tryBody // always matches
-    }
-
-    val tryResponse =
-      for {
-        headers <- tryHeaders
-        body <- tryBody
-      } yield Response(status, headers, body)
-
-    Some(tryResponse)
-  }
+  def unapply(header: String): Option[Header] = Some(Header(header))
 
 }
