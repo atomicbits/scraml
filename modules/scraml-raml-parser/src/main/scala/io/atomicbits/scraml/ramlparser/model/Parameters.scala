@@ -66,7 +66,15 @@ object Parameters {
 
     jsValue match {
       case jsObj: JsObject => jsObjectToParameters(jsObj)
-      case _               => Success(Parameters(Map.empty))
+      case x               => Failure(RamlParseException(s"Cannot parse parameters from a non-object field $x in ${parseContext.head}"))
+    }
+  }
+
+
+  def unapply(jsValue: JsValue)(implicit parseContext: ParseContext): Option[Try[Parameters]] = {
+    jsValue match {
+      case jsObj: JsObject => Some(Parameters(jsObj))
+      case _               => None
     }
   }
 
