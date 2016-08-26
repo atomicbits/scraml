@@ -30,7 +30,7 @@ import scala.util.{Success, Try}
 case class EnumType(id: Id, choices: List[String], required: Option[Boolean] = None)
   extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

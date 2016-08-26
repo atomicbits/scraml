@@ -32,7 +32,7 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
   */
 case class NullType(id: Id = ImplicitId, required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

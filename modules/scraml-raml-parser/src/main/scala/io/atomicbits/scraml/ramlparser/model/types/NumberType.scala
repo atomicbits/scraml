@@ -37,7 +37,7 @@ case class NumberType(id: Id = ImplicitId,
                       multipleOf: Option[Int] = None,
                       required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

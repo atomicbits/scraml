@@ -37,7 +37,7 @@ case class FileType(id: Id = ImplicitId,
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

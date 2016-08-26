@@ -37,9 +37,9 @@ case class ObjectType(id: Id,
                       selection: Option[Selection] = None,
                       fragments: Map[String, Type] = Map.empty,
                       typeVariables: List[String] = List.empty,
-                      typeDiscriminator: Option[String] = None) extends FragmentedType with AllowedAsObjectField with Type {
+                      typeDiscriminator: Option[String] = None) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): NonePrimitiveType = copy(id = updatedId)
 
 }
 
@@ -188,17 +188,19 @@ object ObjectType {
       }
     }
 
+    // removed this from the following match case:
+    // case ObjectType(objectType) => objectType
+    //    case Fragment(fragment)     =>
+    //    fragment.flatMap { frag =>
+    //      typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
+    //        schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)) match {
+    //          case Type(x) => x
+    //        }
+    //      } getOrElse Success(frag)
+    //    }
+
     schema match {
-      case ObjectType(objectType) => objectType
-      case Fragment(fragment)     =>
-        fragment.flatMap { frag =>
-          typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
-            schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)) match {
-              case Type(x) => x
-            }
-          } getOrElse Success(frag)
-        }
-      case Type(x)                => x
+      case Type(x) => x
     }
 
   }

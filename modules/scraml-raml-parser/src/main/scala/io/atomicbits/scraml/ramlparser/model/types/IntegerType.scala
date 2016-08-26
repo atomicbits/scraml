@@ -37,7 +37,7 @@ case class IntegerType(id: Id = ImplicitId,
                        multipleOf: Option[Int] = None,
                        required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -70,7 +70,7 @@ object IntegerType {
 
     (Type.typeDeclaration(json), json) match {
       case (Some(JsString(IntegerType.value)), _) => Some(IntegerType(json))
-      case (_, JsString(IntegerType.value))       => Some(Success(new IntegerType()))
+      case (_, JsString(IntegerType.value))       => Some(Success(IntegerType()))
       case _                                      => None
     }
 

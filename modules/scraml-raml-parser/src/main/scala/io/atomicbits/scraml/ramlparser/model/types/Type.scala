@@ -28,22 +28,35 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 10/02/16.
   */
-trait Type {
+trait Type extends Identifiable {
+
+  def required: Option[Boolean]
+
+  // The default value according to the RAML 1.0 specs is true. According to the json-schema 0.3 specs, it should be false.
+  // The json-schema 0.4 specs don't specify a 'required: boolean' field any more, only a list of the required field names at the
+  // level of the object definition, but this also implies a default value of false.
+  def isRequired = required.getOrElse(true)
+
+}
+
+trait Identifiable {
 
   def id: Id
 
-  def updated(id: Id): Type
+  def updated(id: Id): Identifiable
 
 }
 
 
 trait PrimitiveType extends Type
 
+trait NonePrimitiveType extends Type
+
 
 /**
   * Only used in json-schema.
   */
-trait FragmentedType extends Type {
+trait Fragmented {
 
   def fragments: Map[String, Type]
 
@@ -52,12 +65,7 @@ trait FragmentedType extends Type {
 
 trait AllowedAsObjectField {
 
-  def required: Option[Boolean]
 
-  // The default value according to the RAML 1.0 specs is true. According to the json-schema 0.3 specs, it should be false.
-  // The json-schema 0.4 specs don't specify a 'required: boolean' field any more, only a list of the required field names at the
-  // level of the object definition, but this also implies a default value of false.
-  def isRequired = required.getOrElse(true)
 
 }
 
@@ -141,7 +149,6 @@ object Type {
       case ObjectType(tryObjectType)                => Some(tryObjectType)
       case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
       case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
-      case Fragment(tryFragmentType)                => Some(tryFragmentType) // A Fragment is a catchall for all JsObject values, so must be at the end of the 'normal' types.
       case _                                        => None
     }
 
@@ -165,7 +172,7 @@ object Type {
           schemaMap - excludeKey
         }
       fragmentsToKeep collect {
-        case (fragmentFieldName, fragment: JsObject) => (fragmentFieldName, Type(fragment))
+        case (fragmentFieldName, Type(fragment)) => (fragmentFieldName, fragment)
       }
     }
 

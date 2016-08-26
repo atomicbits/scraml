@@ -38,7 +38,7 @@ case class StringType(id: Id = ImplicitId,
                       required: Option[Boolean] = None)
   extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -71,7 +71,7 @@ object StringType {
 
     (Type.typeDeclaration(json), (json \ EnumType.value).toOption, json) match {
       case (Some(JsString(StringType.value)), None, _) => Some(StringType(json))
-      case (_, _, JsString(StringType.value))          => Some(Success(new StringType()))
+      case (_, _, JsString(StringType.value))          => Some(Success(StringType()))
       case _                                           => None
     }
 

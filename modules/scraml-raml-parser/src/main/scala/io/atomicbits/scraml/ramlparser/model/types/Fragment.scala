@@ -28,9 +28,9 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class Fragment(id: Id, fragments: Map[String, Type]) extends FragmentedType {
+case class Fragment(id: Id, fragments: Map[String, Type]) extends Identifiable with  Fragmented {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
   def isEmpty: Boolean = fragments.isEmpty
 
@@ -44,7 +44,7 @@ object Fragment {
       case IdExtractor(schemaId) => schemaId
     }
     val fragments = schema.value.toSeq collect {
-      case (fragmentFieldName, fragment: JsObject) => (fragmentFieldName, Type(fragment))
+      case (fragmentFieldName, Type(fragment)) => (fragmentFieldName, fragment)
     }
 
     TryUtils.withSuccess(

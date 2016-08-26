@@ -35,9 +35,9 @@ case class ArrayType(items: Type,
                      minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
-                     fragments: Map[String, Type] = Map.empty) extends Type with AllowedAsObjectField {
+                     fragments: Map[String, Type] = Map.empty) extends NonePrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
   def asRequired = copy(required = Some(true))
 

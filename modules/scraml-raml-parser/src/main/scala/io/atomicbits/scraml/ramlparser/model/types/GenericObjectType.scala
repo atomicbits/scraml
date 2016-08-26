@@ -66,9 +66,10 @@ import scala.util.{Failure, Success, Try}
 case class GenericObjectType(id: Id,
                              typeVariable: String,
                              required: Option[Boolean] = None,
-                             fragments: Map[String, Type] = Map.empty) extends FragmentedType with AllowedAsObjectField {
+                             fragments: Map[String, Type] = Map.empty)
+  extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

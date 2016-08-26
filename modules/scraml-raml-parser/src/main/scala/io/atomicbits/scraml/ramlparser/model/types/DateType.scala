@@ -46,7 +46,7 @@ case class DateOnlyType(id: Id = ImplicitId, required: Boolean = true) extends D
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -75,7 +75,7 @@ case class TimeOnlyType(id: Id = ImplicitId, required: Boolean = true) extends D
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -105,7 +105,7 @@ case class DateTimeOnlyType(id: Id = ImplicitId, required: Boolean = true) exten
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -148,7 +148,7 @@ case class DateTimeDefaultType(id: Id = ImplicitId, required: Boolean = true) ex
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 
@@ -174,7 +174,7 @@ case class DateTimeRFC2616Type(id: Id = ImplicitId, required: Boolean = true) ex
 
   def asRequired = copy(required = true)
 
-  override def updated(updatedId: Id): Type = copy(id = updatedId)
+  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
 }
 

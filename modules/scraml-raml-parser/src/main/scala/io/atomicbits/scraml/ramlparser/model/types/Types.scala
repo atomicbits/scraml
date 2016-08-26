@@ -84,8 +84,13 @@ object Types {
 
 
     def typeObjectToNativeTypes(name: String, typeDefinition: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
-      Type(typeDefinition, Some(name)).map(tp => Types(nativeTypes = List(tp)))
+
+      (name, typeDefinition) match {
+        case Type(sometype) => sometype.map(tp => Types(nativeTypes = List(tp)))
+      }
+
     }
+
 
     doApply(typesJson)
   }
