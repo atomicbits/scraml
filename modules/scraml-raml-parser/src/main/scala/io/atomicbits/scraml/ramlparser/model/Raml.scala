@@ -35,7 +35,7 @@ case class Raml(title: String,
                 description: Option[String],
                 version: Option[String],
                 baseUri: Option[String],
-                baseUriParameters: Map[String, Parameter],
+                baseUriParameters: Parameters,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
@@ -45,26 +45,25 @@ case class Raml(title: String,
 object Raml {
 
 
-  def apply(ramlJson: JsObject)(implicit parseContext: ParseContext): Try[Raml] = {
+  def apply(ramlJson: JsObject)(parseCtxt: ParseContext): Try[Raml] = {
 
-    // Process the properties
+
+    val tryTraits: Try[Traits] =
+      (ramlJson \ "traits").toOption.map(Traits(_)(parseCtxt)).getOrElse(Success(Traits()))
+
+
+    implicit val parseContext: ParseContext =
+      tryTraits.map { newTraits =>
+        parseCtxt.copy(traits = newTraits)
+      } getOrElse parseCtxt
+
 
     val title: Try[String] =
       (ramlJson \ "title").toOption.collect {
         case JsString(t) => Success(t)
         case x           =>
-          Failure(RamlParseException(s"File ${parseContext.sourceTrail} has a title field that is not a string value."))
-      } getOrElse Failure(RamlParseException(s"File ${parseContext.sourceTrail} does not contain the mandatory title field."))
-
-
-    val traits: Try[Traits] =
-      (ramlJson \ "traits").toOption.map(Traits(_)).getOrElse(Success(Traits()))
-
-
-    implicit val newParseContext =
-      traits.map { actualTraits =>
-        parseContext.addTraits(actualTraits)
-      } getOrElse parseContext
+          Failure(RamlParseException(s"File ${parseCtxt.sourceTrail} has a title field that is not a string value."))
+      } getOrElse Failure(RamlParseException(s"File ${parseCtxt.sourceTrail} does not contain the mandatory title field."))
 
 
     val types: Try[Types] = {
@@ -72,7 +71,7 @@ object Raml {
         case List(ts, ss) =>
           Failure(
             RamlParseException(
-              s"File ${parseContext.sourceTrail} contains both a 'types' and a 'schemas' field. You should only use a 'types' field."
+              s"File ${parseCtxt.sourceTrail} contains both a 'types' and a 'schemas' field. You should only use a 'types' field."
             )
           )
         case List(t)      => Types(t)
@@ -84,7 +83,7 @@ object Raml {
     val mediaType: Try[Option[MimeType]] = {
       (ramlJson \ "mediaType").toOption.collect {
         case JsString(mType) => Success(Option(MimeType(mType)))
-        case x               => Failure(RamlParseException(s"The mediaType in ${parseContext.sourceTrail} must be a string value."))
+        case x               => Failure(RamlParseException(s"The mediaType in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
 
@@ -93,7 +92,7 @@ object Raml {
       (ramlJson \ "description").toOption.collect {
         case JsString(docu) => Success(Option(docu))
         case x              =>
-          Failure(RamlParseException(s"The description field in ${parseContext.sourceTrail} must be a string value."))
+          Failure(RamlParseException(s"The description field in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
 
@@ -105,16 +104,16 @@ object Raml {
           case JsString(pString) if pString.toUpperCase == "HTTP"  => Success("HTTP")
           case JsString(pString) if pString.toUpperCase == "HTTPS" => Success("HTTPS")
           case JsString(pString)                                   =>
-            Failure(RamlParseException(s"The protocols in ${parseContext.sourceTrail} should be either HTTP or HTTPS."))
+            Failure(RamlParseException(s"The protocols in ${parseCtxt.sourceTrail} should be either HTTP or HTTPS."))
           case x                                                   =>
-            Failure(RamlParseException(s"At least one of the protocols in ${parseContext.sourceTrail} is not a string value."))
+            Failure(RamlParseException(s"At least one of the protocols in ${parseCtxt.sourceTrail} is not a string value."))
         }
       }
 
       (ramlJson \ "protocols").toOption.collect {
         case JsArray(pcols) => accumulate(pcols.map(toProtocolString)).map(Some(_))
         case x              =>
-          Failure(RamlParseException(s"The protocols field in ${parseContext.sourceTrail} must be an array of string values."))
+          Failure(RamlParseException(s"The protocols field in ${parseCtxt.sourceTrail} must be an array of string values."))
       } getOrElse Success(None)
     }
 
@@ -123,7 +122,7 @@ object Raml {
       (ramlJson \ "version").toOption.collect {
         case JsString(v) => Success(Option(v))
         case x           =>
-          Failure(RamlParseException(s"The version field in ${parseContext.sourceTrail} must be a string value."))
+          Failure(RamlParseException(s"The version field in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
 
@@ -132,25 +131,12 @@ object Raml {
       (ramlJson \ "baseUri").toOption.collect {
         case JsString(v) => Success(Option(v))
         case x           =>
-          Failure(RamlParseException(s"The baseUri field in ${parseContext.sourceTrail} must be a string value."))
+          Failure(RamlParseException(s"The baseUri field in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
 
 
-    def readUriParameters(jsParams: Option[JsValue]): Try[Map[String, Parameter]] = {
-      jsParams.collect {
-        case JsObject(jsObj) =>
-          val paramTryList: Map[String, Try[Parameter]] =
-            jsObj.toMap.collect {
-              case (paramName, paramProperties: JsObject) => paramName -> Parameter.asUriParameter(paramProperties)
-              case (paramName, nonObjectProperties)       => paramName -> Try(Parameter(parameterType = StringType().asRequired))
-            }
-          accumulate(paramTryList)
-        case x               => Failure(RamlParseException(s"The 'baseUriParameters' field should not be empty if present."))
-      } getOrElse Success(Map.empty)
-    }
-
-    val baseUriParameters: Try[Map[String, Parameter]] = readUriParameters((ramlJson \ "baseUriParameters").toOption)
+    val baseUriParameters: Try[Parameters] = Parameters((ramlJson \ "baseUriParameters").toOption)
 
 
     /**
@@ -203,10 +189,11 @@ object Raml {
       baseUri,
       baseUriParameters,
       protocols,
-      traits,
+      tryTraits,
       types,
       resources
     )(Raml(_, _, _, _, _, _, _, _, _, _))
+
   }
 
 }

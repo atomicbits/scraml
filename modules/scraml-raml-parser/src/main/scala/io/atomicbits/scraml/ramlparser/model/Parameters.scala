@@ -20,11 +20,10 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.types.Type
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext}
 import play.api.libs.json.{JsObject, JsValue}
 
-import scala.util.{Failure, Success, Try}
-import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+import scala.util.{Success, Try}
 import io.atomicbits.scraml.ramlparser.parser.TryUtils._
 
 import scala.language.postfixOps

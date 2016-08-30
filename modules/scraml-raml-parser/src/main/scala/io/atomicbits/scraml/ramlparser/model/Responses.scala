@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.{JsObject, JsValue}
 
 import scala.util.{Success, Try}
@@ -36,7 +37,7 @@ case class Responses(responseMap: Map[StatusCode, Response] = Map.empty) {
 
 object Responses {
 
-  def apply(jsValue: JsValue): Try[Responses] = {
+  def apply(jsValue: JsValue)(implicit parseContext: ParseContext): Try[Responses] = {
 
     def fromJsObject(json: JsObject): Try[Responses] = {
 

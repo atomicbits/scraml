@@ -49,9 +49,9 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
     val urlPath = defaultPackage.drop(2).mkString("/")
 
     val nameToId: String => Id = name => RootId(s"http://$host/$urlPath/$name.json")
-    implicit val parseContext = ParseContext(List(ramlSource), nameToId)
+    val parseContext = ParseContext(List(ramlSource), nameToId)
 
-    Raml(parsed)
+    Raml(parsed)(parseContext)
   }
 
   /**

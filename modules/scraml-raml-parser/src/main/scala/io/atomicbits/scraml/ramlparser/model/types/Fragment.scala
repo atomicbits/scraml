@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model.types
 
 import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
-import io.atomicbits.scraml.ramlparser.parser.TryUtils
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
@@ -39,7 +39,7 @@ case class Fragment(id: Id, fragments: Map[String, Type]) extends Identifiable w
 
 object Fragment {
 
-  def apply(schema: JsObject)(implicit nameToIdOpt: String => Id): Try[Fragment] = {
+  def apply(schema: JsObject)(implicit parseContext: ParseContext): Try[Fragment] = {
     val id = schema match {
       case IdExtractor(schemaId) => schemaId
     }
@@ -54,7 +54,7 @@ object Fragment {
   }
 
 
-  def unapply(json: JsValue): Option[Try[Fragment]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Fragment]] = {
 
     json match {
       case jsObject: JsObject => Some(Fragment(jsObject))

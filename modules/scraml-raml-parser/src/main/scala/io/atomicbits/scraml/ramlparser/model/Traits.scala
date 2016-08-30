@@ -127,8 +127,6 @@ object Traits {
 
   def apply(traitsJson: JsValue)(implicit parseContext: ParseContext): Try[Traits] = {
 
-    implicit val newParseContext = parseContext.updateFrom(traitsJson)
-
     def doApply(trsJson: JsValue): Try[Traits] = {
       trsJson match {
         case traitsJsObj: JsObject => Success(Traits(traitsJsObjToTraitMap(traitsJsObj)))
@@ -147,7 +145,7 @@ object Traits {
       }.toMap
     }
 
-    doApply(traitsJson)
+    parseContext.withSource(traitsJson)(doApply(traitsJson))
   }
 
 }

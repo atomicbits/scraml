@@ -19,36 +19,44 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.types.Type
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.JsValue
 
 import scala.util.Try
 
+import io.atomicbits.scraml.ramlparser.parser.TryUtils._
+
+
 /**
   * Created by peter on 10/02/16.
   */
-case class Response(status: StatusCode, headers: Parameters, body: Body)
+case class BodyContent(mimeType: MimeType,
+                       bodyType: Option[Type] = None,
+                       formParameters: Parameters = Parameters())
 
 
-object Response {
+object BodyContent {
 
-  def unapply(statusAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[Response]] = {
+  def unapply(mimeTypeAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
 
-    val (statusString, json) = statusAndJsValue
+    val (mimeType, json) = mimeTypeAndJsValue
 
-    val status = StatusCode(statusString)
+    val tryFormParameters = Parameters((json \ "formParameters").toOption)
 
-    val tryHeaders = Parameters((json \ "headers").toOption)
+    val bodyType =
+      json match {
+        case Type(bType) => Some(bType)
+        case _           => None
+      }
 
-    val tryBody = Body(json)
-
-    val tryResponse =
+    val mime =
       for {
-        headers <- tryHeaders
-        body <- tryBody
-      } yield Response(status, headers, body)
+        bType <- accumulate(bodyType)
+        formParameters <- tryFormParameters
+      } yield BodyContent(MimeType(mimeType), bType, formParameters)
 
-    Some(tryResponse)
+    Some(mime)
   }
 
 }

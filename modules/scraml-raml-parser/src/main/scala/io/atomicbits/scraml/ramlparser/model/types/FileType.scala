@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{FileType, Id, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId}
 import play.api.libs.json.{JsString, JsValue}
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
@@ -33,9 +33,9 @@ case class FileType(id: Id = ImplicitId,
                     fileTypes: Option[Seq[String]] = None,
                     minLength: Option[Int] = None,
                     maxLength: Option[Int] = None,
-                    required: Boolean = true) extends PrimitiveType with AllowedAsObjectField {
+                    required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -55,7 +55,7 @@ case object FileType {
             fileTypes = json.fieldStringListValue("fileTypes"),
             minLength = json.fieldIntValue("minLength"),
             maxLength = json.fieldIntValue("maxLength"),
-            required = json.fieldBooleanValue("required").getOrElse(false)
+            required = json.fieldBooleanValue("required")
           )
         )
     }

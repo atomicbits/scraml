@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.{JsObject, JsValue}
 import io.atomicbits.scraml.ramlparser.parser.TryUtils._
 
@@ -29,28 +30,28 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-case class Body(headerMap: Map[Header, MimeType] = Map.empty) {
+case class Body(headerMap: Map[MimeType, BodyContent] = Map.empty) {
 
-  def forHeader(header: Header): Option[MimeType] = headerMap.get(header)
+  def forHeader(header: MimeType): Option[BodyContent] = headerMap.get(header)
 
 }
 
 
 object Body {
 
-  def apply(json: JsValue): Try[Body] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[Body] = {
 
     def fromJsObject(jsObj: JsObject): Try[Body] = {
 
-      val tryMimeTypes =
+      val tryMimeTypes: Seq[Try[BodyContent]] =
         jsObj.value.collect {
-          case MimeType(tryMimeType) => tryMimeType
+          case BodyContent(tryMimeType) => tryMimeType
         } toSeq
 
-      val tryHeaderMap: Try[Map[Header, MimeType]] =
+      val tryHeaderMap: Try[Map[MimeType, BodyContent]] =
         accumulate(tryMimeTypes).map { mimeTypes =>
           mimeTypes.map { mType =>
-            mType.header -> mType
+            mType.mimeType -> mType
           } toMap
         }
 

@@ -61,7 +61,7 @@ object TypeReference {
         case genericTs: JsObject =>
           val genericTsMap =
             genericTs.value collect {
-              case (field, jsObj: JsObject) => (field, Type(jsObj))
+              case (field, Type(t)) => (field, t)
             }
           TryUtils.accumulate[String, Type](genericTsMap.toMap)
       } getOrElse Try(Map.empty[String, Type])

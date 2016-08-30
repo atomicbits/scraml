@@ -171,7 +171,7 @@ object ObjectType {
 
 
   private def tryToInterpretOneOfSelectionAsObjectType(schema: JsObject, parentId: Id, typeDiscriminator: String)
-                                                      (implicit nameToId: String => Id): Try[Type] = {
+                                                      (implicit parseContext: ParseContext): Try[Type] = {
 
     def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
       oneOfFragment.fragments.get("properties") collect {

@@ -40,11 +40,11 @@ trait DateType extends PrimitiveType with AllowedAsObjectField {
   *
   * example: 2015-05-23
   */
-case class DateOnlyType(id: Id = ImplicitId, required: Boolean = true) extends DateType {
+case class DateOnlyType(id: Id = ImplicitId, required: Option[Boolean] = None) extends DateType {
 
   val format = RFC3339FullDate
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -57,7 +57,7 @@ case object DateOnlyType {
 
   def unapply(json: JsValue): Option[Try[DateOnlyType]] = {
     Type.typeDeclaration(json).collect {
-      case JsString(DateOnlyType.value) => Success(DateOnlyType(required = json.fieldBooleanValue("required").getOrElse(false)))
+      case JsString(DateOnlyType.value) => Success(DateOnlyType(required = json.fieldBooleanValue("required")))
     }
   }
 
@@ -69,11 +69,11 @@ case object DateOnlyType {
   *
   * example: 12:30:00
   */
-case class TimeOnlyType(id: Id = ImplicitId, required: Boolean = true) extends DateType {
+case class TimeOnlyType(id: Id = ImplicitId, required: Option[Boolean] = None) extends DateType {
 
   val format = RFC3339PartialTime
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -86,7 +86,7 @@ case object TimeOnlyType {
 
   def unapply(json: JsValue): Option[Try[TimeOnlyType]] = {
     Type.typeDeclaration(json).collect {
-      case JsString(TimeOnlyType.value) => Success(TimeOnlyType(required = json.fieldBooleanValue("required").getOrElse(false)))
+      case JsString(TimeOnlyType.value) => Success(TimeOnlyType(required = json.fieldBooleanValue("required")))
     }
   }
 
@@ -99,11 +99,11 @@ case object TimeOnlyType {
   *
   * example: 2015-07-04T21:00:00
   */
-case class DateTimeOnlyType(id: Id = ImplicitId, required: Boolean = true) extends DateType {
+case class DateTimeOnlyType(id: Id = ImplicitId, required: Option[Boolean] = None) extends DateType {
 
   val format = DateOnlyTimeOnly
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -116,7 +116,7 @@ case object DateTimeOnlyType {
 
   def unapply(json: JsValue): Option[Try[DateTimeOnlyType]] = {
     Type.typeDeclaration(json).collect {
-      case JsString(DateTimeOnlyType.value) => Success(DateTimeOnlyType(required = json.fieldBooleanValue("required").getOrElse(false)))
+      case JsString(DateTimeOnlyType.value) => Success(DateTimeOnlyType(required = json.fieldBooleanValue("required")))
     }
   }
 
@@ -142,11 +142,11 @@ object DateTimeType {
 }
 
 
-case class DateTimeDefaultType(id: Id = ImplicitId, required: Boolean = true) extends DateTimeType {
+case class DateTimeDefaultType(id: Id = ImplicitId, required: Option[Boolean] = None) extends DateTimeType {
 
   val format = RFC3339DateTime
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -161,18 +161,18 @@ case object DateTimeDefaultType {
 
     Type.typeDeclaration(json).collect {
       case JsString(DateTimeType.value) if isValid =>
-        Success(DateTimeDefaultType(required = json.fieldBooleanValue("required").getOrElse(false)))
+        Success(DateTimeDefaultType(required = json.fieldBooleanValue("required")))
     }
   }
 
 }
 
 
-case class DateTimeRFC2616Type(id: Id = ImplicitId, required: Boolean = true) extends DateTimeType {
+case class DateTimeRFC2616Type(id: Id = ImplicitId, required: Option[Boolean] = None) extends DateTimeType {
 
   val format = RFC2616
 
-  def asRequired = copy(required = true)
+  def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -187,7 +187,7 @@ case object DateTimeRFC2616Type {
 
     Type.typeDeclaration(json).collect {
       case JsString(DateTimeType.value) if isValid =>
-        Success(DateTimeRFC2616Type(required = json.fieldBooleanValue("required").getOrElse(false)))
+        Success(DateTimeRFC2616Type(required = json.fieldBooleanValue("required")))
     }
   }
 
