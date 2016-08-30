@@ -49,19 +49,11 @@ object ObjectType {
   val value = "object"
 
 
-  def apply(schema: JsValue, nameOpt: Option[String])(implicit parseContext: ParseContext): Try[ObjectType] = {
+  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[ObjectType] = {
 
     // Process the id
-    val id: Id = {
-      val provisionaryId =
-        schema match {
-          case IdExtractor(schemaId) => schemaId
-        }
-      // If there is no explicit id field set, then use the given name (if there is one) to create the id.
-      (provisionaryId, nameOpt.map(parseContext.nameToId)) match {
-        case (ImplicitId, Some(nameBasedId)) => nameBasedId
-        case (otherId, _)                    => otherId
-      }
+    val id: Id = schema match {
+      case IdExtractor(schemaId) => schemaId
     }
 
     // Process the properties
@@ -147,16 +139,11 @@ object ObjectType {
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ObjectType]] = unapply((None, json))
-
-
-  def unapply(nameAndJsVal: (Option[String], JsValue))(implicit parseContext: ParseContext): Option[Try[ObjectType]] = {
-
-    val (name, json) = nameAndJsVal
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ObjectType]] = {
 
     (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
-      case (Some(JsString(ObjectType.value)), _, None) => Some(ObjectType(json, name))
-      case (None, Some(jsObj), None)                   => Some(ObjectType(json, name))
+      case (Some(JsString(ObjectType.value)), _, None) => Some(ObjectType(json))
+      case (None, Some(jsObj), None)                   => Some(ObjectType(json))
       case _                                           => None
     }
 

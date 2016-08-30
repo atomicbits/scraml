@@ -27,10 +27,10 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 10/02/16.
   */
-case class Types(nativeTypes: List[Type] = List.empty, external: Map[String, String] = Map.empty) {
+case class Types(typeDefinitions: Map[String, Type] = Map.empty) {
 
   def ++(otherTypes: Types): Types = {
-    Types(nativeTypes ++ otherTypes.nativeTypes, external ++ otherTypes.external)
+    Types(typeDefinitions ++ otherTypes.typeDefinitions)
   }
 
 }
@@ -52,10 +52,7 @@ object Types {
     def typesJsObjToTypes(typesJsObj: JsObject): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
-          case (key: String, incl: JsObject)  => parseContext.withSource(incl)(typeObjectToNativeTypes(key, incl))
-          case (key: String, JsString(value)) =>
-            // json-schema is parsed as a single string because it was not in a yaml file
-            Success(Types(external = Map(key -> value)))
+          case (key: String, incl: JsValue) => parseContext.withSource(incl)(typeObjectToNativeTypes(key, incl))
         }
       foldTryTypes(tryTypes)
     }
@@ -69,12 +66,15 @@ object Types {
       }
     }
 
-    def typeObjectToNativeTypes(name: String, typeDefinition: JsObject)(implicit parseContext: ParseContext): Try[Types] = {
+    def typeObjectToNativeTypes(name: String, typeDefinition: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
 
-      (name, typeDefinition) match {
-        case Type(sometype) => sometype.map(tp => Types(nativeTypes = List(tp)))
-      }
+      val result =
+        typeDefinition match {
+          case Type(sometype) => sometype.map(tp => Types(typeDefinitions = Map(name -> tp)))
+          case x              => sys.error(s"Unknown type $x.")
+        }
 
+      result
     }
 
     parseContext.withSource(typesJson)(doApply(typesJson))

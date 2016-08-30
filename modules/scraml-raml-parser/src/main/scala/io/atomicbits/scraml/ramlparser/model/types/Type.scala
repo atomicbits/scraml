@@ -66,7 +66,6 @@ trait Fragmented {
 trait AllowedAsObjectField {
 
 
-
 }
 
 
@@ -132,26 +131,28 @@ object Type {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Type]] = {
 
-    json match {
-      case StringType(tryStringType)                => Some(tryStringType)
-      case NumberType(tryNumberType)                => Some(tryNumberType)
-      case IntegerType(tryIntegerType)              => Some(tryIntegerType)
-      case BooleanType(tryBooleanType)              => Some(tryBooleanType)
-      case DateOnlyType(dateOnlyType)               => Some(dateOnlyType)
-      case TimeOnlyType(timeOnlyType)               => Some(timeOnlyType)
-      case DateTimeOnlyType(dateTimeOnlyType)       => Some(dateTimeOnlyType)
-      case DateTimeDefaultType(dateTimeDefaultType) => Some(dateTimeDefaultType)
-      case DateTimeRFC2616Type(dateTimeRfc2616Type) => Some(dateTimeRfc2616Type)
-      case FileType(fileType)                       => Some(fileType)
-      case NullType(tryNullType)                    => Some(tryNullType)
-      case EnumType(tryEnumType)                    => Some(tryEnumType)
-      case ArrayType(tryArrayType)                  => Some(tryArrayType)
-      case ObjectType(tryObjectType)                => Some(tryObjectType)
-      case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
-      case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
-      case _                                        => None
-    }
+    val result =
+      json match {
+        case StringType(tryStringType)                => Some(tryStringType)
+        case NumberType(tryNumberType)                => Some(tryNumberType)
+        case IntegerType(tryIntegerType)              => Some(tryIntegerType)
+        case BooleanType(tryBooleanType)              => Some(tryBooleanType)
+        case DateOnlyType(dateOnlyType)               => Some(dateOnlyType)
+        case TimeOnlyType(timeOnlyType)               => Some(timeOnlyType)
+        case DateTimeOnlyType(dateTimeOnlyType)       => Some(dateTimeOnlyType)
+        case DateTimeDefaultType(dateTimeDefaultType) => Some(dateTimeDefaultType)
+        case DateTimeRFC2616Type(dateTimeRfc2616Type) => Some(dateTimeRfc2616Type)
+        case FileType(fileType)                       => Some(fileType)
+        case NullType(tryNullType)                    => Some(tryNullType)
+        case EnumType(tryEnumType)                    => Some(tryEnumType)
+        case ArrayType(tryArrayType)                  => Some(tryArrayType)
+        case ObjectType(tryObjectType)                => Some(tryObjectType)
+        case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
+        case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
+        case _                                        => None
+      }
 
+    result
   }
 
 

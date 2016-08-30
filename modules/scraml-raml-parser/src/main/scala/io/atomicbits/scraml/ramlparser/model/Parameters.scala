@@ -45,8 +45,8 @@ case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
   */
 object Parameters {
 
-  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
 
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
 
     def jsObjectToParameters(jsObject: JsObject): Try[Parameters] = {
 
