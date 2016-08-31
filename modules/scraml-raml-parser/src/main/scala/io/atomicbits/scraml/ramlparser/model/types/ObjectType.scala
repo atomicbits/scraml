@@ -35,7 +35,7 @@ case class ObjectType(id: Id,
                       required: Option[Boolean] = None,
                       requiredFields: List[String] = List.empty,
                       selection: Option[Selection] = None,
-                      fragments: Map[String, Type] = Map.empty,
+                      fragments: Fragment = Fragment(),
                       typeVariables: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
@@ -67,7 +67,9 @@ object ObjectType {
         TryUtils.accumulate(propertyTryMap.toMap)
     } getOrElse Success(Map.empty[String, Type])
 
-    val fragments = Type.collectFragments(schema)
+    val fragments = schema match {
+      case Fragment(fragment) => fragment
+    }
 
     // Process the required field
     val (required, requiredFields) =
@@ -132,7 +134,7 @@ object ObjectType {
       Success(required),
       Success(requiredFields.getOrElse(List.empty[String])),
       TryUtils.accumulate(selection),
-      TryUtils.accumulate(fragments),
+      fragments,
       Success(typeVariables),
       Success(typeDiscriminator)
     )(new ObjectType(_, _, _, _, _, _, _, _, _))
@@ -150,7 +152,7 @@ object ObjectType {
   }
 
 
-  def schemaToDiscriminatorValue(schema: Type): Option[String] = {
+  def schemaToDiscriminatorValue(schema: Identifiable): Option[String] = {
     Some(schema) collect {
       case enumType: EnumType if enumType.choices.length == 1 => enumType.choices.head
     }
@@ -161,8 +163,8 @@ object ObjectType {
                                                       (implicit parseContext: ParseContext): Try[Type] = {
 
     def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
-      oneOfFragment.fragments.get("properties") collect {
-        case propFrag: Fragment => propFrag.fragments.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
+      oneOfFragment.fragmentMap.get("properties") collect {
+        case propFrag: Fragment => propFrag.fragmentMap.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
       } getOrElse None
     }
 

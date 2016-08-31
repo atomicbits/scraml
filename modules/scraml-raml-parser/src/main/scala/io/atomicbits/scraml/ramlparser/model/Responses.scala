@@ -52,9 +52,9 @@ object Responses {
       accumulate(tryResponseMap).map(responses => Responses(responses.toMap))
     }
 
-    jsValue match {
-      case jsObject: JsObject => fromJsObject(jsObject)
-      case _                  => Success(Responses())
+    (jsValue \ Response.value).toOption match {
+      case Some(jsObject: JsObject) => fromJsObject(jsObject)
+      case _                        => Success(Responses())
     }
   }
 

@@ -66,7 +66,7 @@ import scala.util.{Failure, Success, Try}
 case class GenericObjectType(id: Id,
                              typeVariable: String,
                              required: Option[Boolean] = None,
-                             fragments: Map[String, Type] = Map.empty)
+                             fragments: Fragment = Fragment())
   extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
@@ -88,7 +88,9 @@ object GenericObjectType {
     // Process the required field
     val required = (schema \ "required").asOpt[Boolean]
 
-    val fragments = TryUtils.accumulate(Type.collectFragments(schema))
+    val fragments = schema match {
+      case Fragment(fragment) => fragment
+    }
 
     val genericType = (schema \ "genericType").asOpt[String].map(Success(_))
       .getOrElse(Failure[String](RamlParseException(s"A generic object must have a 'genericType' field: $id")))

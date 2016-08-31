@@ -42,7 +42,7 @@ object RamlToJsonParser {
     Try {
       val (path, ramlContent) = read(source, charsetName)
       val yaml = new Yaml(SimpleRamlConstructor())
-      val ramlMap: java.util.Map[String, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[String, Any]]
+      val ramlMap: java.util.Map[Any, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[Any, Any]]
       (path, anyToJson(ramlMap))
     } match {
       case Success((path: String, jsvalue)) => (path, jsvalue)
@@ -69,15 +69,20 @@ object RamlToJsonParser {
 
   private def anyToJson(value: Any): JsValue = {
     value match {
-      case s: String                       => Json.toJson(s)
-      case b: Boolean                      => Json.toJson(b)
-      case i: java.lang.Integer            => Json.toJson(i.doubleValue())
-      case d: Double                       => Json.toJson(d)
-      case list: java.util.ArrayList[Any]  => JsArray(list.asScala.map(anyToJson))
-      case map: java.util.Map[String, Any] => JsObject(mapAsScalaMap(map).mapValues(anyToJson).toSeq)
-      case include: Include                => Json.toJson(include)
-      case null                            => JsNull
-      case x                               => sys.error(s"Cannot parse unknown type $x")
+      case s: String                      => Json.toJson(s)
+      case b: Boolean                     => Json.toJson(b)
+      case i: java.lang.Integer           => Json.toJson(i.doubleValue())
+      case d: Double                      => Json.toJson(d)
+      case list: java.util.ArrayList[Any] => JsArray(list.asScala.map(anyToJson))
+      case map: java.util.Map[Any, Any]   =>
+        val mapped =
+          mapAsScalaMap(map).map {
+            case (field, theValue) => field.toString -> anyToJson(theValue)
+          }
+        JsObject(mapped.toSeq)
+      case include: Include => Json.toJson(include)
+      case null             => JsNull
+      case x                => sys.error(s"Cannot parse unknown type $x")
     }
   }
 

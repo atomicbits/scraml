@@ -58,7 +58,27 @@ trait NonePrimitiveType extends Type
   */
 trait Fragmented {
 
-  def fragments: Map[String, Type]
+  def fragments: Fragment
+
+  def fragment(field: String): Option[Identifiable] = fragments.fragmentMap.get(field)
+
+  def fragment(fields: List[String]): Option[Identifiable] = {
+
+    val aggregate: (Option[Fragmented], Option[Identifiable]) = (Some(this), None)
+
+    val (_, identifiableOpt) =
+      fields.foldLeft(aggregate) {
+        case ((Some(fragm), _), field) =>
+          val next = fragm.fragment(field)
+          next match {
+            case frag: Option[Fragmented] => (frag, next)
+            case _                        => (None, next)
+          }
+        case ((None, _), _)            => (None, None)
+      }
+
+    identifiableOpt
+  }
 
 }
 
@@ -160,28 +180,5 @@ object Type {
     List((json \ "type").toOption, (json \ "schema").toOption).flatten.headOption
   }
 
-
-  def collectFragments(schemaObject: JsValue)(implicit parseContext: ParseContext): Map[String, Try[Type]] = {
-
-    def collectFromJsObjecct(jsObj: JsObject): Map[String, Try[Type]] = {
-      // Process the fragments and exclude the json-schema fields that we don't need to consider
-      // (should be only objects as other fields are ignored as fragmens) ToDo: check this
-      val keysToExclude =
-      Seq("id", "type", "properties", "required", "oneOf", "anyOf", "allOf", "typeVariables", "genericTypes", "genericType")
-      val fragmentsToKeep =
-        keysToExclude.foldLeft[Map[String, JsValue]](jsObj.value.toMap) { (schemaMap, excludeKey) =>
-          schemaMap - excludeKey
-        }
-      fragmentsToKeep collect {
-        case (fragmentFieldName, Type(fragment)) => (fragmentFieldName, fragment)
-      }
-    }
-
-    schemaObject match {
-      case jsObj: JsObject => collectFromJsObjecct(jsObj)
-      case _               => Map.empty
-    }
-
-  }
 
 }

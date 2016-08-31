@@ -32,6 +32,8 @@ case class Response(status: StatusCode, headers: Parameters, body: Body)
 
 object Response {
 
+  val value = "responses"
+
   def unapply(statusAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[Response]] = {
 
     val (statusString, json) = statusAndJsValue

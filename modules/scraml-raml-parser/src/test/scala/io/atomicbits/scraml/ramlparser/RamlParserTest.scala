@@ -20,7 +20,8 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
+import io.atomicbits.util.TestUtils
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 
 
 /**
@@ -28,25 +29,36 @@ import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, FeatureSpec}
   */
 class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Basic RAML parser") {
+  feature("RAML parser") {
 
-    scenario("test a basic RAML 1.0 example") {
+    scenario("test parsing json-schema types in a RAML 1.0 model") {
 
-      Given("a RAML 1.0 specification")
-
-
-
-
+      Given("a RAML 1.0 specification with json-schema types")
+      val parser = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", List("io", "atomicbits", "model"))
 
       When("we parse the specification")
-
-      val result = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas")).parse
-      println(s"Parsed raml: $result")
+      val parsedModel = parser.parse
 
       Then("we get a ...")
+      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      println(s"Parsed raml: $prettyModel")
+    }
 
+
+    scenario("test parsing a complex RAML 1.0 model") {
+
+      Given("a RAML 1.0 specification")
+       val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+
+      When("we parse the specification")
+       val parsedModel = parser.parse
+
+      Then("we get a ...")
+      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      println(s"Parsed raml: $prettyModel")
 
     }
+
   }
 
 

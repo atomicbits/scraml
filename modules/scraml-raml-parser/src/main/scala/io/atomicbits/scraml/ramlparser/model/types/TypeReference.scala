@@ -32,7 +32,7 @@ case class TypeReference(refersTo: Id,
                          id: Id = ImplicitId,
                          required: Option[Boolean] = None,
                          genericTypes: Map[String, Type] = Map.empty,
-                         fragments: Map[String, Type] = Map.empty) extends PrimitiveType with AllowedAsObjectField {
+                         fragments: Fragment = Fragment()) extends PrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
@@ -66,7 +66,9 @@ object TypeReference {
           TryUtils.accumulate[String, Type](genericTsMap.toMap)
       } getOrElse Try(Map.empty[String, Type])
 
-    val fragments = TryUtils.accumulate(Type.collectFragments(schema))
+    val fragments = schema match {
+      case Fragment(fragment) => fragment
+    }
 
     TryUtils.withSuccess(
       Success(ref),

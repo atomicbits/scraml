@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
+import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
@@ -28,28 +28,38 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class Fragment(id: Id, fragments: Map[String, Type]) extends Identifiable with  Fragmented {
+case class Fragment(id: Id = ImplicitId, fragmentMap: Map[String, Identifiable] = Map.empty) extends Identifiable with Fragmented {
 
   override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
 
-  def isEmpty: Boolean = fragments.isEmpty
+  def isEmpty: Boolean = fragmentMap.isEmpty
+
+  def fragments: Fragment = this
 
 }
 
 
 object Fragment {
 
-  def apply(schema: JsObject)(implicit parseContext: ParseContext): Try[Fragment] = {
-    val id = schema match {
+  def apply(jsObj: JsObject)(implicit parseContext: ParseContext): Try[Fragment] = {
+
+    val id = jsObj match {
       case IdExtractor(schemaId) => schemaId
     }
-    val fragments = schema.value.toSeq collect {
+
+    val fragmentsToKeep =
+      keysToExclude.foldLeft[Map[String, JsValue]](jsObj.value.toMap) { (schemaMap, excludeKey) =>
+        schemaMap - excludeKey
+      }
+
+    val fragments = fragmentsToKeep collect {
       case (fragmentFieldName, Type(fragment)) => (fragmentFieldName, fragment)
+      case (fragmentFieldName, Fragment(fragment)) => (fragmentFieldName, fragment)
     }
 
     TryUtils.withSuccess(
       Success(id),
-      TryUtils.accumulate(fragments.toMap)
+      TryUtils.accumulate(fragments)
     )(Fragment(_, _))
   }
 
@@ -62,5 +72,25 @@ object Fragment {
     }
 
   }
+
+
+  // Process the fragments and exclude the json-schema fields that we don't need to consider
+  // (should be only objects as other fields are ignored as fragments) ToDo: check this
+  private val keysToExclude = Seq(
+    "id",
+    "type",
+    "properties",
+    "required",
+    "oneOf",
+    "anyOf",
+    "allOf",
+    "typeVariables",
+    "genericTypes",
+    "genericType",
+    "$ref",
+    "_source",
+    "description",
+    "$schema"
+  )
 
 }
