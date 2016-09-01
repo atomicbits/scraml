@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId}
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import io.atomicbits.scraml.ramlparser.model.Id
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import play.api.libs.json.JsValue
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
   * Created by peter on 10/02/16.
@@ -85,7 +85,6 @@ trait Fragmented {
 
 trait AllowedAsObjectField {
 
-
 }
 
 
@@ -95,13 +94,13 @@ object Type {
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
     typeName match {
-      case StringType.value                  => Try(new StringType())
-      case NumberType.value                  => Try(new NumberType())
-      case IntegerType.value                 => Try(new IntegerType())
-      case BooleanType.value                 => Try(new BooleanType())
-      case NullType.value                    => Try(new StringType())
-      case ArrayType(arrayType)              => arrayType
-      case namedType                         => Try(TypeReference(parseContext.nameToId(namedType)))
+      case StringType.value     => Try(new StringType())
+      case NumberType.value     => Try(new NumberType())
+      case IntegerType.value    => Try(new IntegerType())
+      case BooleanType.value    => Try(new BooleanType())
+      case NullType.value       => Try(new StringType())
+      case ArrayType(arrayType) => arrayType
+      case namedType            => Try(TypeReference(parseContext.nameToId(namedType)))
     }
 
   }
@@ -169,7 +168,7 @@ object Type {
         case ObjectType(tryObjectType)                => Some(tryObjectType)
         case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
         case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
-        case InlineTypeDeclaration(inlineTypeDecl)    => Some(inlineTypeDecl)
+        case InlineTypeDeclaration(inlineType)        => Some(inlineType)
         case _                                        => None
       }
 
