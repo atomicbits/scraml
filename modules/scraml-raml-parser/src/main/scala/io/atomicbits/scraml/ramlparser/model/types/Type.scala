@@ -95,23 +95,13 @@ object Type {
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
     typeName match {
-      case StringType.value     => Try(new StringType())
-      case NumberType.value     => Try(new NumberType())
-      case IntegerType.value    => Try(new IntegerType())
-      case BooleanType.value    => Try(new BooleanType())
-      case NullType.value       => Try(new StringType())
-      case ArrayType(arrayType) => arrayType
-      case namedType            =>
-        Try(Json.parse(namedType)) match {
-          case Success(JsString(stV))    => Try(TypeReference(parseContext.nameToId(namedType)))
-          case Success(nonStringJsValue) =>
-            nonStringJsValue match {
-              case Type(tryType) => tryType
-              case _             => Failure(RamlParseException(s"Could not parse type $typeName in ${parseContext.head}."))
-            }
-          case _                         => Try(TypeReference(parseContext.nameToId(namedType)))
-        }
-
+      case StringType.value                  => Try(new StringType())
+      case NumberType.value                  => Try(new NumberType())
+      case IntegerType.value                 => Try(new IntegerType())
+      case BooleanType.value                 => Try(new BooleanType())
+      case NullType.value                    => Try(new StringType())
+      case ArrayType(arrayType)              => arrayType
+      case namedType                         => Try(TypeReference(parseContext.nameToId(namedType)))
     }
 
   }
@@ -162,7 +152,7 @@ object Type {
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Type]] = {
 
     val result =
-      fullyParsed(json) match {
+      json match {
         case StringType(tryStringType)                => Some(tryStringType)
         case NumberType(tryNumberType)                => Some(tryNumberType)
         case IntegerType(tryIntegerType)              => Some(tryIntegerType)
@@ -179,25 +169,11 @@ object Type {
         case ObjectType(tryObjectType)                => Some(tryObjectType)
         case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
         case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
+        case InlineTypeDeclaration(inlineTypeDecl)    => Some(inlineTypeDecl)
         case _                                        => None
       }
 
     result
-  }
-
-
-  def fullyParsed(json: JsValue): JsValue = {
-
-    json match {
-      case JsString(stringValue) =>
-        Try(Json.parse(stringValue)) match {
-          case Success(JsString(stV))    => json
-          case Success(nonStringJsValue) => nonStringJsValue
-          case _                         => json
-        }
-      case other                 => other
-    }
-
   }
 
 

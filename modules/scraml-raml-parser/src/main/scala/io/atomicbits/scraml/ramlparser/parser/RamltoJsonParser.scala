@@ -69,7 +69,7 @@ object RamlToJsonParser {
 
   private def anyToJson(value: Any): JsValue = {
     value match {
-      case s: String                      => Json.toJson(s)
+      case s: String                      => unwrapJsonString(Json.toJson(s))
       case b: Boolean                     => Json.toJson(b)
       case i: java.lang.Integer           => Json.toJson(i.doubleValue())
       case d: Double                      => Json.toJson(d)
@@ -80,9 +80,23 @@ object RamlToJsonParser {
             case (field, theValue) => field.toString -> anyToJson(theValue)
           }
         JsObject(mapped.toSeq)
-      case include: Include => Json.toJson(include)
-      case null             => JsNull
-      case x                => sys.error(s"Cannot parse unknown type $x")
+      case include: Include               => Json.toJson(include)
+      case null                           => JsNull
+      case x                              => sys.error(s"Cannot parse unknown type $x")
+    }
+  }
+
+  /**
+    * One time 'unwrap' of a JSON value that is wrapped as a string value.
+    */
+  private def unwrapJsonString(json: JsValue): JsValue = {
+    json match {
+      case JsString(stringVal) =>
+        Try(Json.parse(stringVal)) match {
+          case Success(nonStringJsValue) => nonStringJsValue
+          case _                         => json
+        }
+      case _                   => json
     }
   }
 

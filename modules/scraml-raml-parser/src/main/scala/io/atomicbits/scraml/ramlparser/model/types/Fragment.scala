@@ -90,7 +90,8 @@ object Fragment {
     "$ref",
     "_source",
     "description",
-    "$schema"
+    "$schema",
+    "items"
   )
 
 }
