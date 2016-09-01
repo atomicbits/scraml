@@ -129,3 +129,5 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
  * an implicit id is a fragment id that hasn't been set.
  */
 case object ImplicitId extends Id
+
+case class NameId() extends Id

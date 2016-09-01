@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/crs.json",
+  "title": "crs",
+  "description": "a Coordinate Reference System object",
+  "type": "object",
+  "required": [
+    "type",
+    "properties"
+  ],
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "properties": {
+      "id": "http://atomicbits.io/schema/named-crs-property.json",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  }
+}

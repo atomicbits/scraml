@@ -280,9 +280,9 @@ object ScalaResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType)
-          s"""def $cleanUrlSegment(_value: $paramType) = new ${
+          s"""def $cleanUrlSegment(value: $paramType) = new ${
             resource.classRep.fullyQualifiedName
-          }(_value, _requestBuilder.withAddedPathSegment(_value))"""
+          }(value, _requestBuilder.withAddedPathSegment(value))"""
         case None            =>
           s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(_requestBuilder.withAddedPathSegment("${
             resource.urlSegment

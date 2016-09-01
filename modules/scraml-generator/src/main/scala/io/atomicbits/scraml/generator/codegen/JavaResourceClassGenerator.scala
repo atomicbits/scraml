@@ -129,9 +129,9 @@ object JavaResourceClassGenerator {
 
       val resourceConstructors = generateResourceConstructors(resource)
 
-      val shallowCloneValueAssignment =
-        if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
-        else ""
+//      val shallowCloneValueAssignment =
+//        if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
+//        else ""
 
       val sourcecode =
         s"""

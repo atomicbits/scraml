@@ -1,0 +1,29 @@
+#%RAML 1.0
+title: GitHub API
+version: v3
+baseUri: https://api.github.com
+mediaType:  application/json
+securitySchemes:
+  - oauth_2_0: !include securitySchemes/oauth_2_0.raml
+types:
+    Gist:  !include types/gist.raml
+    Gists: !include types/gists.raml
+resourceTypes:
+    collection: !include types/collection.raml
+traits:
+  secured:
+    usage: Apply this to any method that needs to be secured
+    description: Some requests require authentication.
+    headers:
+      access_token:
+        description: Access Token
+        example: 5757gh76
+        required: true
+traits2:
+   - secured: !include traits/secured.raml
+   - rateLimited: !include traits/rate-limited.raml
+securedBy: [ oauth_2_0 ]
+/search/code:
+  description: Create a new <<resourcePathName|!singularize>>
+  type: collection
+  get: 5.0
