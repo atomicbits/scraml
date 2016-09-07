@@ -69,7 +69,7 @@ case class GenericObjectType(id: Id,
                              fragments: Fragment = Fragment())
   extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): GenericObjectType = copy(id = updatedId)
 
 }
 

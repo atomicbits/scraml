@@ -45,11 +45,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
     )
 
-    val host = defaultPackage.take(2).reverse.mkString(".")
-    val urlPath = defaultPackage.drop(2).mkString("/")
-
-    val nameToId: String => Id = name => RootId(s"http://$host/$urlPath/$name.json")
-    val parseContext = ParseContext(List(ramlSource), nameToId)
+    val parseContext = ParseContext(List(ramlSource))
 
     Raml(parsed)(parseContext)
   }

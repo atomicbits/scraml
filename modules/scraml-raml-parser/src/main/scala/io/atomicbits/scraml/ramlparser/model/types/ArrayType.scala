@@ -37,7 +37,7 @@ case class ArrayType(items: Type,
                      uniqueItems: Boolean = false,
                      fragments: Fragment = Fragment()) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): ArrayType = copy(id = updatedId)
 
   def asRequired = copy(required = Some(true))
 

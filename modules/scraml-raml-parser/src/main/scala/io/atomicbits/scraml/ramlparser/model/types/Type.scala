@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.Id
+import io.atomicbits.scraml.ramlparser.model.{Id, NativeId}
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.JsValue
 
@@ -37,7 +37,10 @@ trait Type extends Identifiable {
   // level of the object definition, but this also implies a default value of false.
   def isRequired = required.getOrElse(true)
 
+  def updated(id: Id): Type
+
 }
+
 
 trait Identifiable {
 
@@ -100,7 +103,7 @@ object Type {
       case BooleanType.value    => Try(new BooleanType())
       case NullType.value       => Try(new StringType())
       case ArrayType(arrayType) => arrayType
-      case namedType            => Try(TypeReference(parseContext.nameToId(namedType)))
+      case namedType            => Try(TypeReference(NativeId(namedType)))
     }
 
   }

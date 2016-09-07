@@ -105,7 +105,7 @@ case class DateTimeOnlyType(id: Id = ImplicitId, required: Option[Boolean] = Non
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): DateTimeOnlyType = copy(id = updatedId)
 
 }
 

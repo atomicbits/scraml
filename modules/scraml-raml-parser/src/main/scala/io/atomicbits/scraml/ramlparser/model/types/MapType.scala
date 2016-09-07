@@ -26,6 +26,6 @@ import io.atomicbits.scraml.ramlparser.model.Id
   */
 case class MapType(id: Id, baseType: List[String], elementType: String, required: Option[Boolean] = None) extends Type {
 
-  def updated(updatedId: Id): Type = copy(id = updatedId)
+  def updated(updatedId: Id): MapType = copy(id = updatedId)
 
 }

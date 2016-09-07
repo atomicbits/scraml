@@ -19,33 +19,37 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.lookup.TypeLookupTable
 import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model._
 
 import scala.language.postfixOps
 
 /**
- * Created by peter on 22/08/15. 
- */
-case class RichAction(actionType: ActionType,
-                      queryParameters: Map[String, Parameter],
+  * Created by peter on 22/08/15.
+  */
+case class RichAction(actionType: Method,
+                      queryParameters: Parameters,
                       contentTypes: Set[ContentType],
                       responseTypes: Set[ResponseType],
-                      headers: Map[String, Parameter],
+                      headers: Parameters,
                       selectedContentType: ContentType = NoContentType,
                       selectedResponsetype: ResponseType = NoResponseType)
 
 object RichAction {
 
-  def apply(action: Action, schemaLookup: SchemaLookup)(implicit lang: Language): RichAction = {
+  def apply(action: Action, schemaLookup: TypeLookupTable)(implicit lang: Language): RichAction = {
 
-    def mimeTypeToClassRep(mimeType: MimeType): Option[TypedClassReference] = {
-      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsTypedClassReference)
+    def mimeTypeToClassRep(bodyContent: BodyContent): Option[TypedClassReference] = {
+      bodyContent.bodyType.collect {
+        case typedClassReference: TypedClassReference => typedClassReference // ToDo: is this only a type reference, or also inline types?
+      }
     }
 
-    val contentTypes = action.body.values.toList map { mimeType =>
+    val contentTypes = action.body.headerMap map {
+      case (mimeType, content) =>
       ContentType(
-        contentTypeHeader = mimeType.mimeType,
+        contentTypeHeader = mimeType,
         classReference = mimeTypeToClassRep(mimeType),
         formParameters = mimeType.formParameters
       )
@@ -66,7 +70,7 @@ object RichAction {
             classReference = mimeTypeToClassRep(mimeType)
           )
         }
-      }  getOrElse Set.empty[ResponseType]
+      } getOrElse Set.empty[ResponseType]
 
     RichAction(
       actionType = action.actionType,

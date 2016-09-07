@@ -19,18 +19,29 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.{Id, AbsoluteId}
+import io.atomicbits.scraml.ramlparser.model._
+
 
 /**
- * Created by peter on 22/07/15. 
- */
-object SchemaUtil {
+  * Created by peter on 22/07/15.
+  */
+object TypeUtils {
 
-  def asAbsoluteId(id: Id): AbsoluteId = {
+  def asUniqueId(id: Id): UniqueId = {
 
     id match {
-      case absId: AbsoluteId => absId
-      case _                 => sys.error(s"$id is not an absolute id.")
+      case uniqueId: UniqueId => uniqueId
+      case _                  => sys.error(s"$id is not a unique id.")
+    }
+
+  }
+
+
+  def asAbsoluteId(id: Id, nativeToRootId: NativeId => RootId): AbsoluteId = {
+
+    id match {
+      case nativeId: NativeId     => nativeToRootId(nativeId)
+      case absoluteId: AbsoluteId => absoluteId
     }
 
   }

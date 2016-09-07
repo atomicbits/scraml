@@ -28,13 +28,17 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class Fragment(id: Id = ImplicitId, fragmentMap: Map[String, Identifiable] = Map.empty) extends Identifiable with Fragmented {
+case class Fragment(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.empty) extends Type with Fragmented {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): Fragment = copy(id = updatedId)
 
   def isEmpty: Boolean = fragmentMap.isEmpty
 
   def fragments: Fragment = this
+
+  def map[T](fn: ((String, Type)) => (String, Type)): Fragment = copy(fragmentMap = fragmentMap.map(fn))
+
+  override def required: Option[Boolean] = None
 
 }
 

@@ -38,7 +38,7 @@ case class StringType(id: Id = ImplicitId,
                       required: Option[Boolean] = None)
   extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): StringType = copy(id = updatedId)
 
 }
 

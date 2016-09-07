@@ -34,7 +34,7 @@ case class TypeReference(refersTo: Id,
                          genericTypes: Map[String, Type] = Map.empty,
                          fragments: Fragment = Fragment()) extends PrimitiveType with AllowedAsObjectField with Fragmented {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
 
 }
 

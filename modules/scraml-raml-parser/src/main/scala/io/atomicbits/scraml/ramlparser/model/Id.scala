@@ -22,9 +22,21 @@ package io.atomicbits.scraml.ramlparser.model
 /**
   * Created by peter on 25/03/16.
   */
+
+
+/**
+  * The base class for all Id's.
+  */
 sealed trait Id
 
-trait AbsoluteId extends Id {
+
+/**
+  * UniqueId's are Id's that are expected to be unique by value within a RAML document.
+  */
+sealed trait UniqueId extends Id
+
+
+trait AbsoluteId extends UniqueId {
 
   def id: String
 
@@ -76,6 +88,7 @@ case class RootId(id: String) extends AbsoluteId {
 
 }
 
+
 /**
   * A relative id identifies its schema uniquely when expanded with the anchor of its root schema. Its root schema
   * is its nearest parent that has an absolute id. A schema with a relative id is the root for its child-schemas that
@@ -85,6 +98,16 @@ case class RootId(id: String) extends AbsoluteId {
   * @param id The string representation of the id
   */
 case class RelativeId(id: String) extends Id
+
+
+/**
+  * A native id is like a relative id, but it is not expected to have an absolute parent id. NativeId's should not be used in
+  * json-schema definitions. They have been added to cope with the native RAML 1.0 types that either have an NativeId or an ImplicitId.
+  *
+  * We cannot use the RootId concept here, because a NativeID has a free format whereas the RootId is a json-schema concept that
+  * has to meet strict formatting rules.
+  */
+case class NativeId(id: String) extends UniqueId
 
 /**
   * A fragment id identifies its schema uniquely by the schema path (JSON path in the original JSON representation)
@@ -123,5 +146,7 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
   * An implicit id marks the absense of an id. It implies that the schema should be uniquely identified by the schema
   * path (JSON path in the original JSON representation) from its nearest root schema towards itself. In other words,
   * an implicit id is a fragment id that hasn't been set.
+  *
+  * It is not a UniqueId since may items can have ImplicitId's.
   */
 case object ImplicitId extends Id

@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.parser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.{MimeType, Parameters}
+
 
 /**
- * Created by peter on 26/08/15. 
- */
+  * Created by peter on 26/08/15.
+  */
 sealed trait ContentType {
 
   def contentTypeHeaderValue: String
@@ -32,19 +33,19 @@ sealed trait ContentType {
 
 }
 
-case class StringContentType(contentTypeHeaderValue: String) extends ContentType
+case class StringContentType(contentTypeHeaderValue: MimeType) extends ContentType
 
-case class JsonContentType(contentTypeHeaderValue: String) extends ContentType
+case class JsonContentType(contentTypeHeaderValue: MimeType) extends ContentType
 
-case class TypedContentType(contentTypeHeaderValue: String, classReference: TypedClassReference) extends ContentType
+case class TypedContentType(contentTypeHeaderValue: MimeType, classReference: TypedClassReference) extends ContentType
 
-case class FormPostContentType(contentTypeHeaderValue: String, formParameters: Map[String, List[Parameter]]) extends ContentType
+case class FormPostContentType(contentTypeHeaderValue: MimeType, formParameters: Parameters) extends ContentType
 
-case class MultipartFormContentType(contentTypeHeaderValue: String) extends ContentType
+case class MultipartFormContentType(contentTypeHeaderValue: MimeType) extends ContentType
 
-case class BinaryContentType(contentTypeHeaderValue: String) extends ContentType
+case class BinaryContentType(contentTypeHeaderValue: MimeType) extends ContentType
 
-case class AnyContentType(contentTypeHeaderValue: String) extends ContentType
+case class AnyContentType(contentTypeHeaderValue: MimeType) extends ContentType
 
 case object NoContentType extends ContentType {
 
@@ -54,23 +55,24 @@ case object NoContentType extends ContentType {
 
 }
 
+
 object ContentType {
 
-  def apply(contentTypeHeader: String,
+  def apply(contentTypeHeader: MimeType,
             classReference: Option[TypedClassReference],
-            formParameters: Map[String, List[Parameter]]): ContentType = {
+            formParameters: Parameters): ContentType = {
 
-    if (contentTypeHeader.toLowerCase == "multipart/form-data") {
+    if (contentTypeHeader.value.toLowerCase == "multipart/form-data") {
       MultipartFormContentType(contentTypeHeader)
     } else if (formParameters.nonEmpty) {
       FormPostContentType(contentTypeHeader, formParameters)
     } else if (classReference.isDefined) {
       TypedContentType(contentTypeHeader, classReference.get)
-    } else if (contentTypeHeader.toLowerCase.contains("json")) {
+    } else if (contentTypeHeader.value.toLowerCase.contains("json")) {
       JsonContentType(contentTypeHeader)
-    } else if (contentTypeHeader.toLowerCase.contains("text")) {
+    } else if (contentTypeHeader.value.toLowerCase.contains("text")) {
       StringContentType(contentTypeHeader)
-    } else if (contentTypeHeader.toLowerCase.contains("octet-stream")) {
+    } else if (contentTypeHeader.value.toLowerCase.contains("octet-stream")) {
       BinaryContentType(contentTypeHeader)
     } else {
       AnyContentType(contentTypeHeader)

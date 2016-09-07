@@ -39,7 +39,7 @@ case class ObjectType(id: Id,
                       typeVariables: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
-  override def updated(updatedId: Id): NonePrimitiveType = copy(id = updatedId)
+  override def updated(updatedId: Id): ObjectType = copy(id = updatedId)
 
 }
 

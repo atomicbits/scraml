@@ -26,7 +26,7 @@ import play.api.libs.json.{JsString, JsValue}
 /**
   * Created by peter on 10/02/16.
   */
-case class ParseContext(var sourceTrail: List[String], nameToId: String => Id, traits: Traits = Traits()) {
+case class ParseContext(var sourceTrail: List[String], traits: Traits = Traits()) {
 
 
   def withSource[T](jsValue: JsValue)(fn: => T): T = {

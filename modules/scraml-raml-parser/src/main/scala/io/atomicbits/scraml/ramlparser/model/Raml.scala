@@ -154,7 +154,7 @@ object Raml {
           case (field, jsObject: JsObject) if field.startsWith("/") => Resource(field, jsObject)
         } toList
 
-      TryUtils.accumulate(resourceFields)
+      TryUtils.accumulate(resourceFields).map(unparallellizeResources(_, None))
     }
 
 
@@ -193,6 +193,33 @@ object Raml {
       types,
       resources
     )(Raml(_, _, _, _, _, _, _, _, _, _))
+
+  }
+
+
+  private def unparallellizeResources(resources: Seq[Resource], parent: Option[Resource] = None): Seq[Resource] = {
+
+    // Group all resources at this level with the same urlSegment and urlParameter
+    val groupedResources: Seq[Seq[Resource]] =
+    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toSeq
+
+    // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
+    def mergeResources(resources: Seq[Resource]): Resource = {
+      resources.reduce { (resourceA, resourceB) =>
+        resourceA.copy(actions = resourceA.actions ++ resourceB.actions, resources = resourceA.resources ++ resourceB.resources)
+      }
+    }
+    val mergedResources: Seq[Resource] = groupedResources.map(mergeResources)
+
+    mergedResources.map { mergedResource =>
+      mergedResource.copy(
+        resources =
+          unparallellizeResources(
+            resources = mergedResource.resources,
+            parent = Some(mergedResource)
+          )
+      )
+    }
 
   }
 

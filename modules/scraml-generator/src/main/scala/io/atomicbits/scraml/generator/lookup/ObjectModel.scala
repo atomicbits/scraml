@@ -19,18 +19,18 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.jsonschemaparser.{AbsoluteId, Id}
-import io.atomicbits.scraml.jsonschemaparser.model.{OneOf, ObjectEl, Selection, Schema}
+import io.atomicbits.scraml.ramlparser.model.AbsoluteId
+import io.atomicbits.scraml.ramlparser.model.types.{ObjectType, Selection, Type}
 
 /**
  * Created by peter on 5/07/15. 
  */
-case class ObjectElExt(id: AbsoluteId,
-                       properties: Map[String, Schema],
+case class ObjectModel(id: AbsoluteId,
+                       properties: Map[String, Type],
                        required: Boolean,
                        requiredFields: List[String] = List.empty,
                        selection: Option[Selection] = None,
-                       fragments: Map[String, Schema] = Map.empty,
+                       fragments: Map[String, Type] = Map.empty,
                        parent: Option[AbsoluteId] = None,
                        children: List[AbsoluteId] = List.empty,
                        typeVariables: List[String] = List.empty,
@@ -43,9 +43,9 @@ case class ObjectElExt(id: AbsoluteId,
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
-  def topLevelParent(schemaLookup: SchemaLookup): Option[ObjectElExt] = {
+  def topLevelParent(schemaLookup: TypeLookupTable): Option[ObjectModel] = {
 
-    def findTopLevelParent(absoluteId: AbsoluteId): ObjectElExt = {
+    def findTopLevelParent(absoluteId: AbsoluteId): ObjectModel = {
       val objElExt = schemaLookup.objectMap(absoluteId)
       objElExt.parent match {
         case Some(parentId) => findTopLevelParent(parentId)
@@ -60,11 +60,11 @@ case class ObjectElExt(id: AbsoluteId,
 }
 
 
-object ObjectElExt {
+object ObjectModel {
 
-  def apply(obj: ObjectEl): ObjectElExt =
-    ObjectElExt(
-      id = SchemaUtil.asAbsoluteId(obj.id),
+  def apply(obj: ObjectType): ObjectModel =
+    ObjectModel(
+      id = TypeUtils.asUniqueId(obj.id),
       properties = obj.properties,
       required = obj.required,
       requiredFields = obj.requiredFields,

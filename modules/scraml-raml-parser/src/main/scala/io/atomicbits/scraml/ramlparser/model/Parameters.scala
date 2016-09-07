@@ -31,6 +31,8 @@ import scala.language.postfixOps
 
 case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
+  def nonEmpty: Boolean = valueMap.nonEmpty
+
   def byName(name: String): Option[Parameter] = valueMap.get(name)
 
   val values: List[Parameter] = valueMap.values.toList
