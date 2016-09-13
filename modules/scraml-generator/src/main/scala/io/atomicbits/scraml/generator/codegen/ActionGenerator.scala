@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Method
 
 /**
   * Created by peter on 23/08/15.
@@ -62,7 +62,7 @@ case class ActionGenerator(actionCode: ActionCode) {
         } yield actionWithTypeSelection
       }
 
-    val groupedByActionType: Map[ActionType, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
+    val groupedByActionType: Map[Method, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
 
     // now, we have to map the actions onto a segment path if necessary
     val actionPathToAction: List[ActionPath] =

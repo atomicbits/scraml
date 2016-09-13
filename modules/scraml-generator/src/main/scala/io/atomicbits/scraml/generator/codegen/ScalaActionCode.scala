@@ -21,7 +21,8 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
   * Created by peter on 30/09/15.
@@ -123,12 +124,12 @@ object ScalaActionCode extends ActionCode {
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     val typeTypeName = parameter.parameterType match {
-      case StringType  => "String"
-      case IntegerType => "Long"
-      case NumberType  => "Double"
-      case BooleanType => "Boolean"
-      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
+      case stringType: StringType   => "String"
+      case integerType: IntegerType => "Long"
+      case numbertype: NumberType   => "Double"
+      case booleanType: BooleanType => "Boolean"
+      case fileType: FileType       => sys.error(s"RAML type 'FileType' is not yet supported.")
+      case dateType: DateType       => sys.error(s"RAML type 'DateType' is not yet supported.")
     }
 
     if (parameter.repeated) {
@@ -149,9 +150,9 @@ object ScalaActionCode extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     parameter match {
-      case Parameter(_, _, true)      => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, true, false)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, false, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+      case Parameter(_, _, _, true)      => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      case Parameter(_, _, true, false)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      case Parameter(_, _, false, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
     }
   }
 

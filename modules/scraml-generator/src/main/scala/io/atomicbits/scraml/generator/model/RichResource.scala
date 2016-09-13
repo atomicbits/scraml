@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.lookup.TypeLookupTable
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model.{Parameter, Resource}
+import io.atomicbits.scraml.ramlparser.model.{Parameter, Resource}
 
 /**
  * Created by peter on 22/08/15. 

@@ -39,7 +39,7 @@ case class Raml(title: String,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
-                resources: Seq[Resource])
+                resources: List[Resource])
 
 
 object Raml {
@@ -147,7 +147,7 @@ object Raml {
       * property, e.g.: /users, /{groupId}, etc."
       *
       */
-    val resources: Try[Seq[Resource]] = {
+    val resources: Try[List[Resource]] = {
 
       val resourceFields: List[Try[Resource]] =
         ramlJson.fieldSet.collect {
@@ -197,19 +197,19 @@ object Raml {
   }
 
 
-  private def unparallellizeResources(resources: Seq[Resource], parent: Option[Resource] = None): Seq[Resource] = {
+  private def unparallellizeResources(resources: List[Resource], parent: Option[Resource] = None): List[Resource] = {
 
     // Group all resources at this level with the same urlSegment and urlParameter
-    val groupedResources: Seq[Seq[Resource]] =
-    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toSeq
+    val groupedResources: List[List[Resource]] =
+    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
 
     // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
-    def mergeResources(resources: Seq[Resource]): Resource = {
+    def mergeResources(resources: List[Resource]): Resource = {
       resources.reduce { (resourceA, resourceB) =>
         resourceA.copy(actions = resourceA.actions ++ resourceB.actions, resources = resourceA.resources ++ resourceB.resources)
       }
     }
-    val mergedResources: Seq[Resource] = groupedResources.map(mergeResources)
+    val mergedResources: List[Resource] = groupedResources.map(mergeResources)
 
     mergedResources.map { mergedResource =>
       mergedResource.copy(

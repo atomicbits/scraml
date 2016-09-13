@@ -23,11 +23,12 @@ import java.util.Locale
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 30/09/15.
+  */
 object JavaActionCode extends ActionCode {
 
   implicit val language: Language = Java
@@ -145,15 +146,15 @@ object JavaActionCode extends ActionCode {
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     val typeTypeName = parameter.parameterType match {
-      case IntegerType if parameter.required => "long"
-      case NumberType  if parameter.required => "double"
-      case BooleanType if parameter.required => "boolean"
-      case StringType  => "String"
-      case IntegerType => "Long"
-      case NumberType  => "Double"
-      case BooleanType => "Boolean"
-      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
+      case integerType: IntegerType if parameter.required => "long"
+      case numbertype: NumberType if parameter.required   => "double"
+      case booleanType: BooleanType if parameter.required => "boolean"
+      case stringtype: StringType                         => "String"
+      case integerType: IntegerType                       => "Long"
+      case numbertype: NumberType                         => "Double"
+      case booleanType: BooleanType                       => "Boolean"
+      case fileType: FileType                             => sys.error(s"RAML type 'FileType' is not yet supported.")
+      case dateType: DateType                             => sys.error(s"RAML type 'DateType' is not yet supported.")
     }
 
     if (parameter.repeated) {
@@ -168,8 +169,8 @@ object JavaActionCode extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedQueryParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
     parameter match {
-      case Parameter(_, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
-      case Parameter(_, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
+      case Parameter(_, _, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
+      case Parameter(_, _, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
     }
   }
 

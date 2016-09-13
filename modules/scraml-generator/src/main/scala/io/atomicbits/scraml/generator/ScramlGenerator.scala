@@ -148,13 +148,13 @@ object ScramlGenerator {
       case Scala =>
         val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
         println(s"Case classes generated")
-        val resources: Seq[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
+        val resources: List[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
         caseClasses ++ resources
       case Java  =>
         val pojos: Seq[ClassRep] = PojoGenerator.generatePojos(classMap)
         println(s"POJOs generated")
-        val resources: Seq[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
+        val resources: List[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
         pojos ++ resources
     }

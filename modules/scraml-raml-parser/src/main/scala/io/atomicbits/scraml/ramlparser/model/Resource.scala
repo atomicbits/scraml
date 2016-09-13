@@ -36,8 +36,8 @@ case class Resource(urlSegment: String,
                     urlParameter: Option[Parameter] = None,
                     displayName: Option[String] = None,
                     description: Option[String] = None,
-                    actions: Seq[Action] = Seq.empty,
-                    resources: Seq[Resource] = Seq.empty,
+                    actions: List[Action] = List.empty,
+                    resources: List[Resource] = List.empty,
                     parent: Option[Resource] = None)
 
 
