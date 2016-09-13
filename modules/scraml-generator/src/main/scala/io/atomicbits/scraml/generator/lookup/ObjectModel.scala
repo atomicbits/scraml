@@ -64,12 +64,12 @@ object ObjectModel {
 
   def apply(obj: ObjectType): ObjectModel =
     ObjectModel(
-      id = TypeUtils.asUniqueId(obj.id),
+      id = TypeUtils.asAbsoluteId(obj.id),
       properties = obj.properties,
-      required = obj.required,
+      required = obj.isRequired,
       requiredFields = obj.requiredFields,
       selection = obj.selection,
-      fragments = obj.fragments,
+      fragments = obj.fragments.fragmentMap,
       typeVariables = obj.typeVariables,
       typeDiscriminator = obj.typeDiscriminator
     )

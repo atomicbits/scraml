@@ -50,7 +50,7 @@ case class AnyContentType(contentTypeHeader: MediaType) extends ContentType
 
 case object NoContentType extends ContentType {
 
-  val contentTypeHeader = ""
+  val contentTypeHeader = MediaType("")
 
   override val contentTypeHeaderOpt = None
 

@@ -22,14 +22,14 @@ package io.atomicbits.scraml.generator.lookup
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.{AbsoluteId, NativeId, RootId, UniqueId}
-import io.atomicbits.scraml.ramlparser.model.types.{AllowedAsObjectField, AllowedAsObjectField => _, _}
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
   * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
   */
 class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
-  type CanonicalMap = Map[UniqueId, ClassRep]
+  type CanonicalMap = Map[AbsoluteId, ClassRep]
 
   val classReferenceBuilder = new ClassReferenceBuilder(nativeToRootId)
 
@@ -191,7 +191,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
     ttype match {
       case objectType: ObjectType               =>
-        val classReference = lookupTable.classReps(TypeUtils.asUniqueId(ttype.id)).classRef
+        val classReference = lookupTable.classReps(TypeUtils.asAbsoluteId(ttype.id)).classRef
         if (types.isEmpty) classReference
         else TypedClassReference(classReference, types)
       case genericObjectType: GenericObjectType => GenericClassPointer(genericObjectType.typeVariable)

@@ -42,7 +42,7 @@ case class BinaryResponseType(acceptHeader: MediaType) extends ResponseType
 
 case object NoResponseType extends ResponseType {
 
-  val acceptHeader = ""
+  val acceptHeader = MediaType("")
 
   override val acceptHeaderOpt = None
 

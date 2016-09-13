@@ -126,9 +126,9 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
       (resource.copy(actions = updatedActions), updatedTypes)
     }
 
-    def extract(resources: Seq[Resource], types: Types): (Seq[Resource], Types) = {
+    def extract(resources: List[Resource], types: Types): (List[Resource], Types) = {
 
-      resources.foldLeft((Seq.empty[Resource], types)) {
+      resources.foldLeft((List.empty[Resource], types)) {
         case ((processedResources, processedTypes), resource) =>
           val (updatedParentResource, updatedTypes) = extractFromResource(resource, processedTypes)
           val (updatedChildResources, updatedTypesChildren) = extract(resource.resources, updatedTypes)
@@ -256,7 +256,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           case _              => lookup
         }
 
-      val absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, nativeToRootId)
+      val absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, Some(nativeToRootId))
 
       ttype match {
         case objectType: ObjectType       =>
@@ -312,7 +312,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     @tailrec
     def lookupObjEl(schema: Type): Option[ObjectModel] = {
       schema match {
-        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, nativeToRootId))
+        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, Some(nativeToRootId)))
         case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
         case _                            => None
       }
