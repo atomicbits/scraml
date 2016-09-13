@@ -30,9 +30,9 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-case class Body(headerMap: Map[MimeType, BodyContent] = Map.empty) {
+case class Body(contentMap: Map[MediaType, BodyContent] = Map.empty) {
 
-  def forHeader(header: MimeType): Option[BodyContent] = headerMap.get(header)
+  def forHeader(mimeType: MediaType): Option[BodyContent] = contentMap.get(mimeType)
 
 }
 
@@ -48,10 +48,10 @@ object Body {
           case BodyContent(tryMimeType) => tryMimeType
         } toSeq
 
-      val tryHeaderMap: Try[Map[MimeType, BodyContent]] =
+      val tryHeaderMap: Try[Map[MediaType, BodyContent]] =
         accumulate(tryMimeTypes).map { mimeTypes =>
           mimeTypes.map { mType =>
-            mType.mimeType -> mType
+            mType.mediaType -> mType
           } toMap
         }
 

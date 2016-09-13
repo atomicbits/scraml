@@ -31,7 +31,7 @@ import TryUtils._
   * Created by peter on 10/02/16.
   */
 case class Raml(title: String,
-                mediaType: Option[MimeType],
+                mediaType: Option[MediaType],
                 description: Option[String],
                 version: Option[String],
                 baseUri: Option[String],
@@ -80,9 +80,9 @@ object Raml {
     }
 
 
-    val mediaType: Try[Option[MimeType]] = {
+    val mediaType: Try[Option[MediaType]] = {
       (ramlJson \ "mediaType").toOption.collect {
-        case JsString(mType) => Success(Option(MimeType(mType)))
+        case JsString(mType) => Success(Option(MediaType(mType)))
         case x               => Failure(RamlParseException(s"The mediaType in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }

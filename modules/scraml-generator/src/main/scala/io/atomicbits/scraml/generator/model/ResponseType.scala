@@ -19,28 +19,30 @@
 
 package io.atomicbits.scraml.generator.model
 
+import io.atomicbits.scraml.ramlparser.model.MediaType
+
 /**
  * Created by peter on 26/08/15. 
  */
 sealed trait ResponseType {
 
-  def acceptHeaderValue: String
+  def acceptHeader: MediaType
 
-  def acceptHeaderOpt: Option[String] = Some(acceptHeaderValue)
+  def acceptHeaderOpt: Option[MediaType] = Some(acceptHeader)
 
 }
 
-case class StringResponseType(acceptHeaderValue: String) extends ResponseType
+case class StringResponseType(acceptHeader: MediaType) extends ResponseType
 
-case class JsonResponseType(acceptHeaderValue: String) extends ResponseType
+case class JsonResponseType(acceptHeader: MediaType) extends ResponseType
 
-case class TypedResponseType(acceptHeaderValue: String, classReference: TypedClassReference) extends ResponseType
+case class TypedResponseType(acceptHeader: MediaType, classReference: TypedClassReference) extends ResponseType
 
-case class BinaryResponseType(acceptHeaderValue: String) extends ResponseType
+case class BinaryResponseType(acceptHeader: MediaType) extends ResponseType
 
 case object NoResponseType extends ResponseType {
 
-  val acceptHeaderValue = ""
+  val acceptHeader = ""
 
   override val acceptHeaderOpt = None
 
@@ -49,15 +51,17 @@ case object NoResponseType extends ResponseType {
 
 object ResponseType {
 
-  def apply(acceptHeader: String, classReference: Option[TypedClassReference]): ResponseType = {
+  def apply(acceptHeader: MediaType, classReference: Option[TypedClassReference]): ResponseType = {
+
+    val mediaTypeValue = acceptHeader.value.toLowerCase
 
     if (classReference.isDefined) {
       TypedResponseType(acceptHeader, classReference.get)
-    } else if (acceptHeader.toLowerCase.contains("json")) {
+    } else if (mediaTypeValue.contains("json")) {
       JsonResponseType(acceptHeader)
-    } else if (acceptHeader.toLowerCase.contains("text")) {
+    } else if (mediaTypeValue.contains("text")) {
       StringResponseType(acceptHeader)
-    } else if (acceptHeader.toLowerCase.contains("octet-stream")) {
+    } else if (mediaTypeValue.contains("octet-stream")) {
       BinaryResponseType(acceptHeader)
     } else {
       BinaryResponseType(acceptHeader)

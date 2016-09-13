@@ -120,11 +120,11 @@ case class ActionGenerator(actionCode: ActionCode) {
       expandAcceptHeaderMap(baseClassRef, acceptHeaderMap)
 
     // Header segment classes have the same class name in Java as in Scala.
-    val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}HeaderSegment"
+    val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
-    val contentHeaderMethodName = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
+    val contentHeaderMethodName = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}"
     val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
@@ -176,11 +176,11 @@ case class ActionGenerator(actionCode: ActionCode) {
     val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate)
 
     // Header segment classes have the same class name in Java as in Scala.
-    val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}HeaderSegment"
+    val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
-    val acceptHeaderMethodName = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
+    val acceptHeaderMethodName = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}"
     val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))

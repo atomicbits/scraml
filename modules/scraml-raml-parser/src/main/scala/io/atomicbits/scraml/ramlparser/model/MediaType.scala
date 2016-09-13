@@ -22,10 +22,10 @@ package io.atomicbits.scraml.ramlparser.model
 /**
   * Created by peter on 26/08/16.
   */
-case class MimeType(value: String)
+case class MediaType(value: String)
 
-object MimeType {
+object MediaType {
 
-  def unapply(mimeType: String): Option[MimeType] = Some(MimeType(mimeType))
+  def unapply(mimeType: String): Option[MediaType] = Some(MediaType(mimeType))
 
 }

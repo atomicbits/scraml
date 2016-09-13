@@ -20,7 +20,6 @@
 package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.lookup.TypeLookupTable
-import io.atomicbits.scraml.parser.model._
 import io.atomicbits.scraml.ramlparser.model._
 
 import scala.language.postfixOps
@@ -29,30 +28,26 @@ import scala.language.postfixOps
   * Created by peter on 22/08/15.
   */
 case class RichAction(actionType: Method,
+                      headers: Parameters,
                       queryParameters: Parameters,
                       contentTypes: Set[ContentType],
                       responseTypes: Set[ResponseType],
-                      headers: Parameters,
                       selectedContentType: ContentType = NoContentType,
                       selectedResponsetype: ResponseType = NoResponseType)
 
 object RichAction {
 
-  def apply(action: Action, schemaLookup: TypeLookupTable)(implicit lang: Language): RichAction = {
+  def apply(action: Action, lookupTable: TypeLookupTable)(implicit lang: Language): RichAction = {
 
     def mimeTypeToClassRep(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
-        case typedClassReference: TypedClassReference => typedClassReference // ToDo: is this only a type reference, or also inline types?
+        // We replaced all our body contents with native type references that refer back to
+        case typedClassReference: TypedClassReference => typedClassReference
       }
     }
 
-    val contentTypes = action.body.headerMap map {
-      case (mimeType, content) =>
-      ContentType(
-        contentTypeHeader = mimeType,
-        classReference = mimeTypeToClassRep(mimeType),
-        formParameters = mimeType.formParameters
-      )
+    val contentTypes = action.body.contentMap.map {
+      case (mediaType, bodyContent) => ContentType(mediaType, mimeTypeToClassRep(bodyContent), bodyContent.formParameters)
     } toSet
 
     // Select the responses in the 200-range and choose the first one present as the main response type that will be accessible as a
@@ -64,20 +59,20 @@ object RichAction {
 
     val responseTypes =
       first200CodePresent map { response =>
-        response.body.values.toSet[MimeType] map { mimeType =>
+        response.body.contentMap.values.toSet[BodyContent] map { bodyContent =>
           ResponseType(
-            acceptHeader = mimeType.mimeType,
-            classReference = mimeTypeToClassRep(mimeType)
+            acceptHeader = bodyContent.mediaType,
+            classReference = mimeTypeToClassRep(bodyContent)
           )
         }
       } getOrElse Set.empty[ResponseType]
 
     RichAction(
       actionType = action.actionType,
+      headers = action.headers,
       queryParameters = action.queryParameters,
       contentTypes = contentTypes,
-      responseTypes = responseTypes,
-      headers = action.headers
+      responseTypes = responseTypes
     )
 
   }

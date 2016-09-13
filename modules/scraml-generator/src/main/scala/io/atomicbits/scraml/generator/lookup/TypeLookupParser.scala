@@ -58,13 +58,13 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     def extractFromBody(body: Body, types: Types): (Body, Types) = {
 
       val (updatedHeaderMap, updatedTypes) =
-        body.headerMap.foldLeft((Map.empty[MimeType, BodyContent], types)) {
+        body.contentMap.foldLeft((Map.empty[MediaType, BodyContent], types)) {
 
           case ((headerMap, ttypes), (mimeType, bodyContent)) =>
 
             val result: Option[(BodyContent, Types)] =
               bodyContent.bodyType.collect {
-
+                // ToDo: refactor case statements below, it's too cumbersome and there is too much repetition
                 case typeReference: TypeReference =>
                   typeReference.id match {
                     case nativeId: NativeId =>
@@ -91,7 +91,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
             } getOrElse(headerMap + (mimeType -> bodyContent), ttypes)
         }
 
-      val updatedBody = body.copy(headerMap = updatedHeaderMap)
+      val updatedBody = body.copy(contentMap = updatedHeaderMap)
 
       (updatedBody, updatedTypes)
     }
