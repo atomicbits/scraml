@@ -12,37 +12,40 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
 
       scenario("test generated Scala DSL") {
 
+
         Given("a RAML specification")
         val apiResourceUrl = this.getClass.getClassLoader.getResource("withenum/EnumApi.raml")
+
 
         When("we generate the RAMl specification into class representations")
         val classReps: Seq[ClassRep] =
           ScramlGenerator.generateClassReps(
             ramlApiPath = apiResourceUrl.toString,
-            apiPackageName = "withenum",
+            apiPackageName = "io.atomicbits",
             apiClassName = "EnumApi",
             Scala
           )
+
 
         Then("we should get valid class representations")
         val classRepsByFullName: Map[String, ClassRep] = classReps.map(rep => rep.fullyQualifiedName -> rep).toMap
 
         val classes = List(
-          "withenum.EnumApi",
-          "withenum.rest.RestResource",
-          "withenum.rest.withenum.WithEnumResource",
-          "withenum.schema.WithEnum",
-          "withenum.schema.WithEnumMethod"
+          "io.atomicbits.EnumApi",
+          "io.atomicbits.rest.RestResource",
+          "io.atomicbits.rest.withenum.WithEnumResource",
+          "io.atomicbits.schema.WithEnum",
+          "io.atomicbits.schema.WithEnumMethod"
         )
 
         classRepsByFullName.keys.foreach { key =>
           assert(classes.contains(key), s"Class $key is not generated.")
         }
 
-        val linkResource = classRepsByFullName("withenum.schema.WithEnum")
+        val linkResource = classRepsByFullName("io.atomicbits.schema.WithEnum")
         println(linkResource)
         
-        val methodEnumClass = classRepsByFullName("withenum.schema.WithEnumMethod")
+        val methodEnumClass = classRepsByFullName("io.atomicbits.schema.WithEnumMethod")
         println(methodEnumClass)
       }
 
