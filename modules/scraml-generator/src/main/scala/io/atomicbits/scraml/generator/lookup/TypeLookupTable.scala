@@ -55,11 +55,11 @@ case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
         case Nil       => ttype
         case fr :: frs =>
           ttype match {
-            case fragmentedSchema: Fragment =>
+            case fragmentedSchema: Fragmented =>
               fragmentedSchema.fragments.fragmentMap.get(fr)
                 .map(fragmentSearch(_, frs))
                 .getOrElse(sys.error(s"Cannot follow fragment $fr into ${fragmentedSchema.id}"))
-            case _                          => sys.error(s"Cannot follow the following fragment path: $id")
+            case _                           => sys.error(s"Cannot follow the following fragment path: $id")
           }
       }
     }

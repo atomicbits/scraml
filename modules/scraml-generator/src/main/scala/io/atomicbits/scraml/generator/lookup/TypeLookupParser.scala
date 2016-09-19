@@ -203,7 +203,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
               selection = objectType.selection
                 .map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
-          case fragment: Fragment           => fragment.map(expandFragment)
+          case fragment: Fragments          => fragment.map(expandFragment)
           case arrayType: ArrayType         =>
             val (_, expanded) = expandFragment(("items", arrayType.items))
             arrayType.copy(
@@ -218,7 +218,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           case _                            => ttype
         }
 
-      schemaWithUpdatedFragments.updated(expandedId) asInstanceOf
+      schemaWithUpdatedFragments.updated(expandedId)
     }
 
 
@@ -276,7 +276,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           updateLookupAndObjectMapInternal(schemaLookupWithArrayFragments, ("items", arrayType.items))
         case typeReference: TypeReference =>
           typeReference.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
-        case fragment: Fragment           =>
+        case fragment: Fragments          =>
           fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
         case enumType: EnumType           =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumType))

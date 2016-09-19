@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/fragments.json#",
+  "type": "object",
+  "description": "A href",
+  "bar": "baz",
+  "definitions": {
+    "address": {
+      "id": "#/definitions/address",
+      "type": "object",
+      "properties": {
+        "streetAddress": { "type": "string" },
+        "city":          { "type": "string" },
+        "state":         { "type": "string" },
+        "zip":           { "type": "integer" }
+      },
+      "required": ["streetAddress", "city", "state"]
+    }
+  },
+  "properties": {
+    "foo": {
+      "type": "string"
+    }
+  }
+}

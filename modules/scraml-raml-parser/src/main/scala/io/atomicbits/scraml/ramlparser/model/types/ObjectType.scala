@@ -35,7 +35,7 @@ case class ObjectType(id: Id,
                       required: Option[Boolean] = None,
                       requiredFields: List[String] = List.empty,
                       selection: Option[Selection] = None,
-                      fragments: Fragment = Fragment(),
+                      fragments: Fragments = Fragments(),
                       typeVariables: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
@@ -68,7 +68,7 @@ object ObjectType {
     } getOrElse Success(Map.empty[String, Type])
 
     val fragments = schema match {
-      case Fragment(fragment) => fragment
+      case Fragments(fragment) => fragment
     }
 
     // Process the required field
@@ -162,9 +162,9 @@ object ObjectType {
   private def tryToInterpretOneOfSelectionAsObjectType(schema: JsObject, parentId: Id, typeDiscriminator: String)
                                                       (implicit parseContext: ParseContext): Try[Type] = {
 
-    def typeDiscriminatorFromProperties(oneOfFragment: Fragment): Option[String] = {
+    def typeDiscriminatorFromProperties(oneOfFragment: Fragments): Option[String] = {
       oneOfFragment.fragmentMap.get("properties") collect {
-        case propFrag: Fragment => propFrag.fragmentMap.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
+        case propFrag: Fragments => propFrag.fragmentMap.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
       } getOrElse None
     }
 

@@ -199,24 +199,43 @@ object Raml {
 
   private def unparallellizeResources(resources: List[Resource], parent: Option[Resource] = None): List[Resource] = {
 
-    // Group all resources at this level with the same urlSegment and urlParameter
-    val groupedResources: List[List[Resource]] =
-    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
 
     // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
     def mergeResources(resources: List[Resource]): Resource = {
       resources.reduce { (resourceA, resourceB) =>
-        resourceA.copy(actions = resourceA.actions ++ resourceB.actions, resources = resourceA.resources ++ resourceB.resources)
+        val descriptionChoice = List(resourceA.description, resourceB.description).flatten.headOption
+        val displayNameChoice = List(resourceA.displayName, resourceB.displayName).flatten.headOption
+        resourceA.copy(
+          description = descriptionChoice,
+          displayName = displayNameChoice,
+          actions = resourceA.actions ++ resourceB.actions,
+          resources = resourceA.resources ++ resourceB.resources
+        )
       }
     }
+
+    // All children with empty URL segment
+    def absorbChildrenWithEmptyUrlSegment(resource: Resource): Resource = {
+      val (emptyUrlChildren, realChildren) = resource.resources.partition(_.urlSegment.isEmpty)
+      val resourceWithRealChildren = resource.copy(resources = realChildren)
+      mergeResources(resourceWithRealChildren :: emptyUrlChildren)
+    }
+
+
+    // Group all resources at this level with the same urlSegment and urlParameter
+    val groupedResources: List[List[Resource]] =
+    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
+
     val mergedResources: List[Resource] = groupedResources.map(mergeResources)
 
-    mergedResources.map { mergedResource =>
-      mergedResource.copy(
+    val resourcesWithAbsorbedChildren = mergedResources.map(absorbChildrenWithEmptyUrlSegment)
+
+    resourcesWithAbsorbedChildren.map { mergedAndAbsorbedResource =>
+      mergedAndAbsorbedResource.copy(
         resources =
           unparallellizeResources(
-            resources = mergedResource.resources,
-            parent = Some(mergedResource)
+            resources = mergedAndAbsorbedResource.resources,
+            parent = Some(mergedAndAbsorbedResource)
           )
       )
     }

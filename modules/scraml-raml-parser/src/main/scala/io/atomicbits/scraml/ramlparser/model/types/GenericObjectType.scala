@@ -66,7 +66,7 @@ import scala.util.{Failure, Success, Try}
 case class GenericObjectType(id: Id,
                              typeVariable: String,
                              required: Option[Boolean] = None,
-                             fragments: Fragment = Fragment())
+                             fragments: Fragments = Fragments())
   extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
   override def updated(updatedId: Id): GenericObjectType = copy(id = updatedId)
@@ -89,7 +89,7 @@ object GenericObjectType {
     val required = (schema \ "required").asOpt[Boolean]
 
     val fragments = schema match {
-      case Fragment(fragment) => fragment
+      case Fragments(fragment) => fragment
     }
 
     val genericType = (schema \ "genericType").asOpt[String].map(Success(_))

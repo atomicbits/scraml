@@ -32,7 +32,7 @@ case class TypeReference(refersTo: Id,
                          id: Id = ImplicitId,
                          required: Option[Boolean] = None,
                          genericTypes: Map[String, Type] = Map.empty,
-                         fragments: Fragment = Fragment()) extends PrimitiveType with AllowedAsObjectField with Fragmented {
+                         fragments: Fragments = Fragments()) extends PrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
 
@@ -67,7 +67,7 @@ object TypeReference {
       } getOrElse Try(Map.empty[String, Type])
 
     val fragments = schema match {
-      case Fragment(fragment) => fragment
+      case Fragments(fragment) => fragment
     }
 
     TryUtils.withSuccess(

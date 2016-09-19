@@ -28,8 +28,6 @@ import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
 import io.atomicbits.scraml.generator.lookup.{TypeLookupParser, TypeLookupTable}
-import io.atomicbits.scraml.jsonschemaparser.model.Schema
-import io.atomicbits.scraml.jsonschemaparser.JsonSchemaParser
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps

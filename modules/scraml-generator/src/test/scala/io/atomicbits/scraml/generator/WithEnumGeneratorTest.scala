@@ -2,7 +2,6 @@ package io.atomicbits.scraml.generator
 
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.jsonschemaparser.RootId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
 

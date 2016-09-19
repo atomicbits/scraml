@@ -57,7 +57,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       Then("we get a valid RAML model")
       val locationsResource = raml.getResources.asScala.get("/locations")
       locationsResource shouldBe defined
-      println(prettyResource(locationsResource.get))
+      // println(prettyResource(locationsResource.get))
 
     }
 
@@ -70,7 +70,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen {
       val raml = RamlParser.buildRaml(ramlSource).asScala
 
       Then("we get a valid RAML Scala model")
-      println(s"api.yaml Scala RAML model: $raml")
+//      println(s"api.yaml Scala RAML model: $raml")
 
     }
 

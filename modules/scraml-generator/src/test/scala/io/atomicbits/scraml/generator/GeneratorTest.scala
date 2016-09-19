@@ -19,10 +19,10 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.jsonschemaparser.RootId
+import io.atomicbits.scraml.generator.model.{ClassReference, _}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
+import org.scalatest.Matchers._
 
 
 /**
@@ -31,6 +31,50 @@ import org.scalatest._
 class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   feature("The scraml generator generates DSL classes") {
+
+    scenario("test the genenration of an object hierarchy") {
+
+      Given("a json-schema containing an object hierarcy")
+      val apiResourceUrl = this.getClass.getClassLoader.getResource("objecthierarchy/TestObjectHierarchyApi.raml")
+
+      When("we generate the RAMl specification into class representations")
+      val classReps: Seq[ClassRep] =
+        ScramlGenerator.generateClassReps(
+          ramlApiPath = apiResourceUrl.toString,
+          apiPackageName = "io.atomicbits.scraml",
+          apiClassName = "TestObjectHierarchyApi",
+          Scala
+        )
+
+      Then("we should get valid a class hierarchy")
+      val animalClassRep =
+        classReps.filter(_.classRef == ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false)).head
+
+      animalClassRep.subClasses should contain (ClassReference("Cat", List("io", "atomicbits", "schema"), List(), false, false))
+      animalClassRep.subClasses should contain (ClassReference("Dog", List("io", "atomicbits", "schema"), List(), false, false))
+      animalClassRep.subClasses should contain (ClassReference("Fish", List("io", "atomicbits", "schema"), List(), false, false))
+      animalClassRep.parentClass shouldBe None
+
+      val dogClassRep =
+        classReps.filter(_.classRef == ClassReference("Dog", List("io", "atomicbits", "schema"), List(), false, false)).head
+
+      dogClassRep.subClasses shouldBe empty
+      dogClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
+
+      val catClassRep =
+        classReps.filter(_.classRef == ClassReference("Cat", List("io", "atomicbits", "schema"), List(), false, false)).head
+
+      catClassRep.subClasses shouldBe empty
+      catClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
+
+      val fishClassRep =
+        classReps.filter(_.classRef == ClassReference("Fish", List("io", "atomicbits", "schema"), List(), false, false)).head
+
+      fishClassRep.subClasses shouldBe empty
+      fishClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
+
+    }
+
 
     scenario("test generated Scala DSL") {
 

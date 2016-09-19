@@ -19,9 +19,15 @@
 
 package io.atomicbits.scraml.ramlparser
 
+import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.{FragmentId, NativeId, Raml}
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import org.scalatest.Matchers._
+
+import scala.language.postfixOps
+import scala.util.Try
 
 
 /**
@@ -30,6 +36,42 @@ import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
 class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
   feature("RAML parser") {
+
+    scenario("test parsing fragments in json-schema") {
+
+      Given("a json-schema containing fragments")
+      val parser = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", List("io", "atomicbits", "model"))
+
+      When("we parse the specification")
+      val parsedModel: Try[Raml] = parser.parse
+
+      Then("we get a properly parsed fragments object")
+      val raml = parsedModel.get
+
+      val objectWithFragments: ObjectType = raml.types.typeReferences(NativeId("myfragments")).asInstanceOf[ObjectType]
+
+      val barType: Type = objectWithFragments.fragments.fragmentMap("bar")
+
+      barType shouldBe a[TypeReference]
+      barType.asInstanceOf[TypeReference].refersTo shouldBe NativeId("baz")
+
+
+      val definitionFragment: Fragments = objectWithFragments.fragments.fragmentMap("definitions").asInstanceOf[Fragments]
+
+      val addressType = definitionFragment.fragmentMap("address")
+      addressType shouldBe a[ObjectType]
+      val address = addressType.asInstanceOf[ObjectType]
+
+      address.id shouldBe FragmentId(List("definitions", "address"))
+      address.properties("city") shouldBe a[StringType]
+      address.properties("state") shouldBe a[StringType]
+      address.properties("zip") shouldBe a[IntegerType]
+      address.properties("streetAddress") shouldBe a[StringType]
+
+      //      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      //       println(s"Parsed raml: $prettyModel")
+    }
+
 
     scenario("test parsing json-schema types in a RAML 1.0 model") {
 
@@ -41,21 +83,21 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
       Then("we get a ...")
       val prettyModel = TestUtils.prettyPrint(parsedModel)
-      println(s"Parsed raml: $prettyModel")
+      // println(s"Parsed raml: $prettyModel")
     }
 
 
     scenario("test parsing a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
-       val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
 
       When("we parse the specification")
-       val parsedModel = parser.parse
+      val parsedModel = parser.parse
 
       Then("we get a ...")
       val prettyModel = TestUtils.prettyPrint(parsedModel)
-      println(s"Parsed raml: $prettyModel")
+      // println(s"Parsed raml: $prettyModel")
 
     }
 

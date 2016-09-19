@@ -35,7 +35,7 @@ case class ArrayType(items: Type,
                      minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
-                     fragments: Fragment = Fragment()) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
+                     fragments: Fragments = Fragments()) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): ArrayType = copy(id = updatedId)
 
@@ -87,7 +87,7 @@ object ArrayType {
     val required = schema.fieldBooleanValue("required")
 
     val fragments = schema match {
-      case Fragment(fragment) => fragment
+      case Fragments(fragment) => fragment
     }
 
     TryUtils.withSuccess(

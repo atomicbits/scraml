@@ -28,24 +28,24 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class Fragment(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.empty) extends Type with Fragmented {
+case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.empty) extends Type with Fragmented {
 
-  override def updated(updatedId: Id): Fragment = copy(id = updatedId)
+  override def updated(updatedId: Id): Fragments = copy(id = updatedId)
 
   def isEmpty: Boolean = fragmentMap.isEmpty
 
-  def fragments: Fragment = this
+  def fragments: Fragments = this
 
-  def map[T](fn: ((String, Type)) => (String, Type)): Fragment = copy(fragmentMap = fragmentMap.map(fn))
+  def map[T](fn: ((String, Type)) => (String, Type)): Fragments = copy(fragmentMap = fragmentMap.map(fn))
 
   override def required: Option[Boolean] = None
 
 }
 
 
-object Fragment {
+object Fragments {
 
-  def apply(jsObj: JsObject)(implicit parseContext: ParseContext): Try[Fragment] = {
+  def apply(jsObj: JsObject)(implicit parseContext: ParseContext): Try[Fragments] = {
 
     val id = jsObj match {
       case IdExtractor(schemaId) => schemaId
@@ -57,21 +57,21 @@ object Fragment {
       }
 
     val fragments = fragmentsToKeep collect {
-      case (fragmentFieldName, Type(fragment)) => (fragmentFieldName, fragment)
-      case (fragmentFieldName, Fragment(fragment)) => (fragmentFieldName, fragment)
+      case (fragmentFieldName, Type(fragment))      => (fragmentFieldName, fragment)
+      case (fragmentFieldName, Fragments(fragment)) => (fragmentFieldName, fragment)
     }
 
     TryUtils.withSuccess(
       Success(id),
       TryUtils.accumulate(fragments)
-    )(Fragment(_, _))
+    )(Fragments(_, _))
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Fragment]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Fragments]] = {
 
     json match {
-      case jsObject: JsObject => Some(Fragment(jsObject))
+      case jsObject: JsObject => Some(Fragments(jsObject))
       case _                  => None
     }
 
@@ -95,7 +95,8 @@ object Fragment {
     "_source",
     "description",
     "$schema",
-    "items"
+    "items",
+    "typeDiscriminator"
   )
 
 }

@@ -61,7 +61,7 @@ trait NonePrimitiveType extends Type
   */
 trait Fragmented {
 
-  def fragments: Fragment
+  def fragments: Fragments
 
   def fragment(field: String): Option[Identifiable] = fragments.fragmentMap.get(field)
 

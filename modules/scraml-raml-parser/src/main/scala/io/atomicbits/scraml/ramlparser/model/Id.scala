@@ -63,12 +63,18 @@ case class RootId(id: String) extends AbsoluteId {
 
   def toAbsolute(id: Id, path: List[String] = List.empty): AbsoluteId = {
     id match {
-      case absoluteId: RootId => absoluteId
-      case relativeId: RelativeId => RootId(s"$anchor/${relativeId.id}")
-      case fragmentId: FragmentId => AbsoluteFragmentId(this, fragmentId.fragments)
+      case absoluteId: RootId                => absoluteId
+      case relativeId: RelativeId            => RootId(s"$anchor/${relativeId.id}")
+      case fragmentId: FragmentId            => AbsoluteFragmentId(this, fragmentId.fragments)
       case absFragmentId: AbsoluteFragmentId => absFragmentId
-      case ImplicitId => AbsoluteFragmentId(this, path)
-      case absId: AbsoluteId => sys.error("All absolute IDs should be covered already.")
+      case ImplicitId                        => AbsoluteFragmentId(this, path)
+      case nativeId: NativeId                =>
+        // We should not expect native ids inside a json-schema, but our parser doesn't separate json-schema and RAML 1.0 types,
+        // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here and
+        // the best way to do that is using an absolute fragment id.
+        AbsoluteFragmentId(this, path)
+      case absId: AbsoluteId                 => sys.error("All absolute IDs should be covered already.")
+      case other                             => sys.error(s"Cannot transform $other to an absolute id.")
     }
   }
 
@@ -127,7 +133,7 @@ case class FragmentId(fragments: List[String]) extends Id {
   * This is the absolute version of a fragment id. It is prepended with its root's achor.
   * E.g. "http://atomicbits.io/schema/User.json#/some/schema/path/license"
   *
-  * @param root The root of this absolute fragment id.
+  * @param root      The root of this absolute fragment id.
   * @param fragments The path that composes the fragment id.
   */
 case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]) extends AbsoluteId {
