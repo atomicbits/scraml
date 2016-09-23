@@ -119,29 +119,39 @@ object ScalaActionCode extends ActionCode {
   }
 
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
-    val (queryParameterName, parameter) = qParam
-
-    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    val typeTypeName = parameter.parameterType match {
+  def primitiveTypeToScalaType(primitiveType: PrimitiveType): String = {
+    primitiveType match {
       case stringType: StringType   => "String"
       case integerType: IntegerType => "Long"
       case numbertype: NumberType   => "Double"
       case booleanType: BooleanType => "Boolean"
-      case fileType: FileType       => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case dateType: DateType       => sys.error(s"RAML type 'DateType' is not yet supported.")
+      case other                    => sys.error(s"RAML type $other is not yet supported.")
     }
+  }
 
-    if (parameter.repeated) {
-      val defaultValue = if (noDefault) "" else s"= List.empty[$typeTypeName]"
-      s"$sanitizedParameterName: List[$typeTypeName] $defaultValue"
-    } else {
-      if (parameter.required) {
-        s"$sanitizedParameterName: $typeTypeName"
-      } else {
-        val defaultValue = if (noDefault) "" else s"= None"
-        s"$sanitizedParameterName: Option[$typeTypeName] $defaultValue"
-      }
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
+    val (queryParameterName, parameter) = qParam
+
+    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
+
+    parameter.parameterType match {
+      case primitiveType: PrimitiveType =>
+        val primitive = primitiveTypeToScalaType(primitiveType)
+        if (parameter.required) {
+          s"$sanitizedParameterName: $primitive"
+        } else {
+          val defaultValue = if (noDefault) "" else s"= None"
+          s"$sanitizedParameterName: Option[$primitive] $defaultValue"
+        }
+      case arrayType: ArrayType         =>
+        arrayType.items match {
+          case primitiveType: PrimitiveType =>
+            val primitive = primitiveTypeToScalaType(primitiveType)
+            val defaultValue = if (noDefault) "" else s"= List.empty[$primitive]"
+            s"$sanitizedParameterName: List[$primitive] $defaultValue"
+          case other                        =>
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+        }
     }
   }
 
@@ -149,10 +159,11 @@ object ScalaActionCode extends ActionCode {
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    parameter match {
-      case Parameter(_, _, _, true)      => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, _, true, false)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, _, false, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+
+    (parameter.parameterType, parameter.required) match {
+      case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+      case (primitive: PrimitiveType, true)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      case (arrayType: ArrayType, _)         => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
     }
   }
 

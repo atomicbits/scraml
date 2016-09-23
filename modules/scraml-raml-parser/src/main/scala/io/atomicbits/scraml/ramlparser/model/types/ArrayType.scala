@@ -49,6 +49,29 @@ object ArrayType {
   val value = "array"
 
 
+  def apply(triedPrimitiveType: Try[PrimitiveType])(implicit parseContext: ParseContext): Try[ArrayType] = {
+
+    val id = triedPrimitiveType.map(_.id)
+
+    val primitiveWithErasedId =
+      triedPrimitiveType.map { prim =>
+        prim.updated(ImplicitId)
+      }
+
+    val required = triedPrimitiveType.map(_.required)
+
+    TryUtils.withSuccess(
+      primitiveWithErasedId,
+      id,
+      required,
+      Success(None),
+      Success(None),
+      Success(false),
+      Success(new Fragments())
+    )(ArrayType(_, _, _, _, _, _, _))
+  }
+
+
   def apply(arrayExpression: String)(implicit parseContext: ParseContext): Try[ArrayType] = {
 
     if (arrayExpression.endsWith("[]")) {
@@ -110,10 +133,15 @@ object ArrayType {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ArrayType]] = {
 
-    (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(ArrayType.value)), _)                                     => Some(ArrayType(json))
-      case (_, JsString(arrayTypeExpression)) if arrayTypeExpression.endsWith("[]") => Some(ArrayType(arrayTypeExpression))
-      case _                                                                        => None
+    // The repeated field is no longer present in RAML 1.0, but for backward compatibility reasons, we still parse it and
+    // interpret these values as array types.
+    val repeatedValue = (json \ "repeat").asOpt[Boolean]
+
+    (Type.typeDeclaration(json), json, repeatedValue) match {
+      case (Some(JsString(ArrayType.value)), _, _)                                     => Some(ArrayType(json))
+      case (_, JsString(arrayTypeExpression), _) if arrayTypeExpression.endsWith("[]") => Some(ArrayType(arrayTypeExpression))
+      case (_, PrimitiveType(tryType), Some(true))                                     => Some(ArrayType(tryType))
+      case _                                                                           => None
     }
 
   }

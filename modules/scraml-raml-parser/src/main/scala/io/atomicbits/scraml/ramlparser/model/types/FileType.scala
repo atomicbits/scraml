@@ -33,7 +33,7 @@ case class FileType(id: Id = ImplicitId,
                     fileTypes: Option[Seq[String]] = None,
                     minLength: Option[Int] = None,
                     maxLength: Option[Int] = None,
-                    required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
+                    required: Option[Boolean] = None) extends NonePrimitiveType with AllowedAsObjectField {
 
   def asRequired = copy(required = Some(true))
 

@@ -28,7 +28,7 @@ import scala.util.{Success, Try}
   * Created by peter on 1/04/16.
   */
 case class EnumType(id: Id, choices: List[String], required: Option[Boolean] = None)
-  extends PrimitiveType with AllowedAsObjectField {
+  extends NonePrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): EnumType = copy(id = updatedId)
 

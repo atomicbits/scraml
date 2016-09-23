@@ -54,7 +54,7 @@ object Action {
 
     parseContext.traits.applyTo(jsObject) { json =>
 
-      val tryQueryParameters = Parameters((json \ "queryParameters").toOption)
+      val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
 
       val tryHeaders = Parameters((json \ "headers").toOption)
 

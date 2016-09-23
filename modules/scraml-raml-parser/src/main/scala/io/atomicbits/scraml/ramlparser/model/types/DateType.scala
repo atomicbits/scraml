@@ -29,7 +29,7 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-trait DateType extends PrimitiveType with AllowedAsObjectField {
+trait DateType extends NonePrimitiveType with AllowedAsObjectField {
 
   def format: DateFormat
 

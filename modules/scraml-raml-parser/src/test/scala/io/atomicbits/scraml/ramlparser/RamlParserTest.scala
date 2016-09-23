@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.model.types._
-import io.atomicbits.scraml.ramlparser.model.{FragmentId, NativeId, Raml}
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
@@ -83,23 +83,99 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
       Then("we get a ...")
       val prettyModel = TestUtils.prettyPrint(parsedModel)
-      // println(s"Parsed raml: $prettyModel")
+      //       println(s"Parsed raml: $prettyModel")
     }
 
 
-    scenario("test parsing a complex RAML 1.0 model") {
+    scenario("test parsing query parameters in a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
       val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
 
       When("we parse the specification")
-      val parsedModel = parser.parse
+      val parsedModel: Try[Raml] = parser.parse
 
       Then("we get a ...")
-      val prettyModel = TestUtils.prettyPrint(parsedModel)
-      // println(s"Parsed raml: $prettyModel")
+      val raml = parsedModel.get
+      val restResource: Resource = raml.resources.filter(_.urlSegment == "rest").head
+      val userResource: Resource = restResource.resources.filter(_.urlSegment == "user").head
+      val getAction: Action = userResource.actions.filter(_.actionType == Get).head
+
+      val organizationQueryParameter: Parameter = getAction.queryParameters.byName("organization").get
+
+      organizationQueryParameter.parameterType shouldBe a[ArrayType]
+
+      organizationQueryParameter.parameterType.asInstanceOf[ArrayType].items shouldBe a[StringType]
+
+
+      //      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      //       println(s"Parsed raml: $prettyModel")
 
     }
+
+
+    scenario("test resource paths in a complex RAML 1.0 model") {
+
+      Given("a RAML 1.0 specification")
+      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+
+      When("we parse the specification")
+      val parsedModel: Try[Raml] = parser.parse
+
+      Then("we get a ...")
+      val raml = parsedModel.get
+
+      // collect resource paths
+
+      def collectResources(resources: List[Resource]): List[List[String]] = {
+
+        resources.flatMap(collectResourcePaths(_, List.empty))
+      }
+
+      def collectResourcePaths(currentResource: Resource, currentPath: List[String]): List[List[String]] = {
+
+        val currentSegment =
+          currentResource.urlParameter.map(param => s"{${currentResource.urlSegment}}").getOrElse(currentResource.urlSegment)
+
+        val nextPath = currentPath :+ currentSegment
+
+        currentResource.resources match {
+          case Nil => List(nextPath)
+          case rs  =>
+            if (currentResource.actions.isEmpty) rs.flatMap(collectResourcePaths(_, nextPath))
+            else nextPath :: rs.flatMap(collectResourcePaths(_, nextPath))
+        }
+
+      }
+
+
+      val collectedResources = collectResources(raml.resources)
+      //      println(s"collected resources:\n$collectedResources")
+
+      val expectedResources =
+        Set(
+          List("rest", "user"), // X
+          List("rest", "user", "upload"),
+          List("rest", "user", "activate"),
+          List("rest", "user", "{void}", "location"),
+          List("rest", "user", "{userid}"), // X
+          List("rest", "user", "{userid}", "dogs"),
+          List("rest", "animals"), // X
+          List("rest", "animals", "datafile", "upload"),
+          List("rest", "animals", "datafile", "download")
+        )
+
+      collectedResources.size shouldEqual expectedResources.size
+      expectedResources.foreach { expected =>
+        collectedResources should contain(expected)
+      }
+
+
+      //      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      //      println(s"Parsed raml: $prettyModel")
+
+    }
+
 
   }
 

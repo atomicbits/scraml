@@ -35,7 +35,7 @@ trait Type extends Identifiable {
   // The default value according to the RAML 1.0 specs is true. According to the json-schema 0.3 specs, it should be false.
   // The json-schema 0.4 specs don't specify a 'required: boolean' field any more, only a list of the required field names at the
   // level of the object definition, but this also implies a default value of false.
-  def isRequired = required.getOrElse(true)
+  def isRequired = required.getOrElse(Type.defaultRequiredValue)
 
   def updated(id: Id): Type
 
@@ -93,6 +93,7 @@ trait AllowedAsObjectField {
 
 object Type {
 
+  val defaultRequiredValue = true
 
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
@@ -155,6 +156,7 @@ object Type {
 
     val result =
       json match {
+        case ArrayType(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on top of this pattern match!
         case StringType(tryStringType)                => Some(tryStringType)
         case NumberType(tryNumberType)                => Some(tryNumberType)
         case IntegerType(tryIntegerType)              => Some(tryIntegerType)
@@ -167,7 +169,6 @@ object Type {
         case FileType(fileType)                       => Some(fileType)
         case NullType(tryNullType)                    => Some(tryNullType)
         case EnumType(tryEnumType)                    => Some(tryEnumType)
-        case ArrayType(tryArrayType)                  => Some(tryArrayType)
         case ObjectType(tryObjectType)                => Some(tryObjectType)
         case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
         case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
@@ -183,5 +184,21 @@ object Type {
     List((json \ "type").toOption, (json \ "schema").toOption).flatten.headOption
   }
 
+
+}
+
+
+object PrimitiveType {
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[PrimitiveType]] = {
+    json match {
+      case StringType(triedStringType)   => Some(triedStringType)
+      case NumberType(triedNumberType)   => Some(triedNumberType)
+      case IntegerType(triedIntegerType) => Some(triedIntegerType)
+      case BooleanType(triedBooleanType) => Some(triedBooleanType)
+      case NullType(triedNullType)       => Some(triedNullType)
+      case _                             => None
+    }
+  }
 
 }

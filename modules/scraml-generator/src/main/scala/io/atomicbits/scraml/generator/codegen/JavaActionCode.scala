@@ -141,26 +141,37 @@ object JavaActionCode extends ActionCode {
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
 
+  def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
+    primitiveType match {
+      case integerType: IntegerType if required => "long"
+      case numbertype: NumberType if required   => "double"
+      case booleanType: BooleanType if required => "boolean"
+      case stringtype: StringType               => "String"
+      case integerType: IntegerType             => "Long"
+      case numbertype: NumberType               => "Double"
+      case booleanType: BooleanType             => "Boolean"
+      case other                                => sys.error(s"RAML type $other is not yet supported.")
+    }
+  }
+
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    val typeTypeName = parameter.parameterType match {
-      case integerType: IntegerType if parameter.required => "long"
-      case numbertype: NumberType if parameter.required   => "double"
-      case booleanType: BooleanType if parameter.required => "boolean"
-      case stringtype: StringType                         => "String"
-      case integerType: IntegerType                       => "Long"
-      case numbertype: NumberType                         => "Double"
-      case booleanType: BooleanType                       => "Boolean"
-      case fileType: FileType                             => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case dateType: DateType                             => sys.error(s"RAML type 'DateType' is not yet supported.")
-    }
 
-    if (parameter.repeated) {
-      s"List<$typeTypeName> $sanitizedParameterName"
-    } else {
-      s"$typeTypeName $sanitizedParameterName"
+    parameter.parameterType match {
+      case primitiveType: PrimitiveType =>
+        val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+        s"$primitive $sanitizedParameterName"
+      case arrayType: ArrayType         =>
+        arrayType.items match {
+          case primitiveType: PrimitiveType =>
+            val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+            s"List<$primitive> $sanitizedParameterName"
+          case other                        =>
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+        }
     }
   }
 
@@ -168,9 +179,10 @@ object JavaActionCode extends ActionCode {
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedQueryParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    parameter match {
-      case Parameter(_, _, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
-      case Parameter(_, _, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
+
+    parameter.parameterType match {
+      case primitive: PrimitiveType => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
+      case arrayType: ArrayType     => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
     }
   }
 
