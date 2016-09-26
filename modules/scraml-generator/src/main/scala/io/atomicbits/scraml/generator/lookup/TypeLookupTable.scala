@@ -37,8 +37,8 @@ import io.atomicbits.scraml.ramlparser.model.types._
   *                    actual type (integer, number, string, boolean, object, List[integer], List[number],
   *                    List[string], List[boolean], List[object], or even nested lists).
   */
-case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
-                           nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
+case class TypeLookupTable(lookupTable: Map[AbsoluteId, Type] = Map.empty,
+                           nativeIdMap: Map[NativeId, AbsoluteId] = Map.empty,
                            objectMap: Map[AbsoluteId, ObjectModel] = Map.empty,
                            enumMap: Map[AbsoluteId, EnumType] = Map.empty,
                            classReps: Map[AbsoluteId, ClassRep] = Map.empty,
@@ -67,7 +67,7 @@ case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
     id match {
       case absoluteId: AbsoluteId => fragmentSearch(lookupTable(absoluteId.rootPart), absoluteId.fragments)
       case nativeId: NativeId     =>
-        val actualNativeId = nativeIdMap.getOrElse(nativeId, nativeId)
+        val actualNativeId = nativeIdMap.getOrElse(nativeId, sys.error(s"Cannot find type with native id $id."))
         lookupTable.getOrElse(actualNativeId, sys.error(s"Cannot find type with native id $id."))
       case otherId                =>
         sys.error(s"Cannot lookup $otherId in the typeLookupTable. Only absolute IDs and native IDs can be requested.")

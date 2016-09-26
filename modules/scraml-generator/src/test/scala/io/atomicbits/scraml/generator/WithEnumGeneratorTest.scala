@@ -43,10 +43,10 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
         }
 
         val linkResource = classRepsByFullName("io.atomicbits.schema.WithEnum")
-        println(linkResource)
+//        println(linkResource)
         
         val methodEnumClass = classRepsByFullName("io.atomicbits.schema.WithEnumMethod")
-        println(methodEnumClass)
+//        println(methodEnumClass)
       }
 
     }

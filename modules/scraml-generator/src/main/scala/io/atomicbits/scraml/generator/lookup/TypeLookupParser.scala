@@ -33,17 +33,20 @@ import scala.language.postfixOps
 class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
 
-  def parse(raml: Raml)(implicit lang: Language): TypeLookupTable = {
+  def parse(raml: Raml)(implicit lang: Language): (Raml, TypeLookupTable) = {
 
     val ramlExpanded: Raml = extractInlineTypes(raml)
 
-    ramlExpanded.types.typeReferences
-      .map(fillInTopLevelUnrootedIds)
-      .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
-      .foldLeft(TypeLookupTable(nativeToRootId = nativeToRootId))(updateLookupTableAndObjectMap)
-      .map(updateObjectHierarchy)
-      .map(updateTypeDiscriminatorFields)
-      .map(new TypeClassRepAssembler(nativeToRootId).deduceClassReps)
+    val typeLookupTable =
+      ramlExpanded.types.typeReferences
+        .map(fillInTopLevelUnrootedIds)
+        .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
+        .foldLeft(TypeLookupTable(nativeToRootId = nativeToRootId))(updateLookupTableAndObjectMap)
+        .map(updateObjectHierarchy)
+        .map(updateTypeDiscriminatorFields)
+        .map(TypeClassRepAssembler.deduceClassReps)
+
+    (ramlExpanded, typeLookupTable)
   }
 
 
@@ -293,9 +296,10 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
         val schemaLookupWithUpdatedExternalLinks = lookup.copy(nativeIdMap = lookup.nativeIdMap + (nativeId -> id))
         updateLookupAndObjectMapInternal(schemaLookupWithUpdatedExternalLinks, ("", ttype))
       case id: NativeId =>
+        val absoluteId = lookup.nativeToRootId(id)
         lookup.copy(
-          nativeIdMap = lookup.nativeIdMap + (nativeId -> id),
-          lookupTable = lookup.lookupTable + (id -> ttype)
+          nativeIdMap = lookup.nativeIdMap + (nativeId -> absoluteId),
+          lookupTable = lookup.lookupTable + (absoluteId -> ttype)
         )
       case _            => throw RamlParseException(s"A top-level schema must have a root id or a native id (is ${ttype.id}).")
     }

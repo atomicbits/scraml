@@ -27,16 +27,14 @@ import io.atomicbits.scraml.ramlparser.model.types._
 /**
   * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
   */
-class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
+object TypeClassRepAssembler {
 
   type CanonicalMap = Map[AbsoluteId, ClassRep]
 
-  val classReferenceBuilder = new ClassReferenceBuilder(nativeToRootId)
 
+  def deduceClassReps(lookupTable: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
 
-  def deduceClassReps(schemaLookup: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
-
-    val withCanonicals = deduceCanonicalNames(schemaLookup)
+    val withCanonicals = deduceCanonicalNames(lookupTable)
 
     val withEnumClassReps = addEnums(withCanonicals)
 
@@ -48,16 +46,16 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
   }
 
 
-  def addEnums(schemaLookup: TypeLookupTable): TypeLookupTable = {
+  def addEnums(lookupTable: TypeLookupTable): TypeLookupTable = {
 
     val enumClassReps =
-      schemaLookup.enumMap.filter {
+      lookupTable.enumMap.filter {
         case (id, enumEl) => enumEl.choices.size > 1
       }.map {
-        case (id, enumEl) => (id, EnumValuesClassRep(classRef = classReferenceBuilder(id), values = enumEl.choices))
+        case (id, enumEl) => (id, EnumValuesClassRep(classRef = ClassReferenceBuilder(lookupTable)(id), values = enumEl.choices))
       }
 
-    schemaLookup.copy(classReps = enumClassReps ++ schemaLookup.classReps)
+    lookupTable.copy(classReps = enumClassReps ++ lookupTable.classReps)
   }
 
 
@@ -77,14 +75,14 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
       lookupTable.objectMap.map {
         case (id: AbsoluteId, obj: ObjectModel) =>
           if (obj.properties.isEmpty && !obj.hasChildren && !obj.hasParent) id -> jsObjectClassRep
-          else id -> ClassRep(classReferenceBuilder(id).copy(typeVariables = obj.typeVariables))
+          else id -> ClassRep(ClassReferenceBuilder(lookupTable)(id).copy(typeVariables = obj.typeVariables))
       }
 
     lookupTable.copy(classReps = canonicalMap)
   }
 
 
-  def addCaseClassFields(schemaLookup: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
+  def addCaseClassFields(lookupTable: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
 
     def schemaAsField(property: (String, Type), requiredFields: List[String]): Field = {
 
@@ -93,10 +91,10 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
       schema match {
         case enumField: EnumType              =>
           val required = requiredFields.contains(propertyName) || enumField.isRequired
-          Field(propertyName, typeAsClassReference(enumField, schemaLookup), required)
+          Field(propertyName, typeAsClassReference(enumField, lookupTable), required)
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.isRequired
-          Field(propertyName, typeAsClassReference(objField, schemaLookup), required)
+          Field(propertyName, typeAsClassReference(objField, lookupTable), required)
         case noObjectField                  =>
           sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
       }
@@ -104,10 +102,10 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
     }
 
     val canonicalMapWithCaseClassFields =
-      schemaLookup.classReps map { idAndClassRep =>
+      lookupTable.classReps map { idAndClassRep =>
         val (id, classRep) = idAndClassRep
 
-        schemaLookup.objectMap.get(id) match {
+        lookupTable.objectMap.get(id) match {
           case Some(objectElExt) =>
             val fields: List[Field] = objectElExt.properties.toList.map(schemaAsField(_, objectElExt.requiredFields))
 
@@ -121,7 +119,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
         }
       }
 
-    schemaLookup.copy(classReps = canonicalMapWithCaseClassFields)
+    lookupTable.copy(classReps = canonicalMapWithCaseClassFields)
   }
 
 
@@ -148,10 +146,10 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
       // We assume there can be intermediary levels in the hierarchy.
       val classRepWithParent =
       objectModel.parent map { parentId =>
-        classRp.withParent(classReferenceBuilder(parentId))
+        classRp.withParent(ClassReferenceBuilder(lookupTable)(parentId))
       } getOrElse classRp
 
-      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectModel.children.map(classReferenceBuilder(_)))
+      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectModel.children.map(ClassReferenceBuilder(lookupTable)(_)))
 
       val classRepWithParentAndChildrenAndJsonTypeInfo =
         classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
@@ -186,8 +184,10 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
   /**
     * It's the given schema that tells us what kind of class pointer we'll get.
     */
-  def typeAsClassReference(ttype: Type, lookupTable: TypeLookupTable, types: Map[String, TypedClassReference] = Map
-    .empty)(implicit lang: Language): ClassPointer = {
+  def typeAsClassReference(ttype: Type,
+                           lookupTable: TypeLookupTable,
+                           types: Map[String, TypedClassReference] = Map.empty)
+                          (implicit lang: Language): ClassPointer = {
 
     ttype match {
       case objectType: ObjectType               =>
@@ -212,7 +212,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
         )
       case enumType: EnumType                   =>
         if (enumType.choices.size == 1) StringClassReference() // Probably a "type" discriminator field.
-        else classReferenceBuilder(TypeUtils.asUniqueId(ttype.id))
+        else ClassReferenceBuilder(lookupTable)(TypeUtils.asUniqueId(ttype.id))
       case unknownType                          =>
         sys.error(s"Cannot transform schema with id ${unknownType.id} to a class representation.")
     }
@@ -222,14 +222,14 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 }
 
 
-class ClassReferenceBuilder(nativeToRootId: NativeId => RootId) {
+case class ClassReferenceBuilder(typeLookupTable: TypeLookupTable) {
 
   def apply(uniqueId: UniqueId): ClassReference = {
 
     val origin: AbsoluteId =
       uniqueId match {
         case absoluteId: AbsoluteId => absoluteId
-        case nativeId: NativeId     => nativeToRootId(nativeId).asInstanceOf[AbsoluteId]
+        case nativeId: NativeId     => typeLookupTable.nativeToRootId(nativeId).asInstanceOf[AbsoluteId]
       }
 
     val hostPathReversed = origin.hostPath.reverse

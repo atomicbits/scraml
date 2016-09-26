@@ -19,8 +19,9 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.TypeLookupTable
+import io.atomicbits.scraml.generator.lookup.{TypeClassRepAssembler, TypeLookupTable}
 import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.model.types.TypeReference
 
 import scala.language.postfixOps
 
@@ -39,15 +40,14 @@ object RichAction {
 
   def apply(action: Action, lookupTable: TypeLookupTable)(implicit lang: Language): RichAction = {
 
-    def mimeTypeToClassRep(bodyContent: BodyContent): Option[TypedClassReference] = {
+    def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
-        // We replaced all our body contents with native type references that refer back to
-        case typedClassReference: TypedClassReference => typedClassReference
+        case theBodyType => TypeClassRepAssembler.typeAsClassReference(theBodyType, lookupTable).asTypedClassReference
       }
     }
 
     val contentTypes = action.body.contentMap.map {
-      case (mediaType, bodyContent) => ContentType(mediaType, mimeTypeToClassRep(bodyContent), bodyContent.formParameters)
+      case (mediaType, bodyContent) => ContentType(mediaType, mimeTypeToTypedClassReference(bodyContent), bodyContent.formParameters)
     } toSet
 
     // Select the responses in the 200-range and choose the first one present as the main response type that will be accessible as a
@@ -62,7 +62,7 @@ object RichAction {
         response.body.contentMap.values.toSet[BodyContent] map { bodyContent =>
           ResponseType(
             acceptHeader = bodyContent.mediaType,
-            classReference = mimeTypeToClassRep(bodyContent)
+            classReference = mimeTypeToTypedClassReference(bodyContent)
           )
         }
       } getOrElse Set.empty[ResponseType]

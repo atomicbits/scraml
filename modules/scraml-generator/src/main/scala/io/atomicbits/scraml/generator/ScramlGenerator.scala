@@ -133,13 +133,11 @@ object ScramlGenerator {
     val urlPath = packageBasePath.drop(2).mkString("/")
     val nativeToRootId: NativeId => RootId = nativeId => RootId(s"http://$host/$urlPath/${nativeId.id}.json")
 
-    val schemaLookup: TypeLookupTable = new TypeLookupParser(nativeToRootId).parse(raml)
+    val (ramlExpanded, schemaLookup): (Raml, TypeLookupTable) = new TypeLookupParser(nativeToRootId).parse(raml)
     println(s"Schema Lookup generated")
 
-
-
     val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
-    val richResources = raml.resources.map(RichResource(_, packageBasePath, schemaLookup))
+    val richResources = ramlExpanded.resources.map(RichResource(_, packageBasePath, schemaLookup))
 
 
     language match {

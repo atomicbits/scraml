@@ -32,7 +32,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
   feature("The scraml generator generates DSL classes") {
 
-    scenario("test the genenration of an object hierarchy") {
+    scenario("test the generation of an object hierarchy") {
 
       Given("a json-schema containing an object hierarcy")
       val apiResourceUrl = this.getClass.getClassLoader.getResource("objecthierarchy/TestObjectHierarchyApi.raml")
@@ -72,6 +72,26 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       fishClassRep.subClasses shouldBe empty
       fishClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
+
+    }
+
+
+    scenario("test the generation of a rich action with a typed array response") {
+
+      Given("a json-schema containing an action with a typed array response")
+      val apiResourceUrl = this.getClass.getClassLoader.getResource("richaction/TestRichActionApi.raml")
+
+      When("we generate the RAMl specification into class representations")
+      val classReps: Seq[ClassRep] =
+        ScramlGenerator.generateClassReps(
+          ramlApiPath = apiResourceUrl.toString,
+          apiPackageName = "io.atomicbits.scraml",
+          apiClassName = "TestRichActionApi",
+          Scala
+        )
+
+      Then("we should get typed response body")
+//      println(s"class reps: $classReps")
 
     }
 

@@ -154,13 +154,13 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
       val expectedResources =
         Set(
-          List("rest", "user"), // X
+          List("rest", "user"),
           List("rest", "user", "upload"),
           List("rest", "user", "activate"),
           List("rest", "user", "{void}", "location"),
-          List("rest", "user", "{userid}"), // X
+          List("rest", "user", "{userid}"),
           List("rest", "user", "{userid}", "dogs"),
-          List("rest", "animals"), // X
+          List("rest", "animals"),
           List("rest", "animals", "datafile", "upload"),
           List("rest", "animals", "datafile", "download")
         )
@@ -170,10 +170,8 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
         collectedResources should contain(expected)
       }
 
-
-      //      val prettyModel = TestUtils.prettyPrint(parsedModel)
-      //      println(s"Parsed raml: $prettyModel")
-
+//            val prettyModel = TestUtils.prettyPrint(parsedModel)
+//            println(s"Parsed raml: $prettyModel")
     }
 
 

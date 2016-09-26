@@ -19,7 +19,13 @@
       200:
         body:
           application/vnd-v1.0+json:
-            schema: user
+            schema: |
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "http://atomicbits.io/schema/user.json"
+                }
+              }
 
 /upload:
   post:
@@ -118,7 +124,7 @@
           {
             "type": "array",
             "items": {
-              "$ref": "user.json"
+              "$ref": "http://atomicbits.io/schema/user.json"
             }
           }
     responses:
@@ -129,7 +135,7 @@
               {
                 "type": "array",
                 "items": {
-                  "$ref": "user.json"
+                  "$ref": "http://atomicbits.io/schema/user.json"
                 }
               }
 
