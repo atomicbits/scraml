@@ -1,0 +1,21 @@
+#%RAML 0.8
+---
+title: test01
+version: v1
+
+schemas:
+  - link:         !include schemas/link.json
+  - user:         !include schemas/user.json
+  - animal:       !include schemas/animal.json
+  - method:       !include schemas/method.json
+  - paged-list:   !include schemas/paged-list.json
+  - bbox:         !include schemas/geojson/bbox.json
+  - crs:          !include schemas/geojson/crs.json
+  - geometry:     !include schemas/geojson/geometry.json
+
+
+/rest/user:
+  !include user.raml
+#
+#/rest/animals:
+#  !include animals.raml
