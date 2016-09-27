@@ -19,20 +19,23 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
-
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 
 /**
   * Created by peter on 1/04/16.
   */
-case class BooleanType(id: Id = ImplicitId, required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
+case class BooleanType(id: Id = ImplicitId,
+                       required: Option[Boolean] = None,
+                       model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): BooleanType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -43,6 +46,8 @@ object BooleanType {
 
   def apply(json: JsValue): Try[BooleanType] = {
 
+    val model: TypeModel = TypeModel(json)
+
     val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
@@ -50,7 +55,8 @@ object BooleanType {
     Success(
       BooleanType(
         id = id,
-        required = json.fieldBooleanValue("required")
+        required = json.fieldBooleanValue("required"),
+        model
       )
     )
   }

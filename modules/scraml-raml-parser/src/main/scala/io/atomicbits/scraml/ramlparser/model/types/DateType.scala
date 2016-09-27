@@ -33,6 +33,10 @@ trait DateType extends NonePrimitiveType with AllowedAsObjectField {
 
   def format: DateFormat
 
+  def model: TypeModel = RamlModel
+
+  def asTypeModel(typeModel: TypeModel): Type = this
+
 }
 
 /**

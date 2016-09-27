@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId, RamlModel, TypeModel}
 import play.api.libs.json.{JsString, JsValue}
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
@@ -38,6 +38,10 @@ case class FileType(id: Id = ImplicitId,
   def asRequired = copy(required = Some(true))
 
   override def updated(updatedId: Id): FileType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = this
+
+  override def model = RamlModel
 
 }
 

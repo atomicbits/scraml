@@ -19,11 +19,10 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
-
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 
@@ -35,9 +34,12 @@ case class NumberType(id: Id = ImplicitId,
                       minimum: Option[Int] = None,
                       maximum: Option[Int] = None,
                       multipleOf: Option[Int] = None,
-                      required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
+                      required: Option[Boolean] = None,
+                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): NumberType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -47,6 +49,8 @@ object NumberType {
 
 
   def apply(json: JsValue): Try[NumberType] = {
+
+    val model: TypeModel = TypeModel(json)
 
     val id = json match {
       case IdExtractor(schemaId) => schemaId
@@ -59,7 +63,8 @@ object NumberType {
         minimum = json.fieldIntValue("minimum"),
         maximum = json.fieldIntValue("maximum"),
         multipleOf = json.fieldIntValue("multipleOf"),
-        required = json.fieldBooleanValue("required")
+        required = json.fieldBooleanValue("required"),
+        model = model
       )
     )
   }

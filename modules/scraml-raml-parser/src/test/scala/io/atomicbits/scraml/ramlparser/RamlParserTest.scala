@@ -170,8 +170,8 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
         collectedResources should contain(expected)
       }
 
-//            val prettyModel = TestUtils.prettyPrint(parsedModel)
-//            println(s"Parsed raml: $prettyModel")
+            val prettyModel = TestUtils.prettyPrint(parsedModel)
+            println(s"Parsed raml: $prettyModel")
     }
 
 

@@ -35,9 +35,12 @@ case class ArrayType(items: Type,
                      minItems: Option[Int] = None,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
-                     fragments: Fragments = Fragments()) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
+                     fragments: Fragments = Fragments(),
+                     model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): ArrayType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel, items = items.asTypeModel(typeModel))
 
   def asRequired = copy(required = Some(true))
 
@@ -88,16 +91,18 @@ object ArrayType {
   }
 
 
-  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[ArrayType] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ArrayType] = {
+
+    val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id = schema match {
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
     // Process the items type
     val items =
-    (schema \ "items").toOption.collect {
+    (json \ "items").toOption.collect {
       case Type(someType) => someType
     } getOrElse
       Failure(
@@ -107,9 +112,9 @@ object ArrayType {
       )
 
     // Process the required field
-    val required = schema.fieldBooleanValue("required")
+    val required = json.fieldBooleanValue("required")
 
-    val fragments = schema match {
+    val fragments = json match {
       case Fragments(fragment) => fragment
     }
 
@@ -120,8 +125,9 @@ object ArrayType {
       Success(None),
       Success(None),
       Success(false),
-      fragments
-    )(ArrayType(_, _, _, _, _, _, _))
+      fragments,
+      Success(model)
+    )(ArrayType(_, _, _, _, _, _, _, _))
   }
 
 

@@ -62,7 +62,7 @@ object Parameters {
               Parameter(
                 name = name,
                 parameterType = paramType,
-                required = paramType.required.getOrElse(overrideRequired.getOrElse(Type.defaultRequiredValue)),
+                required = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
                 repeated = false
               )
             }

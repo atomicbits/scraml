@@ -143,14 +143,15 @@ object JavaActionCode extends ActionCode {
 
   def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
     primitiveType match {
-      case integerType: IntegerType if required => "long"
-      case numbertype: NumberType if required   => "double"
-      case booleanType: BooleanType if required => "boolean"
-      case stringtype: StringType               => "String"
-      case integerType: IntegerType             => "Long"
-      case numbertype: NumberType               => "Double"
-      case booleanType: BooleanType             => "Boolean"
-      case other                                => sys.error(s"RAML type $other is not yet supported.")
+      // The cases below goe wrong when the primitive ends up in a list like List<double> versus List<Double>.
+      //      case integerType: IntegerType if required => "long"
+      //      case numbertype: NumberType if required   => "double"
+      //      case booleanType: BooleanType if required => "boolean"
+      case stringtype: StringType   => "String"
+      case integerType: IntegerType => "Long"
+      case numbertype: NumberType   => "Double"
+      case booleanType: BooleanType => "Boolean"
+      case other                    => sys.error(s"RAML type $other is not yet supported.")
     }
   }
 
@@ -236,8 +237,8 @@ object JavaActionCode extends ActionCode {
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
 
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s""""$acceptH"""").getOrElse("null")
-    val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""$contentHeader"""").getOrElse("null")
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s""""${acceptH.value}"""").getOrElse("null")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""${contentHeader.value}"""").getOrElse("null")
 
     val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
 

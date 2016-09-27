@@ -185,8 +185,8 @@ object ScalaActionCode extends ActionCode {
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
 
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
-    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("${acceptH.value}")""").getOrElse("None")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("${contentHeader.value}")""").getOrElse("None")
 
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
     val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"

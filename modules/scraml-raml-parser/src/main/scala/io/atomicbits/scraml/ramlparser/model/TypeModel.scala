@@ -17,21 +17,26 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.{Id, JsonSchemaModel, RamlModel, TypeModel}
+import play.api.libs.json.{JsString, JsValue}
 
 /**
-  * Created by peter on 25/03/16.
+  * Created by peter on 26/09/16.
   */
-case class MapType(id: Id,
-                   baseType: List[String],
-                   elementType: String,
-                   required: Option[Boolean] = None,
-                   model: TypeModel = RamlModel) extends Type {
+sealed trait TypeModel
 
-  override def updated(updatedId: Id): MapType = copy(id = updatedId)
+case object RamlModel extends TypeModel
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+case object JsonSchemaModel extends TypeModel
+
+
+object TypeModel {
+
+  def apply(json: JsValue): TypeModel = {
+    (json \ "$schema").toOption.collect {
+      case JsString(schema) if schema.contains("http://json-schema.org") => JsonSchemaModel
+    } getOrElse RamlModel
+  }
 
 }

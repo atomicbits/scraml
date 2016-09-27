@@ -19,11 +19,10 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 
 import scala.util.{Success, Try}
-
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 
@@ -35,10 +34,12 @@ case class StringType(id: Id = ImplicitId,
                       pattern: Option[String] = None,
                       minLength: Option[Int] = None,
                       maxLength: Option[Int] = None,
-                      required: Option[Boolean] = None)
-  extends PrimitiveType with AllowedAsObjectField {
+                      required: Option[Boolean] = None,
+                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): StringType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -49,6 +50,8 @@ object StringType {
 
 
   def apply(json: JsValue): Try[StringType] = {
+
+    val model: TypeModel = TypeModel(json)
 
     val id = json match {
       case IdExtractor(schemaId) => schemaId
@@ -61,7 +64,8 @@ object StringType {
         pattern = json.fieldStringValue("format"),
         minLength = json.fieldIntValue("minLength"),
         maxLength = json.fieldIntValue("maxLength"),
-        required = json.fieldBooleanValue("required")
+        required = json.fieldBooleanValue("required"),
+        model = model
       )
     )
   }

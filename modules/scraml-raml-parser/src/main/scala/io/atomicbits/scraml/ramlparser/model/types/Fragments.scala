@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
@@ -31,6 +31,10 @@ import scala.util.{Success, Try}
 case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.empty) extends Type with Fragmented {
 
   override def updated(updatedId: Id): Fragments = copy(id = updatedId)
+
+  override def model = JsonSchemaModel
+
+  override def asTypeModel(typeModel: TypeModel): Type = this
 
   def isEmpty: Boolean = fragmentMap.isEmpty
 
@@ -45,19 +49,19 @@ case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.e
 
 object Fragments {
 
-  def apply(jsObj: JsObject)(implicit parseContext: ParseContext): Try[Fragments] = {
+  def apply(json: JsObject)(implicit parseContext: ParseContext): Try[Fragments] = {
 
-    val id = jsObj match {
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
     val fragmentsToKeep =
-      keysToExclude.foldLeft[Map[String, JsValue]](jsObj.value.toMap) { (schemaMap, excludeKey) =>
+      keysToExclude.foldLeft[Map[String, JsValue]](json.value.toMap) { (schemaMap, excludeKey) =>
         schemaMap - excludeKey
       }
 
     val fragments = fragmentsToKeep collect {
-      case (fragmentFieldName, Type(fragment))      => (fragmentFieldName, fragment)
+      case (fragmentFieldName, Type(fragment))      => (fragmentFieldName, fragment.map(_.asTypeModel(JsonSchemaModel)))
       case (fragmentFieldName, Fragments(fragment)) => (fragmentFieldName, fragment)
     }
 

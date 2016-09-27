@@ -19,20 +19,23 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId}
+import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
-
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 
 /**
   * Created by peter on 1/04/16.
   */
-case class NullType(id: Id = ImplicitId, required: Option[Boolean] = None) extends PrimitiveType with AllowedAsObjectField {
+case class NullType(id: Id = ImplicitId,
+                    required: Option[Boolean] = None,
+                    model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): NullType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -44,6 +47,8 @@ object NullType {
 
   def apply(json: JsValue): Try[NullType] = {
 
+    val model: TypeModel = TypeModel(json)
+
     val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
@@ -51,7 +56,8 @@ object NullType {
     Success(
       NullType(
         id = id,
-        required = json.fieldBooleanValue("required")
+        required = json.fieldBooleanValue("required"),
+        model = model
       )
     )
   }

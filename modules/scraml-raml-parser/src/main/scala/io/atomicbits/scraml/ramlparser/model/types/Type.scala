@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, NativeId}
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.JsValue
 
@@ -35,9 +35,18 @@ trait Type extends Identifiable {
   // The default value according to the RAML 1.0 specs is true. According to the json-schema 0.3 specs, it should be false.
   // The json-schema 0.4 specs don't specify a 'required: boolean' field any more, only a list of the required field names at the
   // level of the object definition, but this also implies a default value of false.
-  def isRequired = required.getOrElse(Type.defaultRequiredValue)
+  def isRequired = required.getOrElse(defaultRequiredValue)
+
+  def defaultRequiredValue = model match {
+    case JsonSchemaModel => false
+    case RamlModel       => true
+  }
 
   def updated(id: Id): Type
+
+  def asTypeModel(typeModel: TypeModel): Type
+
+  def model: TypeModel
 
 }
 
@@ -92,8 +101,6 @@ trait AllowedAsObjectField {
 
 
 object Type {
-
-  val defaultRequiredValue = true
 
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
