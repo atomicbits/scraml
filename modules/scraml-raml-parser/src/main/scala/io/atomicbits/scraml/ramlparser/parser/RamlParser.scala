@@ -58,10 +58,10 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
     */
   private def parseRamlJsonDocument(basePath: String, raml: JsObject): JsObject = {
 
-    def parseNested(doc: JsValue, currentBasePath: String = basePath): JsValue = {
+    def parseNested(doc: JsValue, currentBasePath: String): JsValue = {
       doc match {
         case JsInclude(source) =>
-          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$basePath/$source")
+          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$currentBasePath/$source")
           included match {
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)
@@ -76,7 +76,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       }
     }
 
-    parseNested(raml).asInstanceOf[JsObject]
+    parseNested(raml, basePath).asInstanceOf[JsObject]
   }
 
 

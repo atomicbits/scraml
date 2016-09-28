@@ -3,7 +3,7 @@
 title: test01
 version: v1
 
-schemas:
+types:
   - link:         !include schemas/link.json
   - user:         !include schemas/user.json
   - animal:       !include schemas/animal.json
@@ -13,6 +13,8 @@ schemas:
   - crs:          !include schemas/geojson/crs.json
   - geometry:     !include schemas/geojson/geometry.json
 
+traits:
+  - error401:     !include schemas/common/traits/error401.yaml
 
 /rest/user:
   !include user.raml

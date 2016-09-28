@@ -137,6 +137,30 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     }
 
 
+    scenario("test the application of traits in a complex RAML 1.0 model") {
+
+      Given("a RAML 1.0 specification with a traits definition")
+      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+
+      When("we parse the specification")
+      val parsedModel: Try[Raml] = parser.parse
+
+      Then("we get all four actions in the userid resource")
+      val raml = parsedModel.get
+      val restResource: Resource = raml.resources.filter(_.urlSegment == "rest").head
+      val userResource: Resource = restResource.resources.filter(_.urlSegment == "user").head
+      val uploadResource: Resource = userResource.resources.filter(_.urlSegment == "upload").head
+
+      val postAction: Action = uploadResource.actions.filter(_.actionType == Post).head
+
+      val response401Opt = postAction.responses.responseMap.get(StatusCode("401"))
+      response401Opt should not be(None)
+
+      val bodyContentOpt = response401Opt.get.body.contentMap.get(MediaType("application/json"))
+      bodyContentOpt should not be (None)
+    }
+
+
     scenario("test resource paths in a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
