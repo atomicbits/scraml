@@ -31,6 +31,8 @@ class RamlParseException(val messages: List[String]) extends RuntimeException(me
 
 object RamlParseException {
 
+
   def apply(message: String): RamlParseException = new RamlParseException(List(message))
+
 
 }

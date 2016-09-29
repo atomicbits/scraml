@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
+import io.atomicbits.scraml.generator.lookup.TypeLookupTable
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model.{Parameter, Resource}
+import io.atomicbits.scraml.ramlparser.model.{Parameter, Resource}
 
 /**
  * Created by peter on 22/08/15. 
@@ -35,7 +35,7 @@ case class RichResource(urlSegment: String,
 
 object RichResource {
 
-  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: SchemaLookup)(implicit lang: Language): RichResource = {
+  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: TypeLookupTable)(implicit lang: Language): RichResource = {
 
     def createRichResource(resource: Resource, actualPackageBasePath: List[String]): RichResource = {
 

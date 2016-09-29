@@ -21,7 +21,8 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
   * Created by peter on 30/09/15.
@@ -118,29 +119,39 @@ object ScalaActionCode extends ActionCode {
   }
 
 
+  def primitiveTypeToScalaType(primitiveType: PrimitiveType): String = {
+    primitiveType match {
+      case stringType: StringType   => "String"
+      case integerType: IntegerType => "Long"
+      case numbertype: NumberType   => "Double"
+      case booleanType: BooleanType => "Boolean"
+      case other                    => sys.error(s"RAML type $other is not yet supported.")
+    }
+  }
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    val typeTypeName = parameter.parameterType match {
-      case StringType  => "String"
-      case IntegerType => "Long"
-      case NumberType  => "Double"
-      case BooleanType => "Boolean"
-      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
-    }
 
-    if (parameter.repeated) {
-      val defaultValue = if (noDefault) "" else s"= List.empty[$typeTypeName]"
-      s"$sanitizedParameterName: List[$typeTypeName] $defaultValue"
-    } else {
-      if (parameter.required) {
-        s"$sanitizedParameterName: $typeTypeName"
-      } else {
-        val defaultValue = if (noDefault) "" else s"= None"
-        s"$sanitizedParameterName: Option[$typeTypeName] $defaultValue"
-      }
+    parameter.parameterType match {
+      case primitiveType: PrimitiveType =>
+        val primitive = primitiveTypeToScalaType(primitiveType)
+        if (parameter.required) {
+          s"$sanitizedParameterName: $primitive"
+        } else {
+          val defaultValue = if (noDefault) "" else s"= None"
+          s"$sanitizedParameterName: Option[$primitive] $defaultValue"
+        }
+      case arrayType: ArrayType         =>
+        arrayType.items match {
+          case primitiveType: PrimitiveType =>
+            val primitive = primitiveTypeToScalaType(primitiveType)
+            val defaultValue = if (noDefault) "" else s"= List.empty[$primitive]"
+            s"$sanitizedParameterName: List[$primitive] $defaultValue"
+          case other                        =>
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+        }
     }
   }
 
@@ -148,10 +159,11 @@ object ScalaActionCode extends ActionCode {
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    parameter match {
-      case Parameter(_, _, true)      => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, true, false)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case Parameter(_, false, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+
+    (parameter.parameterType, parameter.required) match {
+      case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+      case (primitive: PrimitiveType, true)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      case (arrayType: ArrayType, _)         => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
     }
   }
 
@@ -173,8 +185,8 @@ object ScalaActionCode extends ActionCode {
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
 
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("$acceptH")""").getOrElse("None")
-    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("$contentHeader")""").getOrElse("None")
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("${acceptH.value}")""").getOrElse("None")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("${contentHeader.value}")""").getOrElse("None")
 
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
     val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"

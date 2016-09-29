@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/foo.json",
+  "type": "object",
+  "description": "A Foo",
+  "properties": {
+    "bar": {
+      "type": "string",
+      "required": true
+    },
+    "baz": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

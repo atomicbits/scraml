@@ -24,17 +24,6 @@ object ApplicationBuild extends Build
 with BuildSettings
 with Dependencies {
 
-  val scramlParser = Project(
-    id = "scraml-parser",
-    base = file("modules/scraml-parser"),
-    settings = buildSettings(dependencies = scramlParserDeps ++ testDeps)
-  )
-
-  val scramlJsonSchemaParser = Project(
-    id = "scraml-jsonschema-parser",
-    base = file("modules/scraml-jsonschema-parser"),
-    settings = buildSettings(dependencies = scramlJsonSchemaParserDeps ++ testDeps)
-  )
 
   val scramlDslScala = Project(
     id = "scraml-dsl-scala",
@@ -73,13 +62,6 @@ with Dependencies {
   )
 
 
-  val scramlGenerator = Project(
-    id = "scraml-generator",
-    base = file("modules/scraml-generator"),
-    settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-  ) dependsOn(scramlParser, scramlJsonSchemaParser)
-
-
   val scramlGenSimulation = Project(
     id = "scraml-gen-simulation",
     base = file("modules/scraml-gen-simulation"),
@@ -91,7 +73,14 @@ with Dependencies {
     id = "scraml-raml-parser",
     base = file("modules/scraml-raml-parser"),
     settings = buildSettings(dependencies = scramlRamlParserDeps ++ testDeps)
-  ) dependsOn(scramlDslScala, scramlDslJava)
+  )
+
+
+  val scramlGenerator = Project(
+    id = "scraml-generator",
+    base = file("modules/scraml-generator"),
+    settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
+  ) dependsOn(scramlRamlParser)
 
 
   val main = Project(
@@ -102,7 +91,7 @@ with Dependencies {
    .settings(
     publish :=(),
     publishLocal :=()
-    ) aggregate(scramlParser, scramlRamlParser, scramlJsonSchemaParser,
+    ) aggregate(scramlRamlParser,
     scramlDslScala, scramlDslPlay25Scala, scramlDslJava, scramlGenSimulation, scramlGenerator
     )
 

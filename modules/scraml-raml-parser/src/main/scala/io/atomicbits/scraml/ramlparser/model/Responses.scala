@@ -32,6 +32,8 @@ case class Responses(responseMap: Map[StatusCode, Response] = Map.empty) {
 
   val isEmpty = responseMap.isEmpty
 
+  def get(statusCode: String): Option[Response] = responseMap.get(StatusCode(statusCode))
+
 }
 
 

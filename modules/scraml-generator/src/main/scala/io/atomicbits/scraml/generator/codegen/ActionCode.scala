@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.parser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.Parameter
 
 /**
  * Created by peter on 30/09/15.

@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
 
@@ -40,6 +40,7 @@ object Action {
     val actionMapOpt =
       actionMap match {
         case (Method(method), jsObj: JsObject) => Some((method, jsObj))
+        case (Method(method), _)               => Some((method, Json.obj()))
         case _                                 => None
       }
 
@@ -54,7 +55,7 @@ object Action {
 
     parseContext.traits.applyTo(jsObject) { json =>
 
-      val tryQueryParameters = Parameters((json \ "queryParameters").toOption)
+      val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
 
       val tryHeaders = Parameters((json \ "headers").toOption)
 

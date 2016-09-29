@@ -20,11 +20,11 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.parser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.Parameter
 
 /**
- * Created by peter on 28/08/15. 
- */
+  * Created by peter on 28/08/15.
+  */
 case class ActionFunctionGenerator(actionCode: ActionCode) {
 
 
@@ -43,35 +43,27 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateFormAction(action: RichAction, formPostContentType: FormPostContentType): List[String] = {
 
-    val actualFormParameters: Map[String, Parameter] = formPostContentType.formParameters.map { fps =>
-      val (name, paramList) = fps
-      if (paramList.isEmpty) sys.error(s"Form parameter $name has no valid type definition.")
-      // We still don't understand why the form parameters are represented as a Map[String, List[Parameter]]
-      // instead of just a Map[String, Parameter] in the Java Raml model. Here, we just use the first element
-      // of the parameter list.
-      (name, paramList.head)
-    }
+    val actualFormParameters: Map[String, Parameter] = formPostContentType.formParameters.valueMap
 
-    val formParameterMethodParameters =
+    val formParameterMethodParameters: List[String] =
       actionCode.sortQueryOrFormParameters(actualFormParameters.toList).map { paramPair =>
         val (name, param) = paramPair
         actionCode.expandQueryOrFormParameterAsMethodParameter((name, param))
       }
 
-    val formParameterMapEntries =
-      formPostContentType.formParameters.toList.map { paramPair =>
-        val (name, paramList) = paramPair
-        actionCode.expandQueryOrFormParameterAsMapEntry((name, paramList.head))
-      }
+    val formParameterMapEntries: List[String] =
+      formPostContentType.formParameters.valueMap.map {
+        case (name, parameter) => actionCode.expandQueryOrFormParameterAsMapEntry((name, parameter))
+      } toList
 
-    val segmentType = actionCode.createSegmentType(action.selectedResponsetype)(None)
+    val segType: String = actionCode.createSegmentType(action.selectedResponsetype)(None)
 
     val formAction: String =
       actionCode.generateAction(
         action = action,
         actionParameters = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
-        segmentType = segmentType,
+        segmentType = segType,
         contentType = action.selectedContentType,
         responseType = action.selectedResponsetype
       )
@@ -101,17 +93,17 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   def generateBodyAction(action: RichAction, binary: Boolean): List[String] = {
 
     /**
-     * In scala, we can get compiler issues with default values on overloaded action methods. That's why we don't add
-     * a default value in such cases. We do this any time when there are overloaded action methods, i.e. when there
-     * are multiple body types.
-     */
+      * In scala, we can get compiler issues with default values on overloaded action methods. That's why we don't add
+      * a default value in such cases. We do this any time when there are overloaded action methods, i.e. when there
+      * are multiple body types.
+      */
     val bodyTypes = actionCode.bodyTypes(action)
     val noDefault = bodyTypes.size > 1
     val queryParameterMethodParameters =
-      actionCode.sortQueryOrFormParameters(action.queryParameters.toList)
+      actionCode.sortQueryOrFormParameters(action.queryParameters.valueMap.toList)
         .map(actionCode.expandQueryOrFormParameterAsMethodParameter(_, noDefault))
 
-    val queryParameterMapEntries = action.queryParameters.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
+    val queryParameterMapEntries = action.queryParameters.valueMap.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
 
     val segmentTypeFactory = actionCode.createSegmentType(action.selectedResponsetype) _
 

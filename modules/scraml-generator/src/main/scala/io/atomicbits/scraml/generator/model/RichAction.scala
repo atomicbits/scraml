@@ -19,36 +19,35 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.SchemaLookup
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.generator.lookup.{TypeClassRepAssembler, TypeLookupTable}
+import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.model.types.TypeReference
 
 import scala.language.postfixOps
 
 /**
- * Created by peter on 22/08/15. 
- */
-case class RichAction(actionType: ActionType,
-                      queryParameters: Map[String, Parameter],
+  * Created by peter on 22/08/15.
+  */
+case class RichAction(actionType: Method,
+                      headers: Parameters,
+                      queryParameters: Parameters,
                       contentTypes: Set[ContentType],
                       responseTypes: Set[ResponseType],
-                      headers: Map[String, Parameter],
                       selectedContentType: ContentType = NoContentType,
                       selectedResponsetype: ResponseType = NoResponseType)
 
 object RichAction {
 
-  def apply(action: Action, schemaLookup: SchemaLookup)(implicit lang: Language): RichAction = {
+  def apply(action: Action, lookupTable: TypeLookupTable)(implicit lang: Language): RichAction = {
 
-    def mimeTypeToClassRep(mimeType: MimeType): Option[TypedClassReference] = {
-      mimeType.schema.flatMap(schemaLookup.externalSchemaLinks.get).map(schemaLookup.rootIdAsTypedClassReference)
+    def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
+      bodyContent.bodyType.collect {
+        case theBodyType => TypeClassRepAssembler.typeAsClassReference(theBodyType, lookupTable).asTypedClassReference
+      }
     }
 
-    val contentTypes = action.body.values.toList map { mimeType =>
-      ContentType(
-        contentTypeHeader = mimeType.mimeType,
-        classReference = mimeTypeToClassRep(mimeType),
-        formParameters = mimeType.formParameters
-      )
+    val contentTypes = action.body.contentMap.map {
+      case (mediaType, bodyContent) => ContentType(mediaType, mimeTypeToTypedClassReference(bodyContent), bodyContent.formParameters)
     } toSet
 
     // Select the responses in the 200-range and choose the first one present as the main response type that will be accessible as a
@@ -60,20 +59,20 @@ object RichAction {
 
     val responseTypes =
       first200CodePresent map { response =>
-        response.body.values.toSet[MimeType] map { mimeType =>
+        response.body.contentMap.values.toSet[BodyContent] map { bodyContent =>
           ResponseType(
-            acceptHeader = mimeType.mimeType,
-            classReference = mimeTypeToClassRep(mimeType)
+            acceptHeader = bodyContent.mediaType,
+            classReference = mimeTypeToTypedClassReference(bodyContent)
           )
         }
-      }  getOrElse Set.empty[ResponseType]
+      } getOrElse Set.empty[ResponseType]
 
     RichAction(
       actionType = action.actionType,
+      headers = action.headers,
       queryParameters = action.queryParameters,
       contentTypes = contentTypes,
-      responseTypes = responseTypes,
-      headers = action.headers
+      responseTypes = responseTypes
     )
 
   }

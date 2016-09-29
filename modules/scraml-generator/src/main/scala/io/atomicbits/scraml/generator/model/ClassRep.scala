@@ -25,8 +25,8 @@ import io.atomicbits.scraml.generator.util.CleanNameUtil
 import scala.annotation.tailrec
 
 /**
- * Created by peter on 21/08/15. 
- */
+  * Created by peter on 21/08/15.
+  */
 
 trait ClassRep {
 
@@ -69,25 +69,27 @@ trait ClassRep {
   def isInHierarchy: Boolean = parentClass.isDefined || subClasses.nonEmpty
 
   /**
-   * Gives the top level parent of the hierarchy this class rep takes part in if any. If this class rep is the top level class,
-   * it will be returned as the result (as opposed to the method topLevelParent).
-   */
+    * Gives the top level parent of the hierarchy this class rep takes part in if any. If this class rep is the top level class,
+    * it will be returned as the result (as opposed to the method topLevelParent).
+    */
   def hierarchyParent(classMap: ClassMap): Option[ClassRep] = {
     if (parentClass.isEmpty && subClasses.nonEmpty) Some(this)
     else topLevelParent(classMap)
   }
 
   /**
-   * Gives the top level parent of this class rep. A top level parent class itself has no parent and thus no top level parent.
-   */
+    * Gives the top level parent of this class rep. A top level parent class itself has no parent and thus no top level parent.
+    */
   def topLevelParent(classMap: ClassMap): Option[ClassRep] = {
 
     @tailrec
     def findTopLevelParent(parentId: ClassReference): ClassRep = {
       val parentClass = classMap(parentId)
       parentClass.parentClass match {
-        case Some(prntId) => findTopLevelParent(prntId)
-        case None         => parentClass
+        case Some(prntId) if prntId == parentId =>
+          sys.error(s"Class $prntId has itself as parent. Did you forget to define an ID on one of the child classes?")
+        case Some(prntId)                       => findTopLevelParent(prntId)
+        case None                               => parentClass
       }
     }
 
@@ -96,8 +98,6 @@ trait ClassRep {
   }
 
 }
-
-
 
 
 case class EnumValuesClassRep(classRef: ClassReference,
@@ -188,14 +188,14 @@ object ClassRep {
   type ClassMap = Map[ClassReference, ClassRep]
 
   /**
-   *
-   * @param classReference The class reference for the class representation.
-   * @param fields The public fields for this class rep (to become a scala case class or java pojo).
-   * @param parentClass The class rep of the parent class of this class rep.
-   * @param subClasses The class reps of the children of this class rep.
-   * @param content The source content of the class.
-   * @param jsonTypeInfo Info about JSON-typing of case classes.
-   */
+    *
+    * @param classReference The class reference for the class representation.
+    * @param fields         The public fields for this class rep (to become a scala case class or java pojo).
+    * @param parentClass    The class rep of the parent class of this class rep.
+    * @param subClasses     The class reps of the children of this class rep.
+    * @param content        The source content of the class.
+    * @param jsonTypeInfo   Info about JSON-typing of case classes.
+    */
   def apply(classReference: ClassReference,
             fields: List[Field] = List.empty,
             parentClass: Option[ClassReference] = None,

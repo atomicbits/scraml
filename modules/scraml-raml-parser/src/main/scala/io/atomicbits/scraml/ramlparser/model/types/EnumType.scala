@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
+import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
@@ -27,10 +27,14 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class EnumType(id: Id, choices: List[String], required: Option[Boolean] = None)
-  extends PrimitiveType with AllowedAsObjectField {
+case class EnumType(id: Id,
+                    choices: List[String],
+                    required: Option[Boolean] = None,
+                    model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): EnumType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -39,17 +43,19 @@ object EnumType {
 
   val value = "enum"
 
-  def apply(schema: JsValue): Try[EnumType] = {
+  def apply(json: JsValue): Try[EnumType] = {
 
-    val id = schema match {
+    val model: TypeModel = TypeModel(json)
+
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val choices = (schema \ "enum").asOpt[List[String]]
+    val choices = (json \ "enum").asOpt[List[String]]
 
-    val required = (schema \ "required").asOpt[Boolean]
+    val required = (json \ "required").asOpt[Boolean]
 
-    Success(EnumType(id, choices.getOrElse(List.empty), required))
+    Success(EnumType(id, choices.getOrElse(List.empty), required, model))
   }
 
 

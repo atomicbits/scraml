@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Method
 
 /**
   * Created by peter on 23/08/15.
@@ -62,7 +62,7 @@ case class ActionGenerator(actionCode: ActionCode) {
         } yield actionWithTypeSelection
       }
 
-    val groupedByActionType: Map[ActionType, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
+    val groupedByActionType: Map[Method, List[RichAction]] = actionsWithTypeSelection.groupBy(_.actionType)
 
     // now, we have to map the actions onto a segment path if necessary
     val actionPathToAction: List[ActionPath] =
@@ -120,11 +120,11 @@ case class ActionGenerator(actionCode: ActionCode) {
       expandAcceptHeaderMap(baseClassRef, acceptHeaderMap)
 
     // Header segment classes have the same class name in Java as in Scala.
-    val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}HeaderSegment"
+    val headerSegmentClassName = s"Content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
-    val contentHeaderMethodName = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeaderValue)}"
+    val contentHeaderMethodName = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}"
     val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
@@ -176,11 +176,11 @@ case class ActionGenerator(actionCode: ActionCode) {
     val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate)
 
     // Header segment classes have the same class name in Java as in Scala.
-    val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}HeaderSegment"
+    val headerSegmentClassName = s"Accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
-    val acceptHeaderMethodName = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeaderValue)}"
+    val acceptHeaderMethodName = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}"
     val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))

@@ -104,7 +104,7 @@ case class ClassReference(name: String,
   // package parts need to be escaped in Java for Java keywords, Scala doesn't mind if you use keywords in a package name.
   // ToDo: only rename package parts that are keywords if we're generating Java.
   def safePackageParts: List[String] =
-    packageParts.map(part => CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanPackageName(part), "esc"))
+  packageParts.map(part => CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanPackageName(part), "esc"))
 
   /**
     * The class definition as a string.
@@ -117,8 +117,8 @@ case class ClassReference(name: String,
     *
     */
   def classDefinitionScala: String =
-    if (typeVariables.isEmpty) name
-    else s"$name[${typeVariables.mkString(",")}]"
+  if (typeVariables.isEmpty) name
+  else s"$name[${typeVariables.mkString(",")}]"
 
 
   /**
@@ -132,8 +132,8 @@ case class ClassReference(name: String,
     *
     */
   def classDefinitionJava: String =
-    if (typeVariables.isEmpty) name
-    else s"$name<${typeVariables.mkString(",")}>"
+  if (typeVariables.isEmpty) name
+  else s"$name<${typeVariables.mkString(",")}>"
 
 
   def canonicalNameScala: String = if (packageName.nonEmpty) s"$packageName.$classDefinitionScala" else classDefinitionScala
@@ -162,8 +162,8 @@ case class TypedClassReference(classReference: ClassReference,
     * "List[List[User]]"
     */
   def classDefinitionScala: String =
-    if (classReference.typeVariables.isEmpty) classReference.name
-    else s"${classReference.name}[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
+  if (classReference.typeVariables.isEmpty) classReference.name
+  else s"${classReference.name}[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
 
 
   /**
@@ -178,8 +178,8 @@ case class TypedClassReference(classReference: ClassReference,
     *
     */
   def classDefinitionJava: String =
-    if (classReference.typeVariables.isEmpty) classReference.name
-    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionJava).mkString(",")}>"
+  if (classReference.typeVariables.isEmpty) classReference.name
+  else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionJava).mkString(",")}>"
 
 
   def packageName: String = classReference.packageName
@@ -209,7 +209,7 @@ object StringClassReference {
 
 case object BooleanClassReference {
 
-  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
+  def apply(required: Boolean)(implicit lang: Language): ClassReference = lang match {
     case Scala            => ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
     case Java if required => ClassReference(name = "boolean", packageParts = List("java", "lang"), predef = true)
     case Java             => ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
@@ -219,16 +219,17 @@ case object BooleanClassReference {
 
 case object DoubleClassReference {
 
-  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
-      case Scala            => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
-      case Java if required => ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
-      case Java             => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+  def apply(required: Boolean)(implicit lang: Language): ClassReference = lang match {
+    case Scala => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+    // The case below goes wrong when the primitive ends up in a list like List<double> versus List<Double>.
+    // case Java if required => ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
+    case Java => ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
   }
 }
 
 case object LongClassReference {
 
-  def apply(required:Boolean)(implicit lang: Language): ClassReference = lang match {
+  def apply(required: Boolean)(implicit lang: Language): ClassReference = lang match {
     case Scala            => ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
     case Java if required => ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
     case Java             => ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
