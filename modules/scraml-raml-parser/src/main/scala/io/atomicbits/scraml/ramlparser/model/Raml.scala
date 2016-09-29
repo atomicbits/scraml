@@ -223,8 +223,23 @@ object Raml {
 
 
     // Group all resources at this level with the same urlSegment and urlParameter
-    val groupedResources: List[List[Resource]] =
-    resources.groupBy(resource => (resource.urlSegment, resource.urlParameter)).values.toList
+    val groupedResources: List[List[Resource]] = resources.groupBy(_.urlSegment).values.toList
+
+//    groupedResources.foreach { group =>
+//      val (actualParam, noneParam) = group.map(_.urlParameter).partition(_.isDefined)
+//      (actualParam, noneParam) match {
+//        case (Nil, Nil)       => ()
+//        case (Nil, nones)     => ()
+//        case (actuals, Nil)   =>
+//          val diffs = actuals.map(_.get).groupBy(param => (param.parameterType, param.required)).values.toList
+//          if (diffs.size > 1)
+//            sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+//              s"but with inconsistent type or required value.")
+//        case (actuals, nones) =>
+//          sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+//            s"but with inconsistent type or required value...")
+//      }
+//    }
 
     val mergedResources: List[Resource] = groupedResources.map(mergeResources)
 
