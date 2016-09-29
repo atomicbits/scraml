@@ -31,6 +31,8 @@ import scala.language.postfixOps
 
 case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
+  def nonEmpty: Boolean = valueMap.nonEmpty
+
   def byName(name: String): Option[Parameter] = valueMap.get(name)
 
   val values: List[Parameter] = valueMap.values.toList
@@ -46,18 +48,21 @@ case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 object Parameters {
 
 
-  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = apply(jsValueOpt, None)
+
+
+  def apply(jsValueOpt: Option[JsValue], overrideRequired: Option[Boolean])(implicit parseContext: ParseContext): Try[Parameters] = {
 
     def jsObjectToParameters(jsObject: JsObject): Try[Parameters] = {
 
-      val valueMap =
+      val valueMap: Map[String, Try[Parameter]] =
         jsObject.value.collect {
           case (name, Type(tryType)) =>
             name -> tryType.map { paramType =>
               Parameter(
                 name = name,
                 parameterType = paramType,
-                required = paramType.isRequired,
+                required = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
                 repeated = false
               )
             }

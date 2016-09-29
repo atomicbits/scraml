@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/error.json",
+  "type": "object",
+  "description": "Een error response body",
+  "properties": {
+    "message": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

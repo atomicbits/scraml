@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model.types
 
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.JsValue
 
 import scala.util.Try
 
@@ -29,6 +29,24 @@ import scala.util.Try
   */
 object InlineTypeDeclaration {
 
+  /**
+    * An inline type declaration is of the form:
+    *
+    * . /activate:
+    * .  put:
+    * .    body:
+    * .      application/vnd-v1.0+json:
+    * .        schema: |
+    * .          {
+    * .            "type": "array",
+    * .              "items": {
+    * .                "$ref": "user.json"
+    * .              }
+    * .          }
+    *
+    * Here, the 'schema' (or 'type') field does not refer to the type but to an object that defines the type.
+    *
+    */
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Type]] = {
 
     Type.typeDeclaration(json) match {

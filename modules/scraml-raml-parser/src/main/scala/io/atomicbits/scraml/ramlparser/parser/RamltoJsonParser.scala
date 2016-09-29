@@ -41,8 +41,12 @@ object RamlToJsonParser {
   def parseToJson(source: String, charsetName: String): (String, JsValue) = {
     Try {
       val (path, ramlContent) = read(source, charsetName)
+      val ramlContentNoTabs = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
       val yaml = new Yaml(SimpleRamlConstructor())
-      val ramlMap: java.util.Map[Any, Any] = yaml.load(ramlContent).asInstanceOf[java.util.Map[Any, Any]]
+      val ramlMap: Any = {
+        val yamled = yaml.load(ramlContentNoTabs)
+        Try(yamled.asInstanceOf[java.util.Map[Any, Any]]).getOrElse(yamled.asInstanceOf[String])
+      }
       (path, anyToJson(ramlMap))
     } match {
       case Success((path: String, jsvalue)) => (path, jsvalue)

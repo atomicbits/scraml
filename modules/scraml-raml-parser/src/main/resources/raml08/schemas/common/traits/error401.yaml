@@ -1,0 +1,7 @@
+displayName: error401
+responses:
+  401:
+    description: Unauthorized
+    body:
+      application/json:
+        schema: !include ../model/error.json

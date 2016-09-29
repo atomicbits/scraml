@@ -19,61 +19,64 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.parser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.types.TypeReference
+import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType, Parameters}
+
 
 /**
- * Created by peter on 26/08/15. 
- */
+  * Created by peter on 26/08/15.
+  */
 sealed trait ContentType {
 
-  def contentTypeHeaderValue: String
+  def contentTypeHeader: MediaType
 
-  def contentTypeHeaderOpt: Option[String] = Some(contentTypeHeaderValue)
+  def contentTypeHeaderOpt: Option[MediaType] = Some(contentTypeHeader)
 
 }
 
-case class StringContentType(contentTypeHeaderValue: String) extends ContentType
+case class StringContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class JsonContentType(contentTypeHeaderValue: String) extends ContentType
+case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class TypedContentType(contentTypeHeaderValue: String, classReference: TypedClassReference) extends ContentType
+case class TypedContentType(contentTypeHeader: MediaType, classReference: TypedClassReference) extends ContentType
 
-case class FormPostContentType(contentTypeHeaderValue: String, formParameters: Map[String, List[Parameter]]) extends ContentType
+case class FormPostContentType(contentTypeHeader: MediaType, formParameters: Parameters) extends ContentType
 
-case class MultipartFormContentType(contentTypeHeaderValue: String) extends ContentType
+case class MultipartFormContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class BinaryContentType(contentTypeHeaderValue: String) extends ContentType
+case class BinaryContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class AnyContentType(contentTypeHeaderValue: String) extends ContentType
+case class AnyContentType(contentTypeHeader: MediaType) extends ContentType
 
 case object NoContentType extends ContentType {
 
-  val contentTypeHeaderValue = ""
+  val contentTypeHeader = MediaType("")
 
   override val contentTypeHeaderOpt = None
 
 }
 
+
 object ContentType {
 
-  def apply(contentTypeHeader: String,
-            classReference: Option[TypedClassReference],
-            formParameters: Map[String, List[Parameter]]): ContentType = {
+  def apply(mediaType: MediaType, content: Option[TypedClassReference], formParameters: Parameters): ContentType = {
 
-    if (contentTypeHeader.toLowerCase == "multipart/form-data") {
-      MultipartFormContentType(contentTypeHeader)
+    val mediaTypeValue = mediaType.value.toLowerCase
+
+    if (mediaTypeValue == "multipart/form-data") {
+      MultipartFormContentType(mediaType)
     } else if (formParameters.nonEmpty) {
-      FormPostContentType(contentTypeHeader, formParameters)
-    } else if (classReference.isDefined) {
-      TypedContentType(contentTypeHeader, classReference.get)
-    } else if (contentTypeHeader.toLowerCase.contains("json")) {
-      JsonContentType(contentTypeHeader)
-    } else if (contentTypeHeader.toLowerCase.contains("text")) {
-      StringContentType(contentTypeHeader)
-    } else if (contentTypeHeader.toLowerCase.contains("octet-stream")) {
-      BinaryContentType(contentTypeHeader)
+      FormPostContentType(mediaType, formParameters)
+    } else if (content.isDefined) {
+      TypedContentType(mediaType, content.get)
+    } else if (mediaTypeValue.contains("json")) {
+      JsonContentType(mediaType)
+    } else if (mediaTypeValue.contains("text")) {
+      StringContentType(mediaType)
+    } else if (mediaTypeValue.contains("octet-stream")) {
+      BinaryContentType(mediaType)
     } else {
-      AnyContentType(contentTypeHeader)
+      AnyContentType(mediaType)
     }
   }
 

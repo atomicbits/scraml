@@ -19,19 +19,23 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException, Sourced}
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import io.atomicbits.scraml.ramlparser.model.NativeId
+import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
+import play.api.libs.json.{JsArray, JsObject, JsValue}
 
+import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 10/02/16.
   */
-case class Types(typeDefinitions: Map[String, Type] = Map.empty) {
+case class Types(typeReferences: Map[NativeId, Type] = Map.empty) {
 
   def ++(otherTypes: Types): Types = {
-    Types(typeDefinitions ++ otherTypes.typeDefinitions)
+    Types(typeReferences ++ otherTypes.typeReferences)
   }
+
+  def +(typeReference: (NativeId, Type)): Types = copy(typeReferences = typeReferences + typeReference)
 
 }
 
@@ -52,7 +56,7 @@ object Types {
     def typesJsObjToTypes(typesJsObj: JsObject): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
-          case (key: String, incl: JsValue) => parseContext.withSource(incl)(typeObjectToNativeTypes(key, incl))
+          case (key: String, incl: JsValue) => parseContext.withSource(incl)(typeObjectToType(key, incl))
         }
       foldTryTypes(tryTypes)
     }
@@ -66,12 +70,12 @@ object Types {
       }
     }
 
-    def typeObjectToNativeTypes(name: String, typeDefinition: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
+    def typeObjectToType(name: String, typeDefinition: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
 
       val result =
         typeDefinition match {
-          case Type(sometype) => sometype.map(tp => Types(typeDefinitions = Map(name -> tp)))
-          case x              => sys.error(s"Unknown type $x.")
+          case Type(sometype) => sometype.map(tp => Types(typeReferences = Map(NativeId(name) -> tp)))
+          case x              => Failure(RamlParseException(s"Unknown type $x in ${parseContext.head}."))
         }
 
       result

@@ -19,10 +19,17 @@
       200:
         body:
           application/vnd-v1.0+json:
-            schema: user
+            schema: |
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "user.json"
+                }
+              }
 
 /upload:
   post:
+    is: [error401]
     body:
       multipart/form-data:
     responses:
@@ -134,6 +141,11 @@
               }
 
 /{void}/location:
+  uriParameters:
+    void:
+      description: The user's id.
+      type: string
+      required: true
   get:
     responses:
       200:

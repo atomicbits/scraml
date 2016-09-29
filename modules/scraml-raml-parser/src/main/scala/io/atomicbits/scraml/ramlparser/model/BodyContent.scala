@@ -31,7 +31,7 @@ import io.atomicbits.scraml.ramlparser.parser.TryUtils._
 /**
   * Created by peter on 10/02/16.
   */
-case class BodyContent(mimeType: MimeType,
+case class BodyContent(mediaType: MediaType,
                        bodyType: Option[Type] = None,
                        formParameters: Parameters = Parameters())
 
@@ -54,7 +54,7 @@ object BodyContent {
       for {
         bType <- accumulate(bodyType)
         formParameters <- tryFormParameters
-      } yield BodyContent(MimeType(mimeType), bType, formParameters)
+      } yield BodyContent(MediaType(mimeType), bType, formParameters)
 
     Some(mime)
   }

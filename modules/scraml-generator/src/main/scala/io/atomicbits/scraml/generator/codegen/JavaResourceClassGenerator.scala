@@ -19,13 +19,13 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.model.{Language, ClassReference, ClassRep, RichResource}
+import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, Language, RichResource}
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
- * Created by peter on 25/09/15.
- */
+  * Created by peter on 25/09/15.
+  */
 object JavaResourceClassGenerator {
 
   def generateResourceClasses(apiClassName: String,
@@ -129,9 +129,9 @@ object JavaResourceClassGenerator {
 
       val resourceConstructors = generateResourceConstructors(resource)
 
-//      val shallowCloneValueAssignment =
-//        if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
-//        else ""
+      //      val shallowCloneValueAssignment =
+      //        if (isParameterized(resource)) s"$classNameCamel._value = this._value;"
+      //        else ""
 
       val sourcecode =
         s"""
@@ -221,13 +221,13 @@ object JavaResourceClassGenerator {
     def isParameterized(resource: RichResource) = resource.urlParameter.isDefined
 
 
-    def generateParameterType(parameterType: ParameterType): String = {
+    def generateParameterType(parameterType: Type): String = {
       parameterType match {
-        case StringType  => "String"
-        case IntegerType => "Long" // NOT long
-        case NumberType  => "Double" // NOT double
-        case BooleanType => "Boolean" // NOT boolean
-        case x           => sys.error(s"Unknown URL parameter type $x")
+        case stringType: StringType   => "String"
+        case integerType: IntegerType => "Long" // NOT long
+        case numberType: NumberType   => "Double" // NOT double
+        case booleanType: BooleanType => "Boolean" // NOT boolean
+        case x                        => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

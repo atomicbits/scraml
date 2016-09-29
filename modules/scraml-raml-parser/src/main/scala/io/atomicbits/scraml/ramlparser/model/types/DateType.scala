@@ -29,9 +29,13 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-trait DateType extends PrimitiveType with AllowedAsObjectField {
+trait DateType extends NonePrimitiveType with AllowedAsObjectField {
 
   def format: DateFormat
+
+  def model: TypeModel = RamlModel
+
+  def asTypeModel(typeModel: TypeModel): Type = this
 
 }
 
@@ -46,7 +50,7 @@ case class DateOnlyType(id: Id = ImplicitId, required: Option[Boolean] = None) e
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): DateOnlyType = copy(id = updatedId)
 
 }
 
@@ -75,7 +79,7 @@ case class TimeOnlyType(id: Id = ImplicitId, required: Option[Boolean] = None) e
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): TimeOnlyType = copy(id = updatedId)
 
 }
 
@@ -105,7 +109,7 @@ case class DateTimeOnlyType(id: Id = ImplicitId, required: Option[Boolean] = Non
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): DateTimeOnlyType = copy(id = updatedId)
 
 }
 
@@ -148,7 +152,7 @@ case class DateTimeDefaultType(id: Id = ImplicitId, required: Option[Boolean] = 
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): DateTimeDefaultType = copy(id = updatedId)
 
 }
 
@@ -174,7 +178,7 @@ case class DateTimeRFC2616Type(id: Id = ImplicitId, required: Option[Boolean] = 
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): DateTimeRFC2616Type = copy(id = updatedId)
 
 }
 

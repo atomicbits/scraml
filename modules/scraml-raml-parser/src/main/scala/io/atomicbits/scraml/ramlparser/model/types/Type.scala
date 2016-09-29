@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId}
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import play.api.libs.json.JsValue
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
   * Created by peter on 10/02/16.
@@ -35,9 +35,21 @@ trait Type extends Identifiable {
   // The default value according to the RAML 1.0 specs is true. According to the json-schema 0.3 specs, it should be false.
   // The json-schema 0.4 specs don't specify a 'required: boolean' field any more, only a list of the required field names at the
   // level of the object definition, but this also implies a default value of false.
-  def isRequired = required.getOrElse(true)
+  def isRequired = required.getOrElse(defaultRequiredValue)
+
+  def defaultRequiredValue = model match {
+    case JsonSchemaModel => false
+    case RamlModel       => true
+  }
+
+  def updated(id: Id): Type
+
+  def asTypeModel(typeModel: TypeModel): Type
+
+  def model: TypeModel
 
 }
+
 
 trait Identifiable {
 
@@ -58,7 +70,7 @@ trait NonePrimitiveType extends Type
   */
 trait Fragmented {
 
-  def fragments: Fragment
+  def fragments: Fragments
 
   def fragment(field: String): Option[Identifiable] = fragments.fragmentMap.get(field)
 
@@ -85,23 +97,21 @@ trait Fragmented {
 
 trait AllowedAsObjectField {
 
-
 }
 
 
 object Type {
 
-
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
     typeName match {
-      case StringType.value                  => Try(new StringType())
-      case NumberType.value                  => Try(new NumberType())
-      case IntegerType.value                 => Try(new IntegerType())
-      case BooleanType.value                 => Try(new BooleanType())
-      case NullType.value                    => Try(new StringType())
-      case ArrayType(arrayType)              => arrayType
-      case namedType                         => Try(TypeReference(parseContext.nameToId(namedType)))
+      case StringType.value     => Try(new StringType())
+      case NumberType.value     => Try(new NumberType())
+      case IntegerType.value    => Try(new IntegerType())
+      case BooleanType.value    => Try(new BooleanType())
+      case NullType.value       => Try(new StringType())
+      case ArrayType(arrayType) => arrayType
+      case namedType            => Try(TypeReference(NativeId(namedType)))
     }
 
   }
@@ -153,6 +163,7 @@ object Type {
 
     val result =
       json match {
+        case ArrayType(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on top of this pattern match!
         case StringType(tryStringType)                => Some(tryStringType)
         case NumberType(tryNumberType)                => Some(tryNumberType)
         case IntegerType(tryIntegerType)              => Some(tryIntegerType)
@@ -165,11 +176,10 @@ object Type {
         case FileType(fileType)                       => Some(fileType)
         case NullType(tryNullType)                    => Some(tryNullType)
         case EnumType(tryEnumType)                    => Some(tryEnumType)
-        case ArrayType(tryArrayType)                  => Some(tryArrayType)
         case ObjectType(tryObjectType)                => Some(tryObjectType)
         case GenericObjectType(tryGenericObjectType)  => Some(tryGenericObjectType)
         case TypeReference(tryTypeReferenceType)      => Some(tryTypeReferenceType)
-        case InlineTypeDeclaration(inlineTypeDecl)    => Some(inlineTypeDecl)
+        case InlineTypeDeclaration(inlineType)        => Some(inlineType)
         case _                                        => None
       }
 
@@ -181,5 +191,21 @@ object Type {
     List((json \ "type").toOption, (json \ "schema").toOption).flatten.headOption
   }
 
+
+}
+
+
+object PrimitiveType {
+
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[PrimitiveType]] = {
+    json match {
+      case StringType(triedStringType)   => Some(triedStringType)
+      case NumberType(triedNumberType)   => Some(triedNumberType)
+      case IntegerType(triedIntegerType) => Some(triedIntegerType)
+      case BooleanType(triedBooleanType) => Some(triedBooleanType)
+      case NullType(triedNullType)       => Some(triedNullType)
+      case _                             => None
+    }
+  }
 
 }

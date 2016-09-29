@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.model.{Language, ClassReference, ClassRep, RichResource}
+import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, Language, RichResource}
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
   * Created by peter on 22/08/15.
@@ -255,13 +255,13 @@ object ScalaResourceClassGenerator {
       }
 
 
-    def generateParameterType(parameterType: ParameterType): String = {
+    def generateParameterType(parameterType: Type): String = {
       parameterType match {
-        case StringType  => "String"
-        case IntegerType => "Long"
-        case NumberType  => "Double"
-        case BooleanType => "Boolean"
-        case x           => sys.error(s"Unknown URL parameter type $x")
+        case stringType: StringType   => "String"
+        case integerType: IntegerType => "Long"
+        case numberType: NumberType   => "Double"
+        case booleanType: BooleanType => "Boolean"
+        case x                        => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

@@ -1,0 +1,18 @@
+/:
+  get:
+    queryParameters:
+      bar:
+        type: string
+      baz:
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "http://atomicbits.io/schema/foo.json"
+                }
+              }

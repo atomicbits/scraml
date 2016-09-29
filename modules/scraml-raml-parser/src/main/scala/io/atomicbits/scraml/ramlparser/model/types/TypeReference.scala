@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor, ImplicitId, RefExtractor}
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
@@ -32,9 +32,12 @@ case class TypeReference(refersTo: Id,
                          id: Id = ImplicitId,
                          required: Option[Boolean] = None,
                          genericTypes: Map[String, Type] = Map.empty,
-                         fragments: Fragment = Fragment()) extends PrimitiveType with AllowedAsObjectField with Fragmented {
+                         fragments: Fragments = Fragments(),
+                         model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -44,20 +47,22 @@ object TypeReference {
   val value = "$ref"
 
 
-  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[TypeReference] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[TypeReference] = {
 
-    val id = schema match {
+    val model: TypeModel = TypeModel(json)
+
+    val id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val ref = schema match {
+    val ref = json match {
       case RefExtractor(refId) => refId
     }
 
-    val required = (schema \ "required").asOpt[Boolean]
+    val required = (json \ "required").asOpt[Boolean]
 
     val genericTypes: Try[Map[String, Type]] =
-      (schema \ "genericTypes").toOption.collect {
+      (json \ "genericTypes").toOption.collect {
         case genericTs: JsObject =>
           val genericTsMap =
             genericTs.value collect {
@@ -66,8 +71,8 @@ object TypeReference {
           TryUtils.accumulate[String, Type](genericTsMap.toMap)
       } getOrElse Try(Map.empty[String, Type])
 
-    val fragments = schema match {
-      case Fragment(fragment) => fragment
+    val fragments = json match {
+      case Fragments(fragment) => fragment
     }
 
     TryUtils.withSuccess(
@@ -75,8 +80,9 @@ object TypeReference {
       Success(id),
       Success(required),
       genericTypes,
-      fragments
-    )(new TypeReference(_, _, _, _, _))
+      fragments,
+      Success(model)
+    )(new TypeReference(_, _, _, _, _, _))
   }
 
 

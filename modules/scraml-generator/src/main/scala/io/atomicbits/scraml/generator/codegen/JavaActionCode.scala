@@ -23,11 +23,12 @@ import java.util.Locale
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.parser.model._
+import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.types._
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 30/09/15.
+  */
 object JavaActionCode extends ActionCode {
 
   implicit val language: Language = Java
@@ -140,26 +141,38 @@ object JavaActionCode extends ActionCode {
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
 
+  def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
+    primitiveType match {
+      // The cases below goe wrong when the primitive ends up in a list like List<double> versus List<Double>.
+      //      case integerType: IntegerType if required => "long"
+      //      case numbertype: NumberType if required   => "double"
+      //      case booleanType: BooleanType if required => "boolean"
+      case stringtype: StringType   => "String"
+      case integerType: IntegerType => "Long"
+      case numbertype: NumberType   => "Double"
+      case booleanType: BooleanType => "Boolean"
+      case other                    => sys.error(s"RAML type $other is not yet supported.")
+    }
+  }
+
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    val typeTypeName = parameter.parameterType match {
-      case IntegerType if parameter.required => "long"
-      case NumberType  if parameter.required => "double"
-      case BooleanType if parameter.required => "boolean"
-      case StringType  => "String"
-      case IntegerType => "Long"
-      case NumberType  => "Double"
-      case BooleanType => "Boolean"
-      case FileType    => sys.error(s"RAML type 'FileType' is not yet supported.")
-      case DateType    => sys.error(s"RAML type 'DateType' is not yet supported.")
-    }
 
-    if (parameter.repeated) {
-      s"List<$typeTypeName> $sanitizedParameterName"
-    } else {
-      s"$typeTypeName $sanitizedParameterName"
+    parameter.parameterType match {
+      case primitiveType: PrimitiveType =>
+        val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+        s"$primitive $sanitizedParameterName"
+      case arrayType: ArrayType         =>
+        arrayType.items match {
+          case primitiveType: PrimitiveType =>
+            val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+            s"List<$primitive> $sanitizedParameterName"
+          case other                        =>
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+        }
     }
   }
 
@@ -167,9 +180,10 @@ object JavaActionCode extends ActionCode {
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedQueryParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
-    parameter match {
-      case Parameter(_, _, true)  => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
-      case Parameter(_, _, false) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
+
+    parameter.parameterType match {
+      case primitive: PrimitiveType => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
+      case arrayType: ArrayType     => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
     }
   }
 
@@ -223,8 +237,8 @@ object JavaActionCode extends ActionCode {
     val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
 
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s""""$acceptH"""").getOrElse("null")
-    val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""$contentHeader"""").getOrElse("null")
+    val acceptHeader = expectedAcceptHeader.map(acceptH => s""""${acceptH.value}"""").getOrElse("null")
+    val contentHeader = expectedContentTypeHeader.map(contentHeader => s""""${contentHeader.value}"""").getOrElse("null")
 
     val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
 

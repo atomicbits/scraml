@@ -45,11 +45,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
     )
 
-    val host = defaultPackage.take(2).reverse.mkString(".")
-    val urlPath = defaultPackage.drop(2).mkString("/")
-
-    val nameToId: String => Id = name => RootId(s"http://$host/$urlPath/$name.json")
-    val parseContext = ParseContext(List(ramlSource), nameToId)
+    val parseContext = ParseContext(List(ramlSource))
 
     Raml(parsed)(parseContext)
   }
@@ -62,10 +58,10 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
     */
   private def parseRamlJsonDocument(basePath: String, raml: JsObject): JsObject = {
 
-    def parseNested(doc: JsValue, currentBasePath: String = basePath): JsValue = {
+    def parseNested(doc: JsValue, currentBasePath: String): JsValue = {
       doc match {
         case JsInclude(source) =>
-          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$basePath/$source")
+          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$currentBasePath/$source")
           included match {
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)
@@ -80,7 +76,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       }
     }
 
-    parseNested(raml).asInstanceOf[JsObject]
+    parseNested(raml, basePath).asInstanceOf[JsObject]
   }
 
 

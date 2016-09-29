@@ -39,8 +39,6 @@ trait Dependencies { this:Build =>
   val playJson            =   "com.typesafe.play"           %%    "play-json"           % "2.4.3"
   val play25Json          =   "com.typesafe.play"           %%    "play-json"           % "2.5.3"
 
-  val ramlJavaParser      =   "org.raml"                    %     "raml-parser"         % "0.8.11"
-
   val scalariform         =   "org.scalariform"             %%    "scalariform"         % "0.1.7"
   // val eclipseJdt          =   "org.eclipse"                 %    "jdt"                 % "3.3.0-v20070607-1300"
   val slf4j               =   "org.slf4j"                   %    "slf4j-api"            % "1.7.12"
@@ -70,15 +68,6 @@ trait Dependencies { this:Build =>
     asyncClient,
     playJson,
     wiremock
-  )
-
-  val scramlParserDeps = Seq(
-    ramlJavaParser
-  )
-
-  val scramlJsonSchemaParserDeps = Seq(
-    logback,
-    playJson
   )
 
   val scramlDslDepsScala = Seq(

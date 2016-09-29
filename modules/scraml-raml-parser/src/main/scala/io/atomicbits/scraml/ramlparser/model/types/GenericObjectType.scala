@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
-import io.atomicbits.scraml.ramlparser.model.{Id, IdExtractor}
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException, TryUtils}
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
@@ -66,10 +66,13 @@ import scala.util.{Failure, Success, Try}
 case class GenericObjectType(id: Id,
                              typeVariable: String,
                              required: Option[Boolean] = None,
-                             fragments: Fragment = Fragment())
+                             fragments: Fragments = Fragments(),
+                             model: TypeModel = RamlModel)
   extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
-  override def updated(updatedId: Id): Identifiable = copy(id = updatedId)
+  override def updated(updatedId: Id): GenericObjectType = copy(id = updatedId)
+
+  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
@@ -78,29 +81,32 @@ object GenericObjectType {
 
   val value = "genericType"
 
-  def apply(schema: JsValue)(implicit parseContext: ParseContext): Try[GenericObjectType] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[GenericObjectType] = {
+
+    val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id: Id = schema match {
+    val id: Id = json match {
       case IdExtractor(schemaId) => schemaId
     }
 
     // Process the required field
-    val required = (schema \ "required").asOpt[Boolean]
+    val required = (json \ "required").asOpt[Boolean]
 
-    val fragments = schema match {
-      case Fragment(fragment) => fragment
+    val fragments = json match {
+      case Fragments(fragment) => fragment
     }
 
-    val genericType = (schema \ "genericType").asOpt[String].map(Success(_))
+    val genericType = (json \ "genericType").asOpt[String].map(Success(_))
       .getOrElse(Failure[String](RamlParseException(s"A generic object must have a 'genericType' field: $id")))
 
     TryUtils.withSuccess(
       Success(id),
       genericType,
       Success(required),
-      fragments
-    )(GenericObjectType(_, _, _, _))
+      fragments,
+      Success(model)
+    )(GenericObjectType(_, _, _, _, _))
   }
 
 

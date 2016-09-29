@@ -31,7 +31,7 @@ import TryUtils._
   * Created by peter on 10/02/16.
   */
 case class Raml(title: String,
-                mediaType: Option[MimeType],
+                mediaType: Option[MediaType],
                 description: Option[String],
                 version: Option[String],
                 baseUri: Option[String],
@@ -39,7 +39,7 @@ case class Raml(title: String,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
-                resources: Seq[Resource])
+                resources: List[Resource])
 
 
 object Raml {
@@ -80,9 +80,9 @@ object Raml {
     }
 
 
-    val mediaType: Try[Option[MimeType]] = {
+    val mediaType: Try[Option[MediaType]] = {
       (ramlJson \ "mediaType").toOption.collect {
-        case JsString(mType) => Success(Option(MimeType(mType)))
+        case JsString(mType) => Success(Option(MediaType(mType)))
         case x               => Failure(RamlParseException(s"The mediaType in ${parseCtxt.sourceTrail} must be a string value."))
       } getOrElse Success(None)
     }
@@ -147,14 +147,14 @@ object Raml {
       * property, e.g.: /users, /{groupId}, etc."
       *
       */
-    val resources: Try[Seq[Resource]] = {
+    val resources: Try[List[Resource]] = {
 
       val resourceFields: List[Try[Resource]] =
         ramlJson.fieldSet.collect {
           case (field, jsObject: JsObject) if field.startsWith("/") => Resource(field, jsObject)
         } toList
 
-      TryUtils.accumulate(resourceFields)
+      TryUtils.accumulate(resourceFields).map(unparallellizeResources(_, None))
     }
 
 
@@ -193,6 +193,67 @@ object Raml {
       types,
       resources
     )(Raml(_, _, _, _, _, _, _, _, _, _))
+
+  }
+
+
+  private def unparallellizeResources(resources: List[Resource], parent: Option[Resource] = None): List[Resource] = {
+
+
+    // Merge all actions and subresources of all resources that have the same (urlSegment, urlParameter)
+    def mergeResources(resources: List[Resource]): Resource = {
+      resources.reduce { (resourceA, resourceB) =>
+        val descriptionChoice = List(resourceA.description, resourceB.description).flatten.headOption
+        val displayNameChoice = List(resourceA.displayName, resourceB.displayName).flatten.headOption
+        resourceA.copy(
+          description = descriptionChoice,
+          displayName = displayNameChoice,
+          actions = resourceA.actions ++ resourceB.actions,
+          resources = resourceA.resources ++ resourceB.resources
+        )
+      }
+    }
+
+    // All children with empty URL segment
+    def absorbChildrenWithEmptyUrlSegment(resource: Resource): Resource = {
+      val (emptyUrlChildren, realChildren) = resource.resources.partition(_.urlSegment.isEmpty)
+      val resourceWithRealChildren = resource.copy(resources = realChildren)
+      mergeResources(resourceWithRealChildren :: emptyUrlChildren)
+    }
+
+
+    // Group all resources at this level with the same urlSegment and urlParameter
+    val groupedResources: List[List[Resource]] = resources.groupBy(_.urlSegment).values.toList
+
+//    groupedResources.foreach { group =>
+//      val (actualParam, noneParam) = group.map(_.urlParameter).partition(_.isDefined)
+//      (actualParam, noneParam) match {
+//        case (Nil, Nil)       => ()
+//        case (Nil, nones)     => ()
+//        case (actuals, Nil)   =>
+//          val diffs = actuals.map(_.get).groupBy(param => (param.parameterType, param.required)).values.toList
+//          if (diffs.size > 1)
+//            sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+//              s"but with inconsistent type or required value.")
+//        case (actuals, nones) =>
+//          sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+//            s"but with inconsistent type or required value...")
+//      }
+//    }
+
+    val mergedResources: List[Resource] = groupedResources.map(mergeResources)
+
+    val resourcesWithAbsorbedChildren = mergedResources.map(absorbChildrenWithEmptyUrlSegment)
+
+    resourcesWithAbsorbedChildren.map { mergedAndAbsorbedResource =>
+      mergedAndAbsorbedResource.copy(
+        resources =
+          unparallellizeResources(
+            resources = mergedAndAbsorbedResource.resources,
+            parent = Some(mergedAndAbsorbedResource)
+          )
+      )
+    }
 
   }
 
