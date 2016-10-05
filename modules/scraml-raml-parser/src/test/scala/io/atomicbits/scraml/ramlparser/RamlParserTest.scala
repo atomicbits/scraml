@@ -209,7 +209,8 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
           List("rest", "user", "{userid}", "dogs"),
           List("rest", "animals"),
           List("rest", "animals", "datafile", "upload"),
-          List("rest", "animals", "datafile", "download")
+          List("rest", "animals", "datafile", "download"),
+          List("rest", "books")
         )
 
       collectedResources.size shouldEqual expectedResources.size
@@ -218,7 +219,7 @@ class RamlParserTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
       }
 
             val prettyModel = TestUtils.prettyPrint(parsedModel)
-            println(s"Parsed raml: $prettyModel")
+//            println(s"Parsed raml: $prettyModel")
     }
 
 

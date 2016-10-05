@@ -191,7 +191,7 @@ object TypeClassRepAssembler {
 
     ttype match {
       case objectType: ObjectType               =>
-        val classReference = lookupTable.classReps(TypeUtils.asAbsoluteId(ttype.id)).classRef
+        val classReference = lookupTable.classReps(TypeUtils.asAbsoluteId(ttype.id, lookupTable.nativeToRootId)).classRef
         if (types.isEmpty) classReference
         else TypedClassReference(classReference, types)
       case genericObjectType: GenericObjectType => GenericClassPointer(genericObjectType.typeVariable)

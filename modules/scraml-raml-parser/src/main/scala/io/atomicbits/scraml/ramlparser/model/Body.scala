@@ -20,8 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import play.api.libs.json.{JsObject, JsValue}
-import io.atomicbits.scraml.ramlparser.parser.TryUtils._
+import play.api.libs.json.JsValue
 
 import scala.language.postfixOps
 import scala.util.{Success, Try}
@@ -41,28 +40,21 @@ object Body {
 
   def apply(json: JsValue)(implicit parseContext: ParseContext): Try[Body] = {
 
-    def fromJsObject(jsObj: JsObject): Try[Body] = {
-
-      val tryMimeTypes: Seq[Try[BodyContent]] =
-        jsObj.value.collect {
-          case BodyContent(tryMimeType) => tryMimeType
-        } toSeq
-
-      val tryHeaderMap: Try[Map[MediaType, BodyContent]] =
-        accumulate(tryMimeTypes).map { mimeTypes =>
-          mimeTypes.map { mType =>
-            mType.mediaType -> mType
-          } toMap
-        }
-
-      tryHeaderMap.map { headerMap =>
-        Body(headerMap)
-      }
-    }
 
     json \ "body" toOption match {
-      case Some(jsObj: JsObject) => fromJsObject(jsObj)
-      case _                     => Success(Body())
+      case Some(BodyContentAsMediaTypeMap(triedBodyContents))    =>
+        triedBodyContents.map { bodyContentList =>
+          val contentMap =
+            bodyContentList.map { bodyContent =>
+              bodyContent.mediaType -> bodyContent
+            }
+          Body(contentMap.toMap)
+        }
+      case Some(BodyContentAsDefaultMediaType(triedBodyContent)) =>
+        triedBodyContent.map { bodyContent =>
+          Body(Map(bodyContent.mediaType -> bodyContent))
+        }
+      case _                                                     => Success(Body())
     }
   }
 

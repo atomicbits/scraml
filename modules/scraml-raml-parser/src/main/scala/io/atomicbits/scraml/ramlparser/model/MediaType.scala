@@ -26,6 +26,11 @@ case class MediaType(value: String)
 
 object MediaType {
 
-  def unapply(mimeType: String): Option[MediaType] = Some(MediaType(mimeType))
+  def unapply(mimeType: String): Option[MediaType] = {
+    mimeType.split('/').toList match {
+      case ttype :: subtype :: anything => Some(MediaType(mimeType))
+      case _                            => None
+    }
+  }
 
 }

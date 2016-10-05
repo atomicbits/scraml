@@ -62,9 +62,9 @@ case class ObjectModel(id: AbsoluteId,
 
 object ObjectModel {
 
-  def apply(obj: ObjectType): ObjectModel =
+  def apply(obj: ObjectType, lookupTable: TypeLookupTable): ObjectModel =
     ObjectModel(
-      id = TypeUtils.asAbsoluteId(obj.id),
+      id = TypeUtils.asAbsoluteId(obj.id, lookupTable.nativeToRootId),
       properties = obj.properties,
       required = obj.isRequired,
       requiredFields = obj.requiredFields,

@@ -37,14 +37,12 @@ object TypeUtils {
   }
 
 
-  def asAbsoluteId(id: Id, nativeToRootId: Option[NativeId => RootId] = None): AbsoluteId = {
+  def asAbsoluteId(id: Id, nativeToRootId: NativeId => RootId): AbsoluteId = {
 
     id match {
-      case nativeId: NativeId     =>
-        nativeToRootId.collect {
-          case fn => fn(nativeId)
-        } getOrElse sys.error(s"$id is not a native id and no transformation function was given.")
+      case nativeId: NativeId     => nativeToRootId(nativeId)
       case absoluteId: AbsoluteId => absoluteId
+      case other                  => sys.error(s"Cannot transform $other into an absolute id.")
     }
 
   }

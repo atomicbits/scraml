@@ -28,6 +28,7 @@ import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
 
 class TypeLookupParser(nativeToRootId: NativeId => RootId) {
@@ -249,7 +250,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
   def updateLookupTableAndObjectMap(lookup: TypeLookupTable, linkedSchema: (NativeId, Type)): TypeLookupTable = {
 
 
-    def updateLookupAndObjectMapInternal(lookup: TypeLookupTable, schemaFragment: (String, Type)): TypeLookupTable = {
+    def updateLookupAndObjectMapJsonSchema(lookup: TypeLookupTable, schemaFragment: (String, Type)): TypeLookupTable = {
 
       val (path, ttype) = schemaFragment
 
@@ -259,28 +260,28 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           case _              => lookup
         }
 
-      val absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, Some(nativeToRootId))
+      def absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, nativeToRootId)
 
       ttype match {
         case objectType: ObjectType       =>
           val schemaLookupWithObjectFragments =
-            objectType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
+            objectType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithObjectProperties =
-            objectType.properties.foldLeft(schemaLookupWithObjectFragments)(updateLookupAndObjectMapInternal)
+            objectType.properties.foldLeft(schemaLookupWithObjectFragments)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithSelectionObjects =
             objectType.selection.map {
-              select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapInternal)
+              select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapJsonSchema)
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
-            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectModel(objectType)))
+            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
         case arrayType: ArrayType         =>
           val schemaLookupWithArrayFragments =
-            arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
-          updateLookupAndObjectMapInternal(schemaLookupWithArrayFragments, ("items", arrayType.items))
+            arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
+          updateLookupAndObjectMapJsonSchema(schemaLookupWithArrayFragments, ("items", arrayType.items))
         case typeReference: TypeReference =>
-          typeReference.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
+          typeReference.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
         case fragment: Fragments          =>
-          fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapInternal)
+          fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
         case enumType: EnumType           =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumType))
         case _                            => updatedSchemaLookup
@@ -289,18 +290,38 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     }
 
 
+    def updateLookupAndObjectMapNativeTypes(lookup: TypeLookupTable, ttype: Type): TypeLookupTable = {
+
+      def absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, nativeToRootId)
+
+      ttype match {
+        case objectType: ObjectType =>
+          val schemaLookupWithObjectProperties =
+            objectType.properties.values.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
+          schemaLookupWithObjectProperties
+            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
+        case arrayType: ArrayType   =>
+          updateLookupAndObjectMapNativeTypes(lookup, arrayType.items)
+        case enumType: EnumType     => lookup.copy(enumMap = lookup.enumMap + (absoluteId -> enumType))
+        case _                      => lookup
+      }
+    }
+
+
     val (nativeId, ttype) = linkedSchema
 
     ttype.id match {
       case id: RootId   =>
         val schemaLookupWithUpdatedExternalLinks = lookup.copy(nativeIdMap = lookup.nativeIdMap + (nativeId -> id))
-        updateLookupAndObjectMapInternal(schemaLookupWithUpdatedExternalLinks, ("", ttype))
+        updateLookupAndObjectMapJsonSchema(schemaLookupWithUpdatedExternalLinks, ("", ttype))
       case id: NativeId =>
         val absoluteId = lookup.nativeToRootId(id)
-        lookup.copy(
-          nativeIdMap = lookup.nativeIdMap + (nativeId -> absoluteId),
-          lookupTable = lookup.lookupTable + (absoluteId -> ttype)
-        )
+        val updatedLookup =
+          lookup.copy(
+            nativeIdMap = lookup.nativeIdMap + (nativeId -> absoluteId),
+            lookupTable = lookup.lookupTable + (absoluteId -> ttype)
+          )
+        updateLookupAndObjectMapNativeTypes(updatedLookup, ttype)
       case _            => throw RamlParseException(s"A top-level schema must have a root id or a native id (is ${ttype.id}).")
     }
 
@@ -316,7 +337,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     @tailrec
     def lookupObjEl(schema: Type): Option[ObjectModel] = {
       schema match {
-        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, Some(nativeToRootId)))
+        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, nativeToRootId))
         case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
         case _                            => None
       }

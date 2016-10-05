@@ -21,10 +21,9 @@ package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.types.Type
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsObject, JsValue}
 
-import scala.util.Try
-
+import scala.util.{Failure, Success, Try}
 import io.atomicbits.scraml.ramlparser.parser.TryUtils._
 
 
@@ -36,27 +35,80 @@ case class BodyContent(mediaType: MediaType,
                        formParameters: Parameters = Parameters())
 
 
-object BodyContent {
+object BodyContentAsMediaTypeMap {
 
-  def unapply(mimeTypeAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
+  /**
+    * Tries to represent a body from a mediatype map
+    *
+    * @param json Everything under the 'body' field of a resource spec.
+    */
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[List[BodyContent]]] = {
 
-    val (mimeType, json) = mimeTypeAndJsValue
 
-    val tryFormParameters = Parameters((json \ "formParameters").toOption)
+    def fromJsObjectValues(mediaTypeAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
 
-    val bodyType =
-      json match {
-        case Type(bType) => Some(bType)
-        case _           => None
+      val (medType, json) = mediaTypeAndJsValue
+
+      medType match {
+        case mediaType@MediaType(mt) =>
+          val tryFormParameters = Parameters((json \ "formParameters").toOption)
+
+          val bodyType =
+            json match {
+              case Type(bType) => Some(bType)
+              case _           => None
+            }
+
+          val triedBodyContent =
+            for {
+              bType <- accumulate(bodyType)
+              formParameters <- tryFormParameters
+            } yield BodyContent(MediaType(medType), bType, formParameters)
+
+          Some(triedBodyContent)
+        case _                       => None
       }
 
-    val mime =
-      for {
-        bType <- accumulate(bodyType)
-        formParameters <- tryFormParameters
-      } yield BodyContent(MediaType(mimeType), bType, formParameters)
+    }
 
-    Some(mime)
+
+    json match {
+      case jsObj: JsObject =>
+        val bodyContentList = jsObj.value.toList.map(fromJsObjectValues).flatten
+        accumulate(bodyContentList) match {
+          case Success(Nil)         => None
+          case Success(someContent) => Some(Success(someContent))
+          case failure@Failure(exc) => Some(failure)
+        }
+      case _               => None
+    }
+
+  }
+
+}
+
+
+object BodyContentAsDefaultMediaType {
+
+  /**
+    * Tries to represent a body from a mediatype map
+    *
+    * @param json Everything under the 'body' field of a resource spec.
+    */
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
+
+    parseContext.defaultMediaType.map { defaultMediaType =>
+
+      val bodyType =
+        json match {
+          case Type(bType) => Some(bType)
+          case _           => None
+        }
+
+      accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType))
+
+    }
+
   }
 
 }

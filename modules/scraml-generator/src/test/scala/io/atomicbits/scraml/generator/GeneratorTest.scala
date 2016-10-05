@@ -148,7 +148,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.Bbox",
         "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
         "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
-        "play.api.libs.json.JsObject"
+        "play.api.libs.json.JsObject",
+        "io.atomicbits.scraml.Book",
+        "io.atomicbits.scraml.Author",
+        "io.atomicbits.scraml.books.BooksResource"
       )
 
       classRepsByFullName.keys.foreach { key =>
@@ -236,7 +239,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io.atomicbits.schema.Bbox",
         "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
         "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
-        "com.fasterxml.jackson.databind.JsonNode"
+        "com.fasterxml.jackson.databind.JsonNode",
+        "io.atomicbits.scraml.Book",
+        "io.atomicbits.scraml.Author",
+        "io.atomicbits.scraml.books.BooksResource"
       )
 
       classRepsByFullName.keys.foreach { key =>
