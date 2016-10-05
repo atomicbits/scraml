@@ -1,20 +1,53 @@
-#%RAML 0.8
+#%RAML 1.0
 ---
 title: test01
-version: v1
+version: 1.0
+mediaType: application/json
 
 types:
-  - link:         !include schemas/link.json
-  - user:         !include schemas/user.json
-  - animal:       !include schemas/animal.json
-  - method:       !include schemas/method.json
-  - paged-list:   !include schemas/paged-list.json
-  - bbox:         !include schemas/geojson/bbox.json
-  - crs:          !include schemas/geojson/crs.json
-  - geometry:     !include schemas/geojson/geometry.json
+  link:         !include schemas/link.json
+  user:         !include schemas/user.json
+  animal:       !include schemas/animal.json
+  method:       !include schemas/method.json
+  paged-list:   !include schemas/paged-list.json
+  bbox:         !include schemas/geojson/bbox.json
+  crs:          !include schemas/geojson/crs.json
+  geometry:     !include schemas/geojson/geometry.json
+  Book:
+    type: object
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+      author:
+        type: Author
+        required: true
+  Author:
+    type: object
+    properties:
+      firstName:
+        type: string
+        required: true
+      lastName:
+        type: string
+        required: true
 
 traits:
   - error401:     !include schemas/common/traits/error401.yaml
+
+/rest/books:
+  get:
+    description: Get all books
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
 
 /rest/user:
   !include user.raml

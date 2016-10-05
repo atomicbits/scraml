@@ -20,11 +20,10 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.types.Types
-import io.atomicbits.scraml.ramlparser.parser.{TryUtils, RamlParseException, ParseContext}
-import play.api.libs.json.{JsValue, JsArray, JsString, JsObject}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException, TryUtils}
+import play.api.libs.json._
 
 import scala.util.{Failure, Success, Try}
-
 import TryUtils._
 
 /**
@@ -51,11 +50,26 @@ object Raml {
     val tryTraits: Try[Traits] =
       (ramlJson \ "traits").toOption.map(Traits(_)(parseCtxt)).getOrElse(Success(Traits()))
 
+    val mediaType: Try[Option[MediaType]] = {
+      (ramlJson \ "mediaType").toOption.collect {
+        case JsString(mType) => Success(Option(MediaType(mType)))
+        case x               => Failure(RamlParseException(s"The mediaType in ${parseCtxt.sourceTrail} must be a string value."))
+      } getOrElse Success(None)
+    }
 
-    implicit val parseContext: ParseContext =
-      tryTraits.map { newTraits =>
-        parseCtxt.copy(traits = newTraits)
-      } getOrElse parseCtxt
+    implicit val parseContext: ParseContext = {
+
+      val tryParseCtxt =
+        for {
+          newTraits <- tryTraits
+          defaultMediaType <- mediaType
+        } yield parseCtxt.copy(traits = newTraits, defaultMediaType = defaultMediaType)
+
+      tryParseCtxt match {
+        case Success(ctxt) => ctxt
+        case Failure(exc)  => sys.error(s"Parse error: ${exc.getMessage}.")
+      }
+    }
 
 
     val title: Try[String] =
@@ -77,14 +91,6 @@ object Raml {
         case List(t)      => Types(t)
         case Nil          => Success(Types())
       }
-    }
-
-
-    val mediaType: Try[Option[MediaType]] = {
-      (ramlJson \ "mediaType").toOption.collect {
-        case JsString(mType) => Success(Option(MediaType(mType)))
-        case x               => Failure(RamlParseException(s"The mediaType in ${parseCtxt.sourceTrail} must be a string value."))
-      } getOrElse Success(None)
     }
 
 
@@ -121,8 +127,9 @@ object Raml {
     val version: Try[Option[String]] = {
       (ramlJson \ "version").toOption.collect {
         case JsString(v) => Success(Option(v))
+        case JsNumber(v) => Success(Option(v.toString()))
         case x           =>
-          Failure(RamlParseException(s"The version field in ${parseCtxt.sourceTrail} must be a string value."))
+          Failure(RamlParseException(s"The version field in ${parseCtxt.sourceTrail} must be a string or a number value."))
       } getOrElse Success(None)
     }
 
@@ -225,21 +232,21 @@ object Raml {
     // Group all resources at this level with the same urlSegment and urlParameter
     val groupedResources: List[List[Resource]] = resources.groupBy(_.urlSegment).values.toList
 
-//    groupedResources.foreach { group =>
-//      val (actualParam, noneParam) = group.map(_.urlParameter).partition(_.isDefined)
-//      (actualParam, noneParam) match {
-//        case (Nil, Nil)       => ()
-//        case (Nil, nones)     => ()
-//        case (actuals, Nil)   =>
-//          val diffs = actuals.map(_.get).groupBy(param => (param.parameterType, param.required)).values.toList
-//          if (diffs.size > 1)
-//            sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
-//              s"but with inconsistent type or required value.")
-//        case (actuals, nones) =>
-//          sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
-//            s"but with inconsistent type or required value...")
-//      }
-//    }
+    //    groupedResources.foreach { group =>
+    //      val (actualParam, noneParam) = group.map(_.urlParameter).partition(_.isDefined)
+    //      (actualParam, noneParam) match {
+    //        case (Nil, Nil)       => ()
+    //        case (Nil, nones)     => ()
+    //        case (actuals, Nil)   =>
+    //          val diffs = actuals.map(_.get).groupBy(param => (param.parameterType, param.required)).values.toList
+    //          if (diffs.size > 1)
+    //            sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+    //              s"but with inconsistent type or required value.")
+    //        case (actuals, nones) =>
+    //          sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
+    //            s"but with inconsistent type or required value...")
+    //      }
+    //    }
 
     val mergedResources: List[Resource] = groupedResources.map(mergeResources)
 
