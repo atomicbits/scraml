@@ -24,6 +24,8 @@ import io.atomicbits.scraml.ramlparser.model._
 
 /**
   * Created by peter on 22/07/15.
+  *
+  * ToDo: move this functionality inside the TypeLookupTable to simplify its interface.
   */
 object TypeUtils {
 
@@ -37,7 +39,7 @@ object TypeUtils {
   }
 
 
-  def asAbsoluteId(id: Id, nativeToRootId: NativeId => RootId): AbsoluteId = {
+  def asAbsoluteId(id: Id, nativeToRootId: NativeId => AbsoluteId): AbsoluteId = {
 
     id match {
       case nativeId: NativeId     => nativeToRootId(nativeId)

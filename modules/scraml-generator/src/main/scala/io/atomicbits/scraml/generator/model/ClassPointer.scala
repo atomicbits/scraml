@@ -39,7 +39,7 @@ sealed trait ClassPointer {
     this match {
       case classReference: ClassReference           => TypedClassReference(classReference)
       case typedClassReference: TypedClassReference => typedClassReference
-      case generic: GenericClassPointer             =>
+      case generic: TypeParameter                   =>
         sys.error(s"A generic object pointer cannot be transformed to a class pointer: $generic")
       case javaArray: JavaArray                     => sys.error("Typed version of a java array does not exist.")
     }
@@ -61,39 +61,39 @@ sealed trait ClassPointer {
 
 
 /**
-  * A generic class pointer points to a class via a variable, while not knowing what the actual class is it points to.
+  * A type parameter points to a class via a parameter, while not knowing what the actual class is it points to.
   * E.g. "T" in List[T]
   */
-case class GenericClassPointer(typeVariable: String) extends ClassPointer {
+case class TypeParameter(name: String) extends ClassPointer {
 
-  def classDefinitionScala: String = typeVariable
+  def classDefinitionScala: String = name
 
-  def classDefinitionJava: String = typeVariable
+  def classDefinitionJava: String = name
 
-  override def fullyQualifiedName: String = sys.error("Cannot specify a fully qualified name of a generic class pointer.")
+  override def fullyQualifiedName: String = sys.error("Cannot specify a fully qualified name of a type parameter.")
 
-  override def packageName: String = sys.error("Cannot specify the package name of a generic class pointer.")
+  override def packageName: String = sys.error("Cannot specify the package name of a type parameter.")
 
-  override def safePackageParts: List[String] = sys.error("Cannot specify the package name of a generic class pointer.")
+  override def safePackageParts: List[String] = sys.error("Cannot specify the package name of a type parameter.")
 
-  override def canonicalNameJava: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
+  override def canonicalNameJava: String = sys.error("Cannot specify the canonical name of a type parameter.")
 
-  override def canonicalNameScala: String = sys.error("Cannot specify the canonical name of a generic class pointer.")
+  override def canonicalNameScala: String = sys.error("Cannot specify the canonical name of a type parameter.")
 }
 
 
 /**
   * A unique reference to a class. E.g. List[T].
   *
-  * @param name          The name of the class.
-  * @param packageParts  The package parts that comprise the full package name.
-  * @param typeVariables The type variables ths class reference holds.
-  * @param predef        Indicates that the class is a predefined class that doesn't need to be imported to be used.
-  * @param library       Indicates that the class is located in an existing library (and doesn't need to be generated).
+  * @param name           The name of the class.
+  * @param packageParts   The package parts that comprise the full package name.
+  * @param typeParameters The type parameters ths class reference holds.
+  * @param predef         Indicates that the class is a predefined class that doesn't need to be imported to be used.
+  * @param library        Indicates that the class is located in an existing library (and doesn't need to be generated).
   */
 case class ClassReference(name: String,
                           packageParts: List[String] = List.empty,
-                          typeVariables: List[String] = List.empty,
+                          typeParameters: List[TypeParameter] = List.empty,
                           predef: Boolean = false,
                           library: Boolean = false) extends ClassPointer {
 
@@ -117,8 +117,8 @@ case class ClassReference(name: String,
     *
     */
   def classDefinitionScala: String =
-  if (typeVariables.isEmpty) name
-  else s"$name[${typeVariables.mkString(",")}]"
+  if (typeParameters.isEmpty) name
+  else s"$name[${typeParameters.map(_.name).mkString(",")}]"
 
 
   /**
@@ -132,8 +132,8 @@ case class ClassReference(name: String,
     *
     */
   def classDefinitionJava: String =
-  if (typeVariables.isEmpty) name
-  else s"$name<${typeVariables.mkString(",")}>"
+  if (typeParameters.isEmpty) name
+  else s"$name<${typeParameters.map(_.name).mkString(",")}>"
 
 
   def canonicalNameScala: String = if (packageName.nonEmpty) s"$packageName.$classDefinitionScala" else classDefinitionScala
@@ -146,10 +146,11 @@ case class ClassReference(name: String,
 
 /**
   * A class reference is like 'List[T]'
-  * A typed class reference defines what the type variables are, e.g. 'List[String]'
+  * A typed class reference defines what the type parameters are by defining the actual type variables,
+  *   e.g. T = String --> 'List[String]'
   */
 case class TypedClassReference(classReference: ClassReference,
-                               types: Map[String, TypedClassReference] = Map.empty) extends ClassPointer {
+                               typeVariables: Map[TypeParameter, TypedClassReference] = Map.empty) extends ClassPointer {
 
   /**
     * The class definition as a string.
@@ -162,8 +163,8 @@ case class TypedClassReference(classReference: ClassReference,
     * "List[List[User]]"
     */
   def classDefinitionScala: String =
-  if (classReference.typeVariables.isEmpty) classReference.name
-  else s"${classReference.name}[${classReference.typeVariables.map(types(_)).map(_.classDefinitionScala).mkString(",")}]"
+  if (classReference.typeParameters.isEmpty) classReference.name
+  else s"${classReference.name}[${classReference.typeParameters.map(typeVariables(_)).map(_.classDefinitionScala).mkString(",")}]"
 
 
   /**
@@ -178,8 +179,8 @@ case class TypedClassReference(classReference: ClassReference,
     *
     */
   def classDefinitionJava: String =
-  if (classReference.typeVariables.isEmpty) classReference.name
-  else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.classDefinitionJava).mkString(",")}>"
+  if (classReference.typeParameters.isEmpty) classReference.name
+  else s"${classReference.name}<${classReference.typeParameters.map(typeVariables(_)).map(_.classDefinitionJava).mkString(",")}>"
 
 
   def packageName: String = classReference.packageName
@@ -190,13 +191,15 @@ case class TypedClassReference(classReference: ClassReference,
   def safePackageParts: List[String] = classReference.safePackageParts
 
   def canonicalNameScala: String =
-    if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName
-    else s"${classReference.name}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameScala).mkString(",")}>"
+    if (classReference.typeParameters.isEmpty) classReference.fullyQualifiedName
+    else s"${classReference.name}<${classReference.typeParameters.map(typeVariables(_)).map(_.canonicalNameScala).mkString(",")}>"
 
 
   def canonicalNameJava: String =
-    if (classReference.typeVariables.isEmpty) classReference.fullyQualifiedName
-    else s"${classReference.fullyQualifiedName}<${classReference.typeVariables.map(types(_)).map(_.canonicalNameJava).mkString(",")}>"
+    if (classReference.typeParameters.isEmpty) classReference.fullyQualifiedName
+    else s"${classReference.fullyQualifiedName}<${
+      classReference.typeParameters.map(typeVariables(_)).map(_.canonicalNameJava).mkString(",")
+    }>"
 
 }
 
@@ -294,13 +297,15 @@ object BinaryDataClassReference {
 
 object ListClassReference {
 
-  def apply(typeVariable: String)(implicit lang: Language): ClassReference = lang match {
-    case Scala => ClassReference(name = "List", typeVariables = List(typeVariable), predef = true)
-    case Java  => ClassReference(name = "List", packageParts = List("java", "util"), typeVariables = List(typeVariable), library = true)
+  def apply(typeParamName: String)(implicit lang: Language): ClassReference = lang match {
+    case Scala =>
+      ClassReference(name = "List", typeParameters = List(TypeParameter(typeParamName)), predef = true)
+    case Java  =>
+      ClassReference(name = "List", packageParts = List("java", "util"), typeParameters = List(TypeParameter(typeParamName)), library = true)
   }
 
   def typed(listType: ClassPointer)(implicit lang: Language): TypedClassReference =
-    TypedClassReference(classReference = ListClassReference("T"), types = Map("T" -> listType.asTypedClassReference))
+    TypedClassReference(classReference = ListClassReference("T"), typeVariables = Map(TypeParameter("T") -> listType.asTypedClassReference))
 
 }
 
@@ -308,9 +313,9 @@ object ArrayClassReference {
 
   def typed(arrayType: ClassReference)(implicit lang: Language): TypedClassReference = lang match {
     case Scala =>
-      val typeVariable = "T"
-      val classRef = ClassReference(name = "Array", typeVariables = List(typeVariable), predef = true)
-      TypedClassReference(classReference = classRef, types = Map("T" -> arrayType.asTypedClassReference))
+      val typeParamName = "T"
+      val classRef = ClassReference(name = "Array", typeParameters = List(TypeParameter(typeParamName)), predef = true)
+      TypedClassReference(classReference = classRef, typeVariables = Map(TypeParameter("T") -> arrayType.asTypedClassReference))
     case Java  => throw new IllegalArgumentException("Java has no typed array representation.")
   }
 

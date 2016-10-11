@@ -42,7 +42,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
       ramlExpanded.types.typeReferences
         .map(fillInTopLevelUnrootedIds)
         .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
-        .foldLeft(TypeLookupTable(nativeToRootId = nativeToRootId))(updateLookupTableAndObjectMap)
+        .foldLeft(TypeLookupTable(nativeToAbsoluteId = nativeToRootId))(updateLookupTableAndObjectMap)
         .map(updateObjectHierarchy)
         .map(updateTypeDiscriminatorFields)
         .map(TypeClassRepAssembler.deduceClassReps)
@@ -315,7 +315,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
         val schemaLookupWithUpdatedExternalLinks = lookup.copy(nativeIdMap = lookup.nativeIdMap + (nativeId -> id))
         updateLookupAndObjectMapJsonSchema(schemaLookupWithUpdatedExternalLinks, ("", ttype))
       case id: NativeId =>
-        val absoluteId = lookup.nativeToRootId(id)
+        val absoluteId = lookup.nativeToAbsoluteId(id)
         val updatedLookup =
           lookup.copy(
             nativeIdMap = lookup.nativeIdMap + (nativeId -> absoluteId),

@@ -23,8 +23,12 @@ import io.atomicbits.scraml.ramlparser.model.AbsoluteId
 import io.atomicbits.scraml.ramlparser.model.types.{ObjectType, Selection, Type}
 
 /**
- * Created by peter on 5/07/15. 
- */
+  * Created by peter on 5/07/15.
+  *
+  * ToDo: Move this functionality into the parser's ObjectType, together with functionality to transform the RAML model by
+  * replacing all types with their NativeId's and provide a lookup table like the TypeLookupTable
+  *
+  */
 case class ObjectModel(id: AbsoluteId,
                        properties: Map[String, Type],
                        required: Boolean,
@@ -33,7 +37,7 @@ case class ObjectModel(id: AbsoluteId,
                        fragments: Map[String, Type] = Map.empty,
                        parent: Option[AbsoluteId] = None,
                        children: List[AbsoluteId] = List.empty,
-                       typeVariables: List[String] = List.empty,
+                       typeParameters: List[String] = List.empty,
                        typeDiscriminator: Option[String] = None,
                        typeDiscriminatorValue: Option[String] = None) {
 
@@ -64,13 +68,13 @@ object ObjectModel {
 
   def apply(obj: ObjectType, lookupTable: TypeLookupTable): ObjectModel =
     ObjectModel(
-      id = TypeUtils.asAbsoluteId(obj.id, lookupTable.nativeToRootId),
+      id = TypeUtils.asAbsoluteId(obj.id, lookupTable.nativeToAbsoluteId),
       properties = obj.properties,
       required = obj.isRequired,
       requiredFields = obj.requiredFields,
       selection = obj.selection,
       fragments = obj.fragments.fragmentMap,
-      typeVariables = obj.typeVariables,
+      typeParameters = obj.typeVariables,
       typeDiscriminator = obj.typeDiscriminator
     )
 

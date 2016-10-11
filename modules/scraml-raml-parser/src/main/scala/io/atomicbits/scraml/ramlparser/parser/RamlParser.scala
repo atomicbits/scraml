@@ -61,7 +61,13 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
     def parseNested(doc: JsValue, currentBasePath: String): JsValue = {
       doc match {
         case JsInclude(source) =>
-          val (newBasePath, included) = RamlToJsonParser.parseToJson(s"$currentBasePath/$source")
+          // The check for empty base path below needs to be there for Windows machines, to avoid paths like "/C:/Users/..."
+          // that don't resolve because of the leading "/".
+          // ToDo: Refactor to use file system libraries to merge paths (and test on Windows as well).
+          val nextPath =
+            if (currentBasePath.isEmpty) source
+            else s"$currentBasePath/$source"
+          val (newBasePath, included) = RamlToJsonParser.parseToJson(nextPath)
           included match {
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)

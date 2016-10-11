@@ -36,7 +36,7 @@ trait ClassRep {
 
   def packageName = classRef.packageName
 
-  def typeVariables = classRef.typeVariables
+  def typeParameters = classRef.typeParameters
 
   def fullyQualifiedName = classRef.fullyQualifiedName
 
