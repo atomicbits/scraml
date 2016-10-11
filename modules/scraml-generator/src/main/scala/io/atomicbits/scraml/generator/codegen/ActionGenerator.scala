@@ -192,8 +192,8 @@ case class ActionGenerator(actionCode: ActionCode) {
     def nonPredefinedImports(classReps: List[TypedClassReference]): Set[String] = {
       classReps match {
         case cr :: crs if !cr.classReference.predef =>
-          nonPredefinedImports(cr.types.values.toList) ++ nonPredefinedImports(crs) + s"import ${cr.classReference.fullyQualifiedName}"
-        case cr :: crs                              => nonPredefinedImports(cr.types.values.toList) ++ nonPredefinedImports(crs)
+          nonPredefinedImports(cr.typeVariables.values.toList) ++ nonPredefinedImports(crs) + s"import ${cr.classReference.fullyQualifiedName}"
+        case cr :: crs                              => nonPredefinedImports(cr.typeVariables.values.toList) ++ nonPredefinedImports(crs)
         case Nil                                    => Set()
       }
     }

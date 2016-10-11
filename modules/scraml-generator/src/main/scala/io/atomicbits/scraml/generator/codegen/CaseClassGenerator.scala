@@ -173,11 +173,11 @@ object CaseClassGenerator extends DtoSupport {
        * This is the only way we know that formats typed variables, but it has problems with recursive types,
        * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types).
        */
-      val typeVariables = classRep.classRef.typeVariables.map(typeVar => s"$typeVar: Format")
+      val typeParametersFormat = classRep.classRef.typeParameters.map(typeParameter => s"${typeParameter.name}: Format")
       s"""
           import play.api.libs.functional.syntax._
 
-          implicit def jsonFormatter[${typeVariables.mkString(",")}]: Format[${classRep.classDefinitionScala}] = """
+          implicit def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${classRep.classDefinitionScala}] = """
     }
 
 
@@ -248,7 +248,7 @@ object CaseClassGenerator extends DtoSupport {
     s"implicit val jsonFormatter: Format[${classRep.classDefinitionScala}] = Json.format[${classRep.classDefinitionScala}]"
 
 
-    val hasTypeVariables = classRep.classRef.typeVariables.nonEmpty
+    val hasTypeVariables = classRep.classRef.typeParameters.nonEmpty
     val anyFieldRenamed = sortedFields.exists(field => field.fieldName != field.safeFieldNameScala)
     val hasSingleField = formatUnLiftFields.size == 1
     val hasOver22Fields = formatUnLiftFields.size > 22

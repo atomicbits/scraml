@@ -117,48 +117,6 @@ object Type {
   }
 
 
-  //  def apply(schema: JsObject, nameOpt: Option[String] = None)(implicit parseContext: ParseContext): Try[Type] = {
-  //
-  //    val typeOpt = (schema \ "type").asOpt[String]
-  //    val enumOpt = (schema \ "enum").asOpt[List[String]]
-  //
-  //    typeOpt match {
-  //      case Some("object")  =>
-  //        (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema, nameOpt)
-  //      case Some("array")   => ArrayType(schema)
-  //      case Some("string")  =>
-  //        enumOpt match {
-  //          case Some(enum) => EnumType(schema)
-  //          case None       => StringType(schema)
-  //        }
-  //      case Some("number")  => NumberType(schema)
-  //      case Some("integer") => IntegerType(schema)
-  //      case Some("boolean") => BooleanType(schema)
-  //      case Some("null")    => NullType(schema)
-  //      case Some(namedType) =>
-  //        sys.error(s"Unkown json-schema type $namedType") // In RAML 1.0 this can be 'User' or 'Phone | Notebook' or 'Email[]'
-  //      case None            =>
-  //        val propertiesOpt = (schema \ "properties").asOpt[String]
-  //        val referenceOpt = (schema \ "$ref").asOpt[String]
-  //        val enumOpt = (schema \ "enum").asOpt[List[String]]
-  //        (propertiesOpt, referenceOpt, enumOpt) match {
-  //          case (Some(properties), _, _)   =>
-  //            (schema \ "genericType").asOpt[String] map (_ => GenericObjectType(schema)) getOrElse ObjectType(schema, None)
-  //          case (None, Some(reference), _) => TypeReference(schema)
-  //          case (None, None, Some(enum))   => EnumType(schema)
-  //          case _                          =>
-  //            // According to the RAML 1.0 defaults, if no 'type' field and no 'properties' field is present, the type defaults to a
-  //            // string type. This, however, conflicts with the possibility of having nested json-schema schemas. We decided to only
-  //            // interpret the type as a string if the fragment alternative (meaning we have nested schemas) is empty.
-  //            Fragment(schema).flatMap { fragment =>
-  //              if (fragment.isEmpty) StringType(schema)
-  //              else Success(fragment)
-  //            }
-  //        }
-  //    }
-  //  }
-
-
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Type]] = {
 
     val result =

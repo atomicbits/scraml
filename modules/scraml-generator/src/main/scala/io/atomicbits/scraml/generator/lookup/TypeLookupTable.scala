@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.lookup
 
-import io.atomicbits.scraml.generator._
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.types._
@@ -42,7 +41,7 @@ case class TypeLookupTable(lookupTable: Map[AbsoluteId, Type] = Map.empty,
                            objectMap: Map[AbsoluteId, ObjectModel] = Map.empty,
                            enumMap: Map[AbsoluteId, EnumType] = Map.empty,
                            classReps: Map[AbsoluteId, ClassRep] = Map.empty,
-                           nativeToRootId: NativeId => RootId) {
+                           nativeToAbsoluteId: NativeId => AbsoluteId) {
 
   def map(f: TypeLookupTable => TypeLookupTable): TypeLookupTable = f(this)
 

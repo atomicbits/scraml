@@ -46,7 +46,7 @@ trait DtoSupport {
       val collectedFromClassPtr =
         classPtr match {
           case typedClassReference: TypedClassReference =>
-            typedClassReference.types.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
+            typedClassReference.typeVariables.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
           case classReference: ClassReference           => collectFromClassReference(classReference)
           case _                                        => Set.empty[String]
         }
