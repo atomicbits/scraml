@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.generator.lookup
+package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
 

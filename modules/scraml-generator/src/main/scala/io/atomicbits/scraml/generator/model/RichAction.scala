@@ -19,7 +19,9 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.{TypeClassRepAssembler, TypeLookupTable}
+import io.atomicbits.scraml.generator.TypeClassRepAssembler
+import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
+import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.types.TypeReference
 
@@ -38,11 +40,11 @@ case class RichAction(actionType: Method,
 
 object RichAction {
 
-  def apply(action: Action, lookupTable: TypeLookupTable)(implicit lang: Language): RichAction = {
+  def apply(action: Action, lookupTable: TypeLookupTable, canonicalMap: CanonicalMap)(implicit lang: Language): RichAction = {
 
     def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
-        case theBodyType => TypeClassRepAssembler.typeAsClassReference(theBodyType, lookupTable).asTypedClassReference
+        case theBodyType => TypeClassRepAssembler.typeAsClassReference(theBodyType, lookupTable, canonicalMap).asTypedClassReference
       }
     }
 

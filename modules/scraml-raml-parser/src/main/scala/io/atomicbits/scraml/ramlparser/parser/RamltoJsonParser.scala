@@ -57,6 +57,23 @@ object RamlToJsonParser {
 
   private def read(source: String, charsetName: String): (String, String) = {
 
+    /**
+      * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
+      * uri.normalize().getPath then gives /C:/Users/someone instead of C:/Users/someone
+      * Paths.get(uri) is fine, but if we want to work with the URI as a string representation,
+      * then we need to strip off the leading '/'.
+      * see: http://stackoverflow.com/questions/18520972/converting-java-file-url-to-file-path-platform-independent-including-u
+      * and: http://stackoverflow.com/questions/9834776/java-nio-file-path-issue
+      */
+    def cleanWindowsTripleSlashIssue(path: String): String = {
+      val hasWindowsPrefix =
+        path.split('/').filter(_.nonEmpty).headOption.collect {
+          case first if first.endsWith(":") => true
+        } getOrElse false
+      if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
+      else path
+    }
+    
     val resource = Try(this.getClass.getResource(source).toURI).toOption
     val file = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
     val url = Try(new URL(source).toURI).toOption

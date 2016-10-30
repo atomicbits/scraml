@@ -17,24 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.generator.lookup
+package io.atomicbits.scraml.ramlparser.lookup
 
 import java.util.UUID
 
-import io.atomicbits.scraml.generator.model.Language
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.types._
 import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
 
 
 class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
 
-  def parse(raml: Raml)(implicit lang: Language): (Raml, TypeLookupTable) = {
+  def parse(raml: Raml): (Raml, TypeLookupTable) = {
 
     val ramlExpanded: Raml = extractInlineTypes(raml)
 
@@ -45,7 +43,6 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
         .foldLeft(TypeLookupTable(nativeToAbsoluteId = nativeToRootId))(updateLookupTableAndObjectMap)
         .map(updateObjectHierarchy)
         .map(updateTypeDiscriminatorFields)
-        .map(TypeClassRepAssembler.deduceClassReps)
 
     (ramlExpanded, typeLookupTable)
   }
@@ -273,7 +270,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
               select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapJsonSchema)
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
-            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
+            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> objectType))
         case arrayType: ArrayType         =>
           val schemaLookupWithArrayFragments =
             arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
@@ -299,7 +296,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           val schemaLookupWithObjectProperties =
             objectType.properties.values.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
           schemaLookupWithObjectProperties
-            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
+            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> objectType))
         case arrayType: ArrayType   =>
           updateLookupAndObjectMapNativeTypes(lookup, arrayType.items)
         case enumType: EnumType     => lookup.copy(enumMap = lookup.enumMap + (absoluteId -> enumType))
@@ -335,9 +332,9 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
   def updateObjectHierarchy(lookupTable: TypeLookupTable): TypeLookupTable = {
 
     @tailrec
-    def lookupObjEl(schema: Type): Option[ObjectModel] = {
+    def lookupObjEl(schema: Type): Option[ObjectType] = {
       schema match {
-        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, nativeToRootId))
+        case objectType: ObjectType       => Some(objectType) // lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, nativeToRootId))
         case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
         case _                            => None
       }
@@ -347,17 +344,18 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
       val obj = lookup.objectMap(absId)
 
-      val children: List[ObjectModel] = obj.selection.map { sel =>
+      val children: List[ObjectType] = obj.selection.map { sel =>
         sel.selection.flatMap(lookupObjEl)
       } getOrElse List.empty
 
       val childrenWithParent = children.map(_.copy(parent = Some(absId)))
 
       val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, childObj) =>
-        lkup.copy(objectMap = lkup.objectMap + (childObj.id -> childObj))
+        lkup.copy(objectMap = lkup.objectMap + (TypeUtils.asAbsoluteId(childObj.id, lookupTable.nativeToAbsoluteId) -> childObj))
       }
 
-      val updatedObj = obj.copy(children = childrenWithParent.map(_.id))
+      val updatedObj =
+        obj.copy(children = childrenWithParent.map(childObj => TypeUtils.asAbsoluteId(childObj.id, lookupTable.nativeToAbsoluteId)))
       val result = updatedLookup.copy(objectMap = updatedLookup.objectMap + (absId -> updatedObj))
       result
     }
