@@ -40,11 +40,14 @@ case class RichAction(actionType: Method,
 
 object RichAction {
 
-  def apply(action: Action, lookupTable: TypeLookupTable, canonicalMap: CanonicalMap)(implicit lang: Language): RichAction = {
+  def apply(action: Action,
+            lookupTable: TypeLookupTable,
+            canonicalMap: CanonicalMap,
+            nativeToRootId: NativeId => RootId)(implicit lang: Language): RichAction = {
 
     def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
-        case theBodyType => TypeClassRepAssembler.typeAsClassReference(theBodyType, lookupTable, canonicalMap).asTypedClassReference
+        case theBodyType => new TypeClassRepAssembler(nativeToRootId).typeAsClassReference(theBodyType, lookupTable, canonicalMap).asTypedClassReference
       }
     }
 

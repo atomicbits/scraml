@@ -37,8 +37,8 @@ case class ObjectType(id: Id,
                       requiredFields: List[String] = List.empty,
                       selection: Option[Selection] = None,
                       fragments: Fragments = Fragments(),
-                      parent: Option[AbsoluteId] = None,
-                      children: List[AbsoluteId] = List.empty,
+                      parent: Option[UniqueId] = None,
+                      children: List[UniqueId] = List.empty,
                       typeParameters: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None,
                       typeDiscriminatorValue: Option[String] = None,
@@ -59,8 +59,8 @@ case class ObjectType(id: Id,
 
   def topLevelParent(typeLookup: TypeLookupTable): Option[ObjectType] = {
 
-    def findTopLevelParent(absoluteId: AbsoluteId): ObjectType = {
-      val objElExt = typeLookup.objectMap(absoluteId)
+    def findTopLevelParent(uniqueId: UniqueId): ObjectType = {
+      val objElExt = typeLookup.objectMap(uniqueId)
       objElExt.parent match {
         case Some(parentId) => findTopLevelParent(parentId)
         case None           => objElExt

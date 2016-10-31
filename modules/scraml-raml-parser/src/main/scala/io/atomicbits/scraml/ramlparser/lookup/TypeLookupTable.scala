@@ -35,11 +35,10 @@ import io.atomicbits.scraml.ramlparser.model.types._
   *                    actual type (integer, number, string, boolean, object, List[integer], List[number],
   *                    List[string], List[boolean], List[object], or even nested lists).
   */
-case class TypeLookupTable(lookupTable: Map[AbsoluteId, Type] = Map.empty,
-                           nativeIdMap: Map[NativeId, AbsoluteId] = Map.empty,
-                           objectMap: Map[AbsoluteId, ObjectType] = Map.empty,
-                           enumMap: Map[AbsoluteId, EnumType] = Map.empty,
-                           nativeToAbsoluteId: NativeId => AbsoluteId) {
+case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
+                           nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
+                           objectMap: Map[UniqueId, ObjectType] = Map.empty,
+                           enumMap: Map[UniqueId, EnumType] = Map.empty) {
 
   def map(f: TypeLookupTable => TypeLookupTable): TypeLookupTable = f(this)
 
