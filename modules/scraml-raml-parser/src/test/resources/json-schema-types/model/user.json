@@ -29,6 +29,8 @@
       "type": "string"
     },
     "age": {
+      "maximum": 4294967295,
+      "minimum": 0,
       "required": true,
       "type": "integer"
     },
