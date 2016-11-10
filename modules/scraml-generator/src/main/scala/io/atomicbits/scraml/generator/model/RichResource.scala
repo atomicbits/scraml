@@ -19,9 +19,10 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.generator.lookup.TypeLookupTable
+import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
+import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.{Parameter, Resource}
+import io.atomicbits.scraml.ramlparser.model.{NativeId, Parameter, Resource, RootId}
 
 /**
  * Created by peter on 22/08/15. 
@@ -35,7 +36,11 @@ case class RichResource(urlSegment: String,
 
 object RichResource {
 
-  def apply(resource: Resource, packageBasePath: List[String], schemaLookup: TypeLookupTable)(implicit lang: Language): RichResource = {
+  def apply(resource: Resource,
+            packageBasePath: List[String],
+            typeLookupTable: TypeLookupTable,
+            canonicalMap: CanonicalMap,
+            nativeToRootId: NativeId => RootId)(implicit lang: Language): RichResource = {
 
     def createRichResource(resource: Resource, actualPackageBasePath: List[String]): RichResource = {
 
@@ -47,7 +52,7 @@ object RichResource {
 
       val richChildResources = resource.resources.map(createRichResource(_, nextPackageBasePath))
 
-      val richActions = resource.actions.map(RichAction(_, schemaLookup))
+      val richActions = resource.actions.map(RichAction(_, typeLookupTable, canonicalMap, nativeToRootId))
 
       RichResource(
         urlSegment = resource.urlSegment,

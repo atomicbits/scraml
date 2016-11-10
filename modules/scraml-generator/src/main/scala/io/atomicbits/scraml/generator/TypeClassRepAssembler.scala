@@ -17,45 +17,48 @@
  *
  */
 
-package io.atomicbits.scraml.generator.lookup
+package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.{AbsoluteId, NativeId, RootId, UniqueId}
+import io.atomicbits.scraml.ramlparser.lookup.{TypeLookupTable, TypeUtils}
 import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.{AbsoluteId, NativeId, RootId, UniqueId}
 
 /**
   * Created by peter on 3/06/15, Atomic BITS (http://atomicbits.io).
   */
-object TypeClassRepAssembler {
+class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
-  type CanonicalMap = Map[AbsoluteId, ClassRep]
+  import TypeClassRepAssembler._
 
 
-  def deduceClassReps(lookupTable: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
+  def deduceClassReps(lookupTable: TypeLookupTable)(implicit lang: Language): CanonicalMap = {
 
     val withCanonicals = deduceCanonicalNames(lookupTable)
 
-    val withEnumClassReps = addEnums(withCanonicals)
+    val withEnumClassReps = addEnums(withCanonicals, lookupTable)
 
-    val withCaseClassFields = addClassFields(withEnumClassReps)
+    val withCaseClassFields = addClassFields(withEnumClassReps, lookupTable)
 
-    val withClassHierarchy = addParentChildRelations(withCaseClassFields)
+    val withClassHierarchy = addParentChildRelations(withCaseClassFields, lookupTable)
 
     withClassHierarchy
   }
 
 
-  def addEnums(lookupTable: TypeLookupTable): TypeLookupTable = {
+  def addEnums(canonicalMap: CanonicalMap, lookupTable: TypeLookupTable): CanonicalMap = {
 
     val enumClassReps =
       lookupTable.enumMap.filter {
         case (id, enumEl) => enumEl.choices.size > 1
       }.map {
-        case (id, enumEl) => (id, EnumValuesClassRep(classRef = ClassReferenceBuilder(lookupTable)(id), values = enumEl.choices))
+        case (id, enumEl) =>
+          val classReference = buildClassReference(id, lookupTable)
+          (id, EnumValuesClassRep(classRef = classReference, values = enumEl.choices))
       }
 
-    lookupTable.copy(classReps = enumClassReps ++ lookupTable.classReps)
+    enumClassReps ++ canonicalMap
   }
 
 
@@ -63,7 +66,7 @@ object TypeClassRepAssembler {
     * @param lookupTable : The type lookup table
     * @return A map containing the class representation for each absolute ID.
     */
-  def deduceCanonicalNames(lookupTable: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
+  def deduceCanonicalNames(lookupTable: TypeLookupTable)(implicit lang: Language): CanonicalMap = {
 
     def jsObjectClassRep: ClassRep =
       lang match {
@@ -73,16 +76,22 @@ object TypeClassRepAssembler {
 
     val canonicalMap: CanonicalMap =
       lookupTable.objectMap.map {
-        case (id: AbsoluteId, obj: ObjectModel) =>
-          if (obj.properties.isEmpty && !obj.hasChildren && !obj.hasParent) id -> jsObjectClassRep
-          else id -> ClassRep(ClassReferenceBuilder(lookupTable)(id).copy(typeParameters = obj.typeParameters.map(TypeParameter(_))))
+        case (id: UniqueId, obj: ObjectType) =>
+          if (obj.properties.isEmpty && !obj.hasChildren && !obj.hasParent) {
+            id -> jsObjectClassRep
+          }
+          else {
+            val classReference = buildClassReference(id, lookupTable)
+            val classReferenceWithTypeParameters = classReference.copy(typeParameters = obj.typeParameters.map(TypeParameter))
+            id -> ClassRep(classReferenceWithTypeParameters)
+          }
       }
 
-    lookupTable.copy(classReps = canonicalMap)
+    canonicalMap
   }
 
 
-  def addClassFields(lookupTable: TypeLookupTable)(implicit lang: Language): TypeLookupTable = {
+  def addClassFields(canonicalMap: CanonicalMap, lookupTable: TypeLookupTable)(implicit lang: Language): CanonicalMap = {
 
     def schemaAsField(property: (String, Type), requiredFields: List[String]): Field = {
 
@@ -91,23 +100,23 @@ object TypeClassRepAssembler {
       schema match {
         case enumField: EnumType            =>
           val required = requiredFields.contains(propertyName) || enumField.isRequired
-          Field(propertyName, typeAsClassReference(enumField, lookupTable), required)
+          Field(propertyName, typeAsClassReference(enumField, lookupTable, canonicalMap), required)
         case objField: AllowedAsObjectField =>
           val required = requiredFields.contains(propertyName) || objField.isRequired
-          Field(propertyName, typeAsClassReference(objField, lookupTable), required)
+          Field(propertyName, typeAsClassReference(objField, lookupTable, canonicalMap), required)
         case noObjectField                  =>
           sys.error(s"Cannot transform schema with id ${noObjectField.id} to a case class field.")
       }
 
     }
 
-    val canonicalMapWithCaseClassFields =
-      lookupTable.classReps map { idAndClassRep =>
+    val canonicalMapWithCaseClassFields: CanonicalMap =
+      canonicalMap map { idAndClassRep =>
         val (id, classRep) = idAndClassRep
 
         lookupTable.objectMap.get(id) match {
-          case Some(objectElExt) =>
-            val fields: List[Field] = objectElExt.properties.toList.map(schemaAsField(_, objectElExt.requiredFields))
+          case Some(objectType) =>
+            val fields: List[Field] = objectType.properties.toList.map(schemaAsField(_, objectType.requiredFields))
 
             val classRepWithFields = classRep.withFields(fields)
 
@@ -119,21 +128,21 @@ object TypeClassRepAssembler {
         }
       }
 
-    lookupTable.copy(classReps = canonicalMapWithCaseClassFields)
+    canonicalMapWithCaseClassFields
   }
 
 
-  def addParentChildRelations(lookupTable: TypeLookupTable): TypeLookupTable = {
+  def addParentChildRelations(canonicalMap: CanonicalMap, lookupTable: TypeLookupTable): CanonicalMap = {
 
-    def updateParentAndChildren(objectModel: ObjectModel, classRp: ClassRep): Map[AbsoluteId, ClassRep] = {
+    def updateParentAndChildren(objectType: ObjectType, classRp: ClassRep): CanonicalMap = {
 
-      val typeDiscriminator = objectModel.typeDiscriminator.getOrElse("type")
+      val typeDiscriminator = objectType.typeDiscriminator.getOrElse("type")
 
       val childClassReps =
-        objectModel.children map { childId =>
+        objectType.children map { childId =>
 
           val childObjectEl = lookupTable.objectMap(childId)
-          val childClassRepWithParent = lookupTable.classReps(childId).withParent(classRp.classRef)
+          val childClassRepWithParent = canonicalMap(childId).withParent(classRp.classRef)
 
           val childClassRepWithParentAndJsonInfo =
             childObjectEl.typeDiscriminatorValue.map { typeDiscriminatorValue =>
@@ -143,27 +152,31 @@ object TypeClassRepAssembler {
           (childId, childClassRepWithParentAndJsonInfo)
         }
 
+
       // We assume there can be intermediary levels in the hierarchy.
       val classRepWithParent =
-      objectModel.parent map { parentId =>
-        classRp.withParent(ClassReferenceBuilder(lookupTable)(parentId))
+      objectType.parent map { parentId =>
+        classRp.withParent(buildClassReference(parentId, lookupTable))
       } getOrElse classRp
 
-      val classRepWithParentAndChildren = classRepWithParent.withChildren(objectModel.children.map(ClassReferenceBuilder(lookupTable)(_)))
+      val classRepWithParentAndChildren =
+        classRepWithParent.withChildren(objectType.children.map(buildClassReference(_, lookupTable)))
 
       val classRepWithParentAndChildrenAndJsonTypeInfo =
         classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
 
-      ((objectModel.id, classRepWithParentAndChildrenAndJsonTypeInfo) :: childClassReps) toMap
+      val uniqueId = TypeUtils.asUniqueId(objectType.id)
+
+      ((uniqueId, classRepWithParentAndChildrenAndJsonTypeInfo) :: childClassReps) toMap
     }
 
 
-    lookupTable.classReps.foldLeft(lookupTable) { (lookUp, idWithClassRep) =>
+    canonicalMap.foldLeft(canonicalMap) { (updatedCanonicalMap, idWithClassRep) =>
       val (id, classRep) = idWithClassRep
 
       lookupTable.objectMap.get(id) match {
         case Some(objectEl) =>
-          val classRepsWithParentAndChildren: Map[AbsoluteId, ClassRep] =
+          val classRepsWithParentAndChildren: CanonicalMap =
             objectEl.selection match {
               case Some(OneOf(selection)) => updateParentAndChildren(objectEl, classRep)
               case Some(AnyOf(selection)) => Map.empty // We only support OneOf for now.
@@ -171,9 +184,9 @@ object TypeClassRepAssembler {
               case _                      => Map.empty
             }
 
-          lookUp.copy(classReps = lookUp.classReps ++ classRepsWithParentAndChildren)
+          updatedCanonicalMap ++ classRepsWithParentAndChildren
 
-        case None => lookUp
+        case None => updatedCanonicalMap
 
       }
     }
@@ -186,19 +199,21 @@ object TypeClassRepAssembler {
     */
   def typeAsClassReference(ttype: Type,
                            lookupTable: TypeLookupTable,
+                           canonicalMap: CanonicalMap,
                            typeVariables: Map[TypeParameter, TypedClassReference] = Map.empty)
                           (implicit lang: Language): ClassPointer = {
 
     ttype match {
       case objectType: ObjectType               =>
-        val classReference = lookupTable.classReps(TypeUtils.asAbsoluteId(ttype.id, lookupTable.nativeToAbsoluteId)).classRef
+        val classReference = canonicalMap(TypeUtils.asUniqueId(ttype.id)).classRef
         if (typeVariables.isEmpty) classReference
         else TypedClassReference(classReference, typeVariables)
       case genericObjectType: GenericObjectType => TypeParameter(genericObjectType.typeVariable)
       case arrayType: ArrayType                 =>
         arrayType.items match {
           case genericObjectType: GenericObjectType => ListClassReference(genericObjectType.typeVariable)
-          case itemsType                            => ListClassReference.typed(typeAsClassReference(arrayType.items, lookupTable))
+          case itemsType                            =>
+            ListClassReference.typed(typeAsClassReference(arrayType.items, lookupTable, canonicalMap))
         }
       case stringType: StringType               => StringClassReference()
       case numberType: NumberType               => DoubleClassReference(numberType.isRequired)
@@ -208,33 +223,29 @@ object TypeClassRepAssembler {
         val typeRefTypeVars =
           typeReference.genericTypes.map {
             case (typeParamName, theType) =>
-              TypeParameter(typeParamName) -> typeAsClassReference(theType, lookupTable, typeVariables).asTypedClassReference
+              TypeParameter(typeParamName) -> typeAsClassReference(theType, lookupTable, canonicalMap, typeVariables).asTypedClassReference
           }
         typeAsClassReference(
           lookupTable.lookup(typeReference.refersTo),
           lookupTable,
+          canonicalMap,
           typeRefTypeVars
         )
       case enumType: EnumType                   =>
         if (enumType.choices.size == 1) StringClassReference() // Probably a "type" discriminator field.
-        else ClassReferenceBuilder(lookupTable)(TypeUtils.asUniqueId(ttype.id))
+        else buildClassReference(TypeUtils.asUniqueId(ttype.id), lookupTable)
       case unknownType                          =>
         sys.error(s"Cannot transform schema with id ${unknownType.id} to a class representation.")
     }
 
   }
 
-}
 
-
-case class ClassReferenceBuilder(typeLookupTable: TypeLookupTable) {
-
-  def apply(uniqueId: UniqueId): ClassReference = {
-
+  private def buildClassReference(uniqueId: UniqueId, lookupTable: TypeLookupTable): ClassReference = {
     val origin: AbsoluteId =
       uniqueId match {
         case absoluteId: AbsoluteId => absoluteId
-        case nativeId: NativeId     => typeLookupTable.nativeToAbsoluteId(nativeId)
+        case nativeId: NativeId     => nativeToRootId(nativeId)
       }
 
     val hostPathReversed = origin.hostPath.reverse
@@ -259,5 +270,13 @@ case class ClassReferenceBuilder(typeLookupTable: TypeLookupTable) {
 
     ClassReference(name = className, packageParts = path)
   }
+
+
+}
+
+
+object TypeClassRepAssembler {
+
+  type CanonicalMap = Map[UniqueId, ClassRep]
 
 }

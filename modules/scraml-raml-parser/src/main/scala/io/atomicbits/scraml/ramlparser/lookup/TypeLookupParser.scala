@@ -17,24 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.generator.lookup
+package io.atomicbits.scraml.ramlparser.lookup
 
 import java.util.UUID
 
-import io.atomicbits.scraml.generator.model.Language
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.types._
 import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
 
 
-class TypeLookupParser(nativeToRootId: NativeId => RootId) {
+object TypeLookupParser {
 
 
-  def parse(raml: Raml)(implicit lang: Language): (Raml, TypeLookupTable) = {
+  def parse(raml: Raml): (Raml, TypeLookupTable) = {
 
     val ramlExpanded: Raml = extractInlineTypes(raml)
 
@@ -42,10 +40,9 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
       ramlExpanded.types.typeReferences
         .map(fillInTopLevelUnrootedIds)
         .mapValues(expandRelativeToAbsoluteIds) // we are now sure to have only AbsoluteId references as ids
-        .foldLeft(TypeLookupTable(nativeToAbsoluteId = nativeToRootId))(updateLookupTableAndObjectMap)
+        .foldLeft(TypeLookupTable())(updateLookupTableAndObjectMap)
         .map(updateObjectHierarchy)
         .map(updateTypeDiscriminatorFields)
-        .map(TypeClassRepAssembler.deduceClassReps)
 
     (ramlExpanded, typeLookupTable)
   }
@@ -164,7 +161,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
 
   /**
-    * Expand all relative ids to absolute ids and register them in the schema lookup and also expand all $ref pointers.
+    * Expand all relative ids to absolute ids and register them in the type lookup and also expand all $ref pointers.
     *
     * @param ttype
     * @return
@@ -242,12 +239,12 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
   /**
     *
-    * @param lookup       The schema lookup
+    * @param lookup       The type lookup
     * @param linkedSchema A tuple containing a field name and the schema the field refers to. Nothing is done with the
     *                     field name, it is there to make folding easier on schema fragments and object properties.
     * @return The schema lookup with added object references.
     */
-  def updateLookupTableAndObjectMap(lookup: TypeLookupTable, linkedSchema: (NativeId, Type)): TypeLookupTable = {
+  private def updateLookupTableAndObjectMap(lookup: TypeLookupTable, linkedSchema: (NativeId, Type)): TypeLookupTable = {
 
 
     def updateLookupAndObjectMapJsonSchema(lookup: TypeLookupTable, schemaFragment: (String, Type)): TypeLookupTable = {
@@ -260,7 +257,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
           case _              => lookup
         }
 
-      def absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, nativeToRootId)
+      def uniqueId: UniqueId = TypeUtils.asUniqueId(ttype.id)
 
       ttype match {
         case objectType: ObjectType       =>
@@ -273,7 +270,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
               select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapJsonSchema)
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
-            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
+            .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (uniqueId -> objectType))
         case arrayType: ArrayType         =>
           val schemaLookupWithArrayFragments =
             arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
@@ -283,7 +280,7 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
         case fragment: Fragments          =>
           fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
         case enumType: EnumType           =>
-          updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (absoluteId -> enumType))
+          updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (uniqueId -> enumType))
         case _                            => updatedSchemaLookup
       }
 
@@ -292,17 +289,17 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
     def updateLookupAndObjectMapNativeTypes(lookup: TypeLookupTable, ttype: Type): TypeLookupTable = {
 
-      def absoluteId: AbsoluteId = TypeUtils.asAbsoluteId(ttype.id, nativeToRootId)
+      def uniqueId: UniqueId = TypeUtils.asUniqueId(ttype.id)
 
       ttype match {
         case objectType: ObjectType =>
           val schemaLookupWithObjectProperties =
             objectType.properties.values.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
           schemaLookupWithObjectProperties
-            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (absoluteId -> ObjectModel(objectType, lookup)))
+            .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (uniqueId -> objectType))
         case arrayType: ArrayType   =>
           updateLookupAndObjectMapNativeTypes(lookup, arrayType.items)
-        case enumType: EnumType     => lookup.copy(enumMap = lookup.enumMap + (absoluteId -> enumType))
+        case enumType: EnumType     => lookup.copy(enumMap = lookup.enumMap + (uniqueId -> enumType))
         case _                      => lookup
       }
     }
@@ -315,11 +312,11 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
         val schemaLookupWithUpdatedExternalLinks = lookup.copy(nativeIdMap = lookup.nativeIdMap + (nativeId -> id))
         updateLookupAndObjectMapJsonSchema(schemaLookupWithUpdatedExternalLinks, ("", ttype))
       case id: NativeId =>
-        val absoluteId = lookup.nativeToAbsoluteId(id)
+        val uniqueId = TypeUtils.asUniqueId(id)
         val updatedLookup =
           lookup.copy(
-            nativeIdMap = lookup.nativeIdMap + (nativeId -> absoluteId),
-            lookupTable = lookup.lookupTable + (absoluteId -> ttype)
+            nativeIdMap = lookup.nativeIdMap + (nativeId -> uniqueId),
+            lookupTable = lookup.lookupTable + (uniqueId -> ttype)
           )
         updateLookupAndObjectMapNativeTypes(updatedLookup, ttype)
       case _            => throw RamlParseException(s"A top-level schema must have a root id or a native id (is ${ttype.id}).")
@@ -332,12 +329,12 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     * For each unprocessed object, lookup the selection references and collect al selection objects recursively and
     * fill in the parent-child relations.
     */
-  def updateObjectHierarchy(lookupTable: TypeLookupTable): TypeLookupTable = {
+  private def updateObjectHierarchy(lookupTable: TypeLookupTable): TypeLookupTable = {
 
     @tailrec
-    def lookupObjEl(schema: Type): Option[ObjectModel] = {
+    def lookupObjEl(schema: Type): Option[ObjectType] = {
       schema match {
-        case objectType: ObjectType       => lookupTable.objectMap.get(TypeUtils.asAbsoluteId(objectType.id, nativeToRootId))
+        case objectType: ObjectType       => Some(objectType)
         case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
         case _                            => None
       }
@@ -347,17 +344,18 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
 
       val obj = lookup.objectMap(absId)
 
-      val children: List[ObjectModel] = obj.selection.map { sel =>
+      val children: List[ObjectType] = obj.selection.map { sel =>
         sel.selection.flatMap(lookupObjEl)
       } getOrElse List.empty
 
       val childrenWithParent = children.map(_.copy(parent = Some(absId)))
 
       val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, childObj) =>
-        lkup.copy(objectMap = lkup.objectMap + (childObj.id -> childObj))
+        lkup.copy(objectMap = lkup.objectMap + (TypeUtils.asUniqueId(childObj.id) -> childObj))
       }
 
-      val updatedObj = obj.copy(children = childrenWithParent.map(_.id))
+      val updatedObj =
+        obj.copy(children = childrenWithParent.map(childObj => TypeUtils.asUniqueId(childObj.id)))
       val result = updatedLookup.copy(objectMap = updatedLookup.objectMap + (absId -> updatedObj))
       result
     }
@@ -369,12 +367,12 @@ class TypeLookupParser(nativeToRootId: NativeId => RootId) {
     * Check if there is a type field present in each leaf-object that is an EnumEl with one element and fill in the
     * typeDiscriminatorValue field in each of them.
     */
-  private def updateTypeDiscriminatorFields(schemaLookup: TypeLookupTable): TypeLookupTable = {
+  private def updateTypeDiscriminatorFields(lookupTable: TypeLookupTable): TypeLookupTable = {
 
-    schemaLookup.objectMap.foldLeft(schemaLookup) { (lookup, objPair) =>
+    lookupTable.objectMap.foldLeft(lookupTable) { (lookup, objPair) =>
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
-        val typeDiscriminator = obj.topLevelParent(schemaLookup).flatMap(_.typeDiscriminator).getOrElse("type")
+        val typeDiscriminator = obj.topLevelParent(lookupTable).flatMap(_.typeDiscriminator).getOrElse("type")
         val discriminator = obj.properties.get(typeDiscriminator).flatMap(ObjectType.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)

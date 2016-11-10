@@ -17,9 +17,8 @@
  *
  */
 
-package io.atomicbits.scraml.generator.lookup
+package io.atomicbits.scraml.ramlparser.lookup
 
-import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.types._
 
@@ -36,12 +35,10 @@ import io.atomicbits.scraml.ramlparser.model.types._
   *                    actual type (integer, number, string, boolean, object, List[integer], List[number],
   *                    List[string], List[boolean], List[object], or even nested lists).
   */
-case class TypeLookupTable(lookupTable: Map[AbsoluteId, Type] = Map.empty,
-                           nativeIdMap: Map[NativeId, AbsoluteId] = Map.empty,
-                           objectMap: Map[AbsoluteId, ObjectModel] = Map.empty,
-                           enumMap: Map[AbsoluteId, EnumType] = Map.empty,
-                           classReps: Map[AbsoluteId, ClassRep] = Map.empty,
-                           nativeToAbsoluteId: NativeId => AbsoluteId) {
+case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
+                           nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
+                           objectMap: Map[UniqueId, ObjectType] = Map.empty,
+                           enumMap: Map[UniqueId, EnumType] = Map.empty) {
 
   def map(f: TypeLookupTable => TypeLookupTable): TypeLookupTable = f(this)
 

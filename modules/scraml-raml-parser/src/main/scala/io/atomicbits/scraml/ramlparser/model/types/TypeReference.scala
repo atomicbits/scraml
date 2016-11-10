@@ -20,7 +20,8 @@
 package io.atomicbits.scraml.ramlparser.model.types
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
@@ -37,7 +38,7 @@ case class TypeReference(refersTo: Id,
 
   override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): TypeReference = copy(model = typeModel)
 
 }
 
@@ -90,7 +91,7 @@ object TypeReference {
 
     def checkOtherType(theOtherType: String): Option[Try[TypeReference]] = {
       Type(theOtherType) match {
-        case typeRef: Try[TypeReference] => Some(typeRef)
+        case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
         case _                           => None
       }
     }

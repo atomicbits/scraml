@@ -105,13 +105,14 @@ object Type {
   def apply(typeName: String)(implicit parseContext: ParseContext): Try[Type] = {
 
     typeName match {
-      case StringType.value     => Try(new StringType())
-      case NumberType.value     => Try(new NumberType())
-      case IntegerType.value    => Try(new IntegerType())
-      case BooleanType.value    => Try(new BooleanType())
-      case NullType.value       => Try(new StringType())
-      case ArrayType(arrayType) => arrayType
-      case namedType            => Try(TypeReference(NativeId(namedType)))
+      case StringType.value        => Try(new StringType())
+      case NumberType.value        => Try(new NumberType())
+      case IntegerType.value       => Try(new IntegerType())
+      case BooleanType.value       => Try(new BooleanType())
+      case NullType.value          => Try(new StringType())
+      case UnionType(tryUnionType) => tryUnionType
+      case ArrayType(tryArrayType) => tryArrayType
+      case namedType               => Try(TypeReference(NativeId(namedType)))
     }
 
   }
@@ -121,7 +122,9 @@ object Type {
 
     val result =
       json match {
-        case ArrayType(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on top of this pattern match!
+        case MultipleInheritanceType(tryMultiType)    => Some(tryMultiType)
+        case UnionType(tryUnionType)                  => Some(tryUnionType)
+        case ArrayType(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on the second spot of this pattern match!
         case StringType(tryStringType)                => Some(tryStringType)
         case NumberType(tryNumberType)                => Some(tryNumberType)
         case IntegerType(tryIntegerType)              => Some(tryIntegerType)

@@ -19,12 +19,14 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.lookup.{TypeLookupParser, TypeLookupTable}
 import io.atomicbits.scraml.ramlparser.model.types.Types
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException, TryUtils}
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._
 
 import scala.util.{Failure, Success, Try}
-import TryUtils._
+import io.atomicbits.scraml.util.TryUtils._
 
 /**
   * Created by peter on 10/02/16.
@@ -38,7 +40,22 @@ case class Raml(title: String,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
-                resources: List[Resource])
+                resources: List[Resource],
+                typeLookupTable: Option[TypeLookupTable] = None) {
+
+  /**
+    * Collect all types in the type lookup table and replace all inline types with native type references that point to the
+    * nativeIdMap map of the type lookup table.
+    *
+    * @param nativeToRootId The function that transforms a native ID to a root ID.
+    * @return This changed Raml model with a type lookup table.
+    */
+  def collectTypes(nativeToRootId: NativeId => RootId): Raml = {
+    val (ramlExpanded, typeLookupTable): (Raml, TypeLookupTable) = TypeLookupParser.parse(this)
+    ramlExpanded.copy(typeLookupTable = Some(typeLookupTable))
+  }
+
+}
 
 
 object Raml {
@@ -231,22 +248,6 @@ object Raml {
 
     // Group all resources at this level with the same urlSegment and urlParameter
     val groupedResources: List[List[Resource]] = resources.groupBy(_.urlSegment).values.toList
-
-    //    groupedResources.foreach { group =>
-    //      val (actualParam, noneParam) = group.map(_.urlParameter).partition(_.isDefined)
-    //      (actualParam, noneParam) match {
-    //        case (Nil, Nil)       => ()
-    //        case (Nil, nones)     => ()
-    //        case (actuals, Nil)   =>
-    //          val diffs = actuals.map(_.get).groupBy(param => (param.parameterType, param.required)).values.toList
-    //          if (diffs.size > 1)
-    //            sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
-    //              s"but with inconsistent type or required value.")
-    //        case (actuals, nones) =>
-    //          sys.error(s"There are multiple resources defined with URI parameter ${actuals.head.get.name} " +
-    //            s"but with inconsistent type or required value...")
-    //      }
-    //    }
 
     val mergedResources: List[Resource] = groupedResources.map(mergeResources)
 

@@ -75,7 +75,7 @@ object RamlToJsonParser {
         path.split('/').filter(_.nonEmpty).headOption.collect {
           case first if first.endsWith(":") => true
         } getOrElse false
-      if(hasWindowsPrefix && path.startsWith("/")) path.drop(1)
+      if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
       else path
     }
 
@@ -99,6 +99,7 @@ object RamlToJsonParser {
       case s: String                      => unwrapJsonString(Json.toJson(s))
       case b: Boolean                     => Json.toJson(b)
       case i: java.lang.Integer           => Json.toJson(i.doubleValue())
+      case l: java.lang.Long              => Json.toJson(l.doubleValue())
       case d: Double                      => Json.toJson(d)
       case list: java.util.ArrayList[Any] => JsArray(list.asScala.map(anyToJson))
       case map: java.util.Map[Any, Any]   =>
@@ -109,7 +110,7 @@ object RamlToJsonParser {
         JsObject(mapped.toSeq)
       case include: Include               => Json.toJson(include)
       case null                           => JsNull
-      case x                              => sys.error(s"Cannot parse unknown type $x")
+      case x                              => sys.error(s"Cannot parse unknown type $x (${x.getClass.getCanonicalName})")
     }
   }
 

@@ -27,15 +27,14 @@ import io.atomicbits.scraml.generator.codegen.{CaseClassGenerator, JavaResourceC
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
-import io.atomicbits.scraml.generator.lookup.{TypeLookupParser, TypeLookupTable}
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps
 import java.util.{Map => JMap}
 
+import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.generator.license.{LicenseData, LicenseVerifier}
-import io.atomicbits.scraml.ramlparser.model.{Id, NativeId, Raml, RootId}
-import io.atomicbits.scraml.ramlparser.model.types.Types
+import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml, RootId}
 import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, RamlParser}
 
 import scala.util.{Failure, Success, Try}
@@ -133,11 +132,14 @@ object ScramlGenerator {
     val urlPath = packageBasePath.drop(2).mkString("/")
     val nativeToRootId: NativeId => RootId = nativeId => RootId(s"http://$host/$urlPath/${nativeId.id}.json")
 
-    val (ramlExpanded, schemaLookup): (Raml, TypeLookupTable) = new TypeLookupParser(nativeToRootId).parse(raml)
+    val ramlExpanded = raml.collectTypes(nativeToRootId)
+    val typeLookupTable = ramlExpanded.typeLookupTable.get
+
+    val canonicalMap: CanonicalMap = new TypeClassRepAssembler(nativeToRootId).deduceClassReps(typeLookupTable)
     println(s"Schema Lookup generated")
 
-    val classMap: ClassMap = schemaLookup.classReps.values.map(classRep => classRep.classRef -> classRep).toMap
-    val richResources = ramlExpanded.resources.map(RichResource(_, packageBasePath, schemaLookup))
+    val classMap: ClassMap = canonicalMap.values.map(classRep => classRep.classRef -> classRep).toMap
+    val richResources = ramlExpanded.resources.map(RichResource(_, packageBasePath, typeLookupTable, canonicalMap, nativeToRootId))
 
 
     language match {

@@ -19,8 +19,10 @@
 
 package io.atomicbits.scraml.ramlparser.model.types
 
+import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, TryUtils}
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._
 
 import scala.util.{Success, Try}
@@ -31,13 +33,15 @@ import scala.util.{Success, Try}
 case class ObjectType(id: Id,
                       baseType: List[Id],
                       properties: Map[String, Type],
-                      // facets: Option[String],
                       required: Option[Boolean] = None,
                       requiredFields: List[String] = List.empty,
                       selection: Option[Selection] = None,
                       fragments: Fragments = Fragments(),
-                      typeVariables: List[String] = List.empty,
+                      parent: Option[UniqueId] = None,
+                      children: List[UniqueId] = List.empty,
+                      typeParameters: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None,
+                      typeDiscriminatorValue: Option[String] = None,
                       model: TypeModel = RamlModel) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
 
   override def updated(updatedId: Id): ObjectType = copy(id = updatedId)
@@ -45,6 +49,26 @@ case class ObjectType(id: Id,
   override def asTypeModel(typeModel: TypeModel): Type = {
     val updatedProperties = properties.mapValues(_.asTypeModel(typeModel))
     copy(model = typeModel, properties = updatedProperties)
+  }
+
+  def hasChildren: Boolean = children.nonEmpty
+
+  def hasParent: Boolean = parent.isDefined
+
+  def isInTypeHiearchy: Boolean = hasChildren || hasParent
+
+  def topLevelParent(typeLookup: TypeLookupTable): Option[ObjectType] = {
+
+    def findTopLevelParent(uniqueId: UniqueId): ObjectType = {
+      val objElExt = typeLookup.objectMap(uniqueId)
+      objElExt.parent match {
+        case Some(parentId) => findTopLevelParent(parentId)
+        case None           => objElExt
+      }
+    }
+
+    parent.map(findTopLevelParent)
+
   }
 
 }
@@ -143,10 +167,13 @@ object ObjectType {
       Success(requiredFields.getOrElse(List.empty[String])),
       TryUtils.accumulate(selection),
       fragments,
+      Success(None),
+      Success(List.empty[AbsoluteId]),
       Success(typeVariables),
       Success(typeDiscriminator),
+      Success(None),
       Success(model)
-    )(new ObjectType(_, _, _, _, _, _, _, _, _, _))
+    )(new ObjectType(_, _, _, _, _, _, _, _, _, _, _, _, _))
   }
 
 

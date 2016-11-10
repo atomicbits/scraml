@@ -17,10 +17,12 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.parser
+package io.atomicbits.scraml.util
+
+import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 import scala.util.control.NonFatal
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 20/03/16.
@@ -76,7 +78,7 @@ object TryUtils {
     }
   }
 
-  
+
   /**
     * withSuccess collects all failure cases in an applicative way according to the 'addExceptions' specs.
     */
@@ -192,6 +194,35 @@ object TryUtils {
                                                                         K => RES): Try[RES] = {
     val tried: Try[(K => RES)] = withSuccessCurried(a, b, c, d, e, f, g, h, i, j)(fn)
     processDelta(k, tried)
+  }
+
+
+  def withSuccess[A, B, C, D, E, F, G, H, I, J, K, L, RES](a: Try[A], b: Try[B], c: Try[C], d: Try[D], e: Try[E], f: Try[F], g: Try[G],
+                                                           h: Try[H], i: Try[I], j: Try[J], k: Try[K], l: Try[L])
+                                                          (fn: (A, B, C, D, E, F, G, H, I, J, K, L) => RES): Try[RES] =
+    withSuccessCurried(a, b, c, d, e, f, g, h, i, j, k, l)(fn.curried)
+
+  private def withSuccessCurried[A, B, C, D, E, F, G, H, I, J, K, L, RES](a: Try[A], b: Try[B], c: Try[C], d: Try[D], e: Try[E], f: Try[F],
+                                                                          g: Try[G], h: Try[H], i: Try[I], j: Try[J], k: Try[K], l: Try[L])
+                                                                         (fn: A => B => C => D => E => F => G => H => I => J =>
+                                                                           K => L => RES): Try[RES] = {
+    val tried: Try[(L => RES)] = withSuccessCurried(a, b, c, d, e, f, g, h, i, j, k)(fn)
+    processDelta(l, tried)
+  }
+
+
+  def withSuccess[A, B, C, D, E, F, G, H, I, J, K, L, M, RES](a: Try[A], b: Try[B], c: Try[C], d: Try[D], e: Try[E], f: Try[F], g: Try[G],
+                                                              h: Try[H], i: Try[I], j: Try[J], k: Try[K], l: Try[L], m: Try[M])
+                                                             (fn: (A, B, C, D, E, F, G, H, I, J, K, L, M) => RES): Try[RES] =
+    withSuccessCurried(a, b, c, d, e, f, g, h, i, j, k, l, m)(fn.curried)
+
+  private def withSuccessCurried[A, B, C, D, E, F, G, H, I, J, K, L, M, RES](a: Try[A], b: Try[B], c: Try[C], d: Try[D], e: Try[E],
+                                                                             f: Try[F], g: Try[G], h: Try[H], i: Try[I], j: Try[J],
+                                                                             k: Try[K], l: Try[L], m: Try[M])
+                                                                            (fn: A => B => C => D => E => F => G => H => I => J =>
+                                                                              K => L => M => RES): Try[RES] = {
+    val tried: Try[(M => RES)] = withSuccessCurried(a, b, c, d, e, f, g, h, i, j, k, l)(fn)
+    processDelta(m, tried)
   }
 
 

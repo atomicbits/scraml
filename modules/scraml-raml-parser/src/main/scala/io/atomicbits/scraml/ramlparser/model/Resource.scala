@@ -24,7 +24,7 @@ import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlPars
 import play.api.libs.json.{JsArray, JsObject}
 
 import scala.util.{Failure, Success, Try}
-import io.atomicbits.scraml.ramlparser.parser.TryUtils._
+import io.atomicbits.scraml.util.TryUtils._
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 import scala.language.postfixOps
