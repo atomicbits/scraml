@@ -63,6 +63,7 @@ object ScramlGenerator {
                        thirdPartyClassHeader: String): JMap[String, String] =
     generateFor(Java, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
 
+
   private[generator] def generateFor(language: Language,
                                      ramlApiPath: String,
                                      apiPackageName: String,
@@ -136,7 +137,7 @@ object ScramlGenerator {
     val typeLookupTable = ramlExpanded.typeLookupTable.get
 
     val canonicalMap: CanonicalMap = new TypeClassRepAssembler(nativeToRootId).deduceClassReps(typeLookupTable)
-    println(s"Schema Lookup generated")
+    println(s"Type Lookup generated")
 
     val classMap: ClassMap = canonicalMap.values.map(classRep => classRep.classRef -> classRep).toMap
     val richResources = ramlExpanded.resources.map(RichResource(_, packageBasePath, typeLookupTable, canonicalMap, nativeToRootId))

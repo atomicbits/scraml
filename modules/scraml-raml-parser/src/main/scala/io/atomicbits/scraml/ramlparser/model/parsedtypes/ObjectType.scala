@@ -17,24 +17,24 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 25/03/16.
   */
 case class ObjectType(id: Id,
                       baseType: List[Id],
-                      properties: Map[String, Type],
+                      properties: Properties, // Map[String, Type]
                       required: Option[Boolean] = None,
-                      requiredFields: List[String] = List.empty,
+                      requiredProperties: List[String] = List.empty,
                       selection: Option[Selection] = None,
                       fragments: Fragments = Fragments(),
                       parent: Option[UniqueId] = None,
@@ -42,12 +42,12 @@ case class ObjectType(id: Id,
                       typeParameters: List[String] = List.empty,
                       typeDiscriminator: Option[String] = None,
                       typeDiscriminatorValue: Option[String] = None,
-                      model: TypeModel = RamlModel) extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
+                      model: TypeModel = RamlModel) extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
 
   override def updated(updatedId: Id): ObjectType = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): Type = {
-    val updatedProperties = properties.mapValues(_.asTypeModel(typeModel))
+    val updatedProperties = properties.map(property => property.copy(propertyType = property.propertyType.asTypeModel(typeModel)))
     copy(model = typeModel, properties = updatedProperties)
   }
 
@@ -89,15 +89,18 @@ object ObjectType {
     }
 
     // Process the properties
-    val properties: Try[Map[String, Type]] =
+    val properties: Try[Properties] =
     (json \ "properties").toOption.collect {
       case props: JsObject =>
         val propertyTryMap =
           props.value collect {
-            case (fieldName, Type(fieldType)) => (fieldName, fieldType)
+            case (fieldName, Type(tryFieldType)) => (fieldName, tryFieldType)
           }
-        TryUtils.accumulate(propertyTryMap.toMap).map(_.mapValues(_.asTypeModel(model)))
-    } getOrElse Success(Map.empty[String, Type])
+        TryUtils.accumulate(propertyTryMap.toMap).map { typeMap =>
+          val updatedTypeMap = typeMap.mapValues(_.asTypeModel(model))
+          Properties.fromTypeMap(updatedTypeMap)
+        }
+    } getOrElse Success(Properties())
 
     val fragments = json match {
       case Fragments(fragment) => fragment
@@ -179,10 +182,29 @@ object ObjectType {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ObjectType]] = {
 
+    def isParentRef(theOtherType: String): Option[Try[TypeReference]] = {
+      Type(theOtherType) match {
+        case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
+        case _                           => None
+      }
+    }
+
+
     (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
-      case (Some(JsString(ObjectType.value)), _, None) => Some(ObjectType(json))
-      case (None, Some(jsObj), None)                   => Some(ObjectType(json))
-      case _                                           => None
+      case (Some(JsString(ObjectType.value)), _, None)    => Some(ObjectType(json))
+      case (Some(JsString(otherType)), Some(jsObj), None) =>
+        isParentRef(otherType).map { triedParent =>
+          triedParent.flatMap { parent =>
+            ObjectType(json).flatMap { objectType =>
+              parent.refersTo match {
+                case nativeId: NativeId => Success(objectType.copy(parent = Some(nativeId)))
+                case _                  => Failure(RamlParseException(s"Expected a parent reference in RAML1.0 to have a valid native id."))
+              }
+            }
+          }
+        }
+      case (None, Some(jsObj), None)                      => Some(ObjectType(json))
+      case _                                              => None
     }
 
   }

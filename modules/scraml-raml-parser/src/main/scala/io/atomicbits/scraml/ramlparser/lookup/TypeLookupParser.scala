@@ -22,7 +22,7 @@ package io.atomicbits.scraml.ramlparser.lookup
 import java.util.UUID
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 import scala.annotation.tailrec
@@ -188,6 +188,13 @@ object TypeLookupParser {
       val expandedId = root.toAbsolute(ttype.id, path)
 
 
+      def expandProperty(property: Property): Property = {
+        // Treat the property as a fragment to expand it.
+        val fragment = (property.name, property.propertyType)
+        val (name, expandedType) = expandFragment(fragment)
+        property.copy(propertyType = expandedType)
+      }
+
       def expandFragment(fragmentPath: (String, Type)): (String, Type) = {
         val (pathPart, subSchema) = fragmentPath
         val updatedSubSchema = expandWithRootAndPath(subSchema, currentRoot, expandedId.rootPart, path :+ pathPart)
@@ -200,7 +207,7 @@ object TypeLookupParser {
           case objectType: ObjectType       =>
             objectType.copy(
               fragments = objectType.fragments.map(expandFragment),
-              properties = objectType.properties.map(expandFragment),
+              properties = objectType.properties.map(expandProperty),
               selection = objectType.selection
                 .map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
@@ -264,7 +271,7 @@ object TypeLookupParser {
           val schemaLookupWithObjectFragments =
             objectType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithObjectProperties =
-            objectType.properties.foldLeft(schemaLookupWithObjectFragments)(updateLookupAndObjectMapJsonSchema)
+            objectType.properties.asTypeMap.foldLeft(schemaLookupWithObjectFragments)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithSelectionObjects =
             objectType.selection.map {
               select => select.selection.map((path, _)).foldLeft(schemaLookupWithObjectProperties)(updateLookupAndObjectMapJsonSchema)
@@ -294,7 +301,7 @@ object TypeLookupParser {
       ttype match {
         case objectType: ObjectType =>
           val schemaLookupWithObjectProperties =
-            objectType.properties.values.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
+            objectType.properties.types.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
           schemaLookupWithObjectProperties
             .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (uniqueId -> objectType))
         case arrayType: ArrayType   =>
@@ -373,7 +380,7 @@ object TypeLookupParser {
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
         val typeDiscriminator = obj.topLevelParent(lookupTable).flatMap(_.typeDiscriminator).getOrElse("type")
-        val discriminator = obj.properties.get(typeDiscriminator).flatMap(ObjectType.schemaToDiscriminatorValue)
+        val discriminator = obj.properties.get(typeDiscriminator).map(_.propertyType).flatMap(ObjectType.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)
           println(

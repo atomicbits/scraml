@@ -17,33 +17,35 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 import scala.util.{Success, Try}
+import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+
 
 /**
   * Created by peter on 1/04/16.
   */
-case class EnumType(id: Id,
-                    choices: List[String],
+case class NullType(id: Id = ImplicitId,
                     required: Option[Boolean] = None,
-                    model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField {
+                    model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): EnumType = copy(id = updatedId)
+  override def updated(updatedId: Id): NullType = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
 
-object EnumType {
+object NullType {
 
-  val value = "enum"
+  val value = "null"
 
-  def apply(json: JsValue): Try[EnumType] = {
+
+  def apply(json: JsValue): Try[NullType] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -51,20 +53,22 @@ object EnumType {
       case IdExtractor(schemaId) => schemaId
     }
 
-    val choices = (json \ "enum").asOpt[List[String]]
-
-    val required = (json \ "required").asOpt[Boolean]
-
-    Success(EnumType(id, choices.getOrElse(List.empty), required, model))
+    Success(
+      NullType(
+        id = id,
+        required = json.fieldBooleanValue("required"),
+        model = model
+      )
+    )
   }
 
 
-  def unapply(json: JsValue): Option[Try[EnumType]] = {
+  def unapply(json: JsValue): Option[Try[NullType]] = {
 
-    (Type.typeDeclaration(json), (json \ EnumType.value).toOption) match {
-      case (Some(JsString(StringType.value)), Some(JsArray(x))) => Some(EnumType(json))
-      case (None, Some(JsArray(x)))                             => Some(EnumType(json))
-      case _                                                    => None
+    (Type.typeDeclaration(json), json) match {
+      case (Some(JsString(NullType.value)), _) => Some(NullType(json))
+      case (_, JsString(NullType.value))       => Some(Success(new NullType()))
+      case _                                   => None
     }
 
   }

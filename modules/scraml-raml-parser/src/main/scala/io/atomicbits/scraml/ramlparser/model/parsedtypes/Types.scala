@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model.NativeId
 import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
@@ -30,6 +30,10 @@ import scala.util.{Failure, Success, Try}
   * Created by peter on 10/02/16.
   */
 case class Types(typeReferences: Map[NativeId, Type] = Map.empty) {
+
+  def apply(nativeId: NativeId): Type = typeReferences(nativeId)
+
+  def get(nativeId: NativeId): Option[Type] = typeReferences.get(nativeId)
 
   def ++(otherTypes: Types): Types = {
     Types(typeReferences ++ otherTypes.typeReferences)

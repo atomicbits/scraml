@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.Matchers._

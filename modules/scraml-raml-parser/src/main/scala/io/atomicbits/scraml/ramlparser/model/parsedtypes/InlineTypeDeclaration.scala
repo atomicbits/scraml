@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.JsValue

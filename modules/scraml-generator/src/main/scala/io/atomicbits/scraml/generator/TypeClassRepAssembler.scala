@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.lookup.{TypeLookupTable, TypeUtils}
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model.{AbsoluteId, NativeId, RootId, UniqueId}
 
 /**
@@ -116,7 +116,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
         lookupTable.objectMap.get(id) match {
           case Some(objectType) =>
-            val fields: List[Field] = objectType.properties.toList.map(schemaAsField(_, objectType.requiredFields))
+            val fields: List[Field] = objectType.properties.asTypeMap.toList.map(schemaAsField(_, objectType.requiredProperties))
 
             val classRepWithFields = classRep.withFields(fields)
 

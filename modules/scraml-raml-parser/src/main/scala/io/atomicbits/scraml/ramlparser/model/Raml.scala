@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.lookup.{TypeLookupParser, TypeLookupTable}
-import io.atomicbits.scraml.ramlparser.model.types.Types
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.Types
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._

@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
@@ -34,7 +34,7 @@ case class TypeReference(refersTo: Id,
                          required: Option[Boolean] = None,
                          genericTypes: Map[String, Type] = Map.empty,
                          fragments: Fragments = Fragments(),
-                         model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
+                         model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
 

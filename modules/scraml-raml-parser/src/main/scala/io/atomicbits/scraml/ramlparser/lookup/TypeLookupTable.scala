@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 
 /**

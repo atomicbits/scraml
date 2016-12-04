@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model.{Id, ImplicitId, RamlModel, TypeModel}
 import play.api.libs.json.{JsString, JsValue}
@@ -33,7 +33,7 @@ case class FileType(id: Id = ImplicitId,
                     fileTypes: Option[Seq[String]] = None,
                     minLength: Option[Int] = None,
                     maxLength: Option[Int] = None,
-                    required: Option[Boolean] = None) extends NonePrimitiveType with AllowedAsObjectField {
+                    required: Option[Boolean] = None) extends NonPrimitiveType with AllowedAsObjectField {
 
   def asRequired = copy(required = Some(true))
 

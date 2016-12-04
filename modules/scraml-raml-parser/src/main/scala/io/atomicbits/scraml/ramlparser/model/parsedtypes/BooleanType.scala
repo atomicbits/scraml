@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
@@ -29,27 +29,22 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class IntegerType(id: Id = ImplicitId,
-                       format: Option[String] = None,
-                       minimum: Option[Int] = None,
-                       maximum: Option[Int] = None,
-                       multipleOf: Option[Int] = None,
+case class BooleanType(id: Id = ImplicitId,
                        required: Option[Boolean] = None,
                        model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): IntegerType = copy(id = updatedId)
+  override def updated(updatedId: Id): BooleanType = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
 
-object IntegerType {
+object BooleanType {
 
-  val value = "integer"
+  val value = "boolean"
 
-
-  def apply(json: JsValue): Try[IntegerType] = {
+  def apply(json: JsValue): Try[BooleanType] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -58,24 +53,20 @@ object IntegerType {
     }
 
     Success(
-      IntegerType(
+      BooleanType(
         id = id,
-        format = json.fieldStringValue("format"),
-        minimum = json.fieldIntValue("minimum"),
-        maximum = json.fieldIntValue("maximum"),
-        multipleOf = json.fieldIntValue("multipleOf"),
         required = json.fieldBooleanValue("required"),
-        model = model
+        model
       )
     )
   }
 
 
-  def unapply(json: JsValue): Option[Try[IntegerType]] = {
+  def unapply(json: JsValue): Option[Try[BooleanType]] = {
 
     (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(IntegerType.value)), _) => Some(IntegerType(json))
-      case (_, JsString(IntegerType.value))       => Some(Success(IntegerType()))
+      case (Some(JsString(BooleanType.value)), _) => Some(BooleanType(json))
+      case (_, JsString(BooleanType.value))       => Some(Success(new BooleanType()))
       case _                                      => None
     }
 

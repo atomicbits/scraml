@@ -23,7 +23,7 @@ import io.atomicbits.scraml.generator.TypeClassRepAssembler
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.types.TypeReference
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.TypeReference
 
 import scala.language.postfixOps
 

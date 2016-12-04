@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
@@ -69,7 +69,7 @@ case class GenericObjectType(id: Id,
                              required: Option[Boolean] = None,
                              fragments: Fragments = Fragments(),
                              model: TypeModel = RamlModel)
-  extends Fragmented with AllowedAsObjectField with NonePrimitiveType {
+  extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
 
   override def updated(updatedId: Id): GenericObjectType = copy(id = updatedId)
 

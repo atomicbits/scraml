@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import play.api.libs.json.{JsString, JsValue}
 import io.atomicbits.scraml.ramlparser.model._
@@ -29,7 +29,7 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-trait DateType extends NonePrimitiveType with AllowedAsObjectField {
+trait DateType extends NonPrimitiveType with AllowedAsObjectField {
 
   def format: DateFormat
 

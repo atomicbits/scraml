@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
@@ -62,7 +62,7 @@ trait Identifiable {
 
 trait PrimitiveType extends Type
 
-trait NonePrimitiveType extends Type
+trait NonPrimitiveType extends Type
 
 
 /**
@@ -123,8 +123,8 @@ object Type {
     val result =
       json match {
         case MultipleInheritanceType(tryMultiType)    => Some(tryMultiType)
-        case UnionType(tryUnionType)                  => Some(tryUnionType)
         case ArrayType(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on the second spot of this pattern match!
+        case UnionType(tryUnionType)                  => Some(tryUnionType)
         case StringType(tryStringType)                => Some(tryStringType)
         case NumberType(tryNumberType)                => Some(tryNumberType)
         case IntegerType(tryIntegerType)              => Some(tryIntegerType)

@@ -17,11 +17,32 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 /**
-  * Created by peter on 26/08/16.
+  * Created by peter on 25/03/16.
   */
-package object model {
+sealed trait Selection {
+
+  def selection: List[Type]
+
+  def map(f: Type => Type): Selection
+
+}
+
+case class OneOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+}
+
+case class AnyOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+
+}
+
+case class AllOf(selection: List[Type]) extends Selection {
+
+  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
 
 }

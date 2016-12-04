@@ -33,6 +33,26 @@ types:
     properties:
       hero:
         type: string
+  Phone:
+    type: object
+    properties:
+      manufacturer:
+        type: string
+      numberOfSIMCards:
+        type: number
+  Notebook:
+    type: object
+    properties:
+      manufacturer:
+        type: string
+      numberOfUSBPorts:
+        type: number
+  Person:
+    type: object
+    properties:
+      devices: ( Phone | Notebook )[]
+      reports: Person[]
+  PhoneOrNotebook: ( Phone | Notebook )
 
 
 /rest/books:

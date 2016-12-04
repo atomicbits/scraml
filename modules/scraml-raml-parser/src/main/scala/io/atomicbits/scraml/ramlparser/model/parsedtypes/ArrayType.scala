@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
@@ -37,7 +37,7 @@ case class ArrayType(items: Type,
                      maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
                      fragments: Fragments = Fragments(),
-                     model: TypeModel = RamlModel) extends NonePrimitiveType with AllowedAsObjectField with Fragmented {
+                     model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
 
   override def updated(updatedId: Id): ArrayType = copy(id = updatedId)
 

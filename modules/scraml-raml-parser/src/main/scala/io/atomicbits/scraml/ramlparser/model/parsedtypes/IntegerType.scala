@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
@@ -29,23 +29,27 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class NullType(id: Id = ImplicitId,
-                    required: Option[Boolean] = None,
-                    model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class IntegerType(id: Id = ImplicitId,
+                       format: Option[String] = None,
+                       minimum: Option[Int] = None,
+                       maximum: Option[Int] = None,
+                       multipleOf: Option[Int] = None,
+                       required: Option[Boolean] = None,
+                       model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): NullType = copy(id = updatedId)
+  override def updated(updatedId: Id): IntegerType = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
 
-object NullType {
+object IntegerType {
 
-  val value = "null"
+  val value = "integer"
 
 
-  def apply(json: JsValue): Try[NullType] = {
+  def apply(json: JsValue): Try[IntegerType] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -54,8 +58,12 @@ object NullType {
     }
 
     Success(
-      NullType(
+      IntegerType(
         id = id,
+        format = json.fieldStringValue("format"),
+        minimum = json.fieldIntValue("minimum"),
+        maximum = json.fieldIntValue("maximum"),
+        multipleOf = json.fieldIntValue("multipleOf"),
         required = json.fieldBooleanValue("required"),
         model = model
       )
@@ -63,12 +71,12 @@ object NullType {
   }
 
 
-  def unapply(json: JsValue): Option[Try[NullType]] = {
+  def unapply(json: JsValue): Option[Try[IntegerType]] = {
 
     (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(NullType.value)), _) => Some(NullType(json))
-      case (_, JsString(NullType.value))       => Some(Success(new NullType()))
-      case _                                   => None
+      case (Some(JsString(IntegerType.value)), _) => Some(IntegerType(json))
+      case (_, JsString(IntegerType.value))       => Some(Success(IntegerType()))
+      case _                                      => None
     }
 
   }

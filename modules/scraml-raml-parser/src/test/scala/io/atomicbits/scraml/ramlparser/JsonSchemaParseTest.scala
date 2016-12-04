@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
@@ -63,10 +63,10 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       val address = addressType.asInstanceOf[ObjectType]
 
       address.id shouldBe FragmentId(List("definitions", "address"))
-      address.properties("city") shouldBe a[StringType]
-      address.properties("state") shouldBe a[StringType]
-      address.properties("zip") shouldBe a[IntegerType]
-      address.properties("streetAddress") shouldBe a[StringType]
+      address.properties("city").propertyType shouldBe a[StringType]
+      address.properties("state").propertyType shouldBe a[StringType]
+      address.properties("zip").propertyType shouldBe a[IntegerType]
+      address.properties("streetAddress").propertyType shouldBe a[StringType]
 
       //      val prettyModel = TestUtils.prettyPrint(parsedModel)
       //       println(s"Parsed raml: $prettyModel")

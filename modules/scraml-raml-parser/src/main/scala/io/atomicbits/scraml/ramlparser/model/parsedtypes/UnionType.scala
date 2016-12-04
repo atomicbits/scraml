@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
@@ -30,10 +30,10 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 1/11/16.
   */
-case class UnionType(types: List[Type],
+case class UnionType(types: Set[Type],
                      required: Option[Boolean] = None,
                      model: TypeModel = RamlModel,
-                     id: Id = ImplicitId) extends NonePrimitiveType with AllowedAsObjectField {
+                     id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
 
   override def updated(updatedId: Id): UnionType = copy(id = updatedId)
 
@@ -48,7 +48,7 @@ object UnionType {
 
 
   def unapply(unionExpression: String)(implicit parseContext: ParseContext): Option[Try[UnionType]] = {
-    addUnionTypes(UnionType(List.empty), unionExpression)
+    addUnionTypes(UnionType(Set.empty), unionExpression)
   }
 
 
@@ -57,9 +57,9 @@ object UnionType {
     (Type.typeDeclaration(json), json) match {
       case (Some(JsString(unionExpression)), _) =>
         val required = json.fieldBooleanValue("required")
-        addUnionTypes(UnionType(List.empty, required), unionExpression)
+        addUnionTypes(UnionType(Set.empty, required), unionExpression)
       case (_, JsString(unionExpression))       =>
-        addUnionTypes(UnionType(List.empty), unionExpression)
+        addUnionTypes(UnionType(Set.empty), unionExpression)
       case _                                    => None
     }
 
@@ -73,7 +73,7 @@ object UnionType {
           TryUtils.accumulate(stringExpressions.map(Type(_)))
         }
       triedTypes.map { types =>
-        unionType.copy(types = types)
+        unionType.copy(types = types.toSet)
       }
     }
   }

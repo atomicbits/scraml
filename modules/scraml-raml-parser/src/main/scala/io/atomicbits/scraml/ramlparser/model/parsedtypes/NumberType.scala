@@ -17,7 +17,7 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
 import play.api.libs.json.{JsObject, JsString, JsValue}
@@ -29,22 +29,26 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class BooleanType(id: Id = ImplicitId,
-                       required: Option[Boolean] = None,
-                       model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class NumberType(id: Id = ImplicitId,
+                      format: Option[String] = None,
+                      minimum: Option[Int] = None,
+                      maximum: Option[Int] = None,
+                      multipleOf: Option[Int] = None,
+                      required: Option[Boolean] = None,
+                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): BooleanType = copy(id = updatedId)
+  override def updated(updatedId: Id): NumberType = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
 
 }
 
+object NumberType {
 
-object BooleanType {
+  val value = "number"
 
-  val value = "boolean"
 
-  def apply(json: JsValue): Try[BooleanType] = {
+  def apply(json: JsValue): Try[NumberType] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -53,21 +57,25 @@ object BooleanType {
     }
 
     Success(
-      BooleanType(
+      NumberType(
         id = id,
+        format = json.fieldStringValue("format"),
+        minimum = json.fieldIntValue("minimum"),
+        maximum = json.fieldIntValue("maximum"),
+        multipleOf = json.fieldIntValue("multipleOf"),
         required = json.fieldBooleanValue("required"),
-        model
+        model = model
       )
     )
   }
 
 
-  def unapply(json: JsValue): Option[Try[BooleanType]] = {
+  def unapply(json: JsValue): Option[Try[NumberType]] = {
 
     (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(BooleanType.value)), _) => Some(BooleanType(json))
-      case (_, JsString(BooleanType.value))       => Some(Success(new BooleanType()))
-      case _                                      => None
+      case (Some(JsString(NumberType.value)), _) => Some(NumberType(json))
+      case (_, JsString(NumberType.value))       => Some(Success(new NumberType()))
+      case _                                     => None
     }
 
   }

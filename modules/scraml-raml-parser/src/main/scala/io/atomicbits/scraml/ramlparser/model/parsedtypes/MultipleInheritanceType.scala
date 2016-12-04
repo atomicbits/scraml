@@ -17,22 +17,23 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.types
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import play.api.libs.json.{JsArray, JsString, JsValue}
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
+import io.atomicbits.scraml.util.TryUtils._
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by peter on 1/11/16.
   */
-case class MultipleInheritanceType(parents: List[TypeReference],
+case class MultipleInheritanceType(parents: Set[TypeReference],
                                    required: Option[Boolean] = None,
                                    model: TypeModel = RamlModel,
-                                   id: Id = ImplicitId) extends NonePrimitiveType with AllowedAsObjectField {
+                                   id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
 
 
   override def updated(updatedId: Id): MultipleInheritanceType = copy(id = updatedId)
@@ -49,29 +50,38 @@ object MultipleInheritanceType {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[MultipleInheritanceType]] = {
 
-    def processParentReferences(parents: Seq[JsValue]): Option[List[TypeReference]] = {
+    def processParentReferences(parents: Seq[JsValue]): Option[Try[Set[TypeReference]]] = {
+
       val parentRefs =
         parents.collect {
           case JsString(parentRef) => Type(parentRef)
         }
+
       val typeReferences =
         parentRefs.collect {
-          case Success(typeReference: TypeReference) => typeReference
+          case Success(typeReference: TypeReference) => Success(typeReference)
+          case Success(unionType: UnionType)         =>
+            Failure(
+              RamlParseException(s"We do not yet support multiple inheritance where one of the parents is a union type expression.")
+            )
         }
 
-      if (typeReferences.size > 1) Some(typeReferences.toList)
+
+      val triedTypeReferences: Try[Seq[TypeReference]] = accumulate(typeReferences)
+
+      if (typeReferences.size > 1) Some(triedTypeReferences.map(_.toSet))
       else None
     }
 
 
     (Type.typeDeclaration(json), json) match {
       case (Some(JsArray(parentReferences)), _) =>
-        processParentReferences(parentReferences).map { parents =>
+        processParentReferences(parentReferences).map { triedParents =>
           val required = json.fieldBooleanValue("required")
-          Success(MultipleInheritanceType(parents, required))
+          triedParents.map(MultipleInheritanceType(_, required))
         }
       case (_, JsArray(parentReferences))       =>
-        processParentReferences(parentReferences).map(parents => Success(MultipleInheritanceType(parents)))
+        processParentReferences(parentReferences).map(triedParents => triedParents.map(MultipleInheritanceType(_)))
       case _                                    => None
     }
 

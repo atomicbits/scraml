@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator.codegen
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.Parameter
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**
   * Created by peter on 30/09/15.
