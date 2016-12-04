@@ -24,25 +24,25 @@ package io.atomicbits.scraml.ramlparser.model.parsedtypes
   */
 sealed trait Selection {
 
-  def selection: List[Type]
+  def selection: List[ParsedType]
 
-  def map(f: Type => Type): Selection
-
-}
-
-case class OneOf(selection: List[Type]) extends Selection {
-
-  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
-}
-
-case class AnyOf(selection: List[Type]) extends Selection {
-
-  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+  def map(f: ParsedType => ParsedType): Selection
 
 }
 
-case class AllOf(selection: List[Type]) extends Selection {
+case class OneOf(selection: List[ParsedType]) extends Selection {
 
-  override def map(f: (Type) => Type): Selection = copy(selection = selection.map(f))
+  override def map(f: (ParsedType) => ParsedType): Selection = copy(selection = selection.map(f))
+}
+
+case class AnyOf(selection: List[ParsedType]) extends Selection {
+
+  override def map(f: (ParsedType) => ParsedType): Selection = copy(selection = selection.map(f))
+
+}
+
+case class AllOf(selection: List[ParsedType]) extends Selection {
+
+  override def map(f: (ParsedType) => ParsedType): Selection = copy(selection = selection.map(f))
 
 }

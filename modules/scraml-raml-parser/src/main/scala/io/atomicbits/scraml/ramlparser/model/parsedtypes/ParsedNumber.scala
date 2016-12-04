@@ -29,26 +29,26 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class NumberType(id: Id = ImplicitId,
-                      format: Option[String] = None,
-                      minimum: Option[Int] = None,
-                      maximum: Option[Int] = None,
-                      multipleOf: Option[Int] = None,
-                      required: Option[Boolean] = None,
-                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedNumber(id: Id = ImplicitId,
+                        format: Option[String] = None,
+                        minimum: Option[Int] = None,
+                        maximum: Option[Int] = None,
+                        multipleOf: Option[Int] = None,
+                        required: Option[Boolean] = None,
+                        model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): NumberType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedNumber = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
-object NumberType {
+object ParsedNumber {
 
   val value = "number"
 
 
-  def apply(json: JsValue): Try[NumberType] = {
+  def apply(json: JsValue): Try[ParsedNumber] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -57,7 +57,7 @@ object NumberType {
     }
 
     Success(
-      NumberType(
+      ParsedNumber(
         id = id,
         format = json.fieldStringValue("format"),
         minimum = json.fieldIntValue("minimum"),
@@ -70,12 +70,12 @@ object NumberType {
   }
 
 
-  def unapply(json: JsValue): Option[Try[NumberType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedNumber]] = {
 
-    (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(NumberType.value)), _) => Some(NumberType(json))
-      case (_, JsString(NumberType.value))       => Some(Success(new NumberType()))
-      case _                                     => None
+    (ParsedType.typeDeclaration(json), json) match {
+      case (Some(JsString(ParsedNumber.value)), _) => Some(ParsedNumber(json))
+      case (_, JsString(ParsedNumber.value))       => Some(Success(new ParsedNumber()))
+      case _                                       => None
     }
 
   }

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.StringType
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedString}
 import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
 import play.api.libs.json.{JsArray, JsObject}
 
@@ -102,7 +102,7 @@ object Resource {
             if (segment.startsWith("{") && segment.endsWith("}")) {
               val pathParameterName = segment.stripPrefix("{").stripSuffix("}")
               val pathParameterMeta =
-                uriParamMap.byName(pathParameterName).getOrElse(Parameter(pathParameterName, new StringType(), true, false))
+                uriParamMap.byName(pathParameterName).getOrElse(Parameter(pathParameterName, new ParsedString(), true, false))
               Resource(
                 urlSegment = pathParameterName,
                 urlParameter = Some(pathParameterMeta)

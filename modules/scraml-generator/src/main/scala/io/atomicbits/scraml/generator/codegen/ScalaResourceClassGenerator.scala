@@ -255,13 +255,13 @@ object ScalaResourceClassGenerator {
       }
 
 
-    def generateParameterType(parameterType: Type): String = {
+    def generateParameterType(parameterType: ParsedType): String = {
       parameterType match {
-        case stringType: StringType   => "String"
-        case integerType: IntegerType => "Long"
-        case numberType: NumberType   => "Double"
-        case booleanType: BooleanType => "Boolean"
-        case x                        => sys.error(s"Unknown URL parameter type $x")
+        case stringType: ParsedString   => "String"
+        case integerType: ParsedInteger => "Long"
+        case numberType: ParsedNumber   => "Double"
+        case booleanType: ParsedBoolean => "Boolean"
+        case x                          => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

@@ -64,25 +64,25 @@ import scala.util.{Failure, Success, Try}
   *
   *
   */
-case class GenericObjectType(id: Id,
-                             typeVariable: String,
-                             required: Option[Boolean] = None,
-                             fragments: Fragments = Fragments(),
-                             model: TypeModel = RamlModel)
+case class ParsedGenericObject(id: Id,
+                               typeVariable: String,
+                               required: Option[Boolean] = None,
+                               fragments: Fragments = Fragments(),
+                               model: TypeModel = RamlModel)
   extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
 
-  override def updated(updatedId: Id): GenericObjectType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedGenericObject = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object GenericObjectType {
+object ParsedGenericObject {
 
   val value = "genericType"
 
-  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[GenericObjectType] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ParsedGenericObject] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -107,15 +107,15 @@ object GenericObjectType {
       Success(required),
       fragments,
       Success(model)
-    )(GenericObjectType(_, _, _, _, _))
+    )(ParsedGenericObject(_, _, _, _, _))
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[GenericObjectType]] = {
-    (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
-      case (Some(JsString(ObjectType.value)), _, Some(JsString(genT))) => Some(GenericObjectType(json))
-      case (None, Some(jsObj), Some(JsString(genT)))                   => Some(GenericObjectType(json))
-      case _                                                           => None
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedGenericObject]] = {
+    (ParsedType.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
+      case (Some(JsString(ParsedObject.value)), _, Some(JsString(genT))) => Some(ParsedGenericObject(json))
+      case (None, Some(jsObj), Some(JsString(genT)))                     => Some(ParsedGenericObject(json))
+      case _                                                             => None
     }
   }
 

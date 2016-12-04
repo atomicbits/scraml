@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.{Id, JsonSchemaModel, RamlModel, TypeModel}
+import io.atomicbits.scraml.ramlparser.model.{Id, RamlModel, TypeModel}
 
 /**
   * Created by peter on 25/03/16.
@@ -28,10 +28,10 @@ case class MapType(id: Id,
                    baseType: List[String],
                    elementType: String,
                    required: Option[Boolean] = None,
-                   model: TypeModel = RamlModel) extends Type {
+                   model: TypeModel = RamlModel) extends ParsedType {
 
   override def updated(updatedId: Id): MapType = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }

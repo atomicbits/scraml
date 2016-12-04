@@ -35,18 +35,18 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
   *                    actual type (integer, number, string, boolean, object, List[integer], List[number],
   *                    List[string], List[boolean], List[object], or even nested lists).
   */
-case class TypeLookupTable(lookupTable: Map[UniqueId, Type] = Map.empty,
+case class TypeLookupTable(lookupTable: Map[UniqueId, ParsedType] = Map.empty,
                            nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
-                           objectMap: Map[UniqueId, ObjectType] = Map.empty,
-                           enumMap: Map[UniqueId, EnumType] = Map.empty) {
+                           objectMap: Map[UniqueId, ParsedObject] = Map.empty,
+                           enumMap: Map[UniqueId, ParsedEnum] = Map.empty) {
 
   def map(f: TypeLookupTable => TypeLookupTable): TypeLookupTable = f(this)
 
 
-  def lookup(id: Id): Type = {
+  def lookup(id: Id): ParsedType = {
 
 
-    def fragmentSearch(ttype: Type, fragmentPath: List[String]): Type = {
+    def fragmentSearch(ttype: ParsedType, fragmentPath: List[String]): ParsedType = {
       fragmentPath match {
         case Nil       => ttype
         case fr :: frs =>

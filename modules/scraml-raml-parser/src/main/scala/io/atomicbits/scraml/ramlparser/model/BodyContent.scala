@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.Type
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.{JsObject, JsValue}
 
@@ -31,7 +31,7 @@ import io.atomicbits.scraml.util.TryUtils._
   * Created by peter on 10/02/16.
   */
 case class BodyContent(mediaType: MediaType,
-                       bodyType: Option[Type] = None,
+                       bodyType: Option[ParsedType] = None,
                        formParameters: Parameters = Parameters())
 
 
@@ -55,8 +55,8 @@ object BodyContentAsMediaTypeMap {
 
           val bodyType =
             json match {
-              case Type(bType) => Some(bType)
-              case _           => None
+              case ParsedType(bType) => Some(bType)
+              case _                 => None
             }
 
           val triedBodyContent =
@@ -101,8 +101,8 @@ object BodyContentAsDefaultMediaType {
 
       val bodyType =
         json match {
-          case Type(bType) => Some(bType)
-          case _           => None
+          case ParsedType(bType) => Some(bType)
+          case _                 => None
         }
 
       accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType))

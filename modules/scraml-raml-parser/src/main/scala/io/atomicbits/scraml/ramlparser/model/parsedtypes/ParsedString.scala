@@ -29,27 +29,27 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class StringType(id: Id = ImplicitId,
-                      format: Option[String] = None,
-                      pattern: Option[String] = None,
-                      minLength: Option[Int] = None,
-                      maxLength: Option[Int] = None,
-                      required: Option[Boolean] = None,
-                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedString(id: Id = ImplicitId,
+                        format: Option[String] = None,
+                        pattern: Option[String] = None,
+                        minLength: Option[Int] = None,
+                        maxLength: Option[Int] = None,
+                        required: Option[Boolean] = None,
+                        model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): StringType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedString = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object StringType {
+object ParsedString {
 
   val value = "string"
 
 
-  def apply(json: JsValue): Try[StringType] = {
+  def apply(json: JsValue): Try[ParsedString] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -58,7 +58,7 @@ object StringType {
     }
 
     Success(
-      StringType(
+      ParsedString(
         id = id,
         format = json.fieldStringValue("pattern"),
         pattern = json.fieldStringValue("format"),
@@ -71,12 +71,12 @@ object StringType {
   }
 
 
-  def unapply(json: JsValue): Option[Try[StringType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedString]] = {
 
-    (Type.typeDeclaration(json), (json \ EnumType.value).toOption, json) match {
-      case (Some(JsString(StringType.value)), None, _) => Some(StringType(json))
-      case (_, _, JsString(StringType.value))          => Some(Success(StringType()))
-      case _                                           => None
+    (ParsedType.typeDeclaration(json), (json \ ParsedEnum.value).toOption, json) match {
+      case (Some(JsString(ParsedString.value)), None, _) => Some(ParsedString(json))
+      case (_, _, JsString(ParsedString.value))          => Some(Success(ParsedString()))
+      case _                                             => None
     }
 
   }

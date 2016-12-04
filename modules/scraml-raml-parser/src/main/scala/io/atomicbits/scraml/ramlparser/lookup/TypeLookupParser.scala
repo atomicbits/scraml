@@ -148,7 +148,7 @@ object TypeLookupParser {
   }
 
 
-  private def fillInTopLevelUnrootedIds(nameWithType: (NativeId, Type)): (NativeId, Type) = {
+  private def fillInTopLevelUnrootedIds(nameWithType: (NativeId, ParsedType)): (NativeId, ParsedType) = {
 
     val (nativeId, ttype) = nameWithType
 
@@ -166,7 +166,7 @@ object TypeLookupParser {
     * @param ttype
     * @return
     */
-  private def expandRelativeToAbsoluteIds(ttype: Type): Type = {
+  private def expandRelativeToAbsoluteIds(ttype: ParsedType): ParsedType = {
 
     /**
       * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
@@ -177,7 +177,7 @@ object TypeLookupParser {
       * @param path          the fragment path we're on
       * @return a copy of the original schema in which all ids are replaced by root ids
       */
-    def expandWithRootAndPath(ttype: Type, root: RootId, expandingRoot: RootId, path: List[String] = List.empty): Type = {
+    def expandWithRootAndPath(ttype: ParsedType, root: RootId, expandingRoot: RootId, path: List[String] = List.empty): ParsedType = {
 
       val currentRoot =
         ttype.id match {
@@ -195,24 +195,24 @@ object TypeLookupParser {
         property.copy(propertyType = expandedType)
       }
 
-      def expandFragment(fragmentPath: (String, Type)): (String, Type) = {
+      def expandFragment(fragmentPath: (String, ParsedType)): (String, ParsedType) = {
         val (pathPart, subSchema) = fragmentPath
         val updatedSubSchema = expandWithRootAndPath(subSchema, currentRoot, expandedId.rootPart, path :+ pathPart)
         (pathPart, updatedSubSchema)
       }
 
 
-      val schemaWithUpdatedFragments: Type =
+      val schemaWithUpdatedFragments: ParsedType =
         ttype match {
-          case objectType: ObjectType       =>
+          case objectType: ParsedObject =>
             objectType.copy(
               fragments = objectType.fragments.map(expandFragment),
               properties = objectType.properties.map(expandProperty),
               selection = objectType.selection
                 .map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
-          case fragment: Fragments          => fragment.map(expandFragment)
-          case arrayType: ArrayType         =>
+          case fragment: Fragments      => fragment.map(expandFragment)
+          case arrayType: ParsedArray   =>
             val (_, expanded) = expandFragment(("items", arrayType.items))
             arrayType.copy(
               items = expanded,
@@ -251,10 +251,10 @@ object TypeLookupParser {
     *                     field name, it is there to make folding easier on schema fragments and object properties.
     * @return The schema lookup with added object references.
     */
-  private def updateLookupTableAndObjectMap(lookup: TypeLookupTable, linkedSchema: (NativeId, Type)): TypeLookupTable = {
+  private def updateLookupTableAndObjectMap(lookup: TypeLookupTable, linkedSchema: (NativeId, ParsedType)): TypeLookupTable = {
 
 
-    def updateLookupAndObjectMapJsonSchema(lookup: TypeLookupTable, schemaFragment: (String, Type)): TypeLookupTable = {
+    def updateLookupAndObjectMapJsonSchema(lookup: TypeLookupTable, schemaFragment: (String, ParsedType)): TypeLookupTable = {
 
       val (path, ttype) = schemaFragment
 
@@ -267,7 +267,7 @@ object TypeLookupParser {
       def uniqueId: UniqueId = TypeUtils.asUniqueId(ttype.id)
 
       ttype match {
-        case objectType: ObjectType       =>
+        case objectType: ParsedObject =>
           val schemaLookupWithObjectFragments =
             objectType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithObjectProperties =
@@ -278,7 +278,7 @@ object TypeLookupParser {
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
             .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (uniqueId -> objectType))
-        case arrayType: ArrayType         =>
+        case arrayType: ParsedArray       =>
           val schemaLookupWithArrayFragments =
             arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           updateLookupAndObjectMapJsonSchema(schemaLookupWithArrayFragments, ("items", arrayType.items))
@@ -286,7 +286,7 @@ object TypeLookupParser {
           typeReference.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
         case fragment: Fragments          =>
           fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
-        case enumType: EnumType           =>
+        case enumType: ParsedEnum         =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (uniqueId -> enumType))
         case _                            => updatedSchemaLookup
       }
@@ -294,19 +294,19 @@ object TypeLookupParser {
     }
 
 
-    def updateLookupAndObjectMapNativeTypes(lookup: TypeLookupTable, ttype: Type): TypeLookupTable = {
+    def updateLookupAndObjectMapNativeTypes(lookup: TypeLookupTable, ttype: ParsedType): TypeLookupTable = {
 
       def uniqueId: UniqueId = TypeUtils.asUniqueId(ttype.id)
 
       ttype match {
-        case objectType: ObjectType =>
+        case objectType: ParsedObject =>
           val schemaLookupWithObjectProperties =
             objectType.properties.types.foldLeft(lookup)(updateLookupAndObjectMapNativeTypes)
           schemaLookupWithObjectProperties
             .copy(objectMap = schemaLookupWithObjectProperties.objectMap + (uniqueId -> objectType))
-        case arrayType: ArrayType   =>
+        case arrayType: ParsedArray   =>
           updateLookupAndObjectMapNativeTypes(lookup, arrayType.items)
-        case enumType: EnumType     => lookup.copy(enumMap = lookup.enumMap + (uniqueId -> enumType))
+        case enumType: ParsedEnum     => lookup.copy(enumMap = lookup.enumMap + (uniqueId -> enumType))
         case _                      => lookup
       }
     }
@@ -339,9 +339,9 @@ object TypeLookupParser {
   private def updateObjectHierarchy(lookupTable: TypeLookupTable): TypeLookupTable = {
 
     @tailrec
-    def lookupObjEl(schema: Type): Option[ObjectType] = {
+    def lookupObjEl(schema: ParsedType): Option[ParsedObject] = {
       schema match {
-        case objectType: ObjectType       => Some(objectType)
+        case objectType: ParsedObject     => Some(objectType)
         case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
         case _                            => None
       }
@@ -351,7 +351,7 @@ object TypeLookupParser {
 
       val obj = lookup.objectMap(absId)
 
-      val children: List[ObjectType] = obj.selection.map { sel =>
+      val children: List[ParsedObject] = obj.selection.map { sel =>
         sel.selection.flatMap(lookupObjEl)
       } getOrElse List.empty
 
@@ -380,7 +380,7 @@ object TypeLookupParser {
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
         val typeDiscriminator = obj.topLevelParent(lookupTable).flatMap(_.typeDiscriminator).getOrElse("type")
-        val discriminator = obj.properties.get(typeDiscriminator).map(_.propertyType).flatMap(ObjectType.schemaToDiscriminatorValue)
+        val discriminator = obj.properties.get(typeDiscriminator).map(_.propertyType).flatMap(ParsedObject.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)
           println(

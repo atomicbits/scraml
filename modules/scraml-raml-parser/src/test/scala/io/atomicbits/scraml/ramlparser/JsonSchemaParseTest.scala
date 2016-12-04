@@ -48,9 +48,9 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       Then("we get a properly parsed fragments object")
       val raml = parsedModel.get
 
-      val objectWithFragments: ObjectType = raml.types.typeReferences(NativeId("myfragments")).asInstanceOf[ObjectType]
+      val objectWithFragments: ParsedObject = raml.types.typeReferences(NativeId("myfragments")).asInstanceOf[ParsedObject]
 
-      val barType: Type = objectWithFragments.fragments.fragmentMap("bar")
+      val barType: ParsedType = objectWithFragments.fragments.fragmentMap("bar")
 
       barType shouldBe a[TypeReference]
       barType.asInstanceOf[TypeReference].refersTo shouldBe NativeId("baz")
@@ -59,14 +59,14 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       val definitionFragment: Fragments = objectWithFragments.fragments.fragmentMap("definitions").asInstanceOf[Fragments]
 
       val addressType = definitionFragment.fragmentMap("address")
-      addressType shouldBe a[ObjectType]
-      val address = addressType.asInstanceOf[ObjectType]
+      addressType shouldBe a[ParsedObject]
+      val address = addressType.asInstanceOf[ParsedObject]
 
       address.id shouldBe FragmentId(List("definitions", "address"))
-      address.properties("city").propertyType shouldBe a[StringType]
-      address.properties("state").propertyType shouldBe a[StringType]
-      address.properties("zip").propertyType shouldBe a[IntegerType]
-      address.properties("streetAddress").propertyType shouldBe a[StringType]
+      address.properties("city").propertyType shouldBe a[ParsedString]
+      address.properties("state").propertyType shouldBe a[ParsedString]
+      address.properties("zip").propertyType shouldBe a[ParsedInteger]
+      address.properties("streetAddress").propertyType shouldBe a[ParsedString]
 
       //      val prettyModel = TestUtils.prettyPrint(parsedModel)
       //       println(s"Parsed raml: $prettyModel")

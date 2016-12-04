@@ -147,11 +147,11 @@ object JavaActionCode extends ActionCode {
       //      case integerType: IntegerType if required => "long"
       //      case numbertype: NumberType if required   => "double"
       //      case booleanType: BooleanType if required => "boolean"
-      case stringtype: StringType   => "String"
-      case integerType: IntegerType => "Long"
-      case numbertype: NumberType   => "Double"
-      case booleanType: BooleanType => "Boolean"
-      case other                    => sys.error(s"RAML type $other is not yet supported.")
+      case stringtype: ParsedString   => "String"
+      case integerType: ParsedInteger => "Long"
+      case numbertype: ParsedNumber   => "Double"
+      case booleanType: ParsedBoolean => "Boolean"
+      case other                      => sys.error(s"RAML type $other is not yet supported.")
     }
   }
 
@@ -165,7 +165,7 @@ object JavaActionCode extends ActionCode {
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
         s"$primitive $sanitizedParameterName"
-      case arrayType: ArrayType         =>
+      case arrayType: ParsedArray       =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
             val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
@@ -183,7 +183,7 @@ object JavaActionCode extends ActionCode {
 
     parameter.parameterType match {
       case primitive: PrimitiveType => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
-      case arrayType: ArrayType     => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
+      case arrayType: ParsedArray   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
     }
   }
 

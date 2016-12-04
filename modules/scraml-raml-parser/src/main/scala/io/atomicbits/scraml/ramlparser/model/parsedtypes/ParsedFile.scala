@@ -29,33 +29,33 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 26/08/16.
   */
-case class FileType(id: Id = ImplicitId,
-                    fileTypes: Option[Seq[String]] = None,
-                    minLength: Option[Int] = None,
-                    maxLength: Option[Int] = None,
-                    required: Option[Boolean] = None) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedFile(id: Id = ImplicitId,
+                      fileTypes: Option[Seq[String]] = None,
+                      minLength: Option[Int] = None,
+                      maxLength: Option[Int] = None,
+                      required: Option[Boolean] = None) extends NonPrimitiveType with AllowedAsObjectField {
 
   def asRequired = copy(required = Some(true))
 
-  override def updated(updatedId: Id): FileType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedFile = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = this
+  override def asTypeModel(typeModel: TypeModel): ParsedType = this
 
   override def model = RamlModel
 
 }
 
 
-case object FileType {
+case object ParsedFile {
 
   val value = "file"
 
 
-  def unapply(json: JsValue): Option[Try[FileType]] = {
-    Type.typeDeclaration(json).collect {
-      case JsString(FileType.value) =>
+  def unapply(json: JsValue): Option[Try[ParsedFile]] = {
+    ParsedType.typeDeclaration(json).collect {
+      case JsString(ParsedFile.value) =>
         Success(
-          FileType(
+          ParsedFile(
             fileTypes = json.fieldStringListValue("fileTypes"),
             minLength = json.fieldIntValue("minLength"),
             maxLength = json.fieldIntValue("maxLength"),

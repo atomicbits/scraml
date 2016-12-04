@@ -76,7 +76,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
     val canonicalMap: CanonicalMap =
       lookupTable.objectMap.map {
-        case (id: UniqueId, obj: ObjectType) =>
+        case (id: UniqueId, obj: ParsedObject) =>
           if (obj.properties.isEmpty && !obj.hasChildren && !obj.hasParent) {
             id -> jsObjectClassRep
           }
@@ -93,12 +93,12 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
   def addClassFields(canonicalMap: CanonicalMap, lookupTable: TypeLookupTable)(implicit lang: Language): CanonicalMap = {
 
-    def schemaAsField(property: (String, Type), requiredFields: List[String]): Field = {
+    def schemaAsField(property: (String, ParsedType), requiredFields: List[String]): Field = {
 
       val (propertyName, schema) = property
 
       schema match {
-        case enumField: EnumType            =>
+        case enumField: ParsedEnum          =>
           val required = requiredFields.contains(propertyName) || enumField.isRequired
           Field(propertyName, typeAsClassReference(enumField, lookupTable, canonicalMap), required)
         case objField: AllowedAsObjectField =>
@@ -134,7 +134,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
   def addParentChildRelations(canonicalMap: CanonicalMap, lookupTable: TypeLookupTable): CanonicalMap = {
 
-    def updateParentAndChildren(objectType: ObjectType, classRp: ClassRep): CanonicalMap = {
+    def updateParentAndChildren(objectType: ParsedObject, classRp: ClassRep): CanonicalMap = {
 
       val typeDiscriminator = objectType.typeDiscriminator.getOrElse("type")
 
@@ -197,29 +197,29 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
   /**
     * It's the given schema that tells us what kind of class pointer we'll get.
     */
-  def typeAsClassReference(ttype: Type,
+  def typeAsClassReference(ttype: ParsedType,
                            lookupTable: TypeLookupTable,
                            canonicalMap: CanonicalMap,
                            typeVariables: Map[TypeParameter, TypedClassReference] = Map.empty)
                           (implicit lang: Language): ClassPointer = {
 
     ttype match {
-      case objectType: ObjectType               =>
+      case objectType: ParsedObject               =>
         val classReference = canonicalMap(TypeUtils.asUniqueId(ttype.id)).classRef
         if (typeVariables.isEmpty) classReference
         else TypedClassReference(classReference, typeVariables)
-      case genericObjectType: GenericObjectType => TypeParameter(genericObjectType.typeVariable)
-      case arrayType: ArrayType                 =>
+      case genericObjectType: ParsedGenericObject => TypeParameter(genericObjectType.typeVariable)
+      case arrayType: ParsedArray                 =>
         arrayType.items match {
-          case genericObjectType: GenericObjectType => ListClassReference(genericObjectType.typeVariable)
-          case itemsType                            =>
+          case genericObjectType: ParsedGenericObject => ListClassReference(genericObjectType.typeVariable)
+          case itemsType                              =>
             ListClassReference.typed(typeAsClassReference(arrayType.items, lookupTable, canonicalMap))
         }
-      case stringType: StringType               => StringClassReference()
-      case numberType: NumberType               => DoubleClassReference(numberType.isRequired)
-      case integerType: IntegerType             => LongClassReference(integerType.isRequired)
-      case booleanType: BooleanType             => BooleanClassReference(booleanType.isRequired)
-      case typeReference: TypeReference         =>
+      case stringType: ParsedString               => StringClassReference()
+      case numberType: ParsedNumber               => DoubleClassReference(numberType.isRequired)
+      case integerType: ParsedInteger             => LongClassReference(integerType.isRequired)
+      case booleanType: ParsedBoolean             => BooleanClassReference(booleanType.isRequired)
+      case typeReference: TypeReference           =>
         val typeRefTypeVars =
           typeReference.genericTypes.map {
             case (typeParamName, theType) =>
@@ -231,7 +231,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
           canonicalMap,
           typeRefTypeVars
         )
-      case enumType: EnumType                   =>
+      case enumType: ParsedEnum                 =>
         if (enumType.choices.size == 1) StringClassReference() // Probably a "type" discriminator field.
         else buildClassReference(TypeUtils.asUniqueId(ttype.id), lookupTable)
       case unknownType                          =>

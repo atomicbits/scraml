@@ -30,23 +30,23 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 25/03/16.
   */
-case class ObjectType(id: Id,
-                      baseType: List[Id],
-                      properties: Properties, // Map[String, Type]
-                      required: Option[Boolean] = None,
-                      requiredProperties: List[String] = List.empty,
-                      selection: Option[Selection] = None,
-                      fragments: Fragments = Fragments(),
-                      parent: Option[UniqueId] = None,
-                      children: List[UniqueId] = List.empty,
-                      typeParameters: List[String] = List.empty,
-                      typeDiscriminator: Option[String] = None,
-                      typeDiscriminatorValue: Option[String] = None,
-                      model: TypeModel = RamlModel) extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
+case class ParsedObject(id: Id,
+                        baseType: List[Id],
+                        properties: Properties,
+                        required: Option[Boolean] = None,
+                        requiredProperties: List[String] = List.empty,
+                        selection: Option[Selection] = None,
+                        fragments: Fragments = Fragments(),
+                        parent: Option[UniqueId] = None,
+                        children: List[UniqueId] = List.empty,
+                        typeParameters: List[String] = List.empty,
+                        typeDiscriminator: Option[String] = None,
+                        typeDiscriminatorValue: Option[String] = None,
+                        model: TypeModel = RamlModel) extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
 
-  override def updated(updatedId: Id): ObjectType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedObject = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = {
+  override def asTypeModel(typeModel: TypeModel): ParsedType = {
     val updatedProperties = properties.map(property => property.copy(propertyType = property.propertyType.asTypeModel(typeModel)))
     copy(model = typeModel, properties = updatedProperties)
   }
@@ -57,9 +57,9 @@ case class ObjectType(id: Id,
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
-  def topLevelParent(typeLookup: TypeLookupTable): Option[ObjectType] = {
+  def topLevelParent(typeLookup: TypeLookupTable): Option[ParsedObject] = {
 
-    def findTopLevelParent(uniqueId: UniqueId): ObjectType = {
+    def findTopLevelParent(uniqueId: UniqueId): ParsedObject = {
       val objElExt = typeLookup.objectMap(uniqueId)
       objElExt.parent match {
         case Some(parentId) => findTopLevelParent(parentId)
@@ -74,12 +74,12 @@ case class ObjectType(id: Id,
 }
 
 
-object ObjectType {
+object ParsedObject {
 
   val value = "object"
 
 
-  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ObjectType] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ParsedObject] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -89,18 +89,7 @@ object ObjectType {
     }
 
     // Process the properties
-    val properties: Try[Properties] =
-    (json \ "properties").toOption.collect {
-      case props: JsObject =>
-        val propertyTryMap =
-          props.value collect {
-            case (fieldName, Type(tryFieldType)) => (fieldName, tryFieldType)
-          }
-        TryUtils.accumulate(propertyTryMap.toMap).map { typeMap =>
-          val updatedTypeMap = typeMap.mapValues(_.asTypeModel(model))
-          Properties.fromTypeMap(updatedTypeMap)
-        }
-    } getOrElse Success(Properties())
+    val properties: Try[Properties] = Properties((json \ "properties").toOption, model)
 
     val fragments = json match {
       case Fragments(fragment) => fragment
@@ -145,7 +134,7 @@ object ObjectType {
       (json \ "anyOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
-            case Type(theType) => theType
+            case ParsedType(theType) => theType
           }
           TryUtils.accumulate(selectionSchemas.toList).map(selections => AnyOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
@@ -154,7 +143,7 @@ object ObjectType {
       (json \ "allOf").toOption collect {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
-            case Type(theType) => theType
+            case ParsedType(theType) => theType
           }
           TryUtils.accumulate(selectionSchemas.toList).map(selections => AllOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
@@ -176,26 +165,26 @@ object ObjectType {
       Success(typeDiscriminator),
       Success(None),
       Success(model)
-    )(new ObjectType(_, _, _, _, _, _, _, _, _, _, _, _, _))
+    )(new ParsedObject(_, _, _, _, _, _, _, _, _, _, _, _, _))
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ObjectType]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedObject]] = {
 
     def isParentRef(theOtherType: String): Option[Try[TypeReference]] = {
-      Type(theOtherType) match {
+      ParsedType(theOtherType) match {
         case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
         case _                           => None
       }
     }
 
 
-    (Type.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
-      case (Some(JsString(ObjectType.value)), _, None)    => Some(ObjectType(json))
+    (ParsedType.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {
+      case (Some(JsString(ParsedObject.value)), _, None)  => Some(ParsedObject(json))
       case (Some(JsString(otherType)), Some(jsObj), None) =>
         isParentRef(otherType).map { triedParent =>
           triedParent.flatMap { parent =>
-            ObjectType(json).flatMap { objectType =>
+            ParsedObject(json).flatMap { objectType =>
               parent.refersTo match {
                 case nativeId: NativeId => Success(objectType.copy(parent = Some(nativeId)))
                 case _                  => Failure(RamlParseException(s"Expected a parent reference in RAML1.0 to have a valid native id."))
@@ -203,7 +192,7 @@ object ObjectType {
             }
           }
         }
-      case (None, Some(jsObj), None)                      => Some(ObjectType(json))
+      case (None, Some(jsObj), None)                      => Some(ParsedObject(json))
       case _                                              => None
     }
 
@@ -212,13 +201,13 @@ object ObjectType {
 
   def schemaToDiscriminatorValue(schema: Identifiable): Option[String] = {
     Some(schema) collect {
-      case enumType: EnumType if enumType.choices.length == 1 => enumType.choices.head
+      case enumType: ParsedEnum if enumType.choices.length == 1 => enumType.choices.head
     }
   }
 
 
   private def tryToInterpretOneOfSelectionAsObjectType(schema: JsObject, parentId: Id, typeDiscriminator: String)
-                                                      (implicit parseContext: ParseContext): Try[Type] = {
+                                                      (implicit parseContext: ParseContext): Try[ParsedType] = {
 
     def typeDiscriminatorFromProperties(oneOfFragment: Fragments): Option[String] = {
       oneOfFragment.fragmentMap.get("properties") collect {
@@ -247,7 +236,7 @@ object ObjectType {
     //    }
 
     schema match {
-      case Type(x) => x
+      case ParsedType(x) => x
     }
 
   }

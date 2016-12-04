@@ -29,23 +29,22 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class NullType(id: Id = ImplicitId,
-                    required: Option[Boolean] = None,
-                    model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedBoolean(id: Id = ImplicitId,
+                         required: Option[Boolean] = None,
+                         model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): NullType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedBoolean = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object NullType {
+object ParsedBoolean {
 
-  val value = "null"
+  val value = "boolean"
 
-
-  def apply(json: JsValue): Try[NullType] = {
+  def apply(json: JsValue): Try[ParsedBoolean] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -54,21 +53,21 @@ object NullType {
     }
 
     Success(
-      NullType(
+      ParsedBoolean(
         id = id,
         required = json.fieldBooleanValue("required"),
-        model = model
+        model
       )
     )
   }
 
 
-  def unapply(json: JsValue): Option[Try[NullType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedBoolean]] = {
 
-    (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(NullType.value)), _) => Some(NullType(json))
-      case (_, JsString(NullType.value))       => Some(Success(new NullType()))
-      case _                                   => None
+    (ParsedType.typeDeclaration(json), json) match {
+      case (Some(JsString(ParsedBoolean.value)), _) => Some(ParsedBoolean(json))
+      case (_, JsString(ParsedBoolean.value))       => Some(Success(new ParsedBoolean()))
+      case _                                        => None
     }
 
   }

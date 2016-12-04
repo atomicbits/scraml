@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.Type
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 
 /**
   * Created by peter on 4/12/16.
   */
-case class Property(name: String, propertyType: Type, required: Boolean = true)
+case class Property(name: String, propertyType: ParsedType, required: Boolean = true)

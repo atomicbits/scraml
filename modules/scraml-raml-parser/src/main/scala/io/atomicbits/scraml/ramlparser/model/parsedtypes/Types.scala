@@ -29,17 +29,17 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 10/02/16.
   */
-case class Types(typeReferences: Map[NativeId, Type] = Map.empty) {
+case class Types(typeReferences: Map[NativeId, ParsedType] = Map.empty) {
 
-  def apply(nativeId: NativeId): Type = typeReferences(nativeId)
+  def apply(nativeId: NativeId): ParsedType = typeReferences(nativeId)
 
-  def get(nativeId: NativeId): Option[Type] = typeReferences.get(nativeId)
+  def get(nativeId: NativeId): Option[ParsedType] = typeReferences.get(nativeId)
 
   def ++(otherTypes: Types): Types = {
     Types(typeReferences ++ otherTypes.typeReferences)
   }
 
-  def +(typeReference: (NativeId, Type)): Types = copy(typeReferences = typeReferences + typeReference)
+  def +(typeReference: (NativeId, ParsedType)): Types = copy(typeReferences = typeReferences + typeReference)
 
 }
 
@@ -78,8 +78,8 @@ object Types {
 
       val result =
         typeDefinition match {
-          case Type(sometype) => sometype.map(tp => Types(typeReferences = Map(NativeId(name) -> tp)))
-          case x              => Failure(RamlParseException(s"Unknown type $x in ${parseContext.head}."))
+          case ParsedType(sometype) => sometype.map(tp => Types(typeReferences = Map(NativeId(name) -> tp)))
+          case x                    => Failure(RamlParseException(s"Unknown type $x in ${parseContext.head}."))
         }
 
       result

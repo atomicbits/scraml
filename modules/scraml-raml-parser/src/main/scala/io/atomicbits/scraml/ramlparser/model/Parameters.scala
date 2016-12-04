@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.Type
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext}
 import play.api.libs.json.{JsObject, JsValue}
 
@@ -57,7 +57,7 @@ object Parameters {
 
       val valueMap: Map[String, Try[Parameter]] =
         jsObject.value.collect {
-          case (name, Type(tryType)) =>
+          case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
               Parameter(
                 name = name,

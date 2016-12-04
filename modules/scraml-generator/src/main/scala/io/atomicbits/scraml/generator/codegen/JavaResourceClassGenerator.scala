@@ -221,13 +221,13 @@ object JavaResourceClassGenerator {
     def isParameterized(resource: RichResource) = resource.urlParameter.isDefined
 
 
-    def generateParameterType(parameterType: Type): String = {
+    def generateParameterType(parameterType: ParsedType): String = {
       parameterType match {
-        case stringType: StringType   => "String"
-        case integerType: IntegerType => "Long" // NOT long
-        case numberType: NumberType   => "Double" // NOT double
-        case booleanType: BooleanType => "Boolean" // NOT boolean
-        case x                        => sys.error(s"Unknown URL parameter type $x")
+        case stringType: ParsedString   => "String"
+        case integerType: ParsedInteger => "Long" // NOT long
+        case numberType: ParsedNumber   => "Double" // NOT double
+        case booleanType: ParsedBoolean => "Boolean" // NOT boolean
+        case x                          => sys.error(s"Unknown URL parameter type $x")
       }
     }
 

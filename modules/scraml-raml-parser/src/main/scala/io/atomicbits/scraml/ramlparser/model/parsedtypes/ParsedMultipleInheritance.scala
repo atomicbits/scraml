@@ -30,37 +30,37 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 1/11/16.
   */
-case class MultipleInheritanceType(parents: Set[TypeReference],
-                                   required: Option[Boolean] = None,
-                                   model: TypeModel = RamlModel,
-                                   id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedMultipleInheritance(parents: Set[TypeReference],
+                                     required: Option[Boolean] = None,
+                                     model: TypeModel = RamlModel,
+                                     id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
 
 
-  override def updated(updatedId: Id): MultipleInheritanceType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedMultipleInheritance = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel, parents = parents.map(_.asTypeModel(typeModel)))
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel, parents = parents.map(_.asTypeModel(typeModel)))
 
   def asRequired = copy(required = Some(true))
 
 }
 
 
-object MultipleInheritanceType {
+object ParsedMultipleInheritance {
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[MultipleInheritanceType]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedMultipleInheritance]] = {
 
     def processParentReferences(parents: Seq[JsValue]): Option[Try[Set[TypeReference]]] = {
 
       val parentRefs =
         parents.collect {
-          case JsString(parentRef) => Type(parentRef)
+          case JsString(parentRef) => ParsedType(parentRef)
         }
 
       val typeReferences =
         parentRefs.collect {
           case Success(typeReference: TypeReference) => Success(typeReference)
-          case Success(unionType: UnionType)         =>
+          case Success(unionType: ParsedUnionType)   =>
             Failure(
               RamlParseException(s"We do not yet support multiple inheritance where one of the parents is a union type expression.")
             )
@@ -74,14 +74,14 @@ object MultipleInheritanceType {
     }
 
 
-    (Type.typeDeclaration(json), json) match {
+    (ParsedType.typeDeclaration(json), json) match {
       case (Some(JsArray(parentReferences)), _) =>
         processParentReferences(parentReferences).map { triedParents =>
           val required = json.fieldBooleanValue("required")
-          triedParents.map(MultipleInheritanceType(_, required))
+          triedParents.map(ParsedMultipleInheritance(_, required))
         }
       case (_, JsArray(parentReferences))       =>
-        processParentReferences(parentReferences).map(triedParents => triedParents.map(MultipleInheritanceType(_)))
+        processParentReferences(parentReferences).map(triedParents => triedParents.map(ParsedMultipleInheritance(_)))
       case _                                    => None
     }
 

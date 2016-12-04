@@ -30,47 +30,47 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 1/11/16.
   */
-case class UnionType(types: Set[Type],
-                     required: Option[Boolean] = None,
-                     model: TypeModel = RamlModel,
-                     id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedUnionType(types: Set[ParsedType],
+                           required: Option[Boolean] = None,
+                           model: TypeModel = RamlModel,
+                           id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): UnionType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedUnionType = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel, types = types.map(_.asTypeModel(typeModel)))
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel, types = types.map(_.asTypeModel(typeModel)))
 
   def asRequired = copy(required = Some(true))
 
 }
 
 
-object UnionType {
+object ParsedUnionType {
 
 
-  def unapply(unionExpression: String)(implicit parseContext: ParseContext): Option[Try[UnionType]] = {
-    addUnionTypes(UnionType(Set.empty), unionExpression)
+  def unapply(unionExpression: String)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
+    addUnionTypes(ParsedUnionType(Set.empty), unionExpression)
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[UnionType]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
 
-    (Type.typeDeclaration(json), json) match {
+    (ParsedType.typeDeclaration(json), json) match {
       case (Some(JsString(unionExpression)), _) =>
         val required = json.fieldBooleanValue("required")
-        addUnionTypes(UnionType(Set.empty, required), unionExpression)
+        addUnionTypes(ParsedUnionType(Set.empty, required), unionExpression)
       case (_, JsString(unionExpression))       =>
-        addUnionTypes(UnionType(Set.empty), unionExpression)
+        addUnionTypes(ParsedUnionType(Set.empty), unionExpression)
       case _                                    => None
     }
 
   }
 
 
-  private def addUnionTypes(unionType: UnionType, unionExpression: String)(implicit parseContext: ParseContext): Option[Try[UnionType]] = {
+  private def addUnionTypes(unionType: ParsedUnionType, unionExpression: String)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
     typeExpressions(unionExpression).map { triedExpressions =>
       val triedTypes =
         triedExpressions.flatMap { stringExpressions =>
-          TryUtils.accumulate(stringExpressions.map(Type(_)))
+          TryUtils.accumulate(stringExpressions.map(ParsedType(_)))
         }
       triedTypes.map { types =>
         unionType.copy(types = types.toSet)

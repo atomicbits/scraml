@@ -27,23 +27,23 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class EnumType(id: Id,
-                    choices: List[String],
-                    required: Option[Boolean] = None,
-                    model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedEnum(id: Id,
+                      choices: List[String],
+                      required: Option[Boolean] = None,
+                      model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): EnumType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedEnum = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object EnumType {
+object ParsedEnum {
 
   val value = "enum"
 
-  def apply(json: JsValue): Try[EnumType] = {
+  def apply(json: JsValue): Try[ParsedEnum] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -55,16 +55,16 @@ object EnumType {
 
     val required = (json \ "required").asOpt[Boolean]
 
-    Success(EnumType(id, choices.getOrElse(List.empty), required, model))
+    Success(ParsedEnum(id, choices.getOrElse(List.empty), required, model))
   }
 
 
-  def unapply(json: JsValue): Option[Try[EnumType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedEnum]] = {
 
-    (Type.typeDeclaration(json), (json \ EnumType.value).toOption) match {
-      case (Some(JsString(StringType.value)), Some(JsArray(x))) => Some(EnumType(json))
-      case (None, Some(JsArray(x)))                             => Some(EnumType(json))
-      case _                                                    => None
+    (ParsedType.typeDeclaration(json), (json \ ParsedEnum.value).toOption) match {
+      case (Some(JsString(ParsedString.value)), Some(JsArray(x))) => Some(ParsedEnum(json))
+      case (None, Some(JsArray(x)))                               => Some(ParsedEnum(json))
+      case _                                                      => None
     }
 
   }

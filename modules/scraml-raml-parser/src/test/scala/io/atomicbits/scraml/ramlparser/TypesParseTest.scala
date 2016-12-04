@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ObjectType, StringType, TypeReference}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, TypeReference}
 import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml}
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
@@ -45,13 +45,13 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     val raml = parsedModel.get
 
 
-    val bookType = raml.types(NativeId("Book")).asInstanceOf[ObjectType]
-    val authorType = raml.types(NativeId("Author")).asInstanceOf[ObjectType]
-    val comicBookType = raml.types(NativeId("ComicBook")).asInstanceOf[ObjectType]
+    val bookType = raml.types(NativeId("Book")).asInstanceOf[ParsedObject]
+    val authorType = raml.types(NativeId("Author")).asInstanceOf[ParsedObject]
+    val comicBookType = raml.types(NativeId("ComicBook")).asInstanceOf[ParsedObject]
 
     bookType.properties("title").propertyType match {
-      case stringType: StringType => stringType.required shouldBe Some(true)
-      case _                      => fail(s"The title property of a book should be a StringType.")
+      case stringType: ParsedString => stringType.required shouldBe Some(true)
+      case _                        => fail(s"The title property of a book should be a StringType.")
     }
 
     bookType.properties("author").propertyType match {
@@ -61,17 +61,13 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
     comicBookType.parent shouldBe Some(NativeId("Book"))
     comicBookType.properties("hero").propertyType match {
-      case stringType: StringType => stringType.required shouldBe None
-      case _                      => fail(s"The hero property of a comicbook should be a StringType.")
+      case stringType: ParsedString => stringType.required shouldBe None
+      case _                        => fail(s"The hero property of a comicbook should be a StringType.")
     }
 
           val prettyModel = TestUtils.prettyPrint(parsedModel)
            println(s"Parsed raml: $prettyModel")
 
   }
-
-
-  
-
 
 }

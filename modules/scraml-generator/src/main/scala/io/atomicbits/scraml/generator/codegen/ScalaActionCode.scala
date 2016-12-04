@@ -121,11 +121,11 @@ object ScalaActionCode extends ActionCode {
 
   def primitiveTypeToScalaType(primitiveType: PrimitiveType): String = {
     primitiveType match {
-      case stringType: StringType   => "String"
-      case integerType: IntegerType => "Long"
-      case numbertype: NumberType   => "Double"
-      case booleanType: BooleanType => "Boolean"
-      case other                    => sys.error(s"RAML type $other is not yet supported.")
+      case stringType: ParsedString   => "String"
+      case integerType: ParsedInteger => "Long"
+      case numbertype: ParsedNumber   => "Double"
+      case booleanType: ParsedBoolean => "Boolean"
+      case other                      => sys.error(s"RAML type $other is not yet supported.")
     }
   }
 
@@ -143,7 +143,7 @@ object ScalaActionCode extends ActionCode {
           val defaultValue = if (noDefault) "" else s"= None"
           s"$sanitizedParameterName: Option[$primitive] $defaultValue"
         }
-      case arrayType: ArrayType         =>
+      case arrayType: ParsedArray       =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
             val primitive = primitiveTypeToScalaType(primitiveType)
@@ -163,7 +163,7 @@ object ScalaActionCode extends ActionCode {
     (parameter.parameterType, parameter.required) match {
       case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
       case (primitive: PrimitiveType, true)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case (arrayType: ArrayType, _)         => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      case (arrayType: ParsedArray, _)       => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
     }
   }
 

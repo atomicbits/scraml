@@ -29,19 +29,19 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, Type] = Map.empty) extends Type with Fragmented {
+case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, ParsedType] = Map.empty) extends ParsedType with Fragmented {
 
   override def updated(updatedId: Id): Fragments = copy(id = updatedId)
 
   override def model = JsonSchemaModel
 
-  override def asTypeModel(typeModel: TypeModel): Type = this
+  override def asTypeModel(typeModel: TypeModel): ParsedType = this
 
   def isEmpty: Boolean = fragmentMap.isEmpty
 
   def fragments: Fragments = this
 
-  def map[T](fn: ((String, Type)) => (String, Type)): Fragments = copy(fragmentMap = fragmentMap.map(fn))
+  def map[T](fn: ((String, ParsedType)) => (String, ParsedType)): Fragments = copy(fragmentMap = fragmentMap.map(fn))
 
   override def required: Option[Boolean] = None
 
@@ -62,8 +62,8 @@ object Fragments {
       }
 
     val fragments = fragmentsToKeep collect {
-      case (fragmentFieldName, Type(fragment))      => (fragmentFieldName, fragment.map(_.asTypeModel(JsonSchemaModel)))
-      case (fragmentFieldName, Fragments(fragment)) => (fragmentFieldName, fragment)
+      case (fragmentFieldName, ParsedType(fragment)) => (fragmentFieldName, fragment.map(_.asTypeModel(JsonSchemaModel)))
+      case (fragmentFieldName, Fragments(fragment))  => (fragmentFieldName, fragment)
     }
 
     TryUtils.withSuccess(

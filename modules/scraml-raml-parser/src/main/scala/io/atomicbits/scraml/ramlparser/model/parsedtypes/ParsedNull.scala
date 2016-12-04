@@ -29,22 +29,23 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class BooleanType(id: Id = ImplicitId,
-                       required: Option[Boolean] = None,
-                       model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedNull(id: Id = ImplicitId,
+                      required: Option[Boolean] = None,
+                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): BooleanType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedNull = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object BooleanType {
+object ParsedNull {
 
-  val value = "boolean"
+  val value = "null"
 
-  def apply(json: JsValue): Try[BooleanType] = {
+
+  def apply(json: JsValue): Try[ParsedNull] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -53,21 +54,21 @@ object BooleanType {
     }
 
     Success(
-      BooleanType(
+      ParsedNull(
         id = id,
         required = json.fieldBooleanValue("required"),
-        model
+        model = model
       )
     )
   }
 
 
-  def unapply(json: JsValue): Option[Try[BooleanType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedNull]] = {
 
-    (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(BooleanType.value)), _) => Some(BooleanType(json))
-      case (_, JsString(BooleanType.value))       => Some(Success(new BooleanType()))
-      case _                                      => None
+    (ParsedType.typeDeclaration(json), json) match {
+      case (Some(JsString(ParsedNull.value)), _) => Some(ParsedNull(json))
+      case (_, JsString(ParsedNull.value))       => Some(Success(new ParsedNull()))
+      case _                                     => None
     }
 
   }

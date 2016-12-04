@@ -47,11 +47,11 @@ object InlineTypeDeclaration {
     * Here, the 'schema' (or 'type') field does not refer to the type but to an object that defines the type.
     *
     */
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Type]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedType]] = {
 
-    Type.typeDeclaration(json) match {
-      case Some(Type(tryType)) => Some(tryType)
-      case _                   => None
+    ParsedType.typeDeclaration(json) match {
+      case Some(ParsedType(tryType)) => Some(tryType)
+      case _                         => None
     }
 
   }

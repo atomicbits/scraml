@@ -29,27 +29,27 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 /**
   * Created by peter on 1/04/16.
   */
-case class IntegerType(id: Id = ImplicitId,
-                       format: Option[String] = None,
-                       minimum: Option[Int] = None,
-                       maximum: Option[Int] = None,
-                       multipleOf: Option[Int] = None,
-                       required: Option[Boolean] = None,
-                       model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedInteger(id: Id = ImplicitId,
+                         format: Option[String] = None,
+                         minimum: Option[Int] = None,
+                         maximum: Option[Int] = None,
+                         multipleOf: Option[Int] = None,
+                         required: Option[Boolean] = None,
+                         model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
 
-  override def updated(updatedId: Id): IntegerType = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedInteger = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): Type = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
 
 
-object IntegerType {
+object ParsedInteger {
 
   val value = "integer"
 
 
-  def apply(json: JsValue): Try[IntegerType] = {
+  def apply(json: JsValue): Try[ParsedInteger] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -58,7 +58,7 @@ object IntegerType {
     }
 
     Success(
-      IntegerType(
+      ParsedInteger(
         id = id,
         format = json.fieldStringValue("format"),
         minimum = json.fieldIntValue("minimum"),
@@ -71,12 +71,12 @@ object IntegerType {
   }
 
 
-  def unapply(json: JsValue): Option[Try[IntegerType]] = {
+  def unapply(json: JsValue): Option[Try[ParsedInteger]] = {
 
-    (Type.typeDeclaration(json), json) match {
-      case (Some(JsString(IntegerType.value)), _) => Some(IntegerType(json))
-      case (_, JsString(IntegerType.value))       => Some(Success(IntegerType()))
-      case _                                      => None
+    (ParsedType.typeDeclaration(json), json) match {
+      case (Some(JsString(ParsedInteger.value)), _) => Some(ParsedInteger(json))
+      case (_, JsString(ParsedInteger.value))       => Some(Success(ParsedInteger()))
+      case _                                        => None
     }
 
   }

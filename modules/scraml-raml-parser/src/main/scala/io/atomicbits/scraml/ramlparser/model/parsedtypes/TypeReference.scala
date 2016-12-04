@@ -32,7 +32,7 @@ import scala.util.{Success, Try}
 case class TypeReference(refersTo: Id,
                          id: Id = ImplicitId,
                          required: Option[Boolean] = None,
-                         genericTypes: Map[String, Type] = Map.empty,
+                         genericTypes: Map[String, ParsedType] = Map.empty,
                          fragments: Fragments = Fragments(),
                          model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
 
@@ -62,15 +62,15 @@ object TypeReference {
 
     val required = (json \ "required").asOpt[Boolean]
 
-    val genericTypes: Try[Map[String, Type]] =
+    val genericTypes: Try[Map[String, ParsedType]] =
       (json \ "genericTypes").toOption.collect {
         case genericTs: JsObject =>
           val genericTsMap =
             genericTs.value collect {
-              case (field, Type(t)) => (field, t)
+              case (field, ParsedType(t)) => (field, t)
             }
-          TryUtils.accumulate[String, Type](genericTsMap.toMap)
-      } getOrElse Try(Map.empty[String, Type])
+          TryUtils.accumulate[String, ParsedType](genericTsMap.toMap)
+      } getOrElse Try(Map.empty[String, ParsedType])
 
     val fragments = json match {
       case Fragments(fragment) => fragment
@@ -90,13 +90,13 @@ object TypeReference {
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[TypeReference]] = {
 
     def checkOtherType(theOtherType: String): Option[Try[TypeReference]] = {
-      Type(theOtherType) match {
+      ParsedType(theOtherType) match {
         case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
         case _                           => None
       }
     }
 
-    (Type.typeDeclaration(json), (json \ TypeReference.value).toOption, json) match {
+    (ParsedType.typeDeclaration(json), (json \ TypeReference.value).toOption, json) match {
       case (None, Some(_), _)                   => Some(TypeReference(json))
       case (Some(JsString(otherType)), None, _) => checkOtherType(otherType)
       case (_, _, JsString(otherType))          => checkOtherType(otherType)
