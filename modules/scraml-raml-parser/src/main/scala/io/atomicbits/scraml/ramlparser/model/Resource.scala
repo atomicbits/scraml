@@ -34,7 +34,7 @@ import scala.language.postfixOps
   * Created by peter on 10/02/16.
   */
 case class Resource(urlSegment: String,
-                    urlParameter: Option[Parameter] = None,
+                    urlParameter: Option[ParsedParameter] = None,
                     displayName: Option[String] = None,
                     description: Option[String] = None,
                     actions: List[Action] = List.empty,
@@ -60,7 +60,7 @@ object Resource {
 
 
         // URI parameters
-        val uriParameterMap: Try[Parameters] = Parameters((jsObj \ "uriParameters").toOption)
+        val uriParameterMap: Try[ParsedParameters] = ParsedParameters((jsObj \ "uriParameters").toOption)
 
         // Actions
 
@@ -94,7 +94,7 @@ object Resource {
           */
         def createResource(displayN: Option[String],
                            desc: Option[String],
-                           uriParamMap: Parameters,
+                           uriParamMap: ParsedParameters,
                            actionSeq: Seq[Action],
                            childResources: Seq[Resource]): Resource = {
 
@@ -102,7 +102,7 @@ object Resource {
             if (segment.startsWith("{") && segment.endsWith("}")) {
               val pathParameterName = segment.stripPrefix("{").stripSuffix("}")
               val pathParameterMeta =
-                uriParamMap.byName(pathParameterName).getOrElse(Parameter(pathParameterName, new ParsedString(), true, false))
+                uriParamMap.byName(pathParameterName).getOrElse(ParsedParameter(pathParameterName, new ParsedString(), true, false))
               Resource(
                 urlSegment = pathParameterName,
                 urlParameter = Some(pathParameterMeta)

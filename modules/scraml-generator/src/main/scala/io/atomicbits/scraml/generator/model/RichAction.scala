@@ -31,8 +31,8 @@ import scala.language.postfixOps
   * Created by peter on 22/08/15.
   */
 case class RichAction(actionType: Method,
-                      headers: Parameters,
-                      queryParameters: Parameters,
+                      headers: ParsedParameters,
+                      queryParameters: ParsedParameters,
                       contentTypes: Set[ContentType],
                       responseTypes: Set[ResponseType],
                       selectedContentType: ContentType = NoContentType,

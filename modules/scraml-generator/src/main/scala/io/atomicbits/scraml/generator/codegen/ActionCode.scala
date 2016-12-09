@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.ParsedParameter
 
 /**
  * Created by peter on 30/09/15.
@@ -42,11 +42,11 @@ trait ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
+  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)]
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String
 
   def quoteString(text: String): String = s""""$text""""
 

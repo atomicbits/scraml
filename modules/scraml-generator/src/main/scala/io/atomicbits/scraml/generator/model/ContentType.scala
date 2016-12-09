@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.TypeReference
-import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType, Parameters}
+import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType, ParsedParameters}
 
 
 /**
@@ -40,7 +40,7 @@ case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
 case class TypedContentType(contentTypeHeader: MediaType, classReference: TypedClassReference) extends ContentType
 
-case class FormPostContentType(contentTypeHeader: MediaType, formParameters: Parameters) extends ContentType
+case class FormPostContentType(contentTypeHeader: MediaType, formParameters: ParsedParameters) extends ContentType
 
 case class MultipartFormContentType(contentTypeHeader: MediaType) extends ContentType
 
@@ -59,7 +59,7 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(mediaType: MediaType, content: Option[TypedClassReference], formParameters: Parameters): ContentType = {
+  def apply(mediaType: MediaType, content: Option[TypedClassReference], formParameters: ParsedParameters): ContentType = {
 
     val mediaTypeValue = mediaType.value.toLowerCase
 

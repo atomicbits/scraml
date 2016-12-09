@@ -48,7 +48,7 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
       val userResource: Resource = restResource.resources.filter(_.urlSegment == "user").head
       val getAction: Action = userResource.actions.filter(_.actionType == Get).head
 
-      val organizationQueryParameter: Parameter = getAction.queryParameters.byName("organization").get
+      val organizationQueryParameter: ParsedParameter = getAction.queryParameters.byName("organization").get
 
       organizationQueryParameter.parameterType shouldBe a[ParsedArray]
 

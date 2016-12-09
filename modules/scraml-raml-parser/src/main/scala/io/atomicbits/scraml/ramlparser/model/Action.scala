@@ -28,8 +28,8 @@ import scala.util.{Failure, Success, Try}
   * Created by peter on 10/02/16.
   */
 case class Action(actionType: Method,
-                  headers: Parameters,
-                  queryParameters: Parameters,
+                  headers: ParsedParameters,
+                  queryParameters: ParsedParameters,
                   body: Body,
                   responses: Responses)
 
@@ -55,9 +55,9 @@ object Action {
 
     parseContext.traits.applyTo(jsObject) { json =>
 
-      val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
+      val tryQueryParameters = ParsedParameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
 
-      val tryHeaders = Parameters((json \ "headers").toOption)
+      val tryHeaders = ParsedParameters((json \ "headers").toOption)
 
       val tryBody = Body(json)
 

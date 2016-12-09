@@ -32,7 +32,7 @@ import scala.util.{Failure, Success, Try}
   */
 case class ParsedObject(id: Id,
                         baseType: List[Id],
-                        properties: Properties,
+                        properties: ParsedProperties,
                         required: Option[Boolean] = None,
                         requiredProperties: List[String] = List.empty,
                         selection: Option[Selection] = None,
@@ -89,7 +89,7 @@ object ParsedObject {
     }
 
     // Process the properties
-    val properties: Try[Properties] = Properties((json \ "properties").toOption, model)
+    val properties: Try[ParsedProperties] = ParsedProperties((json \ "properties").toOption, model)
 
     val fragments = json match {
       case Fragments(fragment) => fragment

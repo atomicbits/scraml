@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.ParsedParameter
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**
@@ -111,7 +111,7 @@ object ScalaActionCode extends ActionCode {
   }
 
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = {
+  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)] = {
     fieldParams.sortBy { t =>
       val (field, param) = t
       (!param.required, !param.repeated, field)
@@ -129,7 +129,7 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String = {
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
@@ -156,7 +156,7 @@ object ScalaActionCode extends ActionCode {
   }
 
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 

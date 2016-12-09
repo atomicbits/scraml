@@ -36,7 +36,7 @@ case class Raml(title: String,
                 description: Option[String],
                 version: Option[String],
                 baseUri: Option[String],
-                baseUriParameters: Parameters,
+                baseUriParameters: ParsedParameters,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
@@ -160,7 +160,7 @@ object Raml {
     }
 
 
-    val baseUriParameters: Try[Parameters] = Parameters((ramlJson \ "baseUriParameters").toOption)
+    val baseUriParameters: Try[ParsedParameters] = ParsedParameters((ramlJson \ "baseUriParameters").toOption)
 
 
     /**

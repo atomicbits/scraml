@@ -32,7 +32,7 @@ import io.atomicbits.scraml.util.TryUtils._
   */
 case class BodyContent(mediaType: MediaType,
                        bodyType: Option[ParsedType] = None,
-                       formParameters: Parameters = Parameters())
+                       formParameters: ParsedParameters = ParsedParameters())
 
 
 object BodyContentAsMediaTypeMap {
@@ -51,7 +51,7 @@ object BodyContentAsMediaTypeMap {
 
       medType match {
         case mediaType@MediaType(mt) =>
-          val tryFormParameters = Parameters((json \ "formParameters").toOption)
+          val tryFormParameters = ParsedParameters((json \ "formParameters").toOption)
 
           val bodyType =
             json match {

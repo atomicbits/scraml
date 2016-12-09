@@ -20,17 +20,13 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsValue}
-
-import scala.util.{Failure, Try}
 
 
 /**
   * Created by peter on 10/02/16.
   */
-case class Parameter(name: String, parameterType: ParsedType, required: Boolean = true, repeated: Boolean = false) {
+case class ParsedParameter(name: String, parameterType: ParsedType, required: Boolean = true, repeated: Boolean = false) {
 
-  def asRequired: Parameter = this.copy(required = true)
+  def asRequired: ParsedParameter = this.copy(required = true)
 
 }

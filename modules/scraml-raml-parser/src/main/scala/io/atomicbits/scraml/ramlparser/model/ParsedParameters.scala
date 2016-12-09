@@ -21,62 +21,59 @@ package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import io.atomicbits.scraml.util.TryUtils._
 import play.api.libs.json.{JsObject, JsValue}
 
 import scala.util.{Success, Try}
+import io.atomicbits.scraml.util.TryUtils._
 
-/**
-  * Created by peter on 4/12/16.
-  */
-case class Properties(valueMap: Map[String, Property] = Map.empty) {
+import scala.language.postfixOps
 
-  def apply(name: String): Property = valueMap(name)
 
-  def get(name: String): Option[Property] = valueMap.get(name)
+case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) {
 
-  def map(f: Property => Property): Properties = {
-    copy(valueMap = valueMap.mapValues(f))
-  }
+  def nonEmpty: Boolean = valueMap.nonEmpty
 
-  def asTypeMap: Map[String, ParsedType] = {
-    valueMap.mapValues(_.propertyType)
-  }
+  def byName(name: String): Option[ParsedParameter] = valueMap.get(name)
 
-  val values: List[Property] = valueMap.values.toList
-
-  val types: List[ParsedType] = valueMap.values.map(_.propertyType).toList
+  val values: List[ParsedParameter] = valueMap.values.toList
 
   val isEmpty = valueMap.isEmpty
 
 }
 
 
-object Properties {
+/**
+  * Created by peter on 26/08/16.
+  */
+object ParsedParameters {
 
-  def apply(jsValueOpt: Option[JsValue], model: TypeModel)(implicit parseContext: ParseContext): Try[Properties] = {
 
-    def jsObjectToProperties(jsObject: JsObject): Try[Properties] = {
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[ParsedParameters] = apply(jsValueOpt, None)
 
-      val valueMap: Map[String, Try[Property]] =
+
+  def apply(jsValueOpt: Option[JsValue], overrideRequired: Option[Boolean])(implicit parseContext: ParseContext): Try[ParsedParameters] = {
+
+    def jsObjectToParameters(jsObject: JsObject): Try[ParsedParameters] = {
+
+      val valueMap: Map[String, Try[ParsedParameter]] =
         jsObject.value.collect {
           case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
-              Property(
+              ParsedParameter(
                 name = name,
-                propertyType = paramType.asTypeModel(model),
-                required = paramType.required.getOrElse(paramType.defaultRequiredValue)
+                parameterType = paramType,
+                required = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
+                repeated = false
               )
             }
         } toMap
 
-      accumulate(valueMap).map(vm => Properties(vm))
+      accumulate(valueMap).map(vm => ParsedParameters(vm))
     }
 
     jsValueOpt.collect {
-      case jsObj: JsObject => jsObjectToProperties(jsObj)
-    } getOrElse Success(Properties())
-
+      case jsObj: JsObject => jsObjectToParameters(jsObj)
+    } getOrElse Success(ParsedParameters())
   }
 
 }

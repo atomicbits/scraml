@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.ParsedParameter
 
 /**
   * Created by peter on 28/08/15.
@@ -43,7 +43,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateFormAction(action: RichAction, formPostContentType: FormPostContentType): List[String] = {
 
-    val actualFormParameters: Map[String, Parameter] = formPostContentType.formParameters.valueMap
+    val actualFormParameters: Map[String, ParsedParameter] = formPostContentType.formParameters.valueMap
 
     val formParameterMethodParameters: List[String] =
       actionCode.sortQueryOrFormParameters(actualFormParameters.toList).map { paramPair =>

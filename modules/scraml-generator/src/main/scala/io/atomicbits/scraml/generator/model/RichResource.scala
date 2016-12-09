@@ -22,13 +22,13 @@ package io.atomicbits.scraml.generator.model
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.{NativeId, Parameter, Resource, RootId}
+import io.atomicbits.scraml.ramlparser.model.{NativeId, ParsedParameter, Resource, RootId}
 
 /**
  * Created by peter on 22/08/15. 
  */
 case class RichResource(urlSegment: String,
-                        urlParameter: Option[Parameter] = None,
+                        urlParameter: Option[ParsedParameter] = None,
                         classRep: ClassRep,
                         actions: List[RichAction] = List.empty,
                         resources: List[RichResource] = List.empty)
