@@ -161,7 +161,7 @@ object JavaActionCode extends ActionCode {
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
-    parameter.parameterType match {
+    parameter.parameterType match {  // ToDo: match enumerations as well!
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
         s"$primitive $sanitizedParameterName"

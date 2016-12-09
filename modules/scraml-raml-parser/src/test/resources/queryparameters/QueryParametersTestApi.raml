@@ -1,0 +1,30 @@
+#%RAML 1.0
+---
+title: test01
+version: 1.0
+mediaType: application/json
+
+/rest:
+  get:
+    queryParameters:
+      age:
+        description: The age of the user.
+        type: number
+      firstName:
+        description: The firstname of the user.
+        type: string
+      organization:
+        description: The organization of the user.
+        type: string
+        repeat: true
+      filter_op:
+        description: |
+
+          *The match operation (operator)*
+
+        example: filter_op=GREATER_THAN
+        enum: [GREATER_THAN, GREATER_THAN_EQUAL]
+    responses:
+      200:
+        body:
+          application/json:

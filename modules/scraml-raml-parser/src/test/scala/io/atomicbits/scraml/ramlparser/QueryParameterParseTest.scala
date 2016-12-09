@@ -34,9 +34,9 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
 
   feature("query parameter parsing") {
 
-    scenario("test parsing query parameters in a complex RAML 1.0 model") {
+    scenario("test parsing query parameters in a RAML 0.8 model") {
 
-      Given("a RAML 1.0 specification")
+      Given("a RAML 0.8 specification")
       val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
 
       When("we parse the specification")
@@ -59,6 +59,37 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
       //       println(s"Parsed raml: $prettyModel")
 
     }
+
+
+    scenario("test parsing query parameters in a RAML 1.0 model") {
+
+      Given("a RAML 1.0 specification")
+      val parser = RamlParser("/queryparameters/QueryParametersTestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+
+      When("we parse the specification")
+      val parsedModel: Try[Raml] = parser.parse
+
+      Then("we get the expected query parameters")
+      val raml = parsedModel.get
+      val restResource: Resource = raml.resources.filter(_.urlSegment == "rest").head
+      val getAction: Action = restResource.actions.filter(_.actionType == Get).head
+
+      val organizationQueryParameter: Parameter = getAction.queryParameters.byName("organization").get
+
+      organizationQueryParameter.parameterType shouldBe a[ParsedArray]
+
+      organizationQueryParameter.parameterType.asInstanceOf[ParsedArray].items shouldBe a[ParsedString]
+
+      val filterOpQueryParameter: Parameter = getAction.queryParameters.byName("filter_op").get
+
+      filterOpQueryParameter.parameterType shouldBe a[ParsedEnum]
+
+      //      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      //       println(s"Parsed raml: $prettyModel")
+
+    }
+
+
 
   }
 
