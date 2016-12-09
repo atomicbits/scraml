@@ -29,26 +29,26 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 1/04/16.
   */
-case class TypeReference(refersTo: Id,
-                         id: Id = ImplicitId,
-                         required: Option[Boolean] = None,
-                         genericTypes: Map[String, ParsedType] = Map.empty,
-                         fragments: Fragments = Fragments(),
-                         model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
+case class ParsedTypeReference(refersTo: Id,
+                               id: Id = ImplicitId,
+                               required: Option[Boolean] = None,
+                               genericTypes: Map[String, ParsedType] = Map.empty,
+                               fragments: Fragments = Fragments(),
+                               model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
 
-  override def updated(updatedId: Id): TypeReference = copy(id = updatedId)
+  override def updated(updatedId: Id): ParsedTypeReference = copy(id = updatedId)
 
-  override def asTypeModel(typeModel: TypeModel): TypeReference = copy(model = typeModel)
+  override def asTypeModel(typeModel: TypeModel): ParsedTypeReference = copy(model = typeModel)
 
 }
 
 
-object TypeReference {
+object ParsedTypeReference {
 
   val value = "$ref"
 
 
-  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[TypeReference] = {
+  def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ParsedTypeReference] = {
 
     val model: TypeModel = TypeModel(json)
 
@@ -83,21 +83,21 @@ object TypeReference {
       genericTypes,
       fragments,
       Success(model)
-    )(new TypeReference(_, _, _, _, _, _))
+    )(new ParsedTypeReference(_, _, _, _, _, _))
   }
 
 
-  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[TypeReference]] = {
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedTypeReference]] = {
 
-    def checkOtherType(theOtherType: String): Option[Try[TypeReference]] = {
+    def checkOtherType(theOtherType: String): Option[Try[ParsedTypeReference]] = {
       ParsedType(theOtherType) match {
-        case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
-        case _                           => None
+        case typeRef: Try[ParsedTypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
+        case _                                 => None
       }
     }
 
-    (ParsedType.typeDeclaration(json), (json \ TypeReference.value).toOption, json) match {
-      case (None, Some(_), _)                   => Some(TypeReference(json))
+    (ParsedType.typeDeclaration(json), (json \ ParsedTypeReference.value).toOption, json) match {
+      case (None, Some(_), _)                   => Some(ParsedTypeReference(json))
       case (Some(JsString(otherType)), None, _) => checkOtherType(otherType)
       case (_, _, JsString(otherType))          => checkOtherType(otherType)
       case _                                    => None

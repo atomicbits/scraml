@@ -52,8 +52,8 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       val barType: ParsedType = objectWithFragments.fragments.fragmentMap("bar")
 
-      barType shouldBe a[TypeReference]
-      barType.asInstanceOf[TypeReference].refersTo shouldBe NativeId("baz")
+      barType shouldBe a[ParsedTypeReference]
+      barType.asInstanceOf[ParsedTypeReference].refersTo shouldBe NativeId("baz")
 
 
       val definitionFragment: Fragments = objectWithFragments.fragments.fragmentMap("definitions").asInstanceOf[Fragments]

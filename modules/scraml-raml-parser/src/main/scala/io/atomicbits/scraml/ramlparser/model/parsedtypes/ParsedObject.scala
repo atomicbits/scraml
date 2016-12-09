@@ -171,10 +171,10 @@ object ParsedObject {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedObject]] = {
 
-    def isParentRef(theOtherType: String): Option[Try[TypeReference]] = {
+    def isParentRef(theOtherType: String): Option[Try[ParsedTypeReference]] = {
       ParsedType(theOtherType) match {
-        case typeRef: Try[TypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
-        case _                           => None
+        case typeRef: Try[ParsedTypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
+        case _                                 => None
       }
     }
 

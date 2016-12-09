@@ -22,9 +22,8 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-trait TypeConstraints[T <: TypeReference] {
+trait TypeConstraints[T <: TypeReference]
 
-}
 
 case class StringConstraints(format: Option[String] = None,
                              pattern: Option[String] = None,

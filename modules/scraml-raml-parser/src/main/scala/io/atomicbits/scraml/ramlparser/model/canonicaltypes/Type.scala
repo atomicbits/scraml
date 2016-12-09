@@ -35,7 +35,11 @@ trait Type {
   *
   * A primitive type is also its own type reference since it has no user-defined properties that can be configured in the RAML model.
   */
-trait PrimitiveType extends Type with TypeReference
+trait PrimitiveType extends Type with TypeReference {
+
+  def genericTypes: Map[TypeParameter, TypeReference] = Map.empty
+
+}
 
 
 /**

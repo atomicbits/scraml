@@ -22,10 +22,9 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-case class ObjectType(canonicalName: CanonicalName,
-                      parameters: Map[String, Parameter[_]],
-                      parents: List[TypeReference] = List.empty,
-                      children: List[TypeReference] = List.empty,
-                      typeParameters: List[TypeParameter] = List.empty,
-                      typeDiscriminator: Option[String] = None,
-                      typeDiscriminatorValue: Option[String] = None) extends NonPrimitiveType
+
+/**
+  * A generic referrable is the entity that a type parameter can refer to.
+  * This is either another TypeParameter or a concrete TypeReference.
+  */
+trait GenericReferrable

@@ -66,7 +66,7 @@ object TypeLookupParser {
             val result: Option[(BodyContent, Types)] =
               bodyContent.bodyType.collect {
                 // ToDo: refactor case statements below, it's too cumbersome and there is too much repetition
-                case typeReference: TypeReference =>
+                case typeReference: ParsedTypeReference =>
                   typeReference.id match {
                     case nativeId: NativeId =>
                       // No updated needed, it's already a native reference type.
@@ -74,7 +74,7 @@ object TypeLookupParser {
                     case otherId            =>
                       val nativeId = NativeId(s"inline$inlineNativeIdCounter")
                       inlineNativeIdCounter += 1
-                      val nativeTypeReference = TypeReference(nativeId)
+                      val nativeTypeReference = ParsedTypeReference(nativeId)
                       val updatedBodyContent = bodyContent.copy(bodyType = Some(nativeTypeReference))
                       (updatedBodyContent, ttypes + (nativeId -> typeReference))
                   }
@@ -82,7 +82,7 @@ object TypeLookupParser {
                 case otherType =>
                   val nativeId = NativeId(s"inline$inlineNativeIdCounter")
                   inlineNativeIdCounter += 1
-                  val nativeTypeReference = TypeReference(nativeId)
+                  val nativeTypeReference = ParsedTypeReference(nativeId)
                   val updatedBodyContent = bodyContent.copy(bodyType = Some(nativeTypeReference))
                   (updatedBodyContent, ttypes + (nativeId -> otherType))
               }
@@ -204,26 +204,26 @@ object TypeLookupParser {
 
       val schemaWithUpdatedFragments: ParsedType =
         ttype match {
-          case objectType: ParsedObject =>
+          case objectType: ParsedObject           =>
             objectType.copy(
               fragments = objectType.fragments.map(expandFragment),
               properties = objectType.properties.map(expandProperty),
               selection = objectType.selection
                 .map(select => select.map(schema => expandWithRootAndPath(schema, currentRoot, expandingRoot, path)))
             )
-          case fragment: Fragments      => fragment.map(expandFragment)
-          case arrayType: ParsedArray   =>
+          case fragment: Fragments                => fragment.map(expandFragment)
+          case arrayType: ParsedArray             =>
             val (_, expanded) = expandFragment(("items", arrayType.items))
             arrayType.copy(
               items = expanded,
               fragments = arrayType.fragments.map(expandFragment)
             )
-          case typeReference: TypeReference =>
+          case typeReference: ParsedTypeReference =>
             typeReference.copy(
               refersTo = currentRoot.toAbsolute(typeReference.refersTo, path),
               fragments = typeReference.fragments.map(expandFragment)
             )
-          case _                            => ttype
+          case _                                  => ttype
         }
 
       schemaWithUpdatedFragments.updated(expandedId)
@@ -267,7 +267,7 @@ object TypeLookupParser {
       def uniqueId: UniqueId = TypeUtils.asUniqueId(ttype.id)
 
       ttype match {
-        case objectType: ParsedObject =>
+        case objectType: ParsedObject           =>
           val schemaLookupWithObjectFragments =
             objectType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           val schemaLookupWithObjectProperties =
@@ -278,17 +278,17 @@ object TypeLookupParser {
             } getOrElse schemaLookupWithObjectProperties
           schemaLookupWithSelectionObjects
             .copy(objectMap = schemaLookupWithSelectionObjects.objectMap + (uniqueId -> objectType))
-        case arrayType: ParsedArray       =>
+        case arrayType: ParsedArray             =>
           val schemaLookupWithArrayFragments =
             arrayType.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
           updateLookupAndObjectMapJsonSchema(schemaLookupWithArrayFragments, ("items", arrayType.items))
-        case typeReference: TypeReference =>
+        case typeReference: ParsedTypeReference =>
           typeReference.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
-        case fragment: Fragments          =>
+        case fragment: Fragments                =>
           fragment.fragments.fragmentMap.foldLeft(updatedSchemaLookup)(updateLookupAndObjectMapJsonSchema)
-        case enumType: ParsedEnum         =>
+        case enumType: ParsedEnum               =>
           updatedSchemaLookup.copy(enumMap = updatedSchemaLookup.enumMap + (uniqueId -> enumType))
-        case _                            => updatedSchemaLookup
+        case _                                  => updatedSchemaLookup
       }
 
     }
@@ -341,9 +341,9 @@ object TypeLookupParser {
     @tailrec
     def lookupObjEl(schema: ParsedType): Option[ParsedObject] = {
       schema match {
-        case objectType: ParsedObject     => Some(objectType)
-        case typeReference: TypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
-        case _                            => None
+        case objectType: ParsedObject           => Some(objectType)
+        case typeReference: ParsedTypeReference => lookupObjEl(lookupTable.lookup(typeReference.refersTo))
+        case _                                  => None
       }
     }
 

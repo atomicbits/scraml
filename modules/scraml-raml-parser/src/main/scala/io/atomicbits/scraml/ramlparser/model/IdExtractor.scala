@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.TypeReference
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedTypeReference
 import play.api.libs.json.{JsObject, JsValue}
 
 /**
@@ -33,7 +33,7 @@ object IdExtractor {
 
 object RefExtractor {
 
-  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, TypeReference.value)
+  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, ParsedTypeReference.value)
 
 }
 

@@ -22,20 +22,35 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-trait TypeReference {
+trait TypeReference extends GenericReferrable {
 
   def refers: CanonicalName
 
+  def genericTypes: Map[TypeParameter, GenericReferrable]
+
 }
 
-case class NonPrimitiveTypeReference(refers: CanonicalName) extends TypeReference
+
+case class NonPrimitiveTypeReference(refers: CanonicalName,
+                                     genericTypes: Map[TypeParameter, GenericReferrable] = Map.empty) extends TypeReference
+
+
+case class ArrayTypeReference(genericType: GenericReferrable) extends TypeReference {
+
+  val refers = ArrayType.canonicalName
+
+  val genericTypes: Map[TypeParameter, GenericReferrable] = Map(ArrayType.typeParameter -> genericType)
+
+}
 
 
 object TypeReference {
 
   def apply(ttype: Type): TypeReference = ttype match {
-    case primitive: PrimitiveType => primitive
+    case primitive: PrimitiveType       => primitive
     case nonPrimitive: NonPrimitiveType => NonPrimitiveTypeReference(nonPrimitive.canonicalName)
+    case arrayType: ArrayType.type      =>
+      sys.error(s"Cannot create a type reference from an array type without knowing the type of elements it contains.")
   }
 
 }

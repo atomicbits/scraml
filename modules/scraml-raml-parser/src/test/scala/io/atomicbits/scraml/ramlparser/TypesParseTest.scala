@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, TypeReference}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, ParsedTypeReference$}
 import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml}
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
@@ -55,8 +55,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     }
 
     bookType.properties("author").propertyType match {
-      case typeReference: TypeReference => typeReference.refersTo.asInstanceOf[NativeId] shouldBe NativeId("Author")
-      case _                            => fail(s"The author property of a book should be a ReferenceType.")
+      case typeReference: ParsedTypeReference => typeReference.refersTo.asInstanceOf[NativeId] shouldBe NativeId("Author")
+      case _                                  => fail(s"The author property of a book should be a ReferenceType.")
     }
 
     comicBookType.parent shouldBe Some(NativeId("Book"))

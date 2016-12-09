@@ -112,7 +112,7 @@ object ParsedType {
       case ParsedNull.value              => Try(new ParsedString())
       case ParsedUnionType(tryUnionType) => tryUnionType
       case ParsedArray(tryArrayType)     => tryArrayType
-      case namedType                     => Try(TypeReference(NativeId(namedType)))
+      case namedType                     => Try(ParsedTypeReference(NativeId(namedType)))
     }
 
   }
@@ -139,7 +139,7 @@ object ParsedType {
         case ParsedEnum(tryEnumType)                    => Some(tryEnumType)
         case ParsedObject(tryObjectType)                => Some(tryObjectType)
         case ParsedGenericObject(tryGenericObjectType)  => Some(tryGenericObjectType)
-        case TypeReference(tryTypeReferenceType)        => Some(tryTypeReferenceType)
+        case ParsedTypeReference(tryTypeReferenceType)  => Some(tryTypeReferenceType)
         case InlineTypeDeclaration(inlineType)          => Some(inlineType)
         case _                                          => None
       }

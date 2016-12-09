@@ -209,17 +209,17 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
         if (typeVariables.isEmpty) classReference
         else TypedClassReference(classReference, typeVariables)
       case genericObjectType: ParsedGenericObject => TypeParameter(genericObjectType.typeVariable)
-      case arrayType: ParsedArray                 =>
+      case arrayType: ParsedArray             =>
         arrayType.items match {
           case genericObjectType: ParsedGenericObject => ListClassReference(genericObjectType.typeVariable)
           case itemsType                              =>
             ListClassReference.typed(typeAsClassReference(arrayType.items, lookupTable, canonicalMap))
         }
-      case stringType: ParsedString               => StringClassReference()
-      case numberType: ParsedNumber               => DoubleClassReference(numberType.isRequired)
-      case integerType: ParsedInteger             => LongClassReference(integerType.isRequired)
-      case booleanType: ParsedBoolean             => BooleanClassReference(booleanType.isRequired)
-      case typeReference: TypeReference           =>
+      case stringType: ParsedString           => StringClassReference()
+      case numberType: ParsedNumber           => DoubleClassReference(numberType.isRequired)
+      case integerType: ParsedInteger         => LongClassReference(integerType.isRequired)
+      case booleanType: ParsedBoolean         => BooleanClassReference(booleanType.isRequired)
+      case typeReference: ParsedTypeReference =>
         val typeRefTypeVars =
           typeReference.genericTypes.map {
             case (typeParamName, theType) =>
@@ -231,7 +231,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
           canonicalMap,
           typeRefTypeVars
         )
-      case enumType: ParsedEnum                 =>
+      case enumType: ParsedEnum               =>
         if (enumType.choices.size == 1) StringClassReference() // Probably a "type" discriminator field.
         else buildClassReference(TypeUtils.asUniqueId(ttype.id), lookupTable)
       case unknownType                          =>

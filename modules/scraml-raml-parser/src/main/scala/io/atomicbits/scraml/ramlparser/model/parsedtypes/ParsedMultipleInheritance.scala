@@ -30,7 +30,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by peter on 1/11/16.
   */
-case class ParsedMultipleInheritance(parents: Set[TypeReference],
+case class ParsedMultipleInheritance(parents: Set[ParsedTypeReference],
                                      required: Option[Boolean] = None,
                                      model: TypeModel = RamlModel,
                                      id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
@@ -50,7 +50,7 @@ object ParsedMultipleInheritance {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedMultipleInheritance]] = {
 
-    def processParentReferences(parents: Seq[JsValue]): Option[Try[Set[TypeReference]]] = {
+    def processParentReferences(parents: Seq[JsValue]): Option[Try[Set[ParsedTypeReference]]] = {
 
       val parentRefs =
         parents.collect {
@@ -59,15 +59,15 @@ object ParsedMultipleInheritance {
 
       val typeReferences =
         parentRefs.collect {
-          case Success(typeReference: TypeReference) => Success(typeReference)
-          case Success(unionType: ParsedUnionType)   =>
+          case Success(typeReference: ParsedTypeReference) => Success(typeReference)
+          case Success(unionType: ParsedUnionType)         =>
             Failure(
               RamlParseException(s"We do not yet support multiple inheritance where one of the parents is a union type expression.")
             )
         }
 
 
-      val triedTypeReferences: Try[Seq[TypeReference]] = accumulate(typeReferences)
+      val triedTypeReferences: Try[Seq[ParsedTypeReference]] = accumulate(typeReferences)
 
       if (typeReferences.size > 1) Some(triedTypeReferences.map(_.toSet))
       else None
