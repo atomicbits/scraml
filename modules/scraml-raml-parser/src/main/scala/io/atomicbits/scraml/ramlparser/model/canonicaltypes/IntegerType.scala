@@ -20,11 +20,11 @@
 package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 
 /**
-  * Created by peter on 9/12/16.
+  * Created by peter on 11/12/16.
   */
-case object StringType extends PrimitiveType {
+case object IntegerType extends PrimitiveType {
 
-  val canonicalName = CanonicalName("String")
+  val canonicalName = CanonicalName("Integer")
 
   val refers: CanonicalName = canonicalName
 

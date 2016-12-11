@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, ParsedTypeReference$}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, ParsedTypeReference}
 import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml}
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils

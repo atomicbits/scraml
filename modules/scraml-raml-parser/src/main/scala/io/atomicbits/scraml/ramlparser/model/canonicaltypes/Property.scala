@@ -22,10 +22,7 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-case object StringType extends PrimitiveType {
-
-  val canonicalName = CanonicalName("String")
-
-  val refers: CanonicalName = canonicalName
-
-}
+case class Property[T <: TypeReference](name: String,
+                                        ttype: T,
+                                        required: Boolean = true,
+                                        typeConstraints: Option[TypeConstraints[T]] = None)

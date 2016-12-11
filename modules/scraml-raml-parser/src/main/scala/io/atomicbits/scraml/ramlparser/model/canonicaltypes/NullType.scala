@@ -20,9 +20,12 @@
 package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 
 /**
-  * Created by peter on 9/12/16.
+  * Created by peter on 11/12/16.
   */
-case class Parameter[T <: TypeReference](name: String,
-                                         ttype: T,
-                                         required: Boolean = true,
-                                         typeConstraints: Option[TypeConstraints[T]] = None)
+case object NullType extends PrimitiveType {
+
+  val canonicalName = CanonicalName("Null")
+
+  val refers: CanonicalName = canonicalName
+
+}
