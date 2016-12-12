@@ -47,7 +47,10 @@ case class ParsedObject(id: Id,
   override def updated(updatedId: Id): ParsedObject = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): ParsedType = {
-    val updatedProperties = properties.map(property => property.copy(propertyType = property.propertyType.asTypeModel(typeModel)))
+    val updatedProperties =
+      properties.map { property =>
+        property.copy(propertyType = TypeRepresentation(property.propertyType.parsed.asTypeModel(typeModel)))
+      }
     copy(model = typeModel, properties = updatedProperties)
   }
 

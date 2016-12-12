@@ -22,7 +22,7 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-trait Type {
+trait CanonicalType {
 
   def canonicalName: CanonicalName
 
@@ -35,7 +35,7 @@ trait Type {
   *
   * A primitive type is also its own type reference since it has no user-defined properties that can be configured in the RAML model.
   */
-trait PrimitiveType extends Type with TypeReference {
+trait PrimitiveType extends CanonicalType with TypeReference {
 
   def genericTypes: Map[TypeParameter, TypeReference] = Map.empty
 
@@ -45,4 +45,4 @@ trait PrimitiveType extends Type with TypeReference {
 /**
   * Nonprimitive types are the custom types created by the RAML model that will need to be generated as 'new' types.
   */
-trait NonPrimitiveType extends Type
+trait NonPrimitiveType extends CanonicalType

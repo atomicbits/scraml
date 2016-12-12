@@ -49,18 +49,18 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     val authorType = raml.types(NativeId("Author")).asInstanceOf[ParsedObject]
     val comicBookType = raml.types(NativeId("ComicBook")).asInstanceOf[ParsedObject]
 
-    bookType.properties("title").propertyType match {
+    bookType.properties("title").propertyType.parsed match {
       case stringType: ParsedString => stringType.required shouldBe Some(true)
       case _                        => fail(s"The title property of a book should be a StringType.")
     }
 
-    bookType.properties("author").propertyType match {
+    bookType.properties("author").propertyType.parsed match {
       case typeReference: ParsedTypeReference => typeReference.refersTo.asInstanceOf[NativeId] shouldBe NativeId("Author")
       case _                                  => fail(s"The author property of a book should be a ReferenceType.")
     }
 
     comicBookType.parent shouldBe Some(NativeId("Book"))
-    comicBookType.properties("hero").propertyType match {
+    comicBookType.properties("hero").propertyType.parsed match {
       case stringType: ParsedString => stringType.required shouldBe None
       case _                        => fail(s"The hero property of a comicbook should be a StringType.")
     }

@@ -40,12 +40,12 @@ case class ParsedProperties(valueMap: Map[String, Property] = Map.empty) {
   }
 
   def asTypeMap: Map[String, ParsedType] = {
-    valueMap.mapValues(_.propertyType)
+    valueMap.mapValues(_.propertyType.parsed)
   }
 
   val values: List[Property] = valueMap.values.toList
 
-  val types: List[ParsedType] = valueMap.values.map(_.propertyType).toList
+  val types: List[ParsedType] = valueMap.values.map(_.propertyType.parsed).toList
 
   val isEmpty = valueMap.isEmpty
 
@@ -64,7 +64,7 @@ object ParsedProperties {
             name -> tryType.map { paramType =>
               Property(
                 name = name,
-                propertyType = paramType.asTypeModel(model),
+                propertyType = TypeRepresentation(paramType.asTypeModel(model)),
                 required = paramType.required.getOrElse(paramType.defaultRequiredValue)
               )
             }

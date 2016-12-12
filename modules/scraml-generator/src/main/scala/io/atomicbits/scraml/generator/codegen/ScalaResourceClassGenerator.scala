@@ -230,7 +230,7 @@ object ScalaResourceClassGenerator {
     def generateClassDefinition(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""class ${resource.classRep.name}(_value: $paramType, _req: RequestBuilder) extends ParamSegment[$paramType](_value, _req) { """
         case None            =>
           s"""class ${resource.classRep.name}(private val _req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", _req) { """
@@ -240,7 +240,7 @@ object ScalaResourceClassGenerator {
     def generateAddHeaderConstructorArguments(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))"
         case None            => "(_requestBuilder.withAddedHeaders(newHeaders: _*))"
       }
@@ -249,7 +249,7 @@ object ScalaResourceClassGenerator {
     def generateSetHeaderConstructorArguments(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           "(_value, _requestBuilder.withSetHeaders(newHeaders: _*))"
         case None            => "(_requestBuilder.withSetHeaders(newHeaders: _*))"
       }
@@ -279,7 +279,7 @@ object ScalaResourceClassGenerator {
       val cleanUrlSegment = escapeScalaKeyword(cleanMethodName(resource.urlSegment))
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""def $cleanUrlSegment(value: $paramType) = new ${
             resource.classRep.fullyQualifiedName
           }(value, _requestBuilder.withAddedPathSegment(value))"""

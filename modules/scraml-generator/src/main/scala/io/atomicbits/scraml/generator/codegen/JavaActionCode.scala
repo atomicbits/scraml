@@ -161,7 +161,7 @@ object JavaActionCode extends ActionCode {
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
-    parameter.parameterType match {
+    parameter.parameterType.parsed match {
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
         s"$primitive $sanitizedParameterName"
@@ -181,7 +181,7 @@ object JavaActionCode extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedQueryParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
-    parameter.parameterType match {
+    parameter.parameterType.parsed match {
       case primitive: PrimitiveType => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedQueryParameterName));"""
       case arrayType: ParsedArray   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedQueryParameterName));"""
     }

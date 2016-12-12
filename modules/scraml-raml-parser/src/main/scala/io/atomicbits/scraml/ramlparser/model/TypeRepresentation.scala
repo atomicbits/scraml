@@ -19,7 +19,10 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
+
 /**
-  * Created by peter on 4/12/16.
+  * Created by peter on 12/12/16.
   */
-case class Property(name: String, propertyType: TypeRepresentation, required: Boolean = true)
+case class TypeRepresentation(parsed: ParsedType, canonical: Option[TypeReference] = None)

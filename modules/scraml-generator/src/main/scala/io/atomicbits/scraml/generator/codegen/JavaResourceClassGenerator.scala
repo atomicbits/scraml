@@ -179,7 +179,7 @@ object JavaResourceClassGenerator {
     def generateResourceConstructors(resource: RichResource): List[String] =
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           List(
             s"""
                public ${resource.classRep.name}($paramType value, RequestBuilder requestBuilder) {
@@ -211,7 +211,7 @@ object JavaResourceClassGenerator {
     def generateClassDefinition(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""public class ${resource.classRep.name} extends ParamSegment<$paramType> { """
         case None            =>
           s"""public class ${resource.classRep.name} extends PlainSegment {"""
@@ -239,7 +239,7 @@ object JavaResourceClassGenerator {
       val cleanUrlSegment = escapeJavaKeyword(cleanMethodName(resource.urlSegment))
       resource.urlParameter match {
         case Some(parameter) =>
-          val paramType = generateParameterType(parameter.parameterType)
+          val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""
              public ${resource.classRep.fullyQualifiedName} $cleanUrlSegment($paramType value) {
                return new ${resource.classRep.fullyQualifiedName}(value, this.getRequestBuilder());

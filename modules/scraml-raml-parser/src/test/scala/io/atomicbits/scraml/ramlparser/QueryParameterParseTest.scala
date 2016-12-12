@@ -50,9 +50,9 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
 
       val organizationQueryParameter: ParsedParameter = getAction.queryParameters.byName("organization").get
 
-      organizationQueryParameter.parameterType shouldBe a[ParsedArray]
+      organizationQueryParameter.parameterType.parsed shouldBe a[ParsedArray]
 
-      organizationQueryParameter.parameterType.asInstanceOf[ParsedArray].items shouldBe a[ParsedString]
+      organizationQueryParameter.parameterType.parsed.asInstanceOf[ParsedArray].items shouldBe a[ParsedString]
 
 
       //      val prettyModel = TestUtils.prettyPrint(parsedModel)

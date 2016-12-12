@@ -63,10 +63,10 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       val address = addressType.asInstanceOf[ParsedObject]
 
       address.id shouldBe FragmentId(List("definitions", "address"))
-      address.properties("city").propertyType shouldBe a[ParsedString]
-      address.properties("state").propertyType shouldBe a[ParsedString]
-      address.properties("zip").propertyType shouldBe a[ParsedInteger]
-      address.properties("streetAddress").propertyType shouldBe a[ParsedString]
+      address.properties("city").propertyType.parsed shouldBe a[ParsedString]
+      address.properties("state").propertyType.parsed shouldBe a[ParsedString]
+      address.properties("zip").propertyType.parsed shouldBe a[ParsedInteger]
+      address.properties("streetAddress").propertyType.parsed shouldBe a[ParsedString]
 
       //      val prettyModel = TestUtils.prettyPrint(parsedModel)
       //       println(s"Parsed raml: $prettyModel")

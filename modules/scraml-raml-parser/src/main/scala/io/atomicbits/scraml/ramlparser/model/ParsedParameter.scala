@@ -19,13 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
-
 
 /**
   * Created by peter on 10/02/16.
   */
-case class ParsedParameter(name: String, parameterType: ParsedType, required: Boolean = true, repeated: Boolean = false) {
+case class ParsedParameter(name: String, parameterType: TypeRepresentation, required: Boolean = true, repeated: Boolean = false) {
 
   def asRequired: ParsedParameter = this.copy(required = true)
 

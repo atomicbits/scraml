@@ -22,7 +22,7 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-case object ArrayType extends Type {
+case object ArrayType extends CanonicalType {
 
   val typeParameter = TypeParameter("T")
 

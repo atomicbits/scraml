@@ -61,7 +61,7 @@ object ParsedParameters {
             name -> tryType.map { paramType =>
               ParsedParameter(
                 name = name,
-                parameterType = paramType,
+                parameterType = TypeRepresentation(paramType),
                 required = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
                 repeated = false
               )

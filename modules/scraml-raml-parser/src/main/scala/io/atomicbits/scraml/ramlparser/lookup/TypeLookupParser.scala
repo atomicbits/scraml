@@ -64,7 +64,7 @@ object TypeLookupParser {
           case ((headerMap, ttypes), (mimeType, bodyContent)) =>
 
             val result: Option[(BodyContent, Types)] =
-              bodyContent.bodyType.collect {
+              bodyContent.bodyType.map(_.parsed).collect {
                 // ToDo: refactor case statements below, it's too cumbersome and there is too much repetition
                 case typeReference: ParsedTypeReference =>
                   typeReference.id match {
@@ -75,7 +75,7 @@ object TypeLookupParser {
                       val nativeId = NativeId(s"inline$inlineNativeIdCounter")
                       inlineNativeIdCounter += 1
                       val nativeTypeReference = ParsedTypeReference(nativeId)
-                      val updatedBodyContent = bodyContent.copy(bodyType = Some(nativeTypeReference))
+                      val updatedBodyContent = bodyContent.copy(bodyType = Some(TypeRepresentation(nativeTypeReference)))
                       (updatedBodyContent, ttypes + (nativeId -> typeReference))
                   }
 
@@ -83,7 +83,7 @@ object TypeLookupParser {
                   val nativeId = NativeId(s"inline$inlineNativeIdCounter")
                   inlineNativeIdCounter += 1
                   val nativeTypeReference = ParsedTypeReference(nativeId)
-                  val updatedBodyContent = bodyContent.copy(bodyType = Some(nativeTypeReference))
+                  val updatedBodyContent = bodyContent.copy(bodyType = Some(TypeRepresentation(nativeTypeReference)))
                   (updatedBodyContent, ttypes + (nativeId -> otherType))
               }
 
@@ -190,9 +190,9 @@ object TypeLookupParser {
 
       def expandProperty(property: Property): Property = {
         // Treat the property as a fragment to expand it.
-        val fragment = (property.name, property.propertyType)
+        val fragment = (property.name, property.propertyType.parsed)
         val (name, expandedType) = expandFragment(fragment)
-        property.copy(propertyType = expandedType)
+        property.copy(propertyType = TypeRepresentation(expandedType))
       }
 
       def expandFragment(fragmentPath: (String, ParsedType)): (String, ParsedType) = {
@@ -380,7 +380,11 @@ object TypeLookupParser {
       val (absId, obj) = objPair
       if (obj.hasParent && !obj.hasChildren) {
         val typeDiscriminator = obj.topLevelParent(lookupTable).flatMap(_.typeDiscriminator).getOrElse("type")
-        val discriminator = obj.properties.get(typeDiscriminator).map(_.propertyType).flatMap(ParsedObject.schemaToDiscriminatorValue)
+        val discriminator =
+          obj.properties
+            .get(typeDiscriminator)
+            .map(_.propertyType.parsed)
+            .flatMap(ParsedObject.schemaToDiscriminatorValue)
 
         if (discriminator.isEmpty)
           println(

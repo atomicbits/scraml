@@ -47,7 +47,10 @@ object RichAction {
 
     def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
-        case theBodyType => new TypeClassRepAssembler(nativeToRootId).typeAsClassReference(theBodyType, lookupTable, canonicalMap).asTypedClassReference
+        case theBodyType =>
+          new TypeClassRepAssembler(nativeToRootId)
+            .typeAsClassReference(theBodyType.parsed, lookupTable, canonicalMap)
+            .asTypedClassReference
       }
     }
 

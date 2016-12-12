@@ -102,7 +102,9 @@ object Resource {
             if (segment.startsWith("{") && segment.endsWith("}")) {
               val pathParameterName = segment.stripPrefix("{").stripSuffix("}")
               val pathParameterMeta =
-                uriParamMap.byName(pathParameterName).getOrElse(ParsedParameter(pathParameterName, new ParsedString(), true, false))
+                uriParamMap
+                  .byName(pathParameterName)
+                  .getOrElse(ParsedParameter(pathParameterName, TypeRepresentation(new ParsedString()), true, false))
               Resource(
                 urlSegment = pathParameterName,
                 urlParameter = Some(pathParameterMeta)

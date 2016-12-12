@@ -134,7 +134,7 @@ object ScalaActionCode extends ActionCode {
 
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
-    parameter.parameterType match {
+    parameter.parameterType.parsed match {
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToScalaType(primitiveType)
         if (parameter.required) {
@@ -160,7 +160,7 @@ object ScalaActionCode extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
-    (parameter.parameterType, parameter.required) match {
+    (parameter.parameterType.parsed, parameter.required) match {
       case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
       case (primitive: PrimitiveType, true)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
       case (arrayType: ParsedArray, _)       => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""

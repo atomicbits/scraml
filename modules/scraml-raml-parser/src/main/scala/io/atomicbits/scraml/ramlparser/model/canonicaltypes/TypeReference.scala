@@ -46,7 +46,7 @@ case class ArrayTypeReference(genericType: GenericReferrable) extends TypeRefere
 
 object TypeReference {
 
-  def apply(ttype: Type): TypeReference = ttype match {
+  def apply(ttype: CanonicalType): TypeReference = ttype match {
     case primitive: PrimitiveType       => primitive
     case nonPrimitive: NonPrimitiveType => NonPrimitiveTypeReference(nonPrimitive.canonicalName)
     case arrayType: ArrayType.type      =>

@@ -31,7 +31,7 @@ import io.atomicbits.scraml.util.TryUtils._
   * Created by peter on 10/02/16.
   */
 case class BodyContent(mediaType: MediaType,
-                       bodyType: Option[ParsedType] = None,
+                       bodyType: Option[TypeRepresentation] = None,
                        formParameters: ParsedParameters = ParsedParameters())
 
 
@@ -63,7 +63,7 @@ object BodyContentAsMediaTypeMap {
             for {
               bType <- accumulate(bodyType)
               formParameters <- tryFormParameters
-            } yield BodyContent(MediaType(medType), bType, formParameters)
+            } yield BodyContent(MediaType(medType), bType.map(TypeRepresentation(_)), formParameters)
 
           Some(triedBodyContent)
         case _                       => None
@@ -105,7 +105,7 @@ object BodyContentAsDefaultMediaType {
           case _                 => None
         }
 
-      accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType))
+      accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType.map(TypeRepresentation(_))))
 
     }
 
