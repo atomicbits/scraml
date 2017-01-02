@@ -17,16 +17,15 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
+import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.util.TryUtils._
 import play.api.libs.json.{JsObject, JsValue}
 
-import scala.util.{Success, Try}
-import io.atomicbits.scraml.util.TryUtils._
-
 import scala.language.postfixOps
+import scala.util.{Success, Try}
 
 
 case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) {

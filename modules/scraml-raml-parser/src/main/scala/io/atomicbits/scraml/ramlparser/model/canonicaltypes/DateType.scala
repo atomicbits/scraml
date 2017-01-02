@@ -30,56 +30,51 @@ trait DateType extends PrimitiveType {
 
 }
 
-
 case object DateOnlyType extends DateType {
 
   val format = RFC3339FullDate
 
-  val canonicalName = CanonicalName("DateOnly")
+  val canonicalName = CanonicalName.create("DateOnly")
 
   val refers: CanonicalName = canonicalName
 
 }
-
 
 case object TimeOnlyType extends DateType {
 
   val format = RFC3339PartialTime
 
-  val canonicalName = CanonicalName("TimeOnly")
+  val canonicalName = CanonicalName.create("TimeOnly")
 
   val refers: CanonicalName = canonicalName
 
 }
-
 
 case object DateTimeOnlyType extends DateType {
 
   val format = DateOnlyTimeOnly
 
-  val canonicalName = CanonicalName("DateTimeOnly")
+  val canonicalName = CanonicalName.create("DateTimeOnly")
 
   val refers: CanonicalName = canonicalName
 
 }
-
 
 case object DateTimeDefaultType extends DateType {
 
   val format = RFC3339DateTime
 
-  val canonicalName = CanonicalName("DateTimeDefault")
+  val canonicalName = CanonicalName.create("DateTimeDefault")
 
   val refers: CanonicalName = canonicalName
 
 }
 
-
 case object DateTimeRFC2616Type extends DateType {
 
   val format = RFC2616
 
-  val canonicalName = CanonicalName("DateTimeRFC2616")
+  val canonicalName = CanonicalName.create("DateTimeRFC2616")
 
   val refers: CanonicalName = canonicalName
 

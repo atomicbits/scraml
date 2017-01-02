@@ -17,9 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
+
+import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
 
 /**
   * Created by peter on 4/12/16.
   */
-case class Property(name: String, propertyType: TypeRepresentation, required: Boolean = true)
+case class ParsedProperty(name: String, propertyType: TypeRepresentation, required: Boolean = true)

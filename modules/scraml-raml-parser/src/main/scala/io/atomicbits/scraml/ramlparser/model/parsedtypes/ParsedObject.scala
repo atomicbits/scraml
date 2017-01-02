@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
+import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import io.atomicbits.scraml.util.TryUtils
@@ -60,7 +60,7 @@ case class ParsedObject(id: Id,
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
-  def topLevelParent(typeLookup: TypeLookupTable): Option[ParsedObject] = {
+  def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = {
 
     def findTopLevelParent(uniqueId: UniqueId): ParsedObject = {
       val objElExt = typeLookup.objectMap(uniqueId)

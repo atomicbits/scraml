@@ -19,22 +19,20 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+
 /**
   * Created by peter on 25/03/16.
   */
-
-
 /**
   * The base class for all Id's.
   */
 sealed trait Id
 
-
 /**
   * UniqueId's are Id's that are expected to be unique by value within a RAML document.
   */
 sealed trait UniqueId extends Id
-
 
 trait AbsoluteId extends UniqueId {
 
@@ -73,8 +71,8 @@ case class RootId(id: String) extends AbsoluteId {
         // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here and
         // the best way to do that is using an absolute fragment id.
         AbsoluteFragmentId(this, path)
-      case absId: AbsoluteId                 => sys.error("All absolute IDs should be covered already.")
-      case other                             => sys.error(s"Cannot transform $other to an absolute id.")
+      case absId: AbsoluteId => sys.error("All absolute IDs should be covered already.")
+      case other             => sys.error(s"Cannot transform $other to an absolute id.")
     }
   }
 
@@ -82,18 +80,32 @@ case class RootId(id: String) extends AbsoluteId {
 
   val rootPath: List[String] = {
     val withoutProtocol = id.split("://").takeRight(1).head
-    val withoutHost = withoutProtocol.split('/').drop(1).toList
+    val withoutHost     = withoutProtocol.split('/').drop(1).toList
     withoutHost
   }
 
   val hostPath: List[String] = {
     val withoutProtocol = id.split("://").takeRight(1).head
-    val host = withoutProtocol.split('/').take(1).head
+    val host            = withoutProtocol.split('/').take(1).head
     host.split('.').toList
   }
 
 }
 
+object RootId {
+
+  def fromCanonical(canonicalName: CanonicalName): RootId = {
+
+    val domain = canonicalName.packagePath.take(2).mkString(".")
+    val path = canonicalName.packagePath.drop(2) match {
+      case Nil      => "/"
+      case somePath => somePath.mkString("/", "/", "/")
+    }
+
+    RootId(s"http://$domain$path${canonicalName.name}.json")
+  }
+
+}
 
 /**
   * A relative id identifies its schema uniquely when expanded with the anchor of its root schema. Its root schema
@@ -104,7 +116,6 @@ case class RootId(id: String) extends AbsoluteId {
   * @param id The string representation of the id
   */
 case class RelativeId(id: String) extends Id
-
 
 /**
   * A native id is like a relative id, but it is not expected to have an absolute parent id. NativeId's should not be used in

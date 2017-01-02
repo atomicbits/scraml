@@ -15,11 +15,41 @@
         "zip":           { "type": "integer" }
       },
       "required": ["streetAddress", "city", "state"]
+    },
+    "bars": {
+      "type": "object",
+      "properties": {
+        "baz": "string"
+      }
+    },
+    "barlist": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "barpointer": {
+      "$ref": "#/definitions/barlist"
     }
   },
   "properties": {
     "foo": {
-      "type": "string"
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/address"
+      }
+    },
+    "foobars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/bars"
+      }
+    },
+    "foobarlist": {
+      "$ref": "#definitions/barlist"
+    },
+    "foobarpointer": {
+      "$ref": "#definitions/barpointer"
     }
   }
 }

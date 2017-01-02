@@ -17,15 +17,15 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.canonicaltypes
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
+
+import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
 
 /**
-  * Created by peter on 11/12/16.
+  * Created by peter on 10/02/16.
   */
-case object FileType extends PrimitiveType {
+case class ParsedParameter(name: String, parameterType: TypeRepresentation, required: Boolean = true, repeated: Boolean = false) {
 
-  val canonicalName = CanonicalName.create("File")
-
-  val refers: CanonicalName = canonicalName
+  def asRequired: ParsedParameter = this.copy(required = true)
 
 }

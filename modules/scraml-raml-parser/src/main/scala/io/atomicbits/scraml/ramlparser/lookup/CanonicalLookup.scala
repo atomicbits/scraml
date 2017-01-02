@@ -17,15 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.canonicaltypes
+package io.atomicbits.scraml.ramlparser.lookup
+
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
 
 /**
-  * Created by peter on 11/12/16.
+  * Created by peter on 17/12/16.
   */
-case object FileType extends PrimitiveType {
-
-  val canonicalName = CanonicalName.create("File")
-
-  val refers: CanonicalName = canonicalName
-
-}
+case class CanonicalLookup(map: Map[CanonicalName, CanonicalType] = Map.empty)

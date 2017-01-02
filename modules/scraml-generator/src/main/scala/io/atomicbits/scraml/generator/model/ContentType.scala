@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.generator.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedTypeReference$
-import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType, ParsedParameters}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameters, ParsedTypeReference$}
+import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType}
 
 
 /**

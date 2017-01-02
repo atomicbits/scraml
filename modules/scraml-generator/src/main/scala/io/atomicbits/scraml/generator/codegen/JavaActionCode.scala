@@ -23,8 +23,7 @@ import java.util.Locale
 
 import io.atomicbits.scraml.generator.model._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.ParsedParameter
-import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameter, _}
 
 /**
   * Created by peter on 30/09/15.

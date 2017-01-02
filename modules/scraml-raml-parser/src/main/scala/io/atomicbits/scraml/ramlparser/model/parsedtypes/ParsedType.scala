@@ -44,12 +44,7 @@ trait ParsedType extends Identifiable {
 
   def updated(id: Id): ParsedType
 
-  def asTypeModel(typeModel: TypeModel): ParsedType
-
-  def model: TypeModel
-
 }
-
 
 trait Identifiable {
 
@@ -57,13 +52,15 @@ trait Identifiable {
 
   def updated(id: Id): Identifiable
 
-}
+  def asTypeModel(typeModel: TypeModel): ParsedType
 
+  def model: TypeModel
+
+}
 
 trait PrimitiveType extends ParsedType
 
 trait NonPrimitiveType extends ParsedType
-
 
 /**
   * Only used in json-schema.
@@ -86,7 +83,7 @@ trait Fragmented {
             case frag: Option[Fragmented] => (frag, next)
             case _                        => (None, next)
           }
-        case ((None, _), _)            => (None, None)
+        case ((None, _), _) => (None, None)
       }
 
     identifiableOpt
@@ -94,11 +91,7 @@ trait Fragmented {
 
 }
 
-
-trait AllowedAsObjectField {
-
-}
-
+trait AllowedAsObjectField {}
 
 object ParsedType {
 
@@ -117,21 +110,20 @@ object ParsedType {
 
   }
 
-
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedType]] = {
 
     val result =
       json match {
-        case ParsedMultipleInheritance(tryMultiType) => Some(tryMultiType)
-        case ParsedArray(tryArrayType)               => Some(tryArrayType) // ArrayType must stay on the second spot of this pattern match!
-        case ParsedUnionType(tryUnionType)           => Some(tryUnionType)
-        case ParsedString(tryStringType)             => Some(tryStringType)
-        case ParsedNumber(tryNumberType)             => Some(tryNumberType)
-        case ParsedInteger(tryIntegerType)           => Some(tryIntegerType)
-        case ParsedBoolean(tryBooleanType)           => Some(tryBooleanType)
-        case ParsedDateOnly(dateOnlyType)            => Some(dateOnlyType)
-        case ParsedTimeOnly(timeOnlyType)            => Some(timeOnlyType)
-        case ParsedDateTimeOnly(dateTimeOnlyType)    => Some(dateTimeOnlyType)
+        case ParsedMultipleInheritance(tryMultiType)    => Some(tryMultiType)
+        case ParsedArray(tryArrayType)                  => Some(tryArrayType) // ArrayType must stay on the second spot of this pattern match!
+        case ParsedUnionType(tryUnionType)              => Some(tryUnionType)
+        case ParsedString(tryStringType)                => Some(tryStringType)
+        case ParsedNumber(tryNumberType)                => Some(tryNumberType)
+        case ParsedInteger(tryIntegerType)              => Some(tryIntegerType)
+        case ParsedBoolean(tryBooleanType)              => Some(tryBooleanType)
+        case ParsedDateOnly(dateOnlyType)               => Some(dateOnlyType)
+        case ParsedTimeOnly(timeOnlyType)               => Some(timeOnlyType)
+        case ParsedDateTimeOnly(dateTimeOnlyType)       => Some(dateTimeOnlyType)
         case ParsedDateTimeDefault(dateTimeDefaultType) => Some(dateTimeDefaultType)
         case ParsedDateTimeRFC2616(dateTimeRfc2616Type) => Some(dateTimeRfc2616Type)
         case ParsedFile(fileType)                       => Some(fileType)
@@ -141,20 +133,18 @@ object ParsedType {
         case ParsedGenericObject(tryGenericObjectType)  => Some(tryGenericObjectType)
         case ParsedTypeReference(tryTypeReferenceType)  => Some(tryTypeReferenceType)
         case InlineTypeDeclaration(inlineType)          => Some(inlineType)
+        case ParsedFragmentContainer(tryFragmentCont)   => Some(tryFragmentCont)
         case _                                          => None
       }
 
     result
   }
 
-
   def typeDeclaration(json: JsValue): Option[JsValue] = {
     List((json \ "type").toOption, (json \ "schema").toOption).flatten.headOption
   }
 
-
 }
-
 
 object PrimitiveType {
 

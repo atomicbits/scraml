@@ -23,21 +23,27 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import io.atomicbits.scraml.generator.codegen.{CaseClassGenerator, JavaResourceClassGenerator, PojoGenerator, ScalaResourceClassGenerator}
+import io.atomicbits.scraml.generator.codegen.{
+  CaseClassGenerator,
+  JavaResourceClassGenerator,
+  PojoGenerator,
+  ScalaResourceClassGenerator
+}
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
 import io.atomicbits.scraml.generator.model._
 import ClassRep.ClassMap
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps
-import java.util.{Map => JMap}
+import java.util.{ Map => JMap }
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
-import io.atomicbits.scraml.generator.license.{LicenseData, LicenseVerifier}
-import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml, RootId}
-import io.atomicbits.scraml.ramlparser.parser.{RamlParseException, RamlParser}
+import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
+import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences._
 
@@ -47,7 +53,6 @@ import scalariform.formatter.preferences._
   */
 object ScramlGenerator {
 
-
   def generateScalaCode(ramlApiPath: String,
                         apiPackageName: String,
                         apiClassName: String,
@@ -55,14 +60,12 @@ object ScramlGenerator {
                         thirdPartyClassHeader: String): JMap[String, String] =
     generateFor(Scala, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
 
-
   def generateJavaCode(ramlApiPath: String,
                        apiPackageName: String,
                        apiClassName: String,
                        licenseKey: String,
                        thirdPartyClassHeader: String): JMap[String, String] =
     generateFor(Java, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
-
 
   private[generator] def generateFor(language: Language,
                                      ramlApiPath: String,
@@ -76,8 +79,8 @@ object ScramlGenerator {
     // We transform the scramlLicenseKey and thirdPartyClassHeader fields to optionals here. We don't take them as optional parameters
     // higher up the chain to maintain a Java-compatible interface for the ScramlGenerator.
     val licenseKey: Option[String] =
-    if (scramlLicenseKey == null || scramlLicenseKey.isEmpty) None
-    else Some(scramlLicenseKey)
+      if (scramlLicenseKey == null || scramlLicenseKey.isEmpty) None
+      else Some(scramlLicenseKey)
     val classHeader: Option[String] =
       if (thirdPartyClassHeader == null || thirdPartyClassHeader.isEmpty) None
       else Some(thirdPartyClassHeader)
@@ -95,30 +98,27 @@ object ScramlGenerator {
     mapAsJavaMap[String, String](tupleList.toMap)
   }
 
-
   private[generator] def generateClassReps(ramlApiPath: String,
                                            apiPackageName: String,
                                            apiClassName: String,
                                            language: Language): Seq[ClassRep] = {
 
     val packageBasePath = apiPackageName.split('.').toList.filter(!_.isEmpty)
-    val charsetName = "UTF-8" // ToDo: Get the charset as input parameter.
+    val charsetName     = "UTF-8" // ToDo: Get the charset as input parameter.
 
     // Generate the RAML model
     println("Running RAML model generation")
     val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName, packageBasePath).parse
     val raml = tryRaml match {
-      case Success(rml)                     => rml
+      case Success(rml) => rml
       case Failure(rpe: RamlParseException) =>
-        sys.error(
-          s"""
+        sys.error(s"""
              |- - - Invalid RAML model: - - -
              |${rpe.messages.mkString("\n")}
              |- - - - - - - - - - - - - - - -
            """.stripMargin)
-      case Failure(e)                       =>
-        sys.error(
-          s"""
+      case Failure(e) =>
+        sys.error(s"""
              |- - - Unexpected parse error: - - -
              |${e.printStackTrace()}
              |- - - - - - - - - - - - - - - - - -
@@ -129,19 +129,25 @@ object ScramlGenerator {
     // We need an implicit reference to the language we're generating the DSL for.
     implicit val lang = language
 
-    val host = packageBasePath.take(2).reverse.mkString(".")
+    val host    = packageBasePath.take(2).reverse.mkString(".")
     val urlPath = packageBasePath.drop(2).mkString("/")
     val nativeToRootId: NativeId => RootId = nativeId => RootId(s"http://$host/$urlPath/${nativeId.id}.json")
 
-    val ramlExpanded = raml.collectTypes(nativeToRootId)
-    val typeLookupTable = ramlExpanded.typeLookupTable.get
+    val defaultBasePath: List[String] = packageBasePath
+
+    // new canonical type model lookup
+    // val (ramlCanonical, canonicalLookup) = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath)).collect(raml)
+
+    //
+
+    val ramlExpanded    = raml.collectCanonicalTypes(defaultBasePath)
+    val typeLookupTable = ramlExpanded.canonicalMap.get
 
     val canonicalMap: CanonicalMap = new TypeClassRepAssembler(nativeToRootId).deduceClassReps(typeLookupTable)
     println(s"Type Lookup generated")
 
     val classMap: ClassMap = canonicalMap.values.map(classRep => classRep.classRef -> classRep).toMap
-    val richResources = ramlExpanded.resources.map(RichResource(_, packageBasePath, typeLookupTable, canonicalMap, nativeToRootId))
-
+    val richResources      = ramlExpanded.resources.map(RichResource(_, packageBasePath, typeLookupTable, canonicalMap, nativeToRootId))
 
     language match {
       case Scala =>
@@ -150,7 +156,7 @@ object ScramlGenerator {
         val resources: List[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
         println(s"Resources DSL generated")
         caseClasses ++ resources
-      case Java  =>
+      case Java =>
         val pojos: Seq[ClassRep] = PojoGenerator.generatePojos(classMap)
         println(s"POJOs generated")
         val resources: List[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
@@ -160,7 +166,6 @@ object ScramlGenerator {
 
   }
 
-
   private val formatSettings =
     FormattingPreferences()
       .setPreference(RewriteArrowSymbols, true)
@@ -168,7 +173,6 @@ object ScramlGenerator {
       .setPreference(AlignSingleLineCaseStatements, true)
       .setPreference(DoubleIndentClassDeclaration, true)
       .setPreference(IndentSpaces, 2)
-
 
   private def addLicenseAndFormat(classRep: ClassRep, language: Language, licenseHeader: String): ClassRep = {
     val content = s"$licenseHeader\n${classRep.content.get}"
@@ -178,7 +182,6 @@ object ScramlGenerator {
     }
     classRep.withContent(formattedContent)
   }
-
 
   private val agplClassHeader =
     s"""|All rights reserved. This program and the accompanying materials
@@ -191,11 +194,10 @@ object ScramlGenerator {
         |MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
         |Affero General Public License for more details. """.stripMargin
 
-
   private def classRepToFilePathAndContent(classRep: ClassRep, language: Language): (String, String) = {
 
     val classReference = classRep.classRef
-    val pathParts = classReference.safePackageParts
+    val pathParts      = classReference.safePackageParts
     // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
     // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
     //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
@@ -210,7 +212,6 @@ object ScramlGenerator {
 
     (filePath, classRep.content.getOrElse(s"No content generated for class ${classReference.fullyQualifiedName}"))
   }
-
 
   private def deferLicenseHeader(licenseKey: Option[LicenseData], thirdPartyLicenseHeader: Option[String]): String = {
 

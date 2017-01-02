@@ -26,6 +26,8 @@ trait CanonicalType {
 
   def canonicalName: CanonicalName
 
+//  def typeReference: TypeReference
+
 }
 
 

@@ -20,9 +20,10 @@
 package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
-import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
+import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.{NativeId, ParsedParameter, Resource, RootId}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
+import io.atomicbits.scraml.ramlparser.model.{NativeId, Resource, RootId}
 
 /**
  * Created by peter on 22/08/15. 
@@ -38,7 +39,7 @@ object RichResource {
 
   def apply(resource: Resource,
             packageBasePath: List[String],
-            typeLookupTable: TypeLookupTable,
+            typeLookupTable: OldCanonicalLookupHelper,
             canonicalMap: CanonicalMap,
             nativeToRootId: NativeId => RootId)(implicit lang: Language): RichResource = {
 

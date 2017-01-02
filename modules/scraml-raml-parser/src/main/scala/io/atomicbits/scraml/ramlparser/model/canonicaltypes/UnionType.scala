@@ -32,10 +32,9 @@ case class UnionType(types: Set[TypeReference]) extends NonPrimitiveType {
 
     val commonPackage = findCommonPackage(packages)
 
-    CanonicalName(name = s"UnionOf${classNames.mkString("With")}", packagePath = commonPackage)
+    CanonicalName.create(name = s"UnionOf${classNames.mkString("With")}", packagePath = commonPackage)
 
   }
-
 
   private def findCommonPackage(packages: List[List[String]]): List[String] = {
 
@@ -45,14 +44,12 @@ case class UnionType(types: Set[TypeReference]) extends NonPrimitiveType {
 
       if (headOpts.contains(None)) {
         common
-      }
-      else {
-        val heads = headOpts.map(_.get)
+      } else {
+        val heads     = headOpts.map(_.get)
         val firstHead = heads.head
         if (heads.tail.exists(_ != firstHead)) {
           common
-        }
-        else {
+        } else {
           val tails = packs.map(_.tail)
           findCommon(tails, common :+ firstHead)
         }
@@ -63,6 +60,5 @@ case class UnionType(types: Set[TypeReference]) extends NonPrimitiveType {
     findCommon(packages)
 
   }
-
 
 }

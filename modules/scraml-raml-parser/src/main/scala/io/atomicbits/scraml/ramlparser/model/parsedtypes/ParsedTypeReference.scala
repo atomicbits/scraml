@@ -22,19 +22,22 @@ package io.atomicbits.scraml.ramlparser.model.parsedtypes
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 1/04/16.
   */
 case class ParsedTypeReference(refersTo: Id,
-                               id: Id = ImplicitId,
-                               required: Option[Boolean] = None,
+                               id: Id                                = ImplicitId,
+                               required: Option[Boolean]             = None,
                                genericTypes: Map[String, ParsedType] = Map.empty,
-                               fragments: Fragments = Fragments(),
-                               model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
+                               fragments: Fragments                  = Fragments(),
+                               model: TypeModel                      = RamlModel)
+    extends NonPrimitiveType
+    with AllowedAsObjectField
+    with Fragmented {
 
   override def updated(updatedId: Id): ParsedTypeReference = copy(id = updatedId)
 
@@ -42,11 +45,9 @@ case class ParsedTypeReference(refersTo: Id,
 
 }
 
-
 object ParsedTypeReference {
 
   val value = "$ref"
-
 
   def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ParsedTypeReference] = {
 
@@ -85,7 +86,6 @@ object ParsedTypeReference {
       Success(model)
     )(new ParsedTypeReference(_, _, _, _, _, _))
   }
-
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedTypeReference]] = {
 

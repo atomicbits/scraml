@@ -19,8 +19,9 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.lookup.{TypeLookupParser, TypeLookupTable}
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.Types
+import io.atomicbits.scraml.ramlparser.lookup.{CanonicalNameGenerator, OldCanonicalLookupHelper, OldCanonicalTypeCollector}
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameters, Types}
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._
@@ -41,18 +42,20 @@ case class Raml(title: String,
                 traits: Traits,
                 types: Types,
                 resources: List[Resource],
-                typeLookupTable: Option[TypeLookupTable] = None) {
+                canonicalMap: Option[OldCanonicalLookupHelper] = None) {
 
   /**
     * Collect all types in the type lookup table and replace all inline types with native type references that point to the
     * nativeIdMap map of the type lookup table.
     *
-    * @param nativeToRootId The function that transforms a native ID to a root ID.
     * @return This changed Raml model with a type lookup table.
     */
-  def collectTypes(nativeToRootId: NativeId => RootId): Raml = {
-    val (ramlExpanded, typeLookupTable): (Raml, TypeLookupTable) = TypeLookupParser.parse(this)
-    ramlExpanded.copy(typeLookupTable = Some(typeLookupTable))
+  def collectCanonicalTypes(defaultBasePath: List[String]): Raml = {
+    // uniqueIdToCanonicalName: UniqueId => CanonicalName
+    val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+    val canonicalTypeCollector = OldCanonicalTypeCollector(canonicalNameGenerator)
+    val (ramlExpanded, canonicalMap): (Raml, OldCanonicalLookupHelper) = canonicalTypeCollector.collect(this)
+    ramlExpanded.copy(canonicalMap = Some(canonicalMap))
   }
 
 }

@@ -22,9 +22,9 @@ package io.atomicbits.scraml.ramlparser.model.parsedtypes
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 1/04/16.
@@ -45,8 +45,9 @@ case class Fragments(id: Id = ImplicitId, fragmentMap: Map[String, ParsedType] =
 
   override def required: Option[Boolean] = None
 
-}
+  def values = fragmentMap.values.toList
 
+}
 
 object Fragments {
 
@@ -72,7 +73,6 @@ object Fragments {
     )(Fragments(_, _))
   }
 
-
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Fragments]] = {
 
     json match {
@@ -81,7 +81,6 @@ object Fragments {
     }
 
   }
-
 
   // Process the fragments and exclude the json-schema fields that we don't need to consider
   // (should be only objects as other fields are ignored as fragments) ToDo: check this

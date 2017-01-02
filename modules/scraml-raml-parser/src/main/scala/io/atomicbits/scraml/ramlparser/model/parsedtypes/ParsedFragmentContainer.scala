@@ -17,14 +17,25 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import play.api.libs.json.{ JsObject, JsValue }
+
+import scala.util.{ Try }
 
 /**
-  * Created by peter on 10/02/16.
+  * Created by peter on 22/12/16.
   */
-case class ParsedParameter(name: String, parameterType: TypeRepresentation, required: Boolean = true, repeated: Boolean = false) {
+object ParsedFragmentContainer {
 
-  def asRequired: ParsedParameter = this.copy(required = true)
+  def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[Fragments]] = {
+
+    (ParsedType.typeDeclaration(json), (json \ "properties").toOption, json) match {
+      case (None, None, jsObj: JsObject) => Some(Fragments(jsObj))
+      case _                             => None
+    }
+
+  }
 
 }

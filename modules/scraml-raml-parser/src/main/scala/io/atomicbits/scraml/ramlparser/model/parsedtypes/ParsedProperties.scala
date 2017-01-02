@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model
+package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
+import io.atomicbits.scraml.ramlparser.model.{TypeModel, TypeRepresentation}
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils._
 import play.api.libs.json.{JsObject, JsValue}
@@ -29,13 +29,13 @@ import scala.util.{Success, Try}
 /**
   * Created by peter on 4/12/16.
   */
-case class ParsedProperties(valueMap: Map[String, Property] = Map.empty) {
+case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
 
-  def apply(name: String): Property = valueMap(name)
+  def apply(name: String): ParsedProperty = valueMap(name)
 
-  def get(name: String): Option[Property] = valueMap.get(name)
+  def get(name: String): Option[ParsedProperty] = valueMap.get(name)
 
-  def map(f: Property => Property): ParsedProperties = {
+  def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
     copy(valueMap = valueMap.mapValues(f))
   }
 
@@ -43,7 +43,7 @@ case class ParsedProperties(valueMap: Map[String, Property] = Map.empty) {
     valueMap.mapValues(_.propertyType.parsed)
   }
 
-  val values: List[Property] = valueMap.values.toList
+  val values: List[ParsedProperty] = valueMap.values.toList
 
   val types: List[ParsedType] = valueMap.values.map(_.propertyType.parsed).toList
 
@@ -58,11 +58,11 @@ object ParsedProperties {
 
     def jsObjectToProperties(jsObject: JsObject): Try[ParsedProperties] = {
 
-      val valueMap: Map[String, Try[Property]] =
+      val valueMap: Map[String, Try[ParsedProperty]] =
         jsObject.value.collect {
           case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
-              Property(
+              ParsedProperty(
                 name = name,
                 propertyType = TypeRepresentation(paramType.asTypeModel(model)),
                 required = paramType.required.getOrElse(paramType.defaultRequiredValue)

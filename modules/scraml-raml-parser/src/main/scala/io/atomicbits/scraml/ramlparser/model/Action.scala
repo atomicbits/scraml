@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
 import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
 import play.api.libs.json.{JsObject, JsValue, Json}
 

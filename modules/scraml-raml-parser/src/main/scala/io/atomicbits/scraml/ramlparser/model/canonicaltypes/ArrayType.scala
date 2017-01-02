@@ -26,8 +26,10 @@ case object ArrayType extends CanonicalType {
 
   val typeParameter = TypeParameter("T")
 
-  val canonicalName = CanonicalName("Array")
+  val canonicalName = CanonicalName.create("Array")
 
   val typeParameters: List[TypeParameter] = List(ArrayType.typeParameter)
+
+//  val typeReference = ArrayTypeReference()
 
 }

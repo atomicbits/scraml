@@ -24,7 +24,7 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
   */
 case object StringType extends PrimitiveType {
 
-  val canonicalName = CanonicalName("String")
+  val canonicalName = CanonicalName.create("String")
 
   val refers: CanonicalName = canonicalName
 

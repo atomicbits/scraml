@@ -20,27 +20,28 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{CanonicalName, CanonicalType}
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 
 /**
   * A lookup table to follow schema ids and external links to schema definitions (JsObject) and canonical names.
   *
-  * @param lookupTable Maps absolute schema ids (and relative schema ids after they have been expanded to their
-  *                    absolute form) to the schema definition. Mind that not all schema definitions represent
-  *                    object types, they can represent any type, or even no type (usually when defining nested
-  *                    schemas).
-  * @param nativeIdMap Maps the external schema links to the corresponding schema id. That schema id then
-  *                    corresponds with a schema in the lookupTable. That schema should represent an
-  *                    actual type (integer, number, string, boolean, object, List[integer], List[number],
-  *                    List[string], List[boolean], List[object], or even nested lists).
+  * @param lookupTable        Maps absolute schema ids (and relative schema ids after they have been expanded to their
+  *                           absolute form) to the schema definition. Mind that not all schema definitions represent
+  *                           object types, they can represent any type, or even no type (usually when defining nested
+  *                           schemas).
+  * @param nativeIdMap        Maps the external schema links to the corresponding schema id. That schema id then
+  *                           corresponds with a schema in the lookupTable. That schema should represent an
+  *                           actual type (integer, number, string, boolean, object, List[integer], List[number],
+  *                           List[string], List[boolean], List[object], or even nested lists).
   */
-case class TypeLookupTable(lookupTable: Map[UniqueId, ParsedType] = Map.empty,
-                           nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
-                           objectMap: Map[UniqueId, ParsedObject] = Map.empty,
-                           enumMap: Map[UniqueId, ParsedEnum] = Map.empty) {
+case class OldCanonicalLookupHelper(lookupTable: Map[UniqueId, ParsedType] = Map.empty,
+                                    nativeIdMap: Map[NativeId, UniqueId] = Map.empty,
+                                    objectMap: Map[UniqueId, ParsedObject] = Map.empty,
+                                    enumMap: Map[UniqueId, ParsedEnum] = Map.empty) {
 
-  def map(f: TypeLookupTable => TypeLookupTable): TypeLookupTable = f(this)
+  def map(f: OldCanonicalLookupHelper => OldCanonicalLookupHelper): OldCanonicalLookupHelper = f(this)
 
 
   def lookup(id: Id): ParsedType = {
@@ -55,7 +56,7 @@ case class TypeLookupTable(lookupTable: Map[UniqueId, ParsedType] = Map.empty,
               fragmentedSchema.fragments.fragmentMap.get(fr)
                 .map(fragmentSearch(_, frs))
                 .getOrElse(sys.error(s"Cannot follow fragment $fr into ${fragmentedSchema.id}"))
-            case _                           => sys.error(s"Cannot follow the following fragment path: $id")
+            case _                            => sys.error(s"Cannot follow the following fragment path: $id")
           }
       }
     }

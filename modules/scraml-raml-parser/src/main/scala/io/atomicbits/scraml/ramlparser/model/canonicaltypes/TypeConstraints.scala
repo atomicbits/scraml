@@ -22,28 +22,25 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 /**
   * Created by peter on 9/12/16.
   */
-trait TypeConstraints[T <: TypeReference]
+trait TypeConstraints[T <: GenericReferrable]
 
-
-case class StringConstraints(format: Option[String] = None,
+case class StringConstraints(format: Option[String]  = None,
                              pattern: Option[String] = None,
-                             minLength: Option[Int] = None,
-                             maxLength: Option[Int] = None) extends TypeConstraints[StringType.type]
+                             minLength: Option[Int]  = None,
+                             maxLength: Option[Int]  = None)
+    extends TypeConstraints[StringType.type]
 
+case class FileConstraints(fileTypes: Option[Seq[String]] = None, minLength: Option[Int] = None, maxLength: Option[Int] = None)
+    extends TypeConstraints[FileType.type]
 
-case class FileConstraints(fileTypes: Option[Seq[String]] = None,
-                           minLength: Option[Int] = None,
-                           maxLength: Option[Int] = None) extends TypeConstraints[FileType.type]
+case class IntegerConstraints(format: Option[String]  = None,
+                              minimum: Option[Int]    = None,
+                              maximum: Option[Int]    = None,
+                              multipleOf: Option[Int] = None)
+    extends TypeConstraints[IntegerType.type]
 
-
-case class IntegerConstraints(format: Option[String] = None,
-                              minimum: Option[Int] = None,
-                              maximum: Option[Int] = None,
-                              multipleOf: Option[Int] = None) extends TypeConstraints[IntegerType.type ]
-
-
-case class NumberConstraints(format: Option[String] = None,
-                             minimum: Option[Int] = None,
-                             maximum: Option[Int] = None,
-                             multipleOf: Option[Int] = None) extends TypeConstraints[NumberType.type]
-
+case class NumberConstraints(format: Option[String]  = None,
+                             minimum: Option[Int]    = None,
+                             maximum: Option[Int]    = None,
+                             multipleOf: Option[Int] = None)
+    extends TypeConstraints[NumberType.type]

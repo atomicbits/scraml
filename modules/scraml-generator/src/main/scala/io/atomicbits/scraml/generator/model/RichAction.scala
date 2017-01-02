@@ -21,9 +21,9 @@ package io.atomicbits.scraml.generator.model
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
-import io.atomicbits.scraml.ramlparser.lookup.TypeLookupTable
+import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedTypeReference$
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameters, ParsedTypeReference$}
 
 import scala.language.postfixOps
 
@@ -41,7 +41,7 @@ case class RichAction(actionType: Method,
 object RichAction {
 
   def apply(action: Action,
-            lookupTable: TypeLookupTable,
+            lookupTable: OldCanonicalLookupHelper,
             canonicalMap: CanonicalMap,
             nativeToRootId: NativeId => RootId)(implicit lang: Language): RichAction = {
 
