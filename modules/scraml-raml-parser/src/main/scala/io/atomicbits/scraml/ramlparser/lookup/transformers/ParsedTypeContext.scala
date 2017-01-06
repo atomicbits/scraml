@@ -34,8 +34,10 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
   * @param canonicalNameOpt The optional canonical name for the given parsedType.
   * @param parentNameOpt The optional canonical name for the parent of the parsedType. This variable is only present in some cases
   *                      for json-schema type definitions.
+  * @param imposedTypeDiscriminator The optional type discriminator property name that was specified by a parent class
   */
 case class ParsedTypeContext(parsedType: ParsedType,
                              canonicalLookupHelper: CanonicalLookupHelper,
                              canonicalNameOpt: Option[CanonicalName] = None,
-                             parentNameOpt: Option[CanonicalName] = None)
+                             parentNameOpt: Option[CanonicalName] = None,
+                             imposedTypeDiscriminator: Option[String] = None)

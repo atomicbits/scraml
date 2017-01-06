@@ -19,12 +19,12 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.{TypeModel, TypeRepresentation}
+import io.atomicbits.scraml.ramlparser.model.{ TypeModel, TypeRepresentation }
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils._
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{ JsObject, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 4/12/16.
@@ -34,6 +34,8 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
   def apply(name: String): ParsedProperty = valueMap(name)
 
   def get(name: String): Option[ParsedProperty] = valueMap.get(name)
+
+  def -(name: String): ParsedProperties = copy(valueMap = valueMap - name)
 
   def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
     copy(valueMap = valueMap.mapValues(f))
@@ -51,7 +53,6 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
 
 }
 
-
 object ParsedProperties {
 
   def apply(jsValueOpt: Option[JsValue], model: TypeModel)(implicit parseContext: ParseContext): Try[ParsedProperties] = {
@@ -63,9 +64,9 @@ object ParsedProperties {
           case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
               ParsedProperty(
-                name = name,
+                name         = name,
                 propertyType = TypeRepresentation(paramType.asTypeModel(model)),
-                required = paramType.required.getOrElse(paramType.defaultRequiredValue)
+                required     = paramType.required.getOrElse(paramType.defaultRequiredValue)
               )
             }
         } toMap

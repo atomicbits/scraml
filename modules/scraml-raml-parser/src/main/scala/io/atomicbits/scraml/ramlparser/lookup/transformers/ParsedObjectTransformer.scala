@@ -42,20 +42,34 @@ object ParsedObjectTransformer {
     val canonicalLookupHelper: CanonicalLookupHelper = parsedTypeContext.canonicalLookupHelper
     val canonicalNameOpt: Option[CanonicalName]      = parsedTypeContext.canonicalNameOpt
     val parentNameOpt: Option[CanonicalName]         = parsedTypeContext.parentNameOpt // This is the optional json-schema parent
+    val imposedTypeDiscriminatorOpt: Option[String]  = parsedTypeContext.imposedTypeDiscriminator
+
+    def processTypeDiscriminator(typeDiscriminatorOpt: Option[String], props: ParsedProperties): (Option[String], ParsedProperties) = {
+      typeDiscriminatorOpt.flatMap { typeDiscriminator =>
+        props.get(typeDiscriminator).map(_.propertyType.parsed) collect {
+          case parsed: ParsedEnum => (parsed.choices.headOption, props - typeDiscriminator)
+        }
+      } getOrElse (None, props)
+    }
 
     def registerParsedObject(parsedObject: ParsedObject): (TypeReference, CanonicalLookupHelper) = {
 
       // Prepare the empty aggregator
       val aggregator: PropertyAggregator = (Map.empty[String, Property[_]], canonicalLookupHelper)
+
+      // if there is an imposed type discriminator, then we need to find its value and remove the discriminator from the properties.
+      val (typeDiscriminatorValue, propertiesWithoutTypeDiscriminator) =
+        processTypeDiscriminator(imposedTypeDiscriminatorOpt, parsedObject.properties)
       // Transform and register all properties of this object
-      val (properies, propertyUpdatedCanonicalLH) =
-        parsedObject.properties.valueMap.foldLeft(aggregator)(propertyTransformer)
+      val (properties, propertyUpdatedCanonicalLH) =
+        propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer)
 
       // Generate the canonical name for this object
       val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
 
       // Extract all json-schema children from this parsed object and register them in de canonical lookup helper
-      val jsonSchemaChildrenUpdatedCanonicalLH = extractJsonSchemaChildren(parsedObject, propertyUpdatedCanonicalLH, canonicalName)
+      val jsonSchemaChildrenUpdatedCanonicalLH =
+        extractJsonSchemaChildren(parsedObject, propertyUpdatedCanonicalLH, canonicalName, parsedObject.typeDiscriminator)
 
       // Get the RAML 1.0 parent from this parsed object, if any
       val parentId: Option[UniqueId] = parsedObject.parent // This is the RAML 1.0 parent
@@ -67,11 +81,11 @@ object ParsedObjectTransformer {
       val objectType =
         ObjectType(
           canonicalName          = canonicalName,
-          properties             = properies,
+          properties             = properties,
           parents                = parents,
           typeParameters         = parsedObject.typeParameters.map(TypeParameter),
-          typeDiscriminator      = parsedObject.typeDiscriminator,
-          typeDiscriminatorValue = parsedObject.typeDiscriminatorValue
+          typeDiscriminator      = List(imposedTypeDiscriminatorOpt, parsedObject.typeDiscriminator).flatten.headOption,
+          typeDiscriminatorValue = typeDiscriminatorValue
         )
 
       val typeReference: TypeReference = NonPrimitiveTypeReference(canonicalName) // We don't 'fill in' type parameter values here.
@@ -111,15 +125,18 @@ object ParsedObjectTransformer {
     */
   private def extractJsonSchemaChildren(parsedObject: ParsedObject,
                                         canonicalLookupHelper: CanonicalLookupHelper,
-                                        parentName: CanonicalName)
+                                        parentName: CanonicalName,
+                                        typeDiscriminatorOpt: Option[String])
                                        (implicit canonicalNameGenerator: CanonicalNameGenerator): CanonicalLookupHelper = { // format: on
+
+    val typeDiscriminator = typeDiscriminatorOpt.getOrElse("type")
 
     def registerObject(canonicalLH: CanonicalLookupHelper, parsedChild: ParsedType): CanonicalLookupHelper = {
 
-      ParsedTypeContext(parsedChild, canonicalLH, None, Some(parentName)) match {
-        case ParsedObjectTransformer(typeReference, updatedCanonicalLH)        => updatedCanonicalLH
-        case ParsedTypeReferenceTransformer(typeReference, updatedCanonicalLH) => updatedCanonicalLH
-        case _                                                                 => canonicalLH
+      ParsedTypeContext(parsedChild, canonicalLH, None, Some(parentName), Some(typeDiscriminator)) match {
+        case ParsedObjectTransformer(typeReference, updatedCanonicalLH) => updatedCanonicalLH
+        // case ParsedTypeReferenceTransformer(typeReference, updatedCanonicalLH) => updatedCanonicalLH
+        case _ => canonicalLH
       }
 
     }
