@@ -51,9 +51,10 @@ object ParsedToCanonicalTypeTransformer {
       case ParsedStringTransformer(typeReference, updatedLookupHelper)        => (typeReference, updatedLookupHelper)
       case ParsedNumberTransformer(typeReference, updatedLookupHelper)        => (typeReference, updatedLookupHelper)
       case ParsedIntegerTransformer(typeReference, updatedLookupHelper)       => (typeReference, updatedLookupHelper)
+      case ParsedNullTransformer(typeReference, updatedLookupHelper)          => (typeReference, updatedLookupHelper)
       case ParsedGenericObjectTransformer(typeReference, updatedLookupHelper) => (typeReference, updatedLookupHelper)
       case x                                                                  => sys.error(s"Error transforming $x")
-      //      case parsedBoolean: ParsedBoolean                         => ???
+      // Currently not yet supported:
       //      case parsedFile: ParsedFile                               => ???
       //      case parsedNull: ParsedNull                               => ???
       //      case parsedMultipleInheritance: ParsedMultipleInheritance => ???

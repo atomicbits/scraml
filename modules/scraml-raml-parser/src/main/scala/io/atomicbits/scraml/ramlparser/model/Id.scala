@@ -68,9 +68,9 @@ case class RootId(id: String) extends AbsoluteId {
       case ImplicitId                        => AbsoluteFragmentId(this, path)
       case nativeId: NativeId                =>
         // We should not expect native ids inside a json-schema, but our parser doesn't separate json-schema and RAML 1.0 types,
-        // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here and
-        // the best way to do that is using an absolute fragment id.
-        AbsoluteFragmentId(this, path)
+        // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here
+        // by using the NoId.
+        NoId
       case absId: AbsoluteId => sys.error("All absolute IDs should be covered already.")
       case other             => sys.error(s"Cannot transform $other to an absolute id.")
     }
@@ -96,7 +96,7 @@ object RootId {
 
   def fromCanonical(canonicalName: CanonicalName): RootId = {
 
-    val domain = canonicalName.packagePath.take(2).mkString(".")
+    val domain = canonicalName.packagePath.take(2).reverse.mkString(".")
     val path = canonicalName.packagePath.drop(2) match {
       case Nil      => "/"
       case somePath => somePath.mkString("/", "/", "/")
@@ -167,3 +167,18 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
   * It is not a UniqueId since may items can have ImplicitId's.
   */
 case object ImplicitId extends Id
+
+/**
+  * Placeholder object for an ID that points to nowhere.
+  */
+case object NoId extends AbsoluteId {
+
+  override def id: String = "http://no.where"
+
+  override def rootPart: RootId = RootId(id)
+
+  override def rootPath: List[String] = List.empty
+
+  override def hostPath: List[String] = List("no", "where")
+
+}

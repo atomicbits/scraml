@@ -24,4 +24,10 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Can
 /**
   * Created by peter on 17/12/16.
   */
-case class CanonicalLookup(map: Map[CanonicalName, CanonicalType] = Map.empty)
+case class CanonicalLookup(map: Map[CanonicalName, CanonicalType] = Map.empty) {
+
+  def apply(canonicalName: CanonicalName): CanonicalType = map(canonicalName)
+
+  def get(canonicalName: CanonicalName): Option[CanonicalType] = map.get(canonicalName)
+
+}

@@ -22,6 +22,7 @@ package io.atomicbits.scraml.ramlparser.lookup
 import java.util.UUID
 
 import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
@@ -36,11 +37,21 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
     val canonicalLookupHelper = CanonicalLookupHelper()
 
-    val (ramlWithCanonicalReferences, canonicalLookupHelperWithCanonicalTypes) = collectCanonicals(raml, canonicalLookupHelper)
+    val canonicalLookupWithIndexedParsedTypes = indexParsedTypes(raml, canonicalLookupHelper)
+    val (ramlWithCanonicalReferences, canonicalLookupHelperWithCanonicalTypes) =
+      collectCanonicals(raml, canonicalLookupWithIndexedParsedTypes)
 
-    val canonicalLookup = CanonicalLookup() // ToDo
+    val canonicalLookup = CanonicalLookup(canonicalLookupHelperWithCanonicalTypes.lookupTable)
 
     (ramlWithCanonicalReferences, canonicalLookup)
+  }
+
+  def indexParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
+    // First, index all the parsed types on their Id so that we can perform forward lookups when creating the canonical types.
+    val canonicalLookupHelperWithJsonSchemas  = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexListedParsedTypes)
+    val canonicalLookupHelperWithResoureTypes = raml.resources.foldLeft(canonicalLookupHelperWithJsonSchemas)(indexResourceParsedTypes)
+
+    canonicalLookupHelperWithResoureTypes
   }
 
   /**
@@ -48,36 +59,59 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     */
   def collectCanonicals(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): (Raml, CanonicalLookupHelper) = {
 
-    // Todo: consider to collect all json-schema fragments first throughout the types and the resources.
+    // Now, we can create all canonical types and fill in all the TypeReferences in the RAML model's TypeRepresentation instances,
+    // which are located in the BodyContent and ParsedParameter objects.
+    val canonicalLookupWithCanonicals = transformParsedTypeIndex(canonicalLookupHelper)
 
-    val updatedCanonicalLookupHelper = processTypes(raml, canonicalLookupHelper)
+    val ramlUpdated = transformResourceParsedTypes(raml, canonicalLookupWithCanonicals)
 
-    val ramlUpdated = raml // ToDo: complete RAML canonical references
-
-    (ramlUpdated, updatedCanonicalLookupHelper)
+    (ramlUpdated, canonicalLookupWithCanonicals)
   }
 
-  private def processTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
+  private def indexListedParsedTypes(canonicalLookupHelper: CanonicalLookupHelper,
+                                     idWithParsedType: (Id, ParsedType)): CanonicalLookupHelper = {
+    val (id, parsedType) = idWithParsedType
 
-    val canonicalLookupHelperWithJsonSchemas = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexParsedTypes)
+    val finalCanonicalLookupHelper: CanonicalLookupHelper =
+      (parsedType.id, id) match {
+        case (absoluteId: AbsoluteId, nativeId: NativeId) =>
+          val expandedParsedType   = expandRelativeToAbsoluteIds(parsedType)
+          val collectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType)
+          val updatedCLH           = canonicalLookupHelper.addJsonSchemaNativeToAbsoluteIdTranslation(nativeId, absoluteId)
 
-    val canonicalLookupHelperWithResoureTypes = raml.resources.foldLeft(canonicalLookupHelperWithJsonSchemas)(indexResourceParsedTypes)
+          collectedParsedTypes.foldLeft(updatedCLH) { (canonicalLH, parsedType) =>
+            canonicalLH.addParsedTypeIndex(parsedType.id, parsedType)
+          }
+        case (nativeId: NativeId, _) =>
+          canonicalLookupHelper.addParsedTypeIndex(nativeId, parsedType)
+        case (_, NoId) =>
+          val expandedParsedType   = expandRelativeToAbsoluteIds(parsedType)
+          val collectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType)
 
-    val canonicalLookupWithCanonicals = transformParsedTypeIndex(canonicalLookupHelperWithResoureTypes)
+          collectedParsedTypes.foldLeft(canonicalLookupHelper) { (canonicalLH, parsedType) =>
+            canonicalLH.addParsedTypeIndex(parsedType.id, parsedType)
+          }
+        case (ImplicitId, someNativeId) =>
+          canonicalLookupHelper.addParsedTypeIndex(someNativeId, parsedType)
+        case (unexpected, _) =>
+          sys.error(s"Unexpected id in the types definition: $unexpected")
+      }
 
-    canonicalLookupWithCanonicals
+    finalCanonicalLookupHelper
   }
 
   private def indexResourceParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, resource: Resource): CanonicalLookupHelper = {
     // Types are located in the request and response BodyContent and in the ParsedParameter instances. For now we don't expect any
     // complex types in the ParsedParameter instances, so we skip those.
 
+    // ToDo: also handle complex types in the ParsedParameter objects.
+
     def indexBodyParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, body: Body): CanonicalLookupHelper = {
-      val bodyContentList: List[BodyContent]                     = body.contentMap.values.toList
-      val bodyParsedTypes: List[ParsedType]                      = bodyContentList.flatMap(_.bodyType).map(_.parsed)
-      val generatedNativeIds: List[NativeId]                     = bodyParsedTypes.map(x => NativeId(s"Inline${UUID.randomUUID}"))
-      val nativeIdsWithParsedTypes: List[(NativeId, ParsedType)] = generatedNativeIds.zip(bodyParsedTypes)
-      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexParsedTypes)
+      val bodyContentList: List[BodyContent]               = body.contentMap.values.toList
+      val bodyParsedTypes: List[ParsedType]                = bodyContentList.flatMap(_.bodyType).map(_.parsed)
+      val generatedNativeIds: List[Id]                     = bodyParsedTypes.map(x => NoId)
+      val nativeIdsWithParsedTypes: List[(Id, ParsedType)] = generatedNativeIds.zip(bodyParsedTypes)
+      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexListedParsedTypes)
     }
 
     def indexActionParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, action: Action): CanonicalLookupHelper = {
@@ -92,30 +126,6 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     resource.resources.foldLeft(canonicalLookupHelperWithActionTypes)(indexResourceParsedTypes)
   }
 
-  private def indexParsedTypes(canonicalLookupHelper: CanonicalLookupHelper,
-                               idWithParsedType: (NativeId, ParsedType)): CanonicalLookupHelper = {
-    val (id, parsedType) = idWithParsedType
-
-    val finalCanonicalLookupHelper: CanonicalLookupHelper =
-      parsedType.id match {
-        case absoluteId: AbsoluteId =>
-          val expandedParsedType   = expandRelativeToAbsoluteIds(parsedType)
-          val collectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType)
-          val updatedCLH           = canonicalLookupHelper.addJsonSchemaNativeToAbsoluteIdTranslation(id, absoluteId)
-
-          collectedParsedTypes.foldLeft(updatedCLH) { (canonicalLH, parsedType) =>
-            canonicalLH.addParsedTypeIndex(parsedType.id, parsedType)
-          }
-        case nativeId: NativeId =>
-          canonicalLookupHelper.addParsedTypeIndex(nativeId, parsedType)
-        case ImplicitId =>
-          canonicalLookupHelper.addParsedTypeIndex(id, parsedType)
-        case unexpected => sys.error(s"Unexpected id in the types definition: $unexpected")
-      }
-
-    finalCanonicalLookupHelper
-  }
-
   private def transformParsedTypeIndex(canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
 
     canonicalLookupHelper.parsedTypeIndex.foldLeft(canonicalLookupHelper) { (canonicalLH, idWithParsedType) =>
@@ -123,15 +133,61 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       parsedType.id match {
         case ImplicitId =>
           val generatedCanonicalName = canonicalNameGenerator.generate(id)
-          val (canonicalType, canonicalLH) =
-            ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLookupHelper, Some(generatedCanonicalName))
-          canonicalLH
+          val (canonicalType, updatedCanonicalLH) =
+            ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLH, Some(generatedCanonicalName))
+          updatedCanonicalLH
         case otherId =>
-          val (canonicalType, canonicalLH) = ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLookupHelper, None)
-          canonicalLH
+          val (canonicalType, updatedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLH, None)
+          updatedCanonicalLH
       }
     }
 
+  }
+
+  private def transformResourceParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
+
+    def transformTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
+      val (genericReferrable, updatedCanonicalLH) =
+        ParsedToCanonicalTypeTransformer.transform(typeRepresentation.parsed, canonicalLookupHelper, None)
+      // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndex
+      genericReferrable match {
+        case typeReference: TypeReference => typeRepresentation.copy(canonical = Some(typeReference))
+        case other =>
+          sys.error(s"We did not expect a generic type reference directly in the RAML model: ${typeRepresentation.parsed}.")
+      }
+    }
+
+    def transformParsedParameter(parsedParameter: ParsedParameter): ParsedParameter = {
+      val updatedParameterType = transformTypeRepresentation(parsedParameter.parameterType)
+      parsedParameter.copy(parameterType = updatedParameterType)
+    }
+
+    def transformBodyContent(bodyContent: BodyContent): BodyContent = {
+      val updatedFormParameters = bodyContent.formParameters.mapValues(transformParsedParameter)
+      val updatedBodyType       = bodyContent.bodyType.map(transformTypeRepresentation)
+      bodyContent.copy(formParameters = updatedFormParameters, bodyType = updatedBodyType)
+    }
+
+    def transformAction(action: Action): Action = {
+
+      val updatedHeaders = action.headers.mapValues(transformParsedParameter)
+
+      val updatedQueryParameters = action.queryParameters.mapValues(transformParsedParameter)
+
+      val updatedContentMap = action.body.contentMap.mapValues(transformBodyContent)
+      val updatedBody       = action.body.copy(contentMap = updatedContentMap)
+
+      action.copy(headers = updatedHeaders, queryParameters = updatedQueryParameters, body = updatedBody)
+    }
+
+    def transformResource(resource: Resource): Resource = {
+      val transformedActions      = resource.actions.map(transformAction)
+      val transformedSubResources = resource.resources.map(transformResource)
+      resource.copy(actions = transformedActions, resources = transformedSubResources)
+    }
+
+    val updatedResources = raml.resources.map(transformResource)
+    raml.copy(resources = updatedResources)
   }
 
   /**
@@ -223,7 +279,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
         (pathPart, updatedSubSchema)
       }
 
-      val schemaWithUpdatedFragments: ParsedType =
+      val parsedTypeWithUpdatedFragments: ParsedType =
         ttype match {
           case objectType: ParsedObject =>
             objectType.copy(
@@ -234,10 +290,9 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
             )
           case fragment: Fragments => fragment.map(expandFragment)
           case arrayType: ParsedArray =>
-            val (_, expandedFragment) = expandFragment(("items", arrayType.items))
-            // val expandedPath          = expandWithRootAndPath(expandedFragment, currentRoot, expandingRoot, path :+ "items")
+            val expandedPath = expandWithRootAndPath(arrayType.items, currentRoot, expandingRoot, path :+ "items")
             arrayType.copy(
-              items     = expandedFragment,
+              items     = expandedPath,
               fragments = arrayType.fragments.map(expandFragment)
             )
           case typeReference: ParsedTypeReference =>
@@ -248,7 +303,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
           case _ => ttype
         }
 
-      schemaWithUpdatedFragments.updated(expandedId)
+      parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
     ttype.id match {

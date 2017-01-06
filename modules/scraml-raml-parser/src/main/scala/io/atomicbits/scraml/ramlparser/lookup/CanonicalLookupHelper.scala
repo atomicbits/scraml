@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.ramlparser.lookup
 
-import io.atomicbits.scraml.ramlparser.model.{ AbsoluteFragmentId, AbsoluteId, Id, NativeId }
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedType, Types }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedNull, ParsedType, Types }
 
 /**
   * Created by peter on 17/12/16.
@@ -44,17 +44,32 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedTyp
   *                                        search for types in json-schema fragments when deducing the canonical type references.
   */
 case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, CanonicalType]                       = Map.empty,
-                                 parsedTypeIndex: Map[Id, ParsedType]                                 = Map.empty,
+                                 parsedTypeIndex: Map[UniqueId, ParsedType]                           = Map.empty,
                                  jsonSchemaLookupTable: Map[AbsoluteId, ParsedType]                   = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId]           = Map.empty,
                                  jsonSchemaFragmentReferences: Map[AbsoluteFragmentId, CanonicalName] = Map.empty) {
   //                             jsonSchemaNativeToAbsoluteIdMap: Map[CanonicalName, CanonicalName]   = Map.empty,
 
+  def getParsedType(id: Id): Option[ParsedType] = {
+    id match {
+      case NoId => Some(ParsedNull())
+      case nativeId: NativeId =>
+        val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
+        parsedTypeIndex.get(realIndex)
+      case uniqueId: UniqueId => parsedTypeIndex.get(uniqueId)
+      case other              => None
+    }
+  }
+
   def addCanonicalType(canonicalName: CanonicalName, canonicalType: CanonicalType): CanonicalLookupHelper =
     copy(lookupTable = lookupTable + (canonicalName -> canonicalType))
 
-  def addParsedTypeIndex(id: Id, parsedType: ParsedType): CanonicalLookupHelper =
-    copy(parsedTypeIndex = parsedTypeIndex + (id -> parsedType))
+  def addParsedTypeIndex(id: Id, parsedType: ParsedType): CanonicalLookupHelper = {
+    id match {
+      case uniqueId: UniqueId => copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
+      case _                  => this
+    }
+  }
 
   def addJsonSchemaType(absoluteId: AbsoluteId, parsedType: ParsedType): CanonicalLookupHelper =
     copy(jsonSchemaLookupTable = jsonSchemaLookupTable + (absoluteId -> parsedType))

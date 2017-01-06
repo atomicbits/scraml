@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedObject, ParsedString, ParsedTypeReference}
-import io.atomicbits.scraml.ramlparser.model.{NativeId, Raml}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedString, ParsedTypeReference }
+import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
 
 import scala.util.Try
@@ -44,9 +44,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     Then("we get all four actions in the userid resource")
     val raml = parsedModel.get
 
-
-    val bookType = raml.types(NativeId("Book")).asInstanceOf[ParsedObject]
-    val authorType = raml.types(NativeId("Author")).asInstanceOf[ParsedObject]
+    val bookType      = raml.types(NativeId("Book")).asInstanceOf[ParsedObject]
+    val authorType    = raml.types(NativeId("Author")).asInstanceOf[ParsedObject]
     val comicBookType = raml.types(NativeId("ComicBook")).asInstanceOf[ParsedObject]
 
     bookType.properties("title").propertyType.parsed match {
@@ -65,8 +64,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
       case _                        => fail(s"The hero property of a comicbook should be a StringType.")
     }
 
-          val prettyModel = TestUtils.prettyPrint(parsedModel)
-           println(s"Parsed raml: $prettyModel")
+    val prettyModel = TestUtils.prettyPrint(parsedModel)
+//    println(s"Parsed raml: $prettyModel")
 
   }
 

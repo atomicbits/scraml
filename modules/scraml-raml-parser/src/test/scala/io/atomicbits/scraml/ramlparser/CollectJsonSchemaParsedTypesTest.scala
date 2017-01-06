@@ -19,20 +19,15 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.lookup.{
-  CanonicalLookupHelper,
-  CanonicalNameGenerator,
-  CanonicalTypeCollector,
-  ParsedToCanonicalTypeTransformer
-}
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
-import io.atomicbits.scraml.ramlparser.model.{ AbsoluteFragmentId, NativeId, Raml, RootId }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedType }
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.model._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedType, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 
 import scala.util.Try
 import org.scalatest.Matchers._
+import io.atomicbits.util.TestUtils._
 
 /**
   * Created by peter on 2/01/17.
@@ -52,10 +47,14 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
-      Then("we all our relative fragment IDs and their references are expanded to absolute IDs")
-      val raml                                   = parsedModel.get
-      val parsedType                             = raml.types.get(NativeId("myfragments")).get
-      val myFragmentsExpanded                    = canonicalTypeCollector.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
+      Then("all our relative fragment IDs and their references are expanded to absolute IDs")
+      val raml                = parsedModel.get
+      val parsedType          = raml.types.get(NativeId("myfragments")).get
+      val myFragmentsExpanded = canonicalTypeCollector.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
+
+      val barReference = myFragmentsExpanded.fragments.fragmentMap("bar").asInstanceOf[ParsedTypeReference]
+      barReference.refersTo shouldBe NoId
+
       val collectedParsedTypes: List[ParsedType] = canonicalTypeCollector.collectJsonSchemaParsedTypes(myFragmentsExpanded)
 
       collectedParsedTypes.map(_.id) should contain(
@@ -79,28 +78,29 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
         )
       )
 
+      // println(s"$collectedParsedTypes")
     }
 
-  }
+    scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
 
-  feature("Collect the canonical representations of the ParsedTypes") {
-
-    scenario("test collecting of all canonical types") {
-
-      Given("a RAML specification containing a json-schema definition with fragments")
+      Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
       val defaultBasePath = List("io", "atomicbits", "schemas")
-      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
       implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
-      Then("we all our relative fragment IDs and their references are expanded to absolute IDs")
-      val raml                                 = parsedModel.get
-      val (ramlUpdated, canonicalLookupHelper) = canonicalTypeCollector.collectCanonicals(raml, CanonicalLookupHelper())
-      canonicalLookupHelper.parsedTypeIndex
-      println(s"$canonicalLookupHelper")
+      Then("we get all four actions in the userid resource")
+      val raml                              = parsedModel.get
+      val canonicalLHWithIndexedParsedTypes = canonicalTypeCollector.indexParsedTypes(raml, CanonicalLookupHelper())
+
+      val geometryTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedType(NativeId("geometry"))
+      geometryTypeOpt.isDefined shouldBe true
+      geometryTypeOpt.get.isInstanceOf[ParsedObject] shouldBe true
+
+      // println(s"${prettyPrint(canonicalLHWithIndexedParsedTypes)}")
     }
 
   }

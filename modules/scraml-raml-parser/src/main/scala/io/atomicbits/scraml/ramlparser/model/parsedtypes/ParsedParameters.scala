@@ -22,11 +22,10 @@ package io.atomicbits.scraml.ramlparser.model.parsedtypes
 import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils._
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{ JsObject, JsValue }
 
 import scala.language.postfixOps
-import scala.util.{Success, Try}
-
+import scala.util.{ Success, Try }
 
 case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) {
 
@@ -38,17 +37,16 @@ case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) 
 
   val isEmpty = valueMap.isEmpty
 
-}
+  def mapValues(fn: ParsedParameter => ParsedParameter): ParsedParameters = copy(valueMap = valueMap.mapValues(fn))
 
+}
 
 /**
   * Created by peter on 26/08/16.
   */
 object ParsedParameters {
 
-
   def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[ParsedParameters] = apply(jsValueOpt, None)
-
 
   def apply(jsValueOpt: Option[JsValue], overrideRequired: Option[Boolean])(implicit parseContext: ParseContext): Try[ParsedParameters] = {
 
@@ -59,10 +57,10 @@ object ParsedParameters {
           case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
               ParsedParameter(
-                name = name,
+                name          = name,
                 parameterType = TypeRepresentation(paramType),
-                required = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
-                repeated = false
+                required      = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
+                repeated      = false
               )
             }
         } toMap
