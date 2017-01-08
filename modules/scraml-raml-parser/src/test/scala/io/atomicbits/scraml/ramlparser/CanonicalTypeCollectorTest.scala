@@ -19,13 +19,14 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.Matchers._
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 
+import scala.language.postfixOps
 import scala.util.Try
 
 /**
@@ -100,15 +101,69 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       val parsedModel: Try[Raml] = parser.parse
       val canonicalTypeCollector = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
 
-      Then("we get all four actions in the userid resource")
+      Then("we get all expected canonical representations")
       val raml = parsedModel.get
-
-      // val () = canonicalTypeCollector.collectCanonicals(raml, CanonicalLookupHelper())
 
       val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
 
-      // ToDo: finish test implementation
-      println(s"${canonicalLookup.map}")
+      val pagedList              = CanonicalName.create(name = "PagedList", packagePath              = List("io", "atomicbits", "schema"))
+      val method                 = CanonicalName.create(name = "Method", packagePath                 = List("io", "atomicbits", "schema"))
+      val geometry               = CanonicalName.create(name = "Geometry", packagePath               = List("io", "atomicbits", "schema"))
+      val point                  = CanonicalName.create(name = "Point", packagePath                  = List("io", "atomicbits", "schema"))
+      val multiPoint             = CanonicalName.create(name = "MultiPoint", packagePath             = List("io", "atomicbits", "schema"))
+      val lineString             = CanonicalName.create(name = "LineString", packagePath             = List("io", "atomicbits", "schema"))
+      val multiLineString        = CanonicalName.create(name = "MultiLineString", packagePath        = List("io", "atomicbits", "schema"))
+      val polygon                = CanonicalName.create(name = "Polygon", packagePath                = List("io", "atomicbits", "schema"))
+      val multiPolygon           = CanonicalName.create(name = "MultiPolygon", packagePath           = List("io", "atomicbits", "schema"))
+      val geometryCollection     = CanonicalName.create(name = "GeometryCollection", packagePath     = List("io", "atomicbits", "schema"))
+      val crs                    = CanonicalName.create(name = "Crs", packagePath                    = List("io", "atomicbits", "schema"))
+      val namedCrsProperty       = CanonicalName.create(name = "NamedCrsProperty", packagePath       = List("io", "atomicbits", "schema"))
+      val animal                 = CanonicalName.create(name = "Animal", packagePath                 = List("io", "atomicbits", "schema"))
+      val dog                    = CanonicalName.create(name = "Dog", packagePath                    = List("io", "atomicbits", "schema"))
+      val cat                    = CanonicalName.create(name = "Cat", packagePath                    = List("io", "atomicbits", "schema"))
+      val fish                   = CanonicalName.create(name = "Fish", packagePath                   = List("io", "atomicbits", "schema"))
+      val userOther              = CanonicalName.create(name = "UserOther", packagePath              = List("io", "atomicbits", "schema"))
+      val link                   = CanonicalName.create(name = "Link", packagePath                   = List("io", "atomicbits", "schema"))
+      val book                   = CanonicalName.create(name = "Book", packagePath                   = List("io", "atomicbits", "schema"))
+      val userDefinitionsAddress = CanonicalName.create(name = "UserDefinitionsAddress", packagePath = List("io", "atomicbits", "schema"))
+      val user                   = CanonicalName.create(name = "User", packagePath                   = List("io", "atomicbits", "schema"))
+      val author                 = CanonicalName.create(name = "Author", packagePath                 = List("io", "atomicbits", "schema"))
+      val error                  = CanonicalName.create(name = "Error", packagePath                  = List("io", "atomicbits", "schema"))
+
+      val expectedCanonicalNames = Set(
+        pagedList,
+        method,
+        geometry,
+        point,
+        multiPoint,
+        lineString,
+        multiLineString,
+        polygon,
+        multiPolygon,
+        geometryCollection,
+        namedCrsProperty,
+        crs,
+        animal,
+        dog,
+        cat,
+        fish,
+        userOther,
+        link,
+        book,
+        userDefinitionsAddress,
+        user,
+        author,
+        error
+      )
+
+      val canonicalNames = canonicalLookup.map.map {
+        case (canonicalName, theType) => canonicalName
+      } toSet
+
+      canonicalNames shouldBe expectedCanonicalNames
+
+//      ToDo: finish test implementation
+//      println(s"${canonicalLookup.map}")
     }
 
   }

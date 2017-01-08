@@ -135,15 +135,15 @@ object ParsedObjectTransformer {
 
       ParsedTypeContext(parsedChild, canonicalLH, None, Some(parentName), Some(typeDiscriminator)) match {
         case ParsedObjectTransformer(typeReference, updatedCanonicalLH) => updatedCanonicalLH
-        // case ParsedTypeReferenceTransformer(typeReference, updatedCanonicalLH) => updatedCanonicalLH
-        case _ => canonicalLH
+        case _                                                          => canonicalLH
       }
 
     }
 
     parsedObject.selection match {
-      case Some(OneOf(selection)) => selection.foldLeft(canonicalLookupHelper)(registerObject)
-      case _                      => canonicalLookupHelper
+      case Some(OneOf(selection)) =>
+        selection.foldLeft(canonicalLookupHelper)(registerObject)
+      case _ => canonicalLookupHelper
     }
   }
 

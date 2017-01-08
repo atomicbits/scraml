@@ -100,6 +100,9 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       geometryTypeOpt.isDefined shouldBe true
       geometryTypeOpt.get.isInstanceOf[ParsedObject] shouldBe true
 
+      // ToDo: check for the presence of the Cat and the Fish
+      val animalTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedType(NativeId("Animal"))
+
       // println(s"${prettyPrint(canonicalLHWithIndexedParsedTypes)}")
     }
 
