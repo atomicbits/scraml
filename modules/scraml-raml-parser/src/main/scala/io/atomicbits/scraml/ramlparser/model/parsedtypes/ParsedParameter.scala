@@ -23,6 +23,8 @@ import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
 
 /**
   * Created by peter on 10/02/16.
+  *
+  * ToDo: parameter 'repeated' is no longer used, so remove it as soon as the code generation completely relies on the canonical type model.
   */
 case class ParsedParameter(name: String, parameterType: TypeRepresentation, required: Boolean = true, repeated: Boolean = false) {
 

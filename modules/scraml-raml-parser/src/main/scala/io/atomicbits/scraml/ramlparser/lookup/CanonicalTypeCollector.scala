@@ -48,7 +48,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
   def indexParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
     // First, index all the parsed types on their Id so that we can perform forward lookups when creating the canonical types.
-    val canonicalLookupHelperWithJsonSchemas  = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexListedParsedTypes)
+    val canonicalLookupHelperWithJsonSchemas  = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexParsedTypes)
     val canonicalLookupHelperWithResoureTypes = raml.resources.foldLeft(canonicalLookupHelperWithJsonSchemas)(indexResourceParsedTypes)
 
     canonicalLookupHelperWithResoureTypes
@@ -68,8 +68,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     (ramlUpdated, canonicalLookupWithCanonicals)
   }
 
-  private def indexListedParsedTypes(canonicalLookupHelper: CanonicalLookupHelper,
-                                     idWithParsedType: (Id, ParsedType)): CanonicalLookupHelper = {
+  private def indexParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, idWithParsedType: (Id, ParsedType)): CanonicalLookupHelper = {
     val (id, parsedType) = idWithParsedType
 
     val finalCanonicalLookupHelper: CanonicalLookupHelper =
@@ -111,7 +110,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       val bodyParsedTypes: List[ParsedType]                = bodyContentList.flatMap(_.bodyType).map(_.parsed)
       val generatedNativeIds: List[Id]                     = bodyParsedTypes.map(x => NoId)
       val nativeIdsWithParsedTypes: List[(Id, ParsedType)] = generatedNativeIds.zip(bodyParsedTypes)
-      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexListedParsedTypes)
+      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexParsedTypes)
     }
 
     def indexActionParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, action: Action): CanonicalLookupHelper = {
@@ -147,8 +146,9 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
   private def transformResourceParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
 
     def transformTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
+      val expandedParsedType = expandRelativeToAbsoluteIds(typeRepresentation.parsed)
       val (genericReferrable, updatedCanonicalLH) =
-        ParsedToCanonicalTypeTransformer.transform(typeRepresentation.parsed, canonicalLookupHelper, None)
+        ParsedToCanonicalTypeTransformer.transform(expandedParsedType, canonicalLookupHelper, None)
       // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndex
       genericReferrable match {
         case typeReference: TypeReference => typeRepresentation.copy(canonical = Some(typeReference))
@@ -168,16 +168,26 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       bodyContent.copy(formParameters = updatedFormParameters, bodyType = updatedBodyType)
     }
 
+    def transformBody(body: Body): Body = {
+      val updatedContentMap = body.contentMap.mapValues(transformBodyContent)
+      body.copy(contentMap = updatedContentMap)
+    }
+
     def transformAction(action: Action): Action = {
 
       val updatedHeaders = action.headers.mapValues(transformParsedParameter)
 
       val updatedQueryParameters = action.queryParameters.mapValues(transformParsedParameter)
 
-      val updatedContentMap = action.body.contentMap.mapValues(transformBodyContent)
-      val updatedBody       = action.body.copy(contentMap = updatedContentMap)
+      val updatedBody = transformBody(action.body)
 
-      action.copy(headers = updatedHeaders, queryParameters = updatedQueryParameters, body = updatedBody)
+      val updatedResponseMap = action.responses.responseMap.mapValues { response =>
+        val updatedResponseBody = transformBody(response.body)
+        response.copy(body = updatedResponseBody)
+      }
+      val updatedResponses = action.responses.copy(responseMap = updatedResponseMap)
+
+      action.copy(headers = updatedHeaders, queryParameters = updatedQueryParameters, body = updatedBody, responses = updatedResponses)
     }
 
     def transformResource(resource: Resource): Resource = {

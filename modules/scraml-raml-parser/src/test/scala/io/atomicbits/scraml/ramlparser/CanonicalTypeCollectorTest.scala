@@ -22,6 +22,7 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedArray, ParsedNumber, ParsedString }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.Matchers._
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
@@ -171,6 +172,24 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       dogType.properties("canBark") shouldBe Property(name = "canBark", ttype = BooleanType, typeConstraints = None)
       dogType.properties("gender") shouldBe Property(name  = "gender", ttype  = StringType, typeConstraints  = None)
       dogType.canonicalName shouldBe dog
+
+      // Check the updated RAML model
+      val restResource = ramlUpdated.resourceMap("rest")
+      val userResource = restResource.resourceMap("user")
+
+      val userGetAction     = userResource.actionMap(Get)
+      val queryParameterMap = userGetAction.queryParameters.valueMap
+      queryParameterMap("age").required shouldBe false
+      queryParameterMap("age").parameterType.parsed.isInstanceOf[ParsedNumber] shouldBe true
+      queryParameterMap("age").parameterType.canonical shouldBe Some(NumberType)
+      queryParameterMap("organization").required shouldBe false
+      queryParameterMap("organization").parameterType.parsed.isInstanceOf[ParsedArray] shouldBe true
+      queryParameterMap("organization").parameterType.canonical shouldBe Some(ArrayTypeReference(genericType = StringType))
+      val okResponse            = userGetAction.responses.responseMap(StatusCode("200"))
+      val okResponseBodyContent = okResponse.body.contentMap(MediaType("application/vnd-v1.0+json"))
+      okResponseBodyContent.bodyType.get.parsed.isInstanceOf[ParsedArray] shouldBe true
+      okResponseBodyContent.bodyType.get.canonical shouldBe Some(
+        ArrayTypeReference(genericType = NonPrimitiveTypeReference(refers = user)))
     }
 
   }
