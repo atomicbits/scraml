@@ -162,8 +162,15 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       canonicalNames shouldBe expectedCanonicalNames
 
-//      ToDo: finish test implementation
-//      println(s"${canonicalLookup.map}")
+      val dogType = canonicalLookup(dog).asInstanceOf[ObjectType]
+
+      dogType.typeDiscriminator shouldBe Some("_type")
+      dogType.typeDiscriminatorValue shouldBe Some("Dog")
+      dogType.parents shouldBe List(NonPrimitiveTypeReference(refers = animal))
+      dogType.properties("name") shouldBe Property(name    = "name", ttype    = StringType, required         = false, typeConstraints = None)
+      dogType.properties("canBark") shouldBe Property(name = "canBark", ttype = BooleanType, typeConstraints = None)
+      dogType.properties("gender") shouldBe Property(name  = "gender", ttype  = StringType, typeConstraints  = None)
+      dogType.canonicalName shouldBe dog
     }
 
   }

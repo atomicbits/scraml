@@ -23,9 +23,10 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
   * Created by peter on 9/12/16.
   */
 case class ObjectType(canonicalName: CanonicalName,
-                      properties: Map[String, Property[_]],
+                      properties: Map[String, Property[_ <: GenericReferrable]],
                       parents: List[TypeReference] = List.empty,
                       // children: List[TypeReference] = List.empty,
-                      typeParameters: List[TypeParameter] = List.empty,
-                      typeDiscriminator: Option[String] = None,
-                      typeDiscriminatorValue: Option[String] = None) extends NonPrimitiveType
+                      typeParameters: List[TypeParameter]    = List.empty,
+                      typeDiscriminator: Option[String]      = None,
+                      typeDiscriminatorValue: Option[String] = None)
+    extends NonPrimitiveType

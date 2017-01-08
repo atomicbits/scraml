@@ -32,7 +32,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
   */
 object ParsedObjectTransformer {
 
-  type PropertyAggregator = (Map[String, Property[_]], CanonicalLookupHelper)
+  type PropertyAggregator = (Map[String, Property[_ <: GenericReferrable]], CanonicalLookupHelper)
 
   // format: off
   def unapply(parsedTypeContext: ParsedTypeContext)
@@ -55,7 +55,7 @@ object ParsedObjectTransformer {
     def registerParsedObject(parsedObject: ParsedObject): (TypeReference, CanonicalLookupHelper) = {
 
       // Prepare the empty aggregator
-      val aggregator: PropertyAggregator = (Map.empty[String, Property[_]], canonicalLookupHelper)
+      val aggregator: PropertyAggregator = (Map.empty[String, Property[_ <: GenericReferrable]], canonicalLookupHelper)
 
       // if there is an imposed type discriminator, then we need to find its value and remove the discriminator from the properties.
       val (typeDiscriminatorValue, propertiesWithoutTypeDiscriminator) =
