@@ -17,23 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.generator.model
+package io.atomicbits.scraml.generator.oldmodel
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
-import io.atomicbits.scraml.ramlparser.model.{NativeId, Resource, RootId}
+import io.atomicbits.scraml.ramlparser.model.{ NativeId, Resource, RootId }
 
 /**
- * Created by peter on 22/08/15. 
- */
+  * Created by peter on 22/08/15.
+  */
 case class RichResource(urlSegment: String,
                         urlParameter: Option[ParsedParameter] = None,
                         classRep: ClassRep,
-                        actions: List[RichAction] = List.empty,
+                        actions: List[RichAction]     = List.empty,
                         resources: List[RichResource] = List.empty)
-
 
 object RichResource {
 
@@ -56,15 +55,15 @@ object RichResource {
       val richActions = resource.actions.map(RichAction(_, typeLookupTable, canonicalMap, nativeToRootId))
 
       RichResource(
-        urlSegment = resource.urlSegment,
+        urlSegment   = resource.urlSegment,
         urlParameter = resource.urlParameter,
         classRep = ClassRep(
           classReference = ClassReference(
-            name = resourceClassName,
+            name         = resourceClassName,
             packageParts = nextPackageBasePath
           )
         ),
-        actions = richActions,
+        actions   = richActions,
         resources = richChildResources
       )
 

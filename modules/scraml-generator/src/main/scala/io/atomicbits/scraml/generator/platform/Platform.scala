@@ -17,13 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.model
+package io.atomicbits.scraml.generator.platform
 
 /**
- * Created by peter on 13/10/15.
- */
-sealed trait Language
-
-case object Scala extends Language
-
-case object Java extends Language
+  * Created by peter on 10/01/17.
+  */
+trait Platform {}

@@ -17,14 +17,14 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.oldmodel._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 30/09/15.
+  */
 trait ActionCode {
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String
@@ -32,8 +32,8 @@ trait ActionCode {
   def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String
 
   /**
-   * The list of body types that need to be available on a specific action function.
-   */
+    * The list of body types that need to be available on a specific action function.
+    */
   def bodyTypes(action: RichAction): List[Option[ClassPointer]]
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
@@ -52,12 +52,12 @@ trait ActionCode {
 
   def generateAction(action: RichAction,
                      segmentType: String,
-                     actionParameters: List[String] = List.empty,
+                     actionParameters: List[String]         = List.empty,
                      queryParameterMapEntries: List[String] = List.empty,
-                     formParameterMapEntries: List[String] = List.empty,
-                     typedBodyParam: Boolean = false,
-                     multipartParams: Boolean = false,
-                     binaryParam: Boolean = false,
+                     formParameterMapEntries: List[String]  = List.empty,
+                     typedBodyParam: Boolean                = false,
+                     multipartParams: Boolean               = false,
+                     binaryParam: Boolean                   = false,
                      contentType: ContentType,
                      responseType: ResponseType): String
 

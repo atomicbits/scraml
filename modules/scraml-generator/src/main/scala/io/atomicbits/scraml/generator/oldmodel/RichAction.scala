@@ -17,13 +17,13 @@
  *
  */
 
-package io.atomicbits.scraml.generator.model
+package io.atomicbits.scraml.generator.oldmodel
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameters, ParsedTypeReference$}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameters, ParsedTypeReference$ }
 
 import scala.language.postfixOps
 
@@ -35,15 +35,13 @@ case class RichAction(actionType: Method,
                       queryParameters: ParsedParameters,
                       contentTypes: Set[ContentType],
                       responseTypes: Set[ResponseType],
-                      selectedContentType: ContentType = NoContentType,
+                      selectedContentType: ContentType   = NoContentType,
                       selectedResponsetype: ResponseType = NoResponseType)
 
 object RichAction {
 
-  def apply(action: Action,
-            lookupTable: OldCanonicalLookupHelper,
-            canonicalMap: CanonicalMap,
-            nativeToRootId: NativeId => RootId)(implicit lang: Language): RichAction = {
+  def apply(action: Action, lookupTable: OldCanonicalLookupHelper, canonicalMap: CanonicalMap, nativeToRootId: NativeId => RootId)(
+      implicit lang: Language): RichAction = {
 
     def mimeTypeToTypedClassReference(bodyContent: BodyContent): Option[TypedClassReference] = {
       bodyContent.bodyType.collect {
@@ -61,26 +59,26 @@ object RichAction {
     // Select the responses in the 200-range and choose the first one present as the main response type that will be accessible as a
     // type in the Response[T] object. Other types will (in the future) be made available as well but require more complex code generation.
     // 200 code range: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-    val range200 = List("200", "201", "202", "203", "204", "205", "206", "207", "208", "226")
+    val range200             = List("200", "201", "202", "203", "204", "205", "206", "207", "208", "226")
     val responseCodesPresent = range200.flatMap(action.responses.get)
-    val first200CodePresent = responseCodesPresent.headOption
+    val first200CodePresent  = responseCodesPresent.headOption
 
     val responseTypes =
       first200CodePresent map { response =>
         response.body.contentMap.values.toSet[BodyContent] map { bodyContent =>
           ResponseType(
-            acceptHeader = bodyContent.mediaType,
+            acceptHeader   = bodyContent.mediaType,
             classReference = mimeTypeToTypedClassReference(bodyContent)
           )
         }
       } getOrElse Set.empty[ResponseType]
 
     RichAction(
-      actionType = action.actionType,
-      headers = action.headers,
+      actionType      = action.actionType,
+      headers         = action.headers,
       queryParameters = action.queryParameters,
-      contentTypes = contentTypes,
-      responseTypes = responseTypes
+      contentTypes    = contentTypes,
+      responseTypes   = responseTypes
     )
 
   }

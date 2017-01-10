@@ -188,8 +188,10 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       val okResponse            = userGetAction.responses.responseMap(StatusCode("200"))
       val okResponseBodyContent = okResponse.body.contentMap(MediaType("application/vnd-v1.0+json"))
       okResponseBodyContent.bodyType.get.parsed.isInstanceOf[ParsedArray] shouldBe true
-      okResponseBodyContent.bodyType.get.canonical shouldBe Some(
-        ArrayTypeReference(genericType = NonPrimitiveTypeReference(refers = user)))
+      okResponseBodyContent.bodyType.get.canonical shouldBe
+        Some(
+          ArrayTypeReference(genericType = NonPrimitiveTypeReference(refers = user))
+        )
     }
 
   }

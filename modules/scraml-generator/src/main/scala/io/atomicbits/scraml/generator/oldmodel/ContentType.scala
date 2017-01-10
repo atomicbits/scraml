@@ -17,11 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator.model
+package io.atomicbits.scraml.generator.oldmodel
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameters, ParsedTypeReference$}
-import io.atomicbits.scraml.ramlparser.model.{BodyContent, MediaType}
-
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameters, ParsedTypeReference$ }
+import io.atomicbits.scraml.ramlparser.model.{ BodyContent, MediaType }
 
 /**
   * Created by peter on 26/08/15.
@@ -55,7 +54,6 @@ case object NoContentType extends ContentType {
   override val contentTypeHeaderOpt = None
 
 }
-
 
 object ContentType {
 

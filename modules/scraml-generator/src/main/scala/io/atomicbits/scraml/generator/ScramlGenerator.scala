@@ -23,14 +23,14 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import io.atomicbits.scraml.generator.codegen.{
+import io.atomicbits.scraml.generator.oldcodegen.{
   CaseClassGenerator,
   JavaResourceClassGenerator,
   PojoGenerator,
   ScalaResourceClassGenerator
 }
 import io.atomicbits.scraml.generator.formatting.JavaFormatter
-import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.oldmodel._
 import ClassRep.ClassMap
 
 import scala.collection.JavaConversions.mapAsJavaMap

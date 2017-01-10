@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, Language, RichResource}
+import io.atomicbits.scraml.generator.oldmodel.{ ClassReference, ClassRep, Language, RichResource }
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
@@ -28,10 +28,8 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
   */
 object JavaResourceClassGenerator {
 
-  def generateResourceClasses(apiClassName: String,
-                              apiPackageName: List[String],
-                              resources: List[RichResource])
-                             (implicit lang: Language): List[ClassRep] = {
+  def generateResourceClasses(apiClassName: String, apiPackageName: List[String], resources: List[RichResource])(
+      implicit lang: Language): List[ClassRep] = {
 
     def generateClientClass(topLevelResources: List[RichResource]): List[ClassRep] = {
 
@@ -42,9 +40,9 @@ object JavaResourceClassGenerator {
             val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) =
               ActionGenerator(JavaActionCode).generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
-          case manyRoots                                    =>
-            val imports = Set.empty[String]
-            val dslFields = manyRoots.map(generateResourceDslField)
+          case manyRoots =>
+            val imports         = Set.empty[String]
+            val dslFields       = manyRoots.map(generateResourceDslField)
             val actionFunctions = List.empty[String]
             (imports, dslFields, actionFunctions, List.empty)
         }
@@ -112,10 +110,9 @@ object JavaResourceClassGenerator {
       clientClass :: headerPathClassReps
     }
 
-
     def generateResourceClassesHelper(resource: RichResource): List[ClassRep] = {
 
-      val className = resource.classRep.name
+      val className      = resource.classRep.name
       val classNameCamel = CleanNameUtil.camelCased(className)
 
       val dslFields = resource.resources.map(generateResourceDslField)
@@ -175,7 +172,6 @@ object JavaResourceClassGenerator {
       resourceClassRep :: resource.resources.flatMap(generateResourceClassesHelper) ::: headerPathClassReps
     }
 
-
     def generateResourceConstructors(resource: RichResource): List[String] =
       resource.urlParameter match {
         case Some(parameter) =>
@@ -192,7 +188,7 @@ object JavaResourceClassGenerator {
                }
              """
           )
-        case None            =>
+        case None =>
           List(
             s"""
                public ${resource.classRep.name}(RequestBuilder requestBuilder) {
@@ -207,19 +203,16 @@ object JavaResourceClassGenerator {
           )
       }
 
-
     def generateClassDefinition(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""public class ${resource.classRep.name} extends ParamSegment<$paramType> { """
-        case None            =>
+        case None =>
           s"""public class ${resource.classRep.name} extends PlainSegment {"""
       }
 
-
     def isParameterized(resource: RichResource) = resource.urlParameter.isDefined
-
 
     def generateParameterType(parameterType: ParsedType): String = {
       parameterType match {
@@ -230,7 +223,6 @@ object JavaResourceClassGenerator {
         case x                          => sys.error(s"Unknown URL parameter type $x")
       }
     }
-
 
     def generateResourceDslField(resource: RichResource): String = {
 
@@ -245,7 +237,7 @@ object JavaResourceClassGenerator {
                return new ${resource.classRep.fullyQualifiedName}(value, this.getRequestBuilder());
              }
             """
-        case None            =>
+        case None =>
           s"""
               public ${resource.classRep.fullyQualifiedName} $cleanUrlSegment =
                 new ${resource.classRep.fullyQualifiedName}(this.getRequestBuilder());

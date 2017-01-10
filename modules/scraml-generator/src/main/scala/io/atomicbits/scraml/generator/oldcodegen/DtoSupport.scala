@@ -17,25 +17,25 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model.{TypedClassReference, ClassReference, ClassPointer, ClassRep}
+import io.atomicbits.scraml.generator.oldmodel.{ TypedClassReference, ClassReference, ClassPointer, ClassRep }
 
 /**
- * Created by peter on 2/10/15.
- */
+  * Created by peter on 2/10/15.
+  */
 trait DtoSupport {
 
   /**
-   * Collect all type imports for a given class and its generic types, but not its parent or child classes.
-   */
+    * Collect all type imports for a given class and its generic types, but not its parent or child classes.
+    */
   def collectImports(collectClassRep: ClassRep): Set[String] = {
 
     val ownPackage = collectClassRep.packageName
 
     /**
-     * Collect the type imports for the given class rep.
-     */
+      * Collect the type imports for the given class rep.
+      */
     def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
 
       def collectFromClassReference(classRef: ClassReference): Set[String] = {
@@ -46,9 +46,10 @@ trait DtoSupport {
       val collectedFromClassPtr =
         classPtr match {
           case typedClassReference: TypedClassReference =>
-            typedClassReference.typeVariables.values.foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
-          case classReference: ClassReference           => collectFromClassReference(classReference)
-          case _                                        => Set.empty[String]
+            typedClassReference.typeVariables.values
+              .foldLeft(collectFromClassReference(typedClassReference.classReference))(collectTypeImports)
+          case classReference: ClassReference => collectFromClassReference(classReference)
+          case _                              => Set.empty[String]
         }
 
       collectedFromClassPtr ++ collected

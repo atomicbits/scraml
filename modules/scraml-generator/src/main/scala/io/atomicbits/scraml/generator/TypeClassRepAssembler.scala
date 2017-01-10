@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.oldmodel._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.lookup.{ OldCanonicalLookupHelper, TypeUtils }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._

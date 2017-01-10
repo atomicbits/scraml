@@ -17,29 +17,29 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.codegen.CaseClassGenerator._
-import io.atomicbits.scraml.generator.model.{Field, EnumValuesClassRep, ClassRep}
-import io.atomicbits.scraml.generator.model.ClassRep._
+import io.atomicbits.scraml.generator.oldcodegen.CaseClassGenerator._
+import io.atomicbits.scraml.generator.oldmodel.{ Field, EnumValuesClassRep, ClassRep }
+import io.atomicbits.scraml.generator.oldmodel.ClassRep._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 30/09/15.
+  */
 object PojoGenerator {
 
   def generatePojos(classMap: ClassMap): List[ClassRep] = {
 
     val (classRepsInHierarcy, classRepsStandalone) = classMap.values.toList.partition(_.isInHierarchy)
 
-    val classHierarchies = classRepsInHierarcy.groupBy(_.hierarchyParent(classMap))
+    val classHierarchies = classRepsInHierarcy
+      .groupBy(_.hierarchyParent(classMap))
       .collect { case (Some(classRep), reps) => (classRep, reps) }
 
     classHierarchies.values.toList.flatMap(generateHierarchicalClassReps(_, classMap)) :::
       classRepsStandalone.map(generateNonHierarchicalClassRep(_, None, classMap))
   }
-
 
   def generateHierarchicalClassReps(hierarchyReps: List[ClassRep], classMap: ClassMap): List[ClassRep] = {
 
@@ -47,7 +47,7 @@ object PojoGenerator {
     // If there are no intermediary levels between the top level class and the children, then the
     // childClasses and leafClasses will be identical sets.
     val childClasses = hierarchyReps.filter(_.parentClass.isDefined)
-    val leafClasses = hierarchyReps.filter(_.subClasses.isEmpty)
+    val leafClasses  = hierarchyReps.filter(_.subClasses.isEmpty)
 
     val packages = hierarchyReps.groupBy(_.packageName)
     assert(
@@ -57,7 +57,8 @@ object PojoGenerator {
          |${hierarchyReps.map(_.name).mkString("\n")}
          |should be defined in ${topLevelClass.packageName}, but are scattered over the following packages:
          |${packages.keys.mkString("\n")}
-       """.stripMargin)
+       """.stripMargin
+    )
 
     val typeDiscriminator = topLevelClass.jsonTypeInfo.get.discriminator
 
@@ -99,7 +100,6 @@ object PojoGenerator {
       childClasses.map(generateNonHierarchicalClassRep(_, Some(topLevelClass), classMap, Some(typeDiscriminator)))
   }
 
-
   def generateNonHierarchicalClassRep(classRep: ClassRep,
                                       parentClassRep: Option[ClassRep] = None,
                                       classMap: ClassMap,
@@ -111,7 +111,6 @@ object PojoGenerator {
       case y                                              => y
     }
   }
-
 
   private def generateEnumClassRep(classRep: EnumValuesClassRep): ClassRep = {
 
@@ -162,8 +161,9 @@ object PojoGenerator {
     classRep.withContent(content = source)
   }
 
-
-  private def generateNonEnumClassRep(classRep: ClassRep, parentClassRep: Option[ClassRep] = None, skipField: Option[String] = None): ClassRep = {
+  private def generateNonEnumClassRep(classRep: ClassRep,
+                                      parentClassRep: Option[ClassRep] = None,
+                                      skipField: Option[String]        = None): ClassRep = {
 
     val imports: Set[String] = collectImports(classRep)
 
@@ -185,10 +185,10 @@ object PojoGenerator {
     classRep.withContent(content = source)
   }
 
-
   private def generatePojoSource(classRep: ClassRep,
                                  parentClassRep: Option[ClassRep] = None,
-                                 skipFieldName: Option[String] = None, isAbstract: Boolean = false): String = {
+                                 skipFieldName: Option[String]    = None,
+                                 isAbstract: Boolean              = false): String = {
 
     val selectedFields =
       skipFieldName map { skipField =>
@@ -204,9 +204,8 @@ object PojoGenerator {
          """
     }
 
-
     val getterAndSetters = sortedFields map {
-      case fieldRep@Field(fieldName, classPointer, required) =>
+      case fieldRep @ Field(fieldName, classPointer, required) =>
         val fieldNameCap = fieldRep.safeFieldNameJava.capitalize
         s"""
            public ${classPointer.classDefinitionJava} get$fieldNameCap() {

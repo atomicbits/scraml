@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.oldmodel._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.Method
 
@@ -27,7 +27,6 @@ import io.atomicbits.scraml.ramlparser.model.Method
   * Created by peter on 23/08/15.
   */
 case class ActionGenerator(actionCode: ActionCode) {
-
 
   /**
     * The reason why we treat all actions of a resource together is that certain paths towards the actual action
@@ -67,8 +66,8 @@ case class ActionGenerator(actionCode: ActionCode) {
     // now, we have to map the actions onto a segment path if necessary
     val actionPathToAction: List[ActionPath] =
       groupedByActionType.values flatMap {
-        case actionOfKindList@(aok :: Nil)  => List(ActionPath(NoContentHeaderSegment, NoAcceptHeaderSegment, actionOfKindList.head))
-        case actionOfKindList@(aok :: aoks) =>
+        case actionOfKindList @ (aok :: Nil) => List(ActionPath(NoContentHeaderSegment, NoAcceptHeaderSegment, actionOfKindList.head))
+        case actionOfKindList @ (aok :: aoks) =>
           actionOfKindList map { actionOfKind =>
             val contentHeader =
               actionOfKind.selectedContentType match {
@@ -105,11 +104,10 @@ case class ActionGenerator(actionCode: ActionCode) {
     else ActionFunctionResult()
   }
 
-
-  private def expandContentTypePath(baseClassRef: ClassReference,
-                                    contentType: ContentType,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
-                                   (implicit lang: Language): ActionFunctionResult = {
+  private def expandContentTypePath(
+      baseClassRef: ClassReference,
+      contentType: ContentType,
+      acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])(implicit lang: Language): ActionFunctionResult = {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
@@ -124,16 +122,14 @@ case class ActionGenerator(actionCode: ActionCode) {
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
-    val contentHeaderMethodName = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}"
+    val contentHeaderMethodName      = s"content${CleanNameUtil.cleanClassName(contentType.contentTypeHeader.value)}"
     val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
 
-
-  private def expandAcceptHeaderMap(baseClassRef: ClassReference,
-                                    acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])
-                                   (implicit lang: Language): ActionFunctionResult = {
+  private def expandAcceptHeaderMap(baseClassRef: ClassReference, acceptHeaderMap: Map[AcceptHeaderSegment, List[RichAction]])(
+      implicit lang: Language): ActionFunctionResult = {
 
     val actionPathExpansion: List[ActionFunctionResult] =
       acceptHeaderMap.toList match {
@@ -145,9 +141,9 @@ case class ActionGenerator(actionCode: ActionCode) {
               List.empty[ClassRep]
             )
           )
-        case ahMap@(ah :: ahs)   =>
+        case ahMap @ (ah :: ahs) =>
           ahMap map {
-            case (NoAcceptHeaderSegment, actions)                   =>
+            case (NoAcceptHeaderSegment, actions) =>
               ActionFunctionResult(
                 actions.toSet.flatMap(generateActionImports),
                 actions.flatMap(ActionFunctionGenerator(actionCode).generate),
@@ -161,11 +157,8 @@ case class ActionGenerator(actionCode: ActionCode) {
     else ActionFunctionResult()
   }
 
-
-  private def expandResponseTypePath(baseClassRef: ClassReference,
-                                     responseType: ResponseType,
-                                     actions: List[RichAction])
-                                    (implicit lang: Language): ActionFunctionResult = {
+  private def expandResponseTypePath(baseClassRef: ClassReference, responseType: ResponseType, actions: List[RichAction])(
+      implicit lang: Language): ActionFunctionResult = {
 
     // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a result type path field that instantiates the above class (into the List[String] result)
@@ -180,12 +173,11 @@ case class ActionGenerator(actionCode: ActionCode) {
     val headerSegment: ClassRep =
       createHeaderSegment(baseClassRef.packageParts, headerSegmentClassName, actionImports, actionMethods)
 
-    val acceptHeaderMethodName = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}"
+    val acceptHeaderMethodName      = s"accept${CleanNameUtil.cleanClassName(responseType.acceptHeader.value)}"
     val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
-
 
   private def generateActionImports(action: RichAction)(implicit lang: Language): Set[String] = {
 
@@ -193,8 +185,8 @@ case class ActionGenerator(actionCode: ActionCode) {
       classReps match {
         case cr :: crs if !cr.classReference.predef =>
           nonPredefinedImports(cr.typeVariables.values.toList) ++ nonPredefinedImports(crs) + s"import ${cr.classReference.fullyQualifiedName}"
-        case cr :: crs                              => nonPredefinedImports(cr.typeVariables.values.toList) ++ nonPredefinedImports(crs)
-        case Nil                                    => Set()
+        case cr :: crs => nonPredefinedImports(cr.typeVariables.values.toList) ++ nonPredefinedImports(crs)
+        case Nil       => Set()
       }
     }
 
@@ -215,24 +207,18 @@ case class ActionGenerator(actionCode: ActionCode) {
     contentTypeImports ++ responseTypeImports
   }
 
-
-  private def createHeaderSegment(packageParts: List[String],
-                                  className: String,
-                                  imports: Set[String],
-                                  methods: List[String]): ClassRep = {
+  private def createHeaderSegment(packageParts: List[String], className: String, imports: Set[String], methods: List[String]): ClassRep = {
 
     val classReference = ClassReference(name = className, packageParts = packageParts)
-    val classRep = ClassRep(classReference)
+    val classRep       = ClassRep(classReference)
 
     val sourceCode = actionCode.headerSegmentClass(classReference, imports, methods)
 
     classRep.withContent(sourceCode)
   }
 
-
   // Helper class to represent the path from a resource to an action over a content header segment and a accept header segment.
   case class ActionPath(contentHeader: ContentHeaderSegment, acceptHeader: AcceptHeaderSegment, action: RichAction)
-
 
   sealed trait HeaderSegment
 

@@ -17,11 +17,11 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model._
+import io.atomicbits.scraml.generator.oldmodel._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedParameter, _}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameter, _ }
 
 /**
   * Created by peter on 30/09/15.
@@ -30,11 +30,9 @@ object ScalaActionCode extends ActionCode {
 
   implicit val language: Language = Scala
 
-
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String = {
     s"""def $contentHeaderMethodName = new ${headerSegment.classRef.fullyQualifiedName}(_requestBuilder)"""
   }
-
 
   def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String = {
     s"""
@@ -55,7 +53,6 @@ object ScalaActionCode extends ActionCode {
        """
   }
 
-
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
     parameters map { parameterDef =>
       val (field, classPtr) = parameterDef
@@ -63,21 +60,20 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
-
   def bodyTypes(action: RichAction): List[Option[ClassPointer]] =
     action.selectedContentType match {
-      case StringContentType(contentTypeHeader)          => List(Some(StringClassReference()))
-      case JsonContentType(contentTypeHeader)            => List(Some(StringClassReference()), Some(JsValueClassReference()))
+      case StringContentType(contentTypeHeader) => List(Some(StringClassReference()))
+      case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference()), Some(JsValueClassReference()))
       case TypedContentType(contentTypeHeader, classRef) =>
         List(Some(StringClassReference()), Some(JsValueClassReference()), Some(classRef))
-      case BinaryContentType(contentTypeHeader)          =>
+      case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassReference()),
           Some(FileClassReference()),
           Some(InputStreamClassReference()),
           Some(ArrayClassReference.typed(arrayType = ByteClassReference()))
         )
-      case AnyContentType(contentTypeHeader)             =>
+      case AnyContentType(contentTypeHeader) =>
         List(
           None,
           Some(StringClassReference()),
@@ -85,10 +81,9 @@ object ScalaActionCode extends ActionCode {
           Some(InputStreamClassReference()),
           Some(ArrayClassReference.typed(arrayType = ByteClassReference()))
         )
-      case NoContentType                                 => List(None)
-      case x                                             => List(Some(StringClassReference()))
+      case NoContentType => List(None)
+      case x             => List(Some(StringClassReference()))
     }
-
 
   def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
     val bodyType = optBodyType.map(_.classDefinitionScala).getOrElse("String")
@@ -109,14 +104,12 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
-
   def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)] = {
     fieldParams.sortBy { t =>
       val (field, param) = t
       (!param.required, !param.repeated, field)
     }
   }
-
 
   def primitiveTypeToScalaType(primitiveType: PrimitiveType): String = {
     primitiveType match {
@@ -142,22 +135,21 @@ object ScalaActionCode extends ActionCode {
           val defaultValue = if (noDefault) "" else s"= None"
           s"$sanitizedParameterName: Option[$primitive] $defaultValue"
         }
-      case arrayType: ParsedArray       =>
+      case arrayType: ParsedArray =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
-            val primitive = primitiveTypeToScalaType(primitiveType)
+            val primitive    = primitiveTypeToScalaType(primitiveType)
             val defaultValue = if (noDefault) "" else s"= List.empty[$primitive]"
             s"$sanitizedParameterName: List[$primitive] $defaultValue"
-          case other                        =>
+          case other =>
             sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
         }
     }
   }
 
-
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String = {
     val (queryParameterName, parameter) = qParam
-    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
+    val sanitizedParameterName          = CleanNameUtil.cleanFieldName(queryParameterName)
 
     (parameter.parameterType.parsed, parameter.required) match {
       case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
@@ -166,31 +158,30 @@ object ScalaActionCode extends ActionCode {
     }
   }
 
-
   def generateAction(action: RichAction,
                      segmentType: String,
-                     actionParameters: List[String] = List.empty,
+                     actionParameters: List[String]         = List.empty,
                      queryParameterMapEntries: List[String] = List.empty,
-                     formParameterMapEntries: List[String] = List.empty,
-                     typedBodyParam: Boolean = false,
-                     multipartParams: Boolean = false,
-                     binaryParam: Boolean = false,
+                     formParameterMapEntries: List[String]  = List.empty,
+                     typedBodyParam: Boolean                = false,
+                     multipartParams: Boolean               = false,
+                     binaryParam: Boolean                   = false,
                      contentType: ContentType,
                      responseType: ResponseType): String = {
 
-    val actionType = action.actionType
+    val actionType               = action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase
 
-    val expectedAcceptHeader = action.selectedResponsetype.acceptHeaderOpt
+    val expectedAcceptHeader      = action.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = action.selectedContentType.contentTypeHeaderOpt
 
-    val acceptHeader = expectedAcceptHeader.map(acceptH => s"""Some("${acceptH.value}")""").getOrElse("None")
+    val acceptHeader  = expectedAcceptHeader.map(acceptH            => s"""Some("${acceptH.value}")""").getOrElse("None")
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("${contentHeader.value}")""").getOrElse("None")
 
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
-    val bodyFieldValue = if (typedBodyParam) "Some(body)" else "None"
+    val bodyFieldValue       = if (typedBodyParam) "Some(body)" else "None"
     val multipartParamsValue = if (multipartParams) "parts" else "List.empty"
-    val binaryParamValue = if (binaryParam) "Some(BinaryRequest(body))" else "None"
+    val binaryParamValue     = if (binaryParam) "Some(BinaryRequest(body))" else "None"
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =

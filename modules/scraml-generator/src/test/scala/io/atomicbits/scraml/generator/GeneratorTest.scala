@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.model.{ ClassReference, _ }
+import io.atomicbits.scraml.generator.oldmodel.{ ClassReference, _ }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
 import org.scalatest.Matchers._

@@ -17,13 +17,13 @@
  *
  */
 
-package io.atomicbits.scraml.generator.model
+package io.atomicbits.scraml.generator.oldmodel
 
 import io.atomicbits.scraml.ramlparser.model.MediaType
 
 /**
- * Created by peter on 26/08/15. 
- */
+  * Created by peter on 26/08/15.
+  */
 sealed trait ResponseType {
 
   def acceptHeader: MediaType
@@ -47,7 +47,6 @@ case object NoResponseType extends ResponseType {
   override val acceptHeaderOpt = None
 
 }
-
 
 object ResponseType {
 

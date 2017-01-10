@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.generator.codegen
+package io.atomicbits.scraml.generator.oldcodegen
 
-import io.atomicbits.scraml.generator.model.{ClassReference, ClassRep, Language, RichResource}
+import io.atomicbits.scraml.generator.oldmodel.{ ClassReference, ClassRep, Language, RichResource }
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
@@ -28,11 +28,8 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
   */
 object ScalaResourceClassGenerator {
 
-
-  def generateResourceClasses(apiClassName: String,
-                              apiPackageName: List[String],
-                              resources: List[RichResource])
-                             (implicit lang: Language): List[ClassRep] = {
+  def generateResourceClasses(apiClassName: String, apiPackageName: List[String], resources: List[RichResource])(
+      implicit lang: Language): List[ClassRep] = {
 
     // A resource class needs to have one field path entry for each of its child resources. It needs to include the child resource's
     // (fully qualified) class. The resource's package needs to follow the (cleaned) rest path name to guarantee unique class names.
@@ -47,9 +44,9 @@ object ScalaResourceClassGenerator {
             val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode)
               .generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
-          case manyRoots                                    =>
-            val imports = Set.empty[String]
-            val dslFields = manyRoots.map(generateResourceDslField)
+          case manyRoots =>
+            val imports         = Set.empty[String]
+            val dslFields       = manyRoots.map(generateResourceDslField)
             val actionFunctions = List.empty[String]
             (imports, dslFields, actionFunctions, List.empty)
         }
@@ -174,7 +171,6 @@ object ScalaResourceClassGenerator {
       clientClass :: headerPathClassReps
     }
 
-
     def generateResourceClassesHelper(resource: RichResource): List[ClassRep] = {
 
       val classDefinition = generateClassDefinition(resource)
@@ -226,34 +222,30 @@ object ScalaResourceClassGenerator {
       resourceClassRep :: resource.resources.flatMap(generateResourceClassesHelper) ::: headerPathClassReps
     }
 
-
     def generateClassDefinition(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType.parsed)
           s"""class ${resource.classRep.name}(_value: $paramType, _req: RequestBuilder) extends ParamSegment[$paramType](_value, _req) { """
-        case None            =>
+        case None =>
           s"""class ${resource.classRep.name}(private val _req: RequestBuilder) extends PlainSegment("${resource.urlSegment}", _req) { """
       }
-
 
     def generateAddHeaderConstructorArguments(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType.parsed)
           "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))"
-        case None            => "(_requestBuilder.withAddedHeaders(newHeaders: _*))"
+        case None => "(_requestBuilder.withAddedHeaders(newHeaders: _*))"
       }
-
 
     def generateSetHeaderConstructorArguments(resource: RichResource): String =
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType.parsed)
           "(_value, _requestBuilder.withSetHeaders(newHeaders: _*))"
-        case None            => "(_requestBuilder.withSetHeaders(newHeaders: _*))"
+        case None => "(_requestBuilder.withSetHeaders(newHeaders: _*))"
       }
-
 
     def generateParameterType(parameterType: ParsedType): String = {
       parameterType match {
@@ -265,12 +257,10 @@ object ScalaResourceClassGenerator {
       }
     }
 
-
     def generateResourceFieldImports(resource: RichResource, excludePackage: List[String]): Option[String] = {
       if (excludePackage != resource.classRep.packageParts) Some(s"import ${resource.classRep.fullyQualifiedName}")
       else None
     }
-
 
     def generateResourceDslField(resource: RichResource): String = {
 
@@ -280,16 +270,11 @@ object ScalaResourceClassGenerator {
       resource.urlParameter match {
         case Some(parameter) =>
           val paramType = generateParameterType(parameter.parameterType.parsed)
-          s"""def $cleanUrlSegment(value: $paramType) = new ${
-            resource.classRep.fullyQualifiedName
-          }(value, _requestBuilder.withAddedPathSegment(value))"""
-        case None            =>
-          s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(_requestBuilder.withAddedPathSegment("${
-            resource.urlSegment
-          }"))"""
+          s"""def $cleanUrlSegment(value: $paramType) = new ${resource.classRep.fullyQualifiedName}(value, _requestBuilder.withAddedPathSegment(value))"""
+        case None =>
+          s"""def $cleanUrlSegment = new ${resource.classRep.fullyQualifiedName}(_requestBuilder.withAddedPathSegment("${resource.urlSegment}"))"""
       }
     }
-
 
     generateClientClass(resources) ::: resources.flatMap(generateResourceClassesHelper)
   }
