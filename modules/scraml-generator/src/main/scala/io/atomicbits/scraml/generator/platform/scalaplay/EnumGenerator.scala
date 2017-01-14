@@ -17,9 +17,21 @@
  *
  */
 
-package io.atomicbits.scraml.generator.typemodel
+package io.atomicbits.scraml.generator.platform.scalaplay
+
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, SourceFile }
+import io.atomicbits.scraml.generator.platform.Platform._
 
 /**
-  * Created by peter on 10/01/17.
+  * Created by peter on 14/01/17.
   */
-case class ClassDefinition(reference: ClassReference, jsonTypeInfo: Option[JsonTypeInfo])
+object EnumGenerator {
+
+  implicit val platform: Platform = ScalaPlay
+
+  def generate(enumDefinition: EnumDefinition): SourceFile = {
+    ???
+  }
+
+}

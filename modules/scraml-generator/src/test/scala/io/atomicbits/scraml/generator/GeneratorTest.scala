@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.oldmodel.{ ClassReference, _ }
+import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
 import org.scalatest.Matchers._
@@ -42,7 +43,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
           ramlApiPath    = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits.scraml",
           apiClassName   = "TestObjectHierarchyApi",
-          Scala
+          Scala,
+          ScalaPlay
         )
 
       Then("we should get valid a class hierarchy")
@@ -85,7 +87,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
           ramlApiPath    = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits.scraml",
           apiClassName   = "TestRichActionApi",
-          Scala
+          Scala,
+          ScalaPlay
         )
 
       Then("we should get typed response body")
@@ -105,7 +108,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits.scraml",
             apiClassName   = "TestApi",
-            Scala
+            Scala,
+            ScalaPlay
           )
 
         Then("we should get valid class representations")
@@ -196,7 +200,8 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits.scraml",
             apiClassName   = "TestApi",
-            Java
+            Java,
+            ScalaPlay
           )
 
         Then("we should get valid class representations")

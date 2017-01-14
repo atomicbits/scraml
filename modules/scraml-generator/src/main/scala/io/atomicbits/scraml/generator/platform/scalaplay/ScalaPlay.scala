@@ -21,6 +21,7 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
 
 /**
   * Created by peter on 10/01/17.
@@ -110,6 +111,24 @@ object ScalaPlay extends Platform with CleanNameTools {
       s""" (__ \\ "${field.fieldName}").format[${classDefinition(field.classPointer)}]"""
     else
       s""" (__ \\ "$field.fieldName").formatNullable[${classDefinition(field.classPointer)}]"""
+
+  override def toSourceFile(toClassDefinition: TransferObjectClassDefinition): SourceFile =
+    CaseClassGenerator.generate(toClassDefinition)
+
+  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile =
+    TraitGenerator.generate(toInterfaceDefinition)
+
+  override def toSourceFile(enumDefinition: EnumDefinition): SourceFile =
+    EnumGenerator.generate(enumDefinition)
+
+  override def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile =
+    ClientClassGenerator.generate(clientClassDefinition)
+
+  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile =
+    ResourceClassGenerator.generate(resourceClassDefinition)
+
+  override def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile =
+    UnionClassGenerator.generate(unionClassDefinition)
 
   def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
     val scalaReservedwords =

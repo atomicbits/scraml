@@ -39,13 +39,19 @@ import java.util.{ Map => JMap }
 
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
-import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
 import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser }
 
 import scala.util.{ Failure, Success, Try }
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences._
+import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
+import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
+import io.atomicbits.scraml.generator.typemodel.{ SourceDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.transform.{ CanonicalToTransformer, ResourceTransformer }
 
 /**
   * The main Scraml generator class.
@@ -58,16 +64,17 @@ object ScramlGenerator {
                         apiClassName: String,
                         licenseKey: String,
                         thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(Scala, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
+    generateFor(Scala, ScalaPlay, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
 
   def generateJavaCode(ramlApiPath: String,
                        apiPackageName: String,
                        apiClassName: String,
                        licenseKey: String,
                        thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(Java, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
+    generateFor(Java, JavaJackson, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
 
   private[generator] def generateFor(language: Language,
+                                     platform: Platform,
                                      ramlApiPath: String,
                                      apiPackageName: String,
                                      apiClassName: String,
@@ -90,7 +97,7 @@ object ScramlGenerator {
     val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
 
     val tupleList =
-      generateClassReps(ramlApiPath, apiPackageName, apiClassName, language)
+      generateClassReps(ramlApiPath, apiPackageName, apiClassName, language, platform)
         .collect { case clRep if clRep.content.isDefined => clRep }
         .map(addLicenseAndFormat(_, language, licenseHeader))
         .map(classRepToFilePathAndContent(_, language))
@@ -101,7 +108,8 @@ object ScramlGenerator {
   private[generator] def generateClassReps(ramlApiPath: String,
                                            apiPackageName: String,
                                            apiClassName: String,
-                                           language: Language): Seq[ClassRep] = {
+                                           language: Language,
+                                           thePlatform: Platform): Seq[ClassRep] = {
 
     val packageBasePath = apiPackageName.split('.').toList.filter(!_.isEmpty)
     val charsetName     = "UTF-8" // ToDo: Get the charset as input parameter.
@@ -127,7 +135,8 @@ object ScramlGenerator {
     println(s"RAML model generated")
 
     // We need an implicit reference to the language we're generating the DSL for.
-    implicit val lang = language
+    implicit val lang     = language
+    implicit val platform = thePlatform
 
     val host    = packageBasePath.take(2).reverse.mkString(".")
     val urlPath = packageBasePath.drop(2).mkString("/")
@@ -135,12 +144,18 @@ object ScramlGenerator {
 
     val defaultBasePath: List[String] = packageBasePath
 
-    // new canonical type model lookup
-    // val (ramlCanonical, canonicalLookup) = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath)).collect(raml)
+    val (ramlExp, canonicalLookup)             = raml.collectCanonicals(defaultBasePath) // new version
+    val map: Map[CanonicalName, CanonicalType] = canonicalLookup.map
 
-    //
+//    val transferObjectSourceDefinitions: Seq[SourceDefinition] =
+//      CanonicalToTransformer.transferObjectsToClassDefinitions(canonicalLookup.map)
+//    val transferObjectSourceFiles: Seq[SourceFile]          = transferObjectSourceDefinitions.map(_.toSourceFile)
+//    val clientAndResourceDefinitions: Seq[SourceDefinition] = ResourceTransformer.resourceToClientAndResourceClassDefinitions(ramlExp)
+//    val clientAndResourceSourceFiles: Seq[SourceFile]       = clientAndResourceDefinitions.map(_.toSourceFile)
+//    val sourceFiles: Seq[SourceFile]                        = clientAndResourceSourceFiles ++ transferObjectSourceFiles
+    // ToDo... return the sourceFiles and change the method signature's return type
 
-    val ramlExpanded    = raml.collectCanonicalTypes(defaultBasePath)
+    val ramlExpanded    = raml.collectCanonicalTypes(defaultBasePath) // old version
     val typeLookupTable = ramlExpanded.canonicalMap.get
 
     val canonicalMap: CanonicalMap = new TypeClassRepAssembler(nativeToRootId).deduceClassReps(typeLookupTable)

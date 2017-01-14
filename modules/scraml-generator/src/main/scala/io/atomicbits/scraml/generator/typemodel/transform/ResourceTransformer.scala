@@ -17,13 +17,18 @@
  *
  */
 
-package io.atomicbits.scraml.generator.typemodel
+package io.atomicbits.scraml.generator.typemodel.transform
+
+import io.atomicbits.scraml.generator.typemodel.SourceDefinition
+import io.atomicbits.scraml.ramlparser.model.Raml
 
 /**
-  * Created by peter on 10/01/17.
+  * Created by peter on 14/01/17.
   */
-case class EnumDefinition(reference: ClassReference,
-                          values: List[String]               = List.empty,
-                          parent: Option[ClassReference]     = None,
-                          jsonTypeInfo: Option[JsonTypeInfo] = None)
-    extends SourceDefinition
+object ResourceTransformer {
+
+  def resourceToClientAndResourceClassDefinitions(raml: Raml): Seq[SourceDefinition] = {
+    ???
+  }
+
+}

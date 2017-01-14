@@ -17,13 +17,21 @@
  *
  */
 
-package io.atomicbits.scraml.generator.typemodel
+package io.atomicbits.scraml.generator.platform.scalaplay
+
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.typemodel.{ SourceFile, TransferObjectClassDefinition }
+import io.atomicbits.scraml.generator.platform.Platform._
 
 /**
-  * Created by peter on 10/01/17.
+  * Created by peter on 14/01/17.
   */
-case class EnumDefinition(reference: ClassReference,
-                          values: List[String]               = List.empty,
-                          parent: Option[ClassReference]     = None,
-                          jsonTypeInfo: Option[JsonTypeInfo] = None)
-    extends SourceDefinition
+object CaseClassGenerator {
+
+  implicit val platform: Platform = ScalaPlay
+
+  def generate(toClassDefinition: TransferObjectClassDefinition): SourceFile = {
+    ???
+  }
+
+}

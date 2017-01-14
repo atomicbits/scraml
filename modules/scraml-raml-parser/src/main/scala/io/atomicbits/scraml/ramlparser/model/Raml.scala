@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, OldCanonicalLookupHelper, OldCanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.lookup._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameters, Types }
 import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
@@ -50,12 +50,19 @@ case class Raml(title: String,
     *
     * @return This changed Raml model with a type lookup table.
     */
+  @Deprecated
   def collectCanonicalTypes(defaultBasePath: List[String]): Raml = {
     // uniqueIdToCanonicalName: UniqueId => CanonicalName
     val canonicalNameGenerator                                         = CanonicalNameGenerator(defaultBasePath)
     val canonicalTypeCollector                                         = OldCanonicalTypeCollector(canonicalNameGenerator)
     val (ramlExpanded, canonicalMap): (Raml, OldCanonicalLookupHelper) = canonicalTypeCollector.collect(this)
     ramlExpanded.copy(canonicalMap = Some(canonicalMap))
+  }
+
+  def collectCanonicals(defaultBasePath: List[String]): (Raml, CanonicalLookup) = {
+    implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+    val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
+    canonicalTypeCollector.collect(this)
   }
 
   lazy val resourceMap: Map[String, Resource] = resources.map(resource => resource.urlSegment -> resource).toMap

@@ -115,6 +115,18 @@ object JavaJackson extends Platform with CleanNameTools {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 
+  override def toSourceFile(classDefinition: TransferObjectClassDefinition): SourceFile = ???
+
+  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile = ???
+
+  override def toSourceFile(enumDefinition: EnumDefinition): SourceFile = ???
+
+  override def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile = ???
+
+  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile = ???
+
+  override def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile = ???
+
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 
     val javaReservedWords =

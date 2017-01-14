@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform
 
-import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClassReference, Field }
+import io.atomicbits.scraml.generator.typemodel._
 
 /**
   * Created by peter on 10/01/17.
@@ -41,6 +41,18 @@ trait Platform {
   def safeFieldName(field: Field): String
 
   def fieldExpression(field: Field): String
+
+  def toSourceFile(toClassDefinition: TransferObjectClassDefinition): SourceFile
+
+  def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile
+
+  def toSourceFile(enumDefinition: EnumDefinition): SourceFile
+
+  def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile
+
+  def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile
+
+  def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile
 
   def stringClassReference: ClassReference
 
@@ -89,6 +101,58 @@ object Platform {
     def safeFieldName(implicit platform: Platform): String = platform.safeFieldName(field)
 
     def fieldExpression(implicit platform: Platform): String = platform.fieldExpression(field)
+  }
+
+  implicit class PlatformToClassDefinitionOps(val toClassDefinition: TransferObjectClassDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(toClassDefinition)
+
+  }
+
+  implicit class PlatformToInterfaceDefinitionOps(val toInterfaceDefinition: TransferObjectInterfaceDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(toInterfaceDefinition)
+
+  }
+
+  implicit class PlatformEnumDefinitionOps(val enumDefinition: EnumDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(enumDefinition)
+
+  }
+
+  implicit class PlatformClientClassDefinitionOps(val clientClassDefinition: ClientClassDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(clientClassDefinition)
+
+  }
+
+  implicit class PlatformResourceClassDefinitionOps(val resourceClassDefinition: ResourceClassDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(resourceClassDefinition)
+
+  }
+
+  implicit class PlatformUnionClassDefinitionOps(val unionClassDefinition: UnionClassDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(unionClassDefinition)
+
+  }
+
+  implicit class PlatformSourceCodeOps(val sourceCode: SourceDefinition) {
+
+    def toSourceFile(implicit platform: Platform): SourceFile =
+      sourceCode match {
+        case clientClassDefinition: ClientClassDefinition => new PlatformClientClassDefinitionOps(clientClassDefinition).toSourceFile
+        case resourceClassDefinition: ResourceClassDefinition =>
+          new PlatformResourceClassDefinitionOps(resourceClassDefinition).toSourceFile
+        case toClassDefinition: TransferObjectClassDefinition => new PlatformToClassDefinitionOps(toClassDefinition).toSourceFile
+        case toInterfaceDefinition: TransferObjectInterfaceDefinition =>
+          new PlatformToInterfaceDefinitionOps(toInterfaceDefinition).toSourceFile
+        case enumDefinition: EnumDefinition             => new PlatformEnumDefinitionOps(enumDefinition).toSourceFile
+        case unionClassDefinition: UnionClassDefinition => new PlatformUnionClassDefinitionOps(unionClassDefinition).toSourceFile
+      }
+
   }
 
 }

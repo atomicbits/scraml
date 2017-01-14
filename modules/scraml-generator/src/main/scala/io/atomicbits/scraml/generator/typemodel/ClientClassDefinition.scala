@@ -19,11 +19,9 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.ramlparser.model.Resource
+
 /**
-  * Created by peter on 10/01/17.
+  * Created by peter on 13/01/17.
   */
-case class EnumDefinition(reference: ClassReference,
-                          values: List[String]               = List.empty,
-                          parent: Option[ClassReference]     = None,
-                          jsonTypeInfo: Option[JsonTypeInfo] = None)
-    extends SourceDefinition
+case class ClientClassDefinition(baseUrl: String, resources: List[Resource]) extends SourceDefinition

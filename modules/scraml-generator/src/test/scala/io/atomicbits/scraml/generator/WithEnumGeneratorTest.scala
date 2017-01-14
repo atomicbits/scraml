@@ -1,6 +1,7 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.oldmodel._
+import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
 
@@ -19,7 +20,8 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
           ramlApiPath    = apiResourceUrl.toString,
           apiPackageName = "io.atomicbits",
           apiClassName   = "EnumApi",
-          Scala
+          Scala,
+          ScalaPlay
         )
 
       Then("we should get valid class representations")

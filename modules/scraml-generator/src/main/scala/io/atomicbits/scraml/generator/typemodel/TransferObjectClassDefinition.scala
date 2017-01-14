@@ -19,11 +19,19 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.Platform
+
 /**
   * Created by peter on 10/01/17.
+  *
+  * Transfer Object class definition
   */
-case class EnumDefinition(reference: ClassReference,
-                          values: List[String]               = List.empty,
-                          parent: Option[ClassReference]     = None,
-                          jsonTypeInfo: Option[JsonTypeInfo] = None)
-    extends SourceDefinition
+case class TransferObjectClassDefinition(reference: ClassReference,
+                                         fields: List[Field],
+                                         parents: List[ClassReference]      = List.empty,
+                                         jsonTypeInfo: Option[JsonTypeInfo] = None)
+    extends SourceDefinition {
+
+  def hasParents: Boolean = parents.nonEmpty
+
+}
