@@ -17,13 +17,13 @@
  *
  */
 
-package io.atomicbits.scraml.generator.typemodel
+package io.atomicbits.scraml.generator.platform
 
 /**
-  * Created by peter on 10/01/17.
+  * Created by peter on 20/01/17.
   */
-/**
-  * A type parameter points to a class via a parameter, while not knowing what the actual class is it points to.
-  * E.g. "T" in List[T]
-  */
-case class TypeParameter(name: String) extends ClassPointer
+trait SourceGenerator {
+
+  def platform: Platform
+
+}

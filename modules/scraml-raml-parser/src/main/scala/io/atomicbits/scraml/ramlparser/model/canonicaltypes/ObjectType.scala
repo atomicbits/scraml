@@ -24,8 +24,7 @@ package io.atomicbits.scraml.ramlparser.model.canonicaltypes
   */
 case class ObjectType(canonicalName: CanonicalName,
                       properties: Map[String, Property[_ <: GenericReferrable]],
-                      parents: List[TypeReference] = List.empty,
-                      // children: List[TypeReference] = List.empty,
+                      parents: List[TypeReference]           = List.empty,
                       typeParameters: List[TypeParameter]    = List.empty,
                       typeDiscriminator: Option[String]      = None,
                       typeDiscriminatorValue: Option[String] = None)

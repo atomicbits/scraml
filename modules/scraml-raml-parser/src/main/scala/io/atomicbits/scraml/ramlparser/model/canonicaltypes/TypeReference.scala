@@ -30,10 +30,9 @@ trait TypeReference extends GenericReferrable {
 
 }
 
-
-case class NonPrimitiveTypeReference(refers: CanonicalName,
-                                     genericTypes: Map[TypeParameter, GenericReferrable] = Map.empty) extends TypeReference
-
+// ToDo: also keep a List[TypeParameter] so that we maintain the order of the type parameters in the generated code later on.
+case class NonPrimitiveTypeReference(refers: CanonicalName, genericTypes: Map[TypeParameter, GenericReferrable] = Map.empty)
+    extends TypeReference
 
 case class ArrayTypeReference(genericType: GenericReferrable) extends TypeReference {
 
@@ -43,13 +42,12 @@ case class ArrayTypeReference(genericType: GenericReferrable) extends TypeRefere
 
 }
 
-
 object TypeReference {
 
   def apply(ttype: CanonicalType): TypeReference = ttype match {
     case primitive: PrimitiveType       => primitive
     case nonPrimitive: NonPrimitiveType => NonPrimitiveTypeReference(nonPrimitive.canonicalName)
-    case arrayType: ArrayType.type      =>
+    case arrayType: ArrayType.type =>
       sys.error(s"Cannot create a type reference from an array type without knowing the type of elements it contains.")
   }
 

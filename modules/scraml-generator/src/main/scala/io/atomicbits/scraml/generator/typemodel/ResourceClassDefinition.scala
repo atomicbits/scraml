@@ -23,5 +23,12 @@ import io.atomicbits.scraml.ramlparser.model.Resource
 
 /**
   * Created by peter on 13/01/17.
+  *
+  * In a resource class definition, we collect all information that is needed to generate a single resource class, independent from
+  * the target language.
   */
-case class ResourceClassDefinition(resources: List[Resource]) extends SourceDefinition
+case class ResourceClassDefinition(basePackage: List[String],
+                                   precedingUrlSegments: List[String],
+                                   resource: Resource,
+                                   childResources: List[Resource])
+    extends SourceDefinition

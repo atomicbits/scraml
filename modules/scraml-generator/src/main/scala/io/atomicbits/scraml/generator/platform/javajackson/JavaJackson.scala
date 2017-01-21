@@ -22,68 +22,80 @@ package io.atomicbits.scraml.generator.platform.javajackson
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
 
+import Platform._
+
 /**
   * Created by peter on 10/01/17.
   */
 object JavaJackson extends Platform with CleanNameTools {
 
-  val stringClassReference: ClassReference = ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
+  implicit val platform = JavaJackson
 
-  def longClassReference(primitive: Boolean = false): ClassReference =
-    if (primitive) {
-      ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
-    } else {
-      ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
-    }
+  override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
 
-  def doubleClassReference(primitive: Boolean = false): ClassReference =
-    if (primitive) {
-      ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
-    } else {
-      ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
-    }
-
-  def booleanClassReference(primitive: Boolean = false): ClassReference =
-    if (primitive) {
-      ClassReference(name = "boolean", packageParts = List("java", "lang"), predef = true)
-    } else {
-      ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
-    }
-
-  def arrayClassReference(arrayType: ClassReference): ClassPointer = ArrayClassReference(arrayType)
-
-  def listClassReference(typeParamName: String): ClassReference =
-    ClassReference(name = "List", packageParts = List("java", "util"), typeParameters = List(TypeParameter(typeParamName)), library = true)
-
-  val byteClassReference: ClassReference = ClassReference(name = "Byte", packageParts = List("java", "lang"), predef = true)
-
-  val binaryDataClassReference: ClassReference =
-    ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
-
-  val fileClassReference: ClassReference = ClassReference(name = "File", packageParts = List("java", "io"), library = true)
-
-  val inputStreamClassReference: ClassReference = ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
-
-  val jsValueClassReference: ClassReference =
-    ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
-
-  val jsObjectClassReference: ClassReference = jsValueClassReference
-
-  override def classDefinition(classPointer: ClassPointer): String =
     classPointer match {
-      case classReference: ClassReference =>
-        if (classReference.typeParameters.isEmpty) classReference.name
-        else s"${classReference.name}<${classReference.typeParameters.map(_.name).mkString(",")}>"
-      case arrayClassReference: ArrayClassReference => sys.error(s"Scala has no array class representation.")
-      case typeParameter: TypeParameter             => sys.error(s"A type parameter has no class definition.")
+      case classReference: ClassReference => classReference
+      case ArrayClassReference(arrayType) =>
+        ClassReference(name = arrayType.native.name, packageParts = arrayType.native.packageParts, isArray = true)
+      case StringClassReference =>
+        ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
+      case ByteClassReference =>
+        ClassReference(name = "Byte", packageParts = List("java", "lang"), predef = true)
+      case BinaryDataClassReference =>
+        ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+      case FileClassReference =>
+        ClassReference(name = "File", packageParts = List("java", "io"), library = true)
+      case InputStreamClassReference =>
+        ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
+      case JsObjectClassReference =>
+        ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
+      case JsValueClassReference =>
+        ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
+      case BodyPartClassReference =>
+        ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+      case LongClassReference(primitive) =>
+        if (primitive) {
+          ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
+        } else {
+          ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
+        }
+      case DoubleClassReference(primitive) =>
+        if (primitive) {
+          ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
+        } else {
+          ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+        }
+      case BooleanClassReference(primitive) =>
+        if (primitive) {
+          ClassReference(name = "boolean", packageParts = List("java", "lang"), predef = true)
+        } else {
+          ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
+        }
+      case ListClassReference(typeParamValue) =>
+        val typeParameter   = TypeParameter("T")
+        val typeParamValues = Map(typeParameter -> typeParamValue)
+        ClassReference(
+          name            = "List",
+          packageParts    = List("java", "util"),
+          typeParameters  = List(typeParameter),
+          typeParamValues = typeParamValues,
+          library         = true
+        )
+      case typeParameter: TypeParameter =>
+        sys.error(s"Cannot transform a type parameter to a native class reference: $typeParameter.")
     }
+  }
 
-  def className(classPointer: ClassPointer): String =
-    classPointer match {
-      case classReference: ClassReference           => classReference.name
-      case arrayClassReference: ArrayClassReference => sys.error(s"There is no class name for an array class reference")
-      case typeParameter: TypeParameter             => sys.error(s"A type parameter has no class name.")
-    }
+  override def classDefinition(classPointer: ClassPointer): String = {
+    val classReference = classPointer.native
+
+    if (classReference.typeParameters.isEmpty)
+      classReference.name
+    else
+      s"${classReference.name}<${classReference.typeParameters.map(_.name).mkString(",")}>"
+  }
+
+  override def className(classPointer: ClassPointer): String = classPointer.native.name
 
   override def packageName(classPointer: ClassPointer): String = safePackageParts(classPointer).mkString(".")
 
@@ -92,14 +104,9 @@ object JavaJackson extends Platform with CleanNameTools {
     parts.mkString(".")
   }
 
-  override def safePackageParts(classPointer: ClassPointer): List[String] =
-    classPointer match {
-      case classReference: ClassReference =>
-        classReference.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
-      case arrayClassReference: ArrayClassReference =>
-        arrayClassReference.refers.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
-      case typeParameter: TypeParameter => sys.error(s"A type parameter has no package parts.")
-    }
+  override def safePackageParts(classPointer: ClassPointer): List[String] = {
+    classPointer.native.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
+  }
 
   override def canonicalName(classPointer: ClassPointer): String = {
     val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
@@ -115,17 +122,27 @@ object JavaJackson extends Platform with CleanNameTools {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 
-  override def toSourceFile(classDefinition: TransferObjectClassDefinition): SourceFile = ???
+  override def importStatements(imports: Set[ClassPointer]): Set[String] = {
+    imports.map(_.native).collect {
+      case classReference if !classReference.predef => s"import ${classReference.fullyQualifiedName};"
+    }
+  }
 
-  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile = ???
+  override def classFileExtension: String = ".java"
 
-  override def toSourceFile(enumDefinition: EnumDefinition): SourceFile = ???
+  override def toSourceFile(classDefinition: TransferObjectClassDefinition): List[SourceFile] = ???
 
-  override def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile = ???
+  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile] = ???
 
-  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile = ???
+  override def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile] = ???
 
-  override def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile = ???
+  override def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile] = ???
+
+  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile] = ???
+
+  override def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile] = ???
+
+  override def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile] = ???
 
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 

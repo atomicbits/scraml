@@ -19,17 +19,17 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ SourceFile, UnionClassDefinition }
 
 /**
   * Created by peter on 14/01/17.
   */
-object UnionClassGenerator {
+object UnionClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(unionClassDefinition: UnionClassDefinition): SourceFile = {
+  def generate(unionClassDefinition: UnionClassDefinition): List[SourceFile] = {
     ???
   }
 

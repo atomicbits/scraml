@@ -19,12 +19,31 @@
 
 package io.atomicbits.scraml.generator.platform
 
+import java.io.File
+
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
+  ArrayTypeReference,
+  BooleanType,
+  CanonicalName,
+  DateType,
+  FileType,
+  GenericReferrable,
+  IntegerType,
+  NonPrimitiveTypeReference,
+  NullType,
+  NumberType,
+  StringType,
+  TypeReference,
+  TypeParameter => CanonicalTypeParameter
+}
 import io.atomicbits.scraml.generator.typemodel._
 
 /**
   * Created by peter on 10/01/17.
   */
 trait Platform {
+
+  def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference
 
   def classDefinition(classPointer: ClassPointer): String
 
@@ -42,45 +61,82 @@ trait Platform {
 
   def fieldExpression(field: Field): String
 
-  def toSourceFile(toClassDefinition: TransferObjectClassDefinition): SourceFile
+  def importStatements(imports: Set[ClassPointer]): Set[String]
 
-  def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile
+  def toSourceFile(toClassDefinition: TransferObjectClassDefinition): List[SourceFile]
 
-  def toSourceFile(enumDefinition: EnumDefinition): SourceFile
+  def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile]
 
-  def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile
+  def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile]
 
-  def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile
+  def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile]
 
-  def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile
+  def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile]
 
-  def stringClassReference: ClassReference
+  def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile]
 
-  def longClassReference(primitive: Boolean = false): ClassReference
+  def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile]
 
-  def doubleClassReference(primitive: Boolean = false): ClassReference
+  def classFileExtension: String
 
-  def booleanClassReference(primitive: Boolean = false): ClassReference
-
-  def arrayClassReference(arrayType: ClassReference): ClassPointer
-
-  def listClassReference(typeParamName: String): ClassReference
-
-  def byteClassReference: ClassReference
-
-  def binaryDataClassReference: ClassReference
-
-  def fileClassReference: ClassReference
-
-  def inputStreamClassReference: ClassReference
-
-  def jsObjectClassReference: ClassReference
-
-  def jsValueClassReference: ClassReference
+  /**
+    * Transforms a given class reference to a file path. The given class reference already has clean package and class names.
+    *
+    * @param classReference The class reference for which a file path is generated.
+    * @return The relative file name for the given class.
+    */
+  def classReferenceToFilePath(classReference: ClassReference): String = {
+    s"${classReference.packageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
+  }
 
 }
 
 object Platform {
+
+  def typeReferenceToClassPointer(typeReference: TypeReference, primitive: Boolean = false): ClassPointer = {
+
+    def customClassReference(canonicalName: CanonicalName, genericTypes: Map[CanonicalTypeParameter, GenericReferrable]): ClassReference = {
+      val generics: Map[TypeParameter, ClassPointer] =
+        genericTypes.map {
+          case (typeParameter, genericReferrable) =>
+            val tParam = TypeParameter(typeParameter.name)
+            val typeRef =
+              genericReferrable match {
+                case typeReference: TypeReference => typeReferenceToClassPointer(typeReference)
+                case CanonicalTypeParameter(paramName) =>
+                  sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
+              }
+            tParam -> typeRef
+        }
+      val typeParameters = generics.keys.toList // ToDo: we lost any order of the type parameters, fix this in NonPrimitiveTypeReference!
+      ClassReference(
+        name            = canonicalName.name,
+        packageParts    = canonicalName.packagePath,
+        typeParameters  = typeParameters,
+        typeParamValues = generics
+      )
+    }
+
+    typeReference match {
+      case BooleanType        => BooleanClassReference(primitive)
+      case StringType         => StringClassReference
+      case IntegerType        => LongClassReference(primitive)
+      case NumberType         => DoubleClassReference(primitive)
+      case NullType           => StringClassReference // not sure what we have to do in this case
+      case FileType           => FileClassReference
+      case dateType: DateType => StringClassReference // ToDo: support date types
+      case ArrayTypeReference(genericType) =>
+        genericType match {
+          case typeReference: TypeReference =>
+            val classPointer = typeReferenceToClassPointer(typeReference)
+            ListClassReference(classPointer)
+          case CanonicalTypeParameter(paramName) =>
+            sys.error(s"Didn't expect a type parameter when constructing an array reference at this stage.")
+        }
+      case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
+      case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")
+    }
+  }
 
   implicit class PlatformClassPointerOps(val classPointer: ClassPointer) {
 
@@ -94,6 +150,8 @@ object Platform {
 
     def canonicalName(implicit platform: Platform): String = platform.canonicalName(classPointer)
 
+    def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
+
   }
 
   implicit class PlatformFieldOps(val field: Field) {
@@ -105,47 +163,55 @@ object Platform {
 
   implicit class PlatformToClassDefinitionOps(val toClassDefinition: TransferObjectClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(toClassDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(toClassDefinition)
 
   }
 
   implicit class PlatformToInterfaceDefinitionOps(val toInterfaceDefinition: TransferObjectInterfaceDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(toInterfaceDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(toInterfaceDefinition)
 
   }
 
   implicit class PlatformEnumDefinitionOps(val enumDefinition: EnumDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(enumDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(enumDefinition)
 
   }
 
   implicit class PlatformClientClassDefinitionOps(val clientClassDefinition: ClientClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(clientClassDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(clientClassDefinition)
 
   }
 
   implicit class PlatformResourceClassDefinitionOps(val resourceClassDefinition: ResourceClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(resourceClassDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(resourceClassDefinition)
+
+  }
+
+  implicit class PlatformHeaderSegmentClassDefinitionOps(val headerSegmentClassDefinition: HeaderSegmentClassDefinition) {
+
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(headerSegmentClassDefinition)
 
   }
 
   implicit class PlatformUnionClassDefinitionOps(val unionClassDefinition: UnionClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile = platform.toSourceFile(unionClassDefinition)
+    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(unionClassDefinition)
 
   }
 
   implicit class PlatformSourceCodeOps(val sourceCode: SourceDefinition) {
 
-    def toSourceFile(implicit platform: Platform): SourceFile =
+    def toSourceFile(implicit platform: Platform): List[SourceFile] =
       sourceCode match {
         case clientClassDefinition: ClientClassDefinition => new PlatformClientClassDefinitionOps(clientClassDefinition).toSourceFile
         case resourceClassDefinition: ResourceClassDefinition =>
           new PlatformResourceClassDefinitionOps(resourceClassDefinition).toSourceFile
+        case headerSegmentDefinition: HeaderSegmentClassDefinition =>
+          new PlatformHeaderSegmentClassDefinitionOps(headerSegmentDefinition).toSourceFile
         case toClassDefinition: TransferObjectClassDefinition => new PlatformToClassDefinitionOps(toClassDefinition).toSourceFile
         case toInterfaceDefinition: TransferObjectInterfaceDefinition =>
           new PlatformToInterfaceDefinitionOps(toInterfaceDefinition).toSourceFile

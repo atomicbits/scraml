@@ -19,8 +19,9 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
-import io.atomicbits.scraml.generator.typemodel.ClassReference
-import io.atomicbits.scraml.ramlparser.model.MediaType
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.typemodel.ClassPointer
+import io.atomicbits.scraml.ramlparser.model.{ MediaType, Response }
 
 /**
   * Created by peter on 26/08/15.
@@ -37,7 +38,7 @@ case class StringResponseType(acceptHeader: MediaType) extends ResponseType
 
 case class JsonResponseType(acceptHeader: MediaType) extends ResponseType
 
-case class TypedResponseType(acceptHeader: MediaType, classReference: ClassReference) extends ResponseType
+case class TypedResponseType(acceptHeader: MediaType, classReference: ClassPointer) extends ResponseType
 
 case class BinaryResponseType(acceptHeader: MediaType) extends ResponseType
 
@@ -51,12 +52,21 @@ case object NoResponseType extends ResponseType {
 
 object ResponseType {
 
-  def apply(acceptHeader: MediaType, classReference: Option[ClassReference]): ResponseType = {
+  def apply(response: Response): Set[ResponseType] = {
+    response.body.contentMap.map {
+      case (mediaType, bodyContent) =>
+        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
+        val formParams      = bodyContent.formParameters
+        ResponseType(acceptHeader = mediaType, classPointer = classPointerOpt)
+    } toSet
+  }
+
+  def apply(acceptHeader: MediaType, classPointer: Option[ClassPointer]): ResponseType = {
 
     val mediaTypeValue = acceptHeader.value.toLowerCase
 
-    if (classReference.isDefined) {
-      TypedResponseType(acceptHeader, classReference.get)
+    if (classPointer.isDefined) {
+      TypedResponseType(acceptHeader, classPointer.get)
     } else if (mediaTypeValue.contains("json")) {
       JsonResponseType(acceptHeader)
     } else if (mediaTypeValue.contains("text")) {

@@ -22,4 +22,50 @@ package io.atomicbits.scraml.generator.typemodel
 /**
   * Created by peter on 10/01/17.
   */
-trait ClassPointer {}
+sealed trait ClassPointer
+
+case class ClassReference(name: String,
+                          packageParts: List[String]                        = List.empty,
+                          typeParameters: List[TypeParameter]               = List.empty,
+                          typeParamValues: Map[TypeParameter, ClassPointer] = Map.empty,
+                          isArray: Boolean                                  = false,
+                          predef: Boolean                                   = false,
+                          library: Boolean                                  = false)
+    extends ClassPointer {
+
+  /**
+    * The base form for this class reference. The base form refers to the class in its most unique way,
+    * without type parameter values.
+    * e.g. List[T] and not List[Dog]
+    */
+  lazy val base: ClassReference = if (typeParamValues.isEmpty) this else copy(typeParamValues = Map.empty)
+
+}
+
+case class TypeParameter(name: String) extends ClassPointer
+
+case class ArrayClassReference(arrayType: ClassPointer) extends ClassPointer
+
+case object StringClassReference extends ClassPointer
+
+case object ByteClassReference extends ClassPointer
+
+case object BinaryDataClassReference extends ClassPointer
+
+case object InputStreamClassReference extends ClassPointer
+
+case object FileClassReference extends ClassPointer
+
+case object JsObjectClassReference extends ClassPointer
+
+case object JsValueClassReference extends ClassPointer
+
+case class LongClassReference(primitive: Boolean = true) extends ClassPointer
+
+case class DoubleClassReference(primitive: Boolean = true) extends ClassPointer
+
+case class BooleanClassReference(primitive: Boolean = true) extends ClassPointer
+
+case class ListClassReference(typeParamValue: ClassPointer) extends ClassPointer
+
+case object BodyPartClassReference extends ClassPointer

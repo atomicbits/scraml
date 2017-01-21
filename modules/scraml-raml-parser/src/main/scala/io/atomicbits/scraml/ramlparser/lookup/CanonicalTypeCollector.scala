@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.ramlparser.lookup
 
-import java.util.UUID
-
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
@@ -328,15 +326,5 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     }
 
   }
-
-  /**
-    * Index all json-schema definitions on their absolute id so that we can lookup references later on.
-    */
-//  private def indexJsonSchemaReferences(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
-  // First index all json-schema references in the raml.types type map.
-
-  // Next, index all json-schema references inside the resources (in the request and response bodies).
-
-//  }
 
 }

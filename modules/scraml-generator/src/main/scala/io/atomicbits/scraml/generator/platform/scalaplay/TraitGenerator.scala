@@ -19,18 +19,18 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ SourceFile, TransferObjectInterfaceDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
 
 /**
   * Created by peter on 14/01/17.
   */
-object TraitGenerator {
+object TraitGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile = {
+  def generate(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile] = {
     ???
   }
 

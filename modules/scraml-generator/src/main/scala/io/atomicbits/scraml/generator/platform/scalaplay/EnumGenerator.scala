@@ -19,18 +19,18 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
 
 /**
   * Created by peter on 14/01/17.
   */
-object EnumGenerator {
+object EnumGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(enumDefinition: EnumDefinition): SourceFile = {
+  def generate(enumDefinition: EnumDefinition): List[SourceFile] = {
     ???
   }
 

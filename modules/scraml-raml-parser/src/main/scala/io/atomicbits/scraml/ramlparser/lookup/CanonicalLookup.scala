@@ -19,15 +19,15 @@
 
 package io.atomicbits.scraml.ramlparser.lookup
 
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType, NonPrimitiveType }
 
 /**
   * Created by peter on 17/12/16.
   */
-case class CanonicalLookup(map: Map[CanonicalName, CanonicalType] = Map.empty) {
+case class CanonicalLookup(map: Map[CanonicalName, NonPrimitiveType] = Map.empty) {
 
-  def apply(canonicalName: CanonicalName): CanonicalType = map(canonicalName)
+  def apply(canonicalName: CanonicalName): NonPrimitiveType = map(canonicalName)
 
-  def get(canonicalName: CanonicalName): Option[CanonicalType] = map.get(canonicalName)
+  def get(canonicalName: CanonicalName): Option[NonPrimitiveType] = map.get(canonicalName)
 
 }

@@ -41,8 +41,8 @@ object ScalaResourceClassGenerator {
         resources match {
           case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
             val dslFields = oneRoot.resources.map(generateResourceDslField)
-            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) = ActionGenerator(ScalaActionCode)
-              .generateActionFunctions(oneRoot)
+            val ActionFunctionResult(imports, actionFunctions, headerPathClassReps) =
+              ActionGenerator(ScalaActionCode).generateActionFunctions(oneRoot)
             (imports, dslFields, actionFunctions, headerPathClassReps)
           case manyRoots =>
             val imports         = Set.empty[String]

@@ -23,5 +23,9 @@ import io.atomicbits.scraml.ramlparser.model.Resource
 
 /**
   * Created by peter on 13/01/17.
+  *
+  * In a client class definition, we collect all information that is needed to generate a client class, independent from
+  * the target language.
   */
-case class ClientClassDefinition(baseUrl: String, resources: List[Resource]) extends SourceDefinition
+case class ClientClassDefinition(apiName: String, baseUrl: String, basePackage: List[String], topLevelResources: List[Resource])
+    extends SourceDefinition

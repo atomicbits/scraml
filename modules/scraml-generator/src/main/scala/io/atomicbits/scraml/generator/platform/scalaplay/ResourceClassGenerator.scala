@@ -19,19 +19,51 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.generator.typemodel.{ ResourceClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
+import io.atomicbits.scraml.generator.typemodel.{ ClassReference, ResourceClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.model.Resource
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 
 /**
   * Created by peter on 14/01/17.
   */
-object ResourceClassGenerator {
+object ResourceClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(resourceClassDefinition: ResourceClassDefinition): SourceFile = {
+  def generate(resourceClassDefinition: ResourceClassDefinition): List[SourceFile] = {
     ???
+  }
+
+  def generateResourceDslField(packageBasePath: List[String], resource: Resource): String = {
+
+    val cleanUrlSegment  = ScalaPlay.escapeScalaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
+    val resourceClassRef = createResourceClassReference(packageBasePath, resource)
+    val canonicalUrlParameterTypeOpt: Option[TypeReference] =
+      resource.urlParameter
+        .map(_.parameterType)
+        .flatMap(_.canonical)
+
+    canonicalUrlParameterTypeOpt match {
+      case Some(typeReference) =>
+        val urlParamClassReference: ClassReference = Platform.typeReferenceToClassPointer(typeReference).native
+        val urlParamClassName                      = urlParamClassReference.name
+        s"""def $cleanUrlSegment(value: $urlParamClassName) = new ${resourceClassRef.fullyQualifiedName}(value, _requestBuilder.withAddedPathSegment(value))"""
+      case None =>
+        s"""def $cleanUrlSegment = new ${resourceClassRef.fullyQualifiedName}(_requestBuilder.withAddedPathSegment("${resource.urlSegment}"))"""
+    }
+  }
+
+  def createResourceClassReference(packageBasePath: List[String], resource: Resource): ClassReference = {
+
+    val resourceClassName = s"${CleanNameTools.cleanClassName(resource.urlSegment)}Resource"
+
+    val nextPackagePart = CleanNameTools.cleanPackageName(resource.urlSegment)
+
+    val nextPackageBasePath = packageBasePath :+ nextPackagePart
+
+    ClassReference(name = resourceClassName, packageParts = nextPackageBasePath)
   }
 
 }

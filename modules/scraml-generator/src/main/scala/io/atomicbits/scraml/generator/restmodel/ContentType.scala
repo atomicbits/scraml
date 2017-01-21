@@ -19,8 +19,9 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
-import io.atomicbits.scraml.generator.typemodel.ClassReference
-import io.atomicbits.scraml.ramlparser.model.MediaType
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.typemodel.ClassPointer
+import io.atomicbits.scraml.ramlparser.model.{ Body, MediaType }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
 
 /**
@@ -38,7 +39,7 @@ case class StringContentType(contentTypeHeader: MediaType) extends ContentType
 
 case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class TypedContentType(contentTypeHeader: MediaType, classReference: ClassReference) extends ContentType
+case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer) extends ContentType
 
 case class FormPostContentType(contentTypeHeader: MediaType, formParameters: ParsedParameters) extends ContentType
 
@@ -58,7 +59,15 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(mediaType: MediaType, content: Option[ClassReference], formParameters: ParsedParameters): ContentType = {
+  def apply(body: Body): Set[ContentType] =
+    body.contentMap.map {
+      case (mediaType, bodyContent) =>
+        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
+        val formParams      = bodyContent.formParameters
+        ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
+    } toSet
+
+  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters): ContentType = {
 
     val mediaTypeValue = mediaType.value.toLowerCase
 

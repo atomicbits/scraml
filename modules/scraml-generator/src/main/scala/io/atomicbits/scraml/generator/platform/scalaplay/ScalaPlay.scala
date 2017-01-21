@@ -23,59 +23,65 @@ import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
 
+import Platform._
+
 /**
   * Created by peter on 10/01/17.
   */
 object ScalaPlay extends Platform with CleanNameTools {
 
-  val stringClassReference = ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
+  implicit val platform = ScalaPlay
 
-  def longClassReference(primitive: Boolean = false) = ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
-
-  def doubleClassReference(primitive: Boolean = false): ClassReference =
-    ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
-
-  def booleanClassReference(primitive: Boolean = false): ClassReference =
-    ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
-
-  def arrayClassReference(arrayType: ClassReference): ClassPointer = {
-    val typeParameter = TypeParameter("T")
-    ClassReference(name = "Array", typeParameters = List(typeParameter), typeParamValues = Map(typeParameter -> arrayType), predef = true)
+  override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
+    classPointer match {
+      case classReference: ClassReference => classReference
+      case ArrayClassReference(arrayType) =>
+        val typeParameter = TypeParameter("T")
+        ClassReference(name            = "Array",
+                       typeParameters  = List(typeParameter),
+                       typeParamValues = Map(typeParameter -> arrayType),
+                       predef          = true)
+      case StringClassReference =>
+        ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
+      case ByteClassReference =>
+        ClassReference(name = "Byte", packageParts = List("scala"), predef = true)
+      case BinaryDataClassReference =>
+        ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
+      case FileClassReference =>
+        ClassReference(name = "File", packageParts = List("java", "io"), library = true)
+      case InputStreamClassReference =>
+        ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
+      case JsObjectClassReference =>
+        ClassReference(name = "JsObject", packageParts = List("play", "api", "libs", "json"), library = true)
+      case JsValueClassReference =>
+        ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
+      case BodyPartClassReference =>
+        ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
+      case LongClassReference(primitive) =>
+        ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
+      case DoubleClassReference(primitive) =>
+        ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
+      case BooleanClassReference(primitive) =>
+        ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
+      case ListClassReference(typeParamValue) =>
+        val typeParameter   = TypeParameter("T")
+        val typeParamValues = Map(typeParameter -> typeParamValue)
+        ClassReference(name = "List", typeParameters = List(typeParameter), typeParamValues = typeParamValues, predef = true)
+      case typeParameter: TypeParameter =>
+        sys.error(s"Cannot transform a type parameter to a native class reference: $typeParameter.")
+    }
   }
 
-  def listClassReference(typeParamName: String): ClassReference =
-    ClassReference(name = "List", typeParameters = List(TypeParameter(typeParamName)), predef = true)
+  override def classDefinition(classPointer: ClassPointer): String = {
+    val classReference = classPointer.native
 
-  val byteClassReference: ClassReference = ClassReference(name = "Byte", packageParts = List("scala"), predef = true)
+    if (classReference.typeParameters.isEmpty)
+      classReference.name
+    else
+      s"${classReference.name}[${classReference.typeParameters.map(_.name).mkString(",")}]"
+  }
 
-  val binaryDataClassReference: ClassReference =
-    ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
-
-  val fileClassReference: ClassReference = ClassReference(name = "File", packageParts = List("java", "io"), library = true)
-
-  val inputStreamClassReference: ClassReference = ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
-
-  val jsObjectClassReference: ClassReference =
-    ClassReference(name = "JsObject", packageParts = List("play", "api", "libs", "json"), library = true)
-
-  val jsValueClassReference: ClassReference =
-    ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
-
-  override def classDefinition(classPointer: ClassPointer): String =
-    classPointer match {
-      case classReference: ClassReference =>
-        if (classReference.typeParameters.isEmpty) classReference.name
-        else s"${classReference.name}[${classReference.typeParameters.map(_.name).mkString(",")}]"
-      case arrayClassReference: ArrayClassReference => sys.error(s"Scala has no array class representation.")
-      case typeParameter: TypeParameter             => sys.error(s"A type parameter has no class definition.")
-    }
-
-  override def className(classPointer: ClassPointer): String =
-    classPointer match {
-      case classReference: ClassReference           => classReference.name
-      case arrayClassReference: ArrayClassReference => sys.error(s"Scala has no array class representation.")
-      case typeParameter: TypeParameter             => sys.error(s"A type parameter has no class definition.")
-    }
+  override def className(classPointer: ClassPointer): String = classPointer.native.name
 
   override def packageName(classPointer: ClassPointer): String = safePackageParts(classPointer).mkString(".")
 
@@ -84,12 +90,7 @@ object ScalaPlay extends Platform with CleanNameTools {
     parts.mkString(".")
   }
 
-  override def safePackageParts(classPointer: ClassPointer): List[String] =
-    classPointer match {
-      case classReference: ClassReference           => classReference.packageParts
-      case arrayClassReference: ArrayClassReference => sys.error(s"Scala has no array class representation.")
-      case typeParameter: TypeParameter             => sys.error(s"A type parameter has no package parts.")
-    }
+  override def safePackageParts(classPointer: ClassPointer): List[String] = classPointer.native.packageParts
 
   override def canonicalName(classPointer: ClassPointer): String = {
     val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
@@ -112,23 +113,34 @@ object ScalaPlay extends Platform with CleanNameTools {
     else
       s""" (__ \\ "$field.fieldName").formatNullable[${classDefinition(field.classPointer)}]"""
 
-  override def toSourceFile(toClassDefinition: TransferObjectClassDefinition): SourceFile =
+  override def importStatements(imports: Set[ClassPointer]): Set[String] = {
+    imports.map(_.native).collect {
+      case classReference if !classReference.predef => s"import ${classReference.fullyQualifiedName}"
+    }
+  }
+
+  override def toSourceFile(toClassDefinition: TransferObjectClassDefinition): List[SourceFile] =
     CaseClassGenerator.generate(toClassDefinition)
 
-  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): SourceFile =
+  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile] =
     TraitGenerator.generate(toInterfaceDefinition)
 
-  override def toSourceFile(enumDefinition: EnumDefinition): SourceFile =
+  override def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile] =
     EnumGenerator.generate(enumDefinition)
 
-  override def toSourceFile(clientClassDefinition: ClientClassDefinition): SourceFile =
+  override def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile] =
     ClientClassGenerator.generate(clientClassDefinition)
 
-  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): SourceFile =
+  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile] =
     ResourceClassGenerator.generate(resourceClassDefinition)
 
-  override def toSourceFile(unionClassDefinition: UnionClassDefinition): SourceFile =
+  override def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile] =
+    HeaderSegmentClassGenerator.generate(headerSegmentClassDefinition)
+
+  override def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile] =
     UnionClassGenerator.generate(unionClassDefinition)
+
+  override def classFileExtension: String = ".scala"
 
   def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
     val scalaReservedwords =

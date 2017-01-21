@@ -21,5 +21,8 @@ package io.atomicbits.scraml.generator.typemodel
 
 /**
   * Created by peter on 14/01/17.
+  *
+  * In a transfer object interface definition, we collect all information that is needed to generate a single interface,
+  * independent from the target language.
   */
 case class TransferObjectInterfaceDefinition(origin: TransferObjectClassDefinition) extends SourceDefinition

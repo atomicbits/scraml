@@ -75,3 +75,5 @@ trait CleanNameTools {
   }
 
 }
+
+object CleanNameTools extends CleanNameTools

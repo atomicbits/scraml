@@ -17,18 +17,10 @@
  *
  */
 
-package io.atomicbits.scraml.generator.typemodel.transform
-
-import io.atomicbits.scraml.generator.typemodel.SourceDefinition
-import io.atomicbits.scraml.ramlparser.model.Raml
+package io.atomicbits.scraml.generator.typemodel
 
 /**
-  * Created by peter on 14/01/17.
+  * Created by peter on 18/01/17.
   */
-object ResourceTransformer {
-
-  def resourceToClientAndResourceClassDefinitions(raml: Raml): Seq[SourceDefinition] = {
-    ???
-  }
-
-}
+case class HeaderSegmentClassDefinition(classReference: ClassReference, imports: Set[ClassPointer], methods: List[String])
+    extends SourceDefinition

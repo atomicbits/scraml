@@ -24,7 +24,9 @@ import io.atomicbits.scraml.generator.platform.Platform
 /**
   * Created by peter on 10/01/17.
   *
-  * Transfer Object class definition
+  * Transfer Object class definition.
+  * In a transfer object class definition, we collect all information that is needed to generate a single TO class,
+  * independent from the target language.
   */
 case class TransferObjectClassDefinition(reference: ClassReference,
                                          fields: List[Field],

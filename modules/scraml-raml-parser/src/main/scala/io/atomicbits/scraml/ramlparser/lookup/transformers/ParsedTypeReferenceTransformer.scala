@@ -84,29 +84,6 @@ object ParsedTypeReferenceTransformer {
         case unexpected                   => sys.error(s"Expected $unexpected to be a type referece")
       }
 
-      /*
-      parsedTypeReference.refersTo match {
-          case absoluteId: AbsoluteId =>
-            val jsonSchemaCanonicalName = canonicalNameGenerator.generate(absoluteId)
-            val typeReference           = NonPrimitiveTypeReference(jsonSchemaCanonicalName)
-            // Can we assume that each type reference is a NonPrimitiveTypeReference?
-            // How do we capture forward references to json-schema types that are defined inline somewhere inside the resource definitions?
-            (typeReference, canonicalLookupHelper)
-          case nativeId: NativeId =>
-            val generatedCanonicalName =
-              canonicalLookupHelper.parsedTypeIndex.get(nativeId).flatMap { parsedType =>
-                parsedType.id match {
-                  case absoluteId: AbsoluteId => Some(canonicalNameGenerator.generate(absoluteId))
-                  case _                      => None
-                }
-              } getOrElse canonicalNameGenerator.generate(nativeId)
-
-            val typeReference = NonPrimitiveTypeReference(generatedCanonicalName)
-            (typeReference, canonicalLookupHelper)
-          case unexpected => sys.error(s"Unexpected id in the types definition: $unexpected")
-        }
-     */
-
     }
 
     parsed match {
