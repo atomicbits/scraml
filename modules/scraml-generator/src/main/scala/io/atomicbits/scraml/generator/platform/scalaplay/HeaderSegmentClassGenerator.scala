@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ HeaderSegmentClassDefinition, SourceFile }
 
@@ -31,7 +32,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile] = {
+  def generate(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr = {
 
     val className   = headerSegmentClassDefinition.classReference.name
     val packageName = headerSegmentClassDefinition.classReference.packageName
@@ -58,7 +59,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
 
     val filePath = platform.classReferenceToFilePath(headerSegmentClassDefinition.classReference)
 
-    List(SourceFile(filePath = filePath, content = source))
+    generationAggr.addSourceFile(SourceFile(filePath = filePath, content = source))
   }
 
 }

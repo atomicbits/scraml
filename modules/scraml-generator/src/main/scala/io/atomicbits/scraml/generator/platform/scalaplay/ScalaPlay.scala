@@ -22,8 +22,8 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
-
 import Platform._
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 
 /**
   * Created by peter on 10/01/17.
@@ -119,26 +119,26 @@ object ScalaPlay extends Platform with CleanNameTools {
     }
   }
 
-  override def toSourceFile(toClassDefinition: TransferObjectClassDefinition): List[SourceFile] =
-    CaseClassGenerator.generate(toClassDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr =
+    CaseClassGenerator.generate(generationAggr, toClassDefinition)
 
-  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile] =
-    TraitGenerator.generate(toInterfaceDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
+    TraitGenerator.generate(generationAggr, toInterfaceDefinition)
 
-  override def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile] =
-    EnumGenerator.generate(enumDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr =
+    EnumGenerator.generate(generationAggr, enumDefinition)
 
-  override def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile] =
-    ClientClassGenerator.generate(clientClassDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr =
+    ClientClassGenerator.generate(generationAggr, clientClassDefinition)
 
-  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile] =
-    ResourceClassGenerator.generate(resourceClassDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr =
+    ResourceClassGenerator.generate(generationAggr, resourceClassDefinition)
 
-  override def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile] =
-    HeaderSegmentClassGenerator.generate(headerSegmentClassDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
+    HeaderSegmentClassGenerator.generate(generationAggr, headerSegmentClassDefinition)
 
-  override def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile] =
-    UnionClassGenerator.generate(unionClassDefinition)
+  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
+    UnionClassGenerator.generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = ".scala"
 

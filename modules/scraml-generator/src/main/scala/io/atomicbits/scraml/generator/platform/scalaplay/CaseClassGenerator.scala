@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ SourceFile, TransferObjectClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -30,7 +31,7 @@ object CaseClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(toClassDefinition: TransferObjectClassDefinition): List[SourceFile] = {
+  def generate(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr = {
     ???
   }
 

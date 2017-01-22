@@ -21,6 +21,7 @@ package io.atomicbits.scraml.generator.platform
 
 import java.io.File
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   ArrayTypeReference,
   BooleanType,
@@ -63,19 +64,19 @@ trait Platform {
 
   def importStatements(imports: Set[ClassPointer]): Set[String]
 
-  def toSourceFile(toClassDefinition: TransferObjectClassDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr
 
-  def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr
 
-  def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr
 
-  def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr
 
-  def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr
 
-  def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr
 
-  def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile]
+  def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr
 
   def classFileExtension: String
 
@@ -163,60 +164,71 @@ object Platform {
 
   implicit class PlatformToClassDefinitionOps(val toClassDefinition: TransferObjectClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(toClassDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, toClassDefinition)
 
   }
 
   implicit class PlatformToInterfaceDefinitionOps(val toInterfaceDefinition: TransferObjectInterfaceDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(toInterfaceDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, toInterfaceDefinition)
 
   }
 
   implicit class PlatformEnumDefinitionOps(val enumDefinition: EnumDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(enumDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, enumDefinition)
 
   }
 
   implicit class PlatformClientClassDefinitionOps(val clientClassDefinition: ClientClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(clientClassDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, clientClassDefinition)
 
   }
 
   implicit class PlatformResourceClassDefinitionOps(val resourceClassDefinition: ResourceClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(resourceClassDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, resourceClassDefinition)
 
   }
 
   implicit class PlatformHeaderSegmentClassDefinitionOps(val headerSegmentClassDefinition: HeaderSegmentClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(headerSegmentClassDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, headerSegmentClassDefinition)
 
   }
 
   implicit class PlatformUnionClassDefinitionOps(val unionClassDefinition: UnionClassDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] = platform.toSourceFile(unionClassDefinition)
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
+      platform.toSourceFile(generationAggr, unionClassDefinition)
 
   }
 
   implicit class PlatformSourceCodeOps(val sourceCode: SourceDefinition) {
 
-    def toSourceFile(implicit platform: Platform): List[SourceFile] =
+    def toSourceFile(generationAggr: GenerationAggr)(implicit platform: Platform): GenerationAggr =
       sourceCode match {
-        case clientClassDefinition: ClientClassDefinition => new PlatformClientClassDefinitionOps(clientClassDefinition).toSourceFile
+        case clientClassDefinition: ClientClassDefinition =>
+          new PlatformClientClassDefinitionOps(clientClassDefinition).toSourceFile(generationAggr)
         case resourceClassDefinition: ResourceClassDefinition =>
-          new PlatformResourceClassDefinitionOps(resourceClassDefinition).toSourceFile
+          new PlatformResourceClassDefinitionOps(resourceClassDefinition).toSourceFile(generationAggr)
         case headerSegmentDefinition: HeaderSegmentClassDefinition =>
-          new PlatformHeaderSegmentClassDefinitionOps(headerSegmentDefinition).toSourceFile
-        case toClassDefinition: TransferObjectClassDefinition => new PlatformToClassDefinitionOps(toClassDefinition).toSourceFile
+          new PlatformHeaderSegmentClassDefinitionOps(headerSegmentDefinition).toSourceFile(generationAggr)
+        case toClassDefinition: TransferObjectClassDefinition =>
+          new PlatformToClassDefinitionOps(toClassDefinition).toSourceFile(generationAggr)
         case toInterfaceDefinition: TransferObjectInterfaceDefinition =>
-          new PlatformToInterfaceDefinitionOps(toInterfaceDefinition).toSourceFile
-        case enumDefinition: EnumDefinition             => new PlatformEnumDefinitionOps(enumDefinition).toSourceFile
-        case unionClassDefinition: UnionClassDefinition => new PlatformUnionClassDefinitionOps(unionClassDefinition).toSourceFile
+          new PlatformToInterfaceDefinitionOps(toInterfaceDefinition).toSourceFile(generationAggr)
+        case enumDefinition: EnumDefinition =>
+          new PlatformEnumDefinitionOps(enumDefinition).toSourceFile(generationAggr)
+        case unionClassDefinition: UnionClassDefinition =>
+          new PlatformUnionClassDefinitionOps(unionClassDefinition).toSourceFile(generationAggr)
       }
 
   }

@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
-import io.atomicbits.scraml.generator.typemodel.{ BinaryDataClassReference, ClassPointer, ClassReference, HeaderSegmentClassDefinition }
+import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.{ Method, Resource }
 
 /**
@@ -35,12 +35,16 @@ case class ActionGenerator(actionCode: ActionCode) {
     * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
     * so we pass all actions of a single resource together.
     *
-    * @param resource The resource whose actions are going to be processed (NOT recursively!)
+    * @param resourceClassDefinition The resource class definition of the resource whose actions are going to be processed
+    *                                (NOT recursively!)
     * @return A list of action function definitions or action paths that lead to the action function. Action paths will only be
     *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
     *         don't support those yet, but we will do so in the future).
     */
-  def generateActionFunctions(resourcePackageParts: List[String], resource: Resource)(implicit platform: Platform): ActionFunctionResult = {
+  def generateActionFunctions(resourceClassDefinition: ResourceClassDefinition)(implicit platform: Platform): ActionFunctionResult = {
+
+    val resourcePackageParts: List[String] = resourceClassDefinition.resourcePackage
+    val resource: Resource                 = resourceClassDefinition.resource
 
     val actionSelections: List[ActionSelection] = resource.actions.map(ActionSelection(_))
 

@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.ramlparser.model.Resource
 
 /**
@@ -27,8 +28,38 @@ import io.atomicbits.scraml.ramlparser.model.Resource
   * In a resource class definition, we collect all information that is needed to generate a single resource class, independent from
   * the target language.
   */
-case class ResourceClassDefinition(basePackage: List[String],
-                                   precedingUrlSegments: List[String],
-                                   resource: Resource,
-                                   childResources: List[Resource])
-    extends SourceDefinition
+case class ResourceClassDefinition(apiPackage: List[String], precedingUrlSegments: List[String], resource: Resource)
+    extends SourceDefinition {
+
+  lazy val childResourceDefinitions: List[ResourceClassDefinition] = {
+    val nextPrecedingUrlSegments = precedingUrlSegments :+ resource.urlSegment
+    resource.resources.map { childResource =>
+      ResourceClassDefinition(
+        apiPackage           = apiPackage,
+        precedingUrlSegments = nextPrecedingUrlSegments,
+        resource             = childResource
+      )
+    }
+  }
+
+  lazy val resourcePackage: List[String] = apiPackage ++ precedingUrlSegments
+
+  lazy val urlParamClassPointer: Option[ClassPointer] = {
+    resource.urlParameter
+      .map(_.parameterType)
+      .flatMap(_.canonical)
+      .map(Platform.typeReferenceToClassPointer(_))
+  }
+
+  lazy val resourceClassReference: ClassReference = {
+
+    val resourceClassName = s"${CleanNameTools.cleanClassName(resource.urlSegment)}Resource"
+
+    val nextPackagePart = CleanNameTools.cleanPackageName(resource.urlSegment)
+
+    val nextPackageBasePath = resourcePackage :+ nextPackagePart
+
+    ClassReference(name = resourceClassName, packageParts = nextPackageBasePath)
+  }
+
+}

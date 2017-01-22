@@ -19,13 +19,14 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
-import io.atomicbits.scraml.ramlparser.model.Resource
-
 /**
   * Created by peter on 13/01/17.
   *
   * In a client class definition, we collect all information that is needed to generate a client class, independent from
   * the target language.
   */
-case class ClientClassDefinition(apiName: String, baseUrl: String, basePackage: List[String], topLevelResources: List[Resource])
+case class ClientClassDefinition(apiName: String,
+                                 baseUrl: String,
+                                 basePackage: List[String],
+                                 topLevelResourceDefinitions: List[ResourceClassDefinition])
     extends SourceDefinition

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.typemodel.{ SourceDefinition, TransferObjectInterfaceDefinition }
+import io.atomicbits.scraml.generator.typemodel.{ SourceDefinition, SourceFile, TransferObjectInterfaceDefinition }
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
 
@@ -36,17 +36,24 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * @param toInterfaceMap The map containing the transfer objects that require an interface definition so far, keyed on the
   *                       canonical name of the original transfer object. This map is expected to grow while source
   *                       definitions for transfer objects are generated.
-  * @param sourceDefinitions The collected source definitions up to 'now'.
+  * @param sourceDefinitionsToProcess The collected source definitions up to 'now'.
   */
 case class GenerationAggr( // raml: Raml,
                           canonicalToMap: Map[CanonicalName, NonPrimitiveType],
                           toInterfaceMap: Map[CanonicalName, TransferObjectInterfaceDefinition] = Map.empty,
-                          sourceDefinitions: Seq[SourceDefinition]                              = Seq.empty) {
+                          sourceDefinitionsToProcess: Seq[SourceDefinition]                     = Seq.empty,
+                          sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty) {
 
   def addSourceDefinition(sourceDefinition: SourceDefinition): GenerationAggr =
-    copy(sourceDefinitions = sourceDefinition +: sourceDefinitions)
+    copy(sourceDefinitionsToProcess = sourceDefinition +: sourceDefinitionsToProcess)
 
   def addSourceDefinitions(sourceDefinitionsToAdd: Seq[SourceDefinition]): GenerationAggr =
-    copy(sourceDefinitions = sourceDefinitions ++ sourceDefinitionsToAdd)
+    copy(sourceDefinitionsToProcess = sourceDefinitionsToProcess ++ sourceDefinitionsToAdd)
+
+  def addSourceFile(sourceFile: SourceFile): GenerationAggr =
+    copy(sourceFilesGenerated = sourceFile +: sourceFilesGenerated)
+
+  def addSourceFiles(sourceFiles: Seq[SourceFile]): GenerationAggr =
+    copy(sourceFilesGenerated = sourceFiles ++ sourceFilesGenerated)
 
 }

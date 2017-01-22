@@ -21,8 +21,8 @@ package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
-
 import Platform._
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 
 /**
   * Created by peter on 10/01/17.
@@ -130,19 +130,20 @@ object JavaJackson extends Platform with CleanNameTools {
 
   override def classFileExtension: String = ".java"
 
-  override def toSourceFile(classDefinition: TransferObjectClassDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, classDefinition: TransferObjectClassDefinition): GenerationAggr = ???
 
-  override def toSourceFile(toInterfaceDefinition: TransferObjectInterfaceDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = ???
 
-  override def toSourceFile(enumDefinition: EnumDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = ???
 
-  override def toSourceFile(clientClassDefinition: ClientClassDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = ???
 
-  override def toSourceFile(resourceClassDefinition: ResourceClassDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = ???
 
-  override def toSourceFile(headerSegmentClassDefinition: HeaderSegmentClassDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
+    ???
 
-  override def toSourceFile(unionClassDefinition: UnionClassDefinition): List[SourceFile] = ???
+  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr = ???
 
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 

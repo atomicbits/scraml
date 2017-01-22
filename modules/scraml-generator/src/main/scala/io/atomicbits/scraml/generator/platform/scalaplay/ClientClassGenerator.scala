@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator }
+import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClassReference, ClientClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -31,25 +31,22 @@ object ClientClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
-  def generate(clientClassDefinition: ClientClassDefinition): List[SourceFile] = {
+  def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
     val apiPackage        = clientClassDefinition.basePackage
     val apiClassName      = CleanNameTools.cleanClassNameFromFileName(clientClassDefinition.apiName)
     val apiClassReference = ClassReference(name = apiClassName, packageParts = apiPackage)
 
-    val (importClasses, dslFields, actionFunctions, headerPathClassReps) =
-      clientClassDefinition.topLevelResources match {
-        case oneRoot :: Nil if oneRoot.urlSegment.isEmpty =>
-          val dslFields =
-            oneRoot.resources
-              .map(ResourceClassGenerator.generateResourceDslField(apiPackage, _))
-          val ActionFunctionResult(importClasses, actionFunctions, headerPathClassReps) =
-            ActionGenerator(ScalaActionCodeGenerator)
-              .generateActionFunctions(apiPackage, oneRoot)
-          (importClasses, dslFields, actionFunctions, headerPathClassReps)
+    val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
+      clientClassDefinition.topLevelResourceDefinitions match {
+        case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
+          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
+          val ActionFunctionResult(importClasses, actionFunctions, headerPathSourceDefs) =
+            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
+          (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
-          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField(apiPackage, _))
+          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField)
           val actionFunctions = List.empty[String]
           (importClasses, dslFields, actionFunctions, List.empty)
       }
@@ -170,7 +167,9 @@ object ClientClassGenerator extends SourceGenerator {
          }
        """
 
-    List(SourceFile(filePath = platform.classReferenceToFilePath(apiClassReference), content = sourcecode))
+    generationAggr
+      .addSourceDefinitions(headerPathSourceDefs)
+      .addSourceFile(SourceFile(filePath = platform.classReferenceToFilePath(apiClassReference), content = sourcecode))
   }
 
 }
