@@ -40,7 +40,6 @@ import java.util.{ Map => JMap }
 import io.atomicbits.scraml.generator.TypeClassRepAssembler.CanonicalMap
 import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType, NonPrimitiveType }
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
 import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser }
 
@@ -51,7 +50,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.typemodel.{ SourceDefinition, SourceFile }
-import io.atomicbits.scraml.generator.codegen.ResourceClassSourceDefinitionGenerator
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 
 /**
   * The main Scraml generator class.
@@ -144,17 +143,14 @@ object ScramlGenerator {
 
     val defaultBasePath: List[String] = packageBasePath
 
-    val (ramlExp, canonicalLookup)                = raml.collectCanonicals(defaultBasePath) // new version
-    val map: Map[CanonicalName, NonPrimitiveType] = canonicalLookup.map
+    val (ramlExp, canonicalLookup) = raml.collectCanonicals(defaultBasePath) // new version
 
-//    val transferObjectSourceDefinitions: Seq[SourceDefinition] =
-//      CanonicalToTransformer.transferObjectsToClassDefinitions(canonicalLookup.map)
-//    val transferObjectSourceFiles: Seq[SourceFile]          = transferObjectSourceDefinitions.map(_.toSourceFile)
-//    val clientAndResourceDefinitions: Seq[SourceDefinition] = ResourceTransformer.resourceToClientAndResourceClassDefinitions(ramlExp)
-//    val clientAndResourceSourceFiles: Seq[SourceFile]       = clientAndResourceDefinitions.map(_.toSourceFile)
-//    val sourceFiles: Seq[SourceFile]                        = clientAndResourceSourceFiles ++ transferObjectSourceFiles
+    val generationAggregator: GenerationAggr =
+      GenerationAggr(apiName = apiClassName, apiBasePackage = packageBasePath, raml = ramlExp, canonicalToMap = canonicalLookup.map)
+    // val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
     // ToDo... return the sourceFiles and change the method signature's return type
 
+    // Old version from here
     val ramlExpanded    = raml.collectCanonicalTypes(defaultBasePath) // old version
     val typeLookupTable = ramlExpanded.canonicalMap.get
 
@@ -193,7 +189,7 @@ object ScramlGenerator {
     val content = s"$licenseHeader\n${classRep.content.get}"
     val formattedContent = language match {
       case Scala => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
-      case Java  => JavaFormatter.format(content) // ToDo: implement the Java code formatter.
+      case Java  => Try(JavaFormatter.format(content)).getOrElse(content)
     }
     classRep.withContent(formattedContent)
   }

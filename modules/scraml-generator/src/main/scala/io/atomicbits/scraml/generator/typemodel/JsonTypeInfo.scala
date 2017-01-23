@@ -22,4 +22,4 @@ package io.atomicbits.scraml.generator.typemodel
 /**
   * Created by peter on 10/01/17.
   */
-case class JsonTypeInfo(discriminator: String, discriminatorValue: Option[String])
+case class JsonTypeInfo(discriminator: String, discriminatorValue: String)

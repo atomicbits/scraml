@@ -19,8 +19,19 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, TransferObjectClassDefinition, UnionClassDefinition }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
+import io.atomicbits.scraml.generator.platform.Platform
+import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
+  CanonicalName,
+  EnumType,
+  GenericReferrable,
+  NonPrimitiveType,
+  ObjectType,
+  Property,
+  TypeReference,
+  UnionType,
+  TypeParameter => CanonicalTypeParameter
+}
 
 /**
   * Created by peter on 14/01/17.
@@ -31,7 +42,8 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
   */
 object CanonicalToSourceDefinitionGenerator {
 
-  def transferObjectsToClassDefinitions(generationAggr: GenerationAggr): GenerationAggr = {
+  def transferObjectsToClassDefinitions(generationAggr: GenerationAggr,
+                                        canonicalToMap: Map[CanonicalName, NonPrimitiveType]): GenerationAggr = {
 
     // ToDo: see if the following assertion is true for all languages, for now we put this logic in the sourcecode generators.
     // We assume here that all our target languages support inheritance, but no multiple inheritance and that
@@ -44,18 +56,73 @@ object CanonicalToSourceDefinitionGenerator {
     //   generating the source codes (adding those interface definitions to the GenerationAggr for later source code generation).
 
     def objectTypeToTransferObjectClassDefinition(objectType: ObjectType): TransferObjectClassDefinition = {
-      ???
+
+      def propertyToField(propertyDef: (String, Property[_ <: GenericReferrable])): Field = {
+        val (name, property) = propertyDef
+
+        val fieldClassPointer =
+          property.ttype match {
+            case CanonicalTypeParameter(tParamName) => TypeParameter(tParamName)
+            case typeReference: TypeReference       => Platform.typeReferenceToClassPointer(typeReference)
+          }
+
+        Field(
+          fieldName    = name,
+          classPointer = fieldClassPointer,
+          required     = property.required
+        )
+      }
+
+      val toClassReference =
+        ClassReference(
+          name           = objectType.canonicalName.name,
+          packageParts   = objectType.canonicalName.packagePath,
+          typeParameters = objectType.typeParameters.map(tp => TypeParameter(tp.name))
+        )
+
+      val jsonTypeInfoOpt =
+        for {
+          typeDiscrimintator <- objectType.typeDiscriminator
+          typeDiscrimintatorValue <- objectType.typeDiscriminatorValue
+        } yield JsonTypeInfo(discriminator = typeDiscrimintator, discriminatorValue = typeDiscrimintatorValue)
+
+      TransferObjectClassDefinition(
+        reference    = toClassReference,
+        fields       = objectType.properties.map(propertyToField).toList,
+        parents      = objectType.parents.map(Platform.typeReferenceToClassPointer(_)),
+        jsonTypeInfo = jsonTypeInfoOpt
+      )
     }
 
     def enumTypeToEnumDefinition(enumType: EnumType): EnumDefinition = {
-      ???
+
+      val enumClassReference =
+        ClassReference(
+          name         = enumType.canonicalName.name,
+          packageParts = enumType.canonicalName.packagePath
+        )
+
+      EnumDefinition(
+        reference = enumClassReference,
+        values    = enumType.choices
+      )
     }
 
     def unionTypeToUnionClassDefinition(unionType: UnionType): UnionClassDefinition = {
-      ???
+
+      val unionClassReference =
+        ClassReference(
+          name         = unionType.canonicalName.name,
+          packageParts = unionType.canonicalName.packagePath
+        )
+
+      UnionClassDefinition(
+        reference = unionClassReference,
+        union     = unionType.types.map(Platform.typeReferenceToClassPointer(_))
+      )
     }
 
-    generationAggr.canonicalToMap.values.foldLeft(generationAggr) { (genAggr, theType) =>
+    canonicalToMap.values.foldLeft(generationAggr) { (genAggr, theType) =>
       val sourceDefinition =
         theType match {
           case objectType: ObjectType => objectTypeToTransferObjectClassDefinition(objectType)
@@ -65,8 +132,6 @@ object CanonicalToSourceDefinitionGenerator {
         }
       genAggr.addSourceDefinition(sourceDefinition)
     }
-
-    ???
   }
 
 }

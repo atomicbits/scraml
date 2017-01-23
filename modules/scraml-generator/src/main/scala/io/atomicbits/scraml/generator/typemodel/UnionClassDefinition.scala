@@ -22,4 +22,4 @@ package io.atomicbits.scraml.generator.typemodel
 /**
   * Created by peter on 14/01/17.
   */
-case class UnionClassDefinition(union: Set[ClassReference]) extends SourceDefinition
+case class UnionClassDefinition(reference: ClassReference, union: Set[ClassPointer]) extends SourceDefinition

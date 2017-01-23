@@ -28,9 +28,9 @@ import io.atomicbits.scraml.generator.platform.Platform
   * In a transfer object class definition, we collect all information that is needed to generate a single TO class,
   * independent from the target language.
   */
-case class TransferObjectClassDefinition(reference: ClassReference,
+case class TransferObjectClassDefinition(reference: ClassPointer,
                                          fields: List[Field],
-                                         parents: List[ClassReference]      = List.empty,
+                                         parents: List[ClassPointer]        = List.empty,
                                          jsonTypeInfo: Option[JsonTypeInfo] = None)
     extends SourceDefinition {
 

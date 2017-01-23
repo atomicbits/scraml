@@ -26,7 +26,7 @@ package io.atomicbits.scraml.generator.typemodel
   * the target language.
   */
 case class ClientClassDefinition(apiName: String,
-                                 baseUrl: String,
+                                 baseUri: Option[String],
                                  basePackage: List[String],
                                  topLevelResourceDefinitions: List[ResourceClassDefinition])
     extends SourceDefinition

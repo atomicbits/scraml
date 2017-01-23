@@ -19,15 +19,16 @@
 
 package io.atomicbits.scraml.generator.formatting
 
+import com.google.googlejavaformat.java.Formatter
+
 /**
- * Created by peter on 10/10/15.
- */
+  * Created by peter on 10/10/15.
+  */
 object JavaFormatter {
 
-  def format(code: String): String = {
-    // ToDo: add Java code formatting...
-    // https://github.com/krasa/eclipsecodeformatter ???
-    code
-  }
+  /**
+    * See https://github.com/google/google-java-format
+    */
+  def format(code: String): String = new Formatter().formatSource(code)
 
 }
