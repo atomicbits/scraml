@@ -21,18 +21,74 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ SourceFile, TransferObjectInterfaceDefinition }
+import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 
 /**
   * Created by peter on 14/01/17.
   */
-object TraitGenerator extends SourceGenerator {
+object TraitGenerator extends SourceGenerator with DtoGenerationSupport {
 
   implicit val platform: Platform = ScalaPlay
 
   def generate(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
-    ???
+
+    val toCanonicalName = toInterfaceDefinition.origin.reference.canonicalName
+
+    val fields: Seq[Field] = toInterfaceDefinition.origin.fields
+
+    val implementingClassNames                                  = generationAggr.children(toCanonicalName) + toCanonicalName
+    val implementingClasses: Set[TransferObjectClassDefinition] = implementingClassNames.map(generationAggr.toMap)
+
+    generateTrait(fields, toInterfaceDefinition, implementingClasses, generationAggr)
+  }
+
+  private def generateTrait(fields: Seq[Field],
+                            toInterfaceDefinition: TransferObjectInterfaceDefinition,
+                            implementingClasses: Set[TransferObjectClassDefinition],
+                            generationAggr: GenerationAggr): GenerationAggr = {
+
+    def leafClassRepToWithTypeHintExpression(leafClassRep: TransferObjectClassDefinition): String = {
+      val discriminatorValue = leafClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(toInterfaceDefinition.origin.reference.name)
+      s"""${leafClassRep.reference.name}.jsonFormatter.withTypeHint("$discriminatorValue")"""
+    }
+
+    val imports: Set[String] = collectImports(toInterfaceDefinition.reference, fields, implementingClasses.map(_.reference).toSeq)
+
+    val fieldDefinitions = fields.map(_.fieldExpression).map(fieldExpr => s"def $fieldExpr")
+
+    val source =
+      s"""
+        package ${toInterfaceDefinition.reference.packageName}
+
+        import play.api.libs.json._
+        import io.atomicbits.scraml.dsl.json.TypedJson._
+
+        ${imports.mkString("\n")}
+        
+        trait ${toInterfaceDefinition.reference.classDefinition} {
+
+          ${fieldDefinitions.mkString("\n\n")}
+
+        }
+
+        object ${toInterfaceDefinition.reference.name} {
+
+          implicit val jsonFormat: Format[${toInterfaceDefinition.reference.classDefinition}] =
+            TypeHintFormat(
+              "${toInterfaceDefinition.discriminator}",
+              ${implementingClasses.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}
+            )
+        }
+      """
+
+    val sourceFile =
+      SourceFile(
+        filePath = platform.classReferenceToFilePath(toInterfaceDefinition.reference),
+        content  = source
+      )
+
+    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
   }
 
 }

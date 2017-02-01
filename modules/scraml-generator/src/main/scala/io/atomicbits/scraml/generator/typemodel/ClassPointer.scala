@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+
 /**
   * Created by peter on 10/01/17.
   */
@@ -32,6 +34,8 @@ case class ClassReference(name: String,
                           predef: Boolean                                   = false,
                           library: Boolean                                  = false)
     extends ClassPointer {
+
+  lazy val canonicalName = CanonicalName(name, packageParts)
 
   /**
     * The base form for this class reference. The base form refers to the class in its most unique way,

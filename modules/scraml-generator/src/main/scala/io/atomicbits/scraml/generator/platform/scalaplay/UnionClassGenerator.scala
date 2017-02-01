@@ -31,7 +31,7 @@ object UnionClassGenerator extends SourceGenerator {
   implicit val platform: Platform = ScalaPlay
 
   def generate(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr = {
-    ???
+    throw new RuntimeException("Union type classes are not yet supported.")
   }
 
 }

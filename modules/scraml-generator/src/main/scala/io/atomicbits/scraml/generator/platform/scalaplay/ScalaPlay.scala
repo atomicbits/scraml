@@ -72,13 +72,23 @@ object ScalaPlay extends Platform with CleanNameTools {
     }
   }
 
+  override def interfaceReference(classReference: ClassReference): ClassReference =
+    ClassReference(
+      name         = s"${classReference.name}Trait",
+      packageParts = classReference.packageParts
+    )
+
   override def classDefinition(classPointer: ClassPointer): String = {
     val classReference = classPointer.native
 
-    if (classReference.typeParameters.isEmpty)
+    if (classReference.typeParameters.isEmpty) {
       classReference.name
-    else
-      s"${classReference.name}[${classReference.typeParameters.map(_.name).mkString(",")}]"
+    } else {
+      val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
+        classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+      }
+      s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
+    }
   }
 
   override def className(classPointer: ClassPointer): String = classPointer.native.name

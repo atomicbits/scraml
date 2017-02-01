@@ -55,7 +55,7 @@ object CanonicalToSourceDefinitionGenerator {
     // * interface definitions are not generated now, its the target language's responsibility to generate them when necessary while
     //   generating the source codes (adding those interface definitions to the GenerationAggr for later source code generation).
 
-    def objectTypeToTransferObjectClassDefinition(objectType: ObjectType): TransferObjectClassDefinition = {
+    def objectTypeToTransferObjectClassDefinition(genAggr: GenerationAggr, objectType: ObjectType): GenerationAggr = {
 
       def propertyToField(propertyDef: (String, Property[_ <: GenericReferrable])): Field = {
         val (name, property) = propertyDef
@@ -73,10 +73,12 @@ object CanonicalToSourceDefinitionGenerator {
         )
       }
 
+      val canonicalName = objectType.canonicalName
+
       val toClassReference =
         ClassReference(
-          name           = objectType.canonicalName.name,
-          packageParts   = objectType.canonicalName.packagePath,
+          name           = canonicalName.name,
+          packageParts   = canonicalName.packagePath,
           typeParameters = objectType.typeParameters.map(tp => TypeParameter(tp.name))
         )
 
@@ -86,15 +88,19 @@ object CanonicalToSourceDefinitionGenerator {
           typeDiscrimintatorValue <- objectType.typeDiscriminatorValue
         } yield JsonTypeInfo(discriminator = typeDiscrimintator, discriminatorValue = typeDiscrimintatorValue)
 
-      TransferObjectClassDefinition(
-        reference    = toClassReference,
-        fields       = objectType.properties.map(propertyToField).toList,
-        parents      = objectType.parents.map(Platform.typeReferenceToClassPointer(_)),
-        jsonTypeInfo = jsonTypeInfoOpt
-      )
+      val transferObjectClassDefinition =
+        TransferObjectClassDefinition(
+          reference    = toClassReference,
+          fields       = objectType.properties.map(propertyToField).toList,
+          parents      = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
+          jsonTypeInfo = jsonTypeInfoOpt
+        )
+
+      genAggr.addToDefinition(canonicalName, transferObjectClassDefinition)
+      genAggr.addSourceDefinition(transferObjectClassDefinition)
     }
 
-    def enumTypeToEnumDefinition(enumType: EnumType): EnumDefinition = {
+    def enumTypeToEnumDefinition(genAggr: GenerationAggr, enumType: EnumType): GenerationAggr = {
 
       val enumClassReference =
         ClassReference(
@@ -102,13 +108,16 @@ object CanonicalToSourceDefinitionGenerator {
           packageParts = enumType.canonicalName.packagePath
         )
 
-      EnumDefinition(
-        reference = enumClassReference,
-        values    = enumType.choices
-      )
+      val enumDefinition =
+        EnumDefinition(
+          reference = enumClassReference,
+          values    = enumType.choices
+        )
+
+      genAggr.addSourceDefinition(enumDefinition)
     }
 
-    def unionTypeToUnionClassDefinition(unionType: UnionType): UnionClassDefinition = {
+    def unionTypeToUnionClassDefinition(genAggr: GenerationAggr, unionType: UnionType): GenerationAggr = {
 
       val unionClassReference =
         ClassReference(
@@ -116,21 +125,22 @@ object CanonicalToSourceDefinitionGenerator {
           packageParts = unionType.canonicalName.packagePath
         )
 
-      UnionClassDefinition(
-        reference = unionClassReference,
-        union     = unionType.types.map(Platform.typeReferenceToClassPointer(_))
-      )
+      val unionClassDefinition =
+        UnionClassDefinition(
+          reference = unionClassReference,
+          union     = unionType.types.map(Platform.typeReferenceToClassPointer(_))
+        )
+
+      genAggr.addSourceDefinition(unionClassDefinition)
     }
 
     canonicalToMap.values.foldLeft(generationAggr) { (genAggr, theType) =>
-      val sourceDefinition =
-        theType match {
-          case objectType: ObjectType => objectTypeToTransferObjectClassDefinition(objectType)
-          case enumType: EnumType     => enumTypeToEnumDefinition(enumType)
-          case unionType: UnionType   => unionTypeToUnionClassDefinition(unionType)
-          case unexpected             => sys.error(s"Unexpected type seen during TO definition generation: $unexpected")
-        }
-      genAggr.addSourceDefinition(sourceDefinition)
+      theType match {
+        case objectType: ObjectType => objectTypeToTransferObjectClassDefinition(genAggr, objectType)
+        case enumType: EnumType     => enumTypeToEnumDefinition(genAggr, enumType)
+        case unionType: UnionType   => unionTypeToUnionClassDefinition(genAggr, unionType)
+        case unexpected             => sys.error(s"Unexpected type seen during TO definition generation: $unexpected")
+      }
     }
   }
 

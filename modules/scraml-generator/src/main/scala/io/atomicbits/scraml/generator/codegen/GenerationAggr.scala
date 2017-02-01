@@ -37,10 +37,18 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * @param toInterfaceMap The map containing the transfer objects that require an interface definition so far, keyed on the
   *                       canonical name of the original transfer object. This map is expected to grow while source
   *                       definitions for transfer objects are generated.
+  * @param toChildParentsMap The child parents relations are needed to navigate through the class hierarchy of the transfer objects. The
+  *                          toChildParentsMap is build up when the TOs are added to the toMap.
+  * @param toParentChildrenMap The parent children relations are needed to navigate through the class hierarchy of the transfer objects.
+  *                            The toParentChildrenMap is build up when the TOs are added to the toMap.
+  * @param toMap The TO map is needed to find all fields that we have to put in a class extending from one or more parents.
   */
 case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]                     = Seq.empty,
                           sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty,
-                          toInterfaceMap: Map[CanonicalName, TransferObjectInterfaceDefinition] = Map.empty) {
+                          toInterfaceMap: Map[CanonicalName, TransferObjectInterfaceDefinition] = Map.empty,
+                          toChildParentsMap: Map[CanonicalName, Set[CanonicalName]]             = Map.empty,
+                          toParentChildrenMap: Map[CanonicalName, Set[CanonicalName]]           = Map.empty,
+                          toMap: Map[CanonicalName, TransferObjectClassDefinition]              = Map.empty) {
 
   def addSourceDefinition(sourceDefinition: SourceDefinition): GenerationAggr =
     copy(sourceDefinitionsToProcess = sourceDefinition +: sourceDefinitionsToProcess)
@@ -54,6 +62,49 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
   def addSourceFiles(sourceFiles: Seq[SourceFile]): GenerationAggr =
     copy(sourceFilesGenerated = sourceFiles ++ sourceFilesGenerated)
 
+  def addInterface(canonicalName: CanonicalName, interfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
+    copy(toInterfaceMap = toInterfaceMap + (canonicalName -> interfaceDefinition))
+
+  def hasChildren(canonicalName: CanonicalName): Boolean = toParentChildrenMap.get(canonicalName).exists(_.nonEmpty)
+
+  def children(canonicalName: CanonicalName): Set[CanonicalName] = toParentChildrenMap.getOrElse(canonicalName, Set.empty)
+
+  /**
+    * @return A breadth-first list of all parent canonical names.
+    */
+  def allParents(canonicalName: CanonicalName): List[CanonicalName] = {
+
+    def findParents(parentsToExpand: List[CanonicalName], parentsFound: List[CanonicalName] = List.empty): List[CanonicalName] = {
+      parentsToExpand match {
+        case Nil => parentsFound
+        case moreParents =>
+          val nextLevelOfParents =
+            parentsToExpand.flatMap { parent =>
+              toChildParentsMap.getOrElse(parent, Set.empty[CanonicalName]).toList
+            }
+          findParents(nextLevelOfParents, parentsFound ++ parentsToExpand)
+      }
+    }
+
+    findParents(toChildParentsMap.getOrElse(canonicalName, Set.empty[CanonicalName]).toList)
+  }
+
+  /**
+    * Adds a TO definition and update the child-parents map and the parent-children map.
+    *
+    * @param canonicalName The canonical name of the TO.
+    * @param toDefinition The definition of the TO.
+    * @return The generation aggregate.
+    */
+  def addToDefinition(canonicalName: CanonicalName, toDefinition: TransferObjectClassDefinition): GenerationAggr = {
+
+    val parentsMap: (CanonicalName, Set[CanonicalName]) = canonicalName -> toDefinition.parents.map(_.canonicalName).toSet
+
+    val updatedAggr = updateChildParentsRelations(parentsMap)
+
+    updatedAggr.copy(toMap = updatedAggr.toMap + (canonicalName -> toDefinition))
+  }
+
   def generate(implicit platform: Platform): GenerationAggr = {
 
     import Platform._
@@ -65,8 +116,26 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
 
   }
 
-  private def dropSourceDefinitionsHead: GenerationAggr =
-    copy(sourceDefinitionsToProcess = sourceDefinitionsToProcess.tail)
+  private def dropSourceDefinitionsHead: GenerationAggr = copy(sourceDefinitionsToProcess = sourceDefinitionsToProcess.tail)
+
+  private def updateChildParentsRelations(childWithParents: (CanonicalName, Set[CanonicalName])): GenerationAggr = {
+
+    val (child, parents) = childWithParents
+
+    def updatedAggregate = {
+      val aggrWithUpdatedParentChildrenRelation =
+        parents.foldLeft(this) { (aggr, parent) =>
+          val childrenOfParent = aggr.toParentChildrenMap.getOrElse(parent, Set.empty[CanonicalName])
+          aggr.copy(toParentChildrenMap = aggr.toParentChildrenMap + (parent -> (childrenOfParent + child)))
+        }
+
+      aggrWithUpdatedParentChildrenRelation
+        .copy(toChildParentsMap = aggrWithUpdatedParentChildrenRelation.toChildParentsMap + childWithParents)
+    }
+
+    if (parents.nonEmpty) updatedAggregate
+    else this
+  }
 
 }
 

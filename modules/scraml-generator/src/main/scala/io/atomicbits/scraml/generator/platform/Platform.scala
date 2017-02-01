@@ -46,6 +46,8 @@ trait Platform {
 
   def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference
 
+  def interfaceReference(classReference: ClassReference): ClassReference
+
   def classDefinition(classPointer: ClassPointer): String
 
   def className(classPointer: ClassPointer): String
@@ -139,6 +141,18 @@ object Platform {
     }
   }
 
+  def typeReferenceToNonPrimitiveCanonicalName(typeReference: TypeReference): Option[CanonicalName] = {
+    Some(typeReference).collect {
+      case NonPrimitiveTypeReference(refers, genericTypes) => refers
+    }
+  }
+
+  def typeReferenceToClassReference(typeReference: TypeReference): Option[ClassReference] = {
+    Some(typeReferenceToClassPointer(typeReference)).collect {
+      case classReference: ClassReference => classReference
+    }
+  }
+
   implicit class PlatformClassPointerOps(val classPointer: ClassPointer) {
 
     def classDefinition(implicit platform: Platform): String = platform.classDefinition(classPointer)
@@ -152,6 +166,8 @@ object Platform {
     def canonicalName(implicit platform: Platform): String = platform.canonicalName(classPointer)
 
     def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
+
+    def interfaceReference(implicit platform: Platform): ClassReference = platform.interfaceReference(classPointer.native)
 
   }
 
