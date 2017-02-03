@@ -33,9 +33,9 @@ object ClientClassGenerator extends SourceGenerator {
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
-    val apiPackage        = clientClassDefinition.basePackage
-    val apiClassName      = CleanNameTools.cleanClassNameFromFileName(clientClassDefinition.apiName)
-    val apiClassReference = ClassReference(name = apiClassName, packageParts = apiPackage)
+    val apiPackage        = clientClassDefinition.classReference.packageParts
+    val apiClassName      = clientClassDefinition.classReference.name
+    val apiClassReference = clientClassDefinition.classReference
 
     val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
       clientClassDefinition.topLevelResourceDefinitions match {

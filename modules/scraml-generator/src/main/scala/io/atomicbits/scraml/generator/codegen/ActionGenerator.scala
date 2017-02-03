@@ -117,7 +117,7 @@ case class ActionGenerator(actionCode: ActionCode) {
       createHeaderSegment(resourcePackageParts, headerSegmentClassName, acceptSegmentMethodImports, acceptSegmentMethods)
 
     val contentHeaderMethodName      = s"content${CleanNameTools.cleanClassName(contentType.contentTypeHeader.value)}"
-    val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment.classReference)
+    val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment.reference)
 
     ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
   }
@@ -168,7 +168,7 @@ case class ActionGenerator(actionCode: ActionCode) {
       createHeaderSegment(resourcePackageParts, headerSegmentClassName, actionImports, actionMethods)
 
     val acceptHeaderMethodName      = s"accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}"
-    val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment.classReference)
+    val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment.reference)
 
     ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
   }
@@ -199,7 +199,7 @@ case class ActionGenerator(actionCode: ActionCode) {
 
     val classReference = ClassReference(name = className, packageParts = packageParts)
 
-    HeaderSegmentClassDefinition(classReference = classReference, imports = imports, methods = methods)
+    HeaderSegmentClassDefinition(reference = classReference, imports = imports, methods = methods)
   }
 
   // Helper class to represent the path from a resource to an action over a content header segment and a accept header segment.

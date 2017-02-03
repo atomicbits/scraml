@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.lookup
 
+import org.slf4j.{ Logger, LoggerFactory }
 import io.atomicbits.scraml.ramlparser.lookup.transformers._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
@@ -27,6 +28,8 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
   * Created by peter on 17/12/16.
   */
 object ParsedToCanonicalTypeTransformer {
+
+  val LOGGER: Logger = LoggerFactory.getLogger("ParsedToCanonicalTypeTransformer")
 
   /**
     * Transform the given parsed type to a canonical type, recursively parsing and registering all internal parsed types .
@@ -53,7 +56,10 @@ object ParsedToCanonicalTypeTransformer {
       case ParsedIntegerTransformer(typeReference, updatedLookupHelper)       => (typeReference, updatedLookupHelper)
       case ParsedNullTransformer(typeReference, updatedLookupHelper)          => (typeReference, updatedLookupHelper)
       case ParsedGenericObjectTransformer(typeReference, updatedLookupHelper) => (typeReference, updatedLookupHelper)
-      case x                                                                  => sys.error(s"Error transforming $x")
+      case ParsedTypeContext(fragments: Fragments, _, _, _, _) =>
+        LOGGER.info(s"Skipped unknown json-schema fragments.")
+        (NullType, canonicalLookupHelper)
+      case x => sys.error(s"Error transforming $x")
       // Currently not yet supported:
       //      case parsedFile: ParsedFile                               => ???
       //      case parsedNull: ParsedNull                               => ???

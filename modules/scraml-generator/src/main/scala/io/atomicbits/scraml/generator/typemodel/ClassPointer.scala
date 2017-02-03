@@ -32,7 +32,8 @@ case class ClassReference(name: String,
                           typeParamValues: Map[TypeParameter, ClassPointer] = Map.empty,
                           isArray: Boolean                                  = false,
                           predef: Boolean                                   = false,
-                          library: Boolean                                  = false)
+                          library: Boolean                                  = false,
+                          isTypeParameter: Boolean                          = false)
     extends ClassPointer {
 
   lazy val canonicalName = CanonicalName(name, packageParts)

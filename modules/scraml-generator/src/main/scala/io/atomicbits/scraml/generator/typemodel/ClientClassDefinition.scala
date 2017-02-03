@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
+
 /**
   * Created by peter on 13/01/17.
   *
@@ -29,4 +31,11 @@ case class ClientClassDefinition(apiName: String,
                                  baseUri: Option[String],
                                  basePackage: List[String],
                                  topLevelResourceDefinitions: List[ResourceClassDefinition])
-    extends SourceDefinition
+    extends SourceDefinition {
+
+  override def classReference(implicit platform: Platform): ClassReference = {
+    val apiClassName = CleanNameTools.cleanClassNameFromFileName(apiName)
+    ClassReference(name = apiClassName, packageParts = basePackage)
+  }
+
+}

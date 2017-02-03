@@ -19,7 +19,13 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.Platform
+
 /**
   * Created by peter on 14/01/17.
   */
-case class UnionClassDefinition(reference: ClassReference, union: Set[ClassPointer]) extends SourceDefinition
+case class UnionClassDefinition(reference: ClassReference, union: Set[ClassPointer]) extends SourceDefinition {
+
+  override def classReference(implicit platform: Platform): ClassReference = reference
+
+}

@@ -30,7 +30,7 @@ import Platform._
   */
 case class TransferObjectInterfaceDefinition(origin: TransferObjectClassDefinition, discriminator: String) extends SourceDefinition {
 
-  def reference(implicit platform: Platform) = origin.reference.interfaceReference
+  override def classReference(implicit platform: Platform): ClassReference = origin.reference.interfaceReference
 
   lazy val fields: List[Field] = origin.fields
 

@@ -100,6 +100,8 @@ object Fragments {
     "description",
     "$schema",
     "items",
+    "formParameters",
+    "queryParameters",
     "typeDiscriminator"
   )
 

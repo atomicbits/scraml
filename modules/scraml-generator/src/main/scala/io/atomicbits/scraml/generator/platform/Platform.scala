@@ -133,8 +133,7 @@ object Platform {
           case typeReference: TypeReference =>
             val classPointer = typeReferenceToClassPointer(typeReference)
             ListClassReference(classPointer)
-          case CanonicalTypeParameter(paramName) =>
-            sys.error(s"Didn't expect a type parameter when constructing an array reference at this stage.")
+          case CanonicalTypeParameter(paramName) => TypeParameter(paramName)
         }
       case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
       case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")

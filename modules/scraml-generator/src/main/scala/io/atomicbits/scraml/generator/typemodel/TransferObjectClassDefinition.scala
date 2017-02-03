@@ -34,6 +34,8 @@ case class TransferObjectClassDefinition(reference: ClassReference,
                                          jsonTypeInfo: Option[JsonTypeInfo] = None)
     extends SourceDefinition {
 
+  override def classReference(implicit platform: Platform): ClassReference = reference
+
   def hasParents: Boolean = parents.nonEmpty
 
 }

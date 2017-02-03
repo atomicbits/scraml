@@ -51,9 +51,8 @@ trait Dependencies { this: Build =>
 
   val scramlRamlParserDeps = Seq(
     playJson,
-    snakeYaml
-//    ,
-//    jerkson
+    snakeYaml,
+    slf4j
   )
 
   // inclusion of the above dependencies in the modules

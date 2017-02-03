@@ -19,7 +19,13 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.Platform
+
 /**
   * Created by peter on 13/01/17.
   */
-trait SourceDefinition
+trait SourceDefinition {
+
+  def classReference(implicit platform: Platform): ClassReference
+
+}

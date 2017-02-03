@@ -68,7 +68,7 @@ object ScalaPlay extends Platform with CleanNameTools {
         val typeParamValues = Map(typeParameter -> typeParamValue)
         ClassReference(name = "List", typeParameters = List(typeParameter), typeParamValues = typeParamValues, predef = true)
       case typeParameter: TypeParameter =>
-        sys.error(s"Cannot transform a type parameter to a native class reference: $typeParameter.")
+        ClassReference(name = typeParameter.name, predef = true, isTypeParameter = true)
     }
   }
 

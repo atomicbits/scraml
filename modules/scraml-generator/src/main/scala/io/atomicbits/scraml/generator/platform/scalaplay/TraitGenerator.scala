@@ -49,32 +49,34 @@ object TraitGenerator extends SourceGenerator with DtoGenerationSupport {
                             generationAggr: GenerationAggr): GenerationAggr = {
 
     def leafClassRepToWithTypeHintExpression(leafClassRep: TransferObjectClassDefinition): String = {
-      val discriminatorValue = leafClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(toInterfaceDefinition.origin.reference.name)
+      val discriminatorValue =
+        leafClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(toInterfaceDefinition.origin.reference.name)
       s"""${leafClassRep.reference.name}.jsonFormatter.withTypeHint("$discriminatorValue")"""
     }
 
-    val imports: Set[String] = collectImports(toInterfaceDefinition.reference, fields, implementingClasses.map(_.reference).toSeq)
+    val imports: Set[String] =
+      collectImports(toInterfaceDefinition.classReference, fields, implementingClasses.map(_.reference).toSeq)
 
     val fieldDefinitions = fields.map(_.fieldExpression).map(fieldExpr => s"def $fieldExpr")
 
     val source =
       s"""
-        package ${toInterfaceDefinition.reference.packageName}
+        package ${toInterfaceDefinition.classReference.packageName}
 
         import play.api.libs.json._
         import io.atomicbits.scraml.dsl.json.TypedJson._
 
         ${imports.mkString("\n")}
         
-        trait ${toInterfaceDefinition.reference.classDefinition} {
+        trait ${toInterfaceDefinition.classReference.classDefinition} {
 
           ${fieldDefinitions.mkString("\n\n")}
 
         }
 
-        object ${toInterfaceDefinition.reference.name} {
+        object ${toInterfaceDefinition.classReference.name} {
 
-          implicit val jsonFormat: Format[${toInterfaceDefinition.reference.classDefinition}] =
+          implicit val jsonFormat: Format[${toInterfaceDefinition.classReference.classDefinition}] =
             TypeHintFormat(
               "${toInterfaceDefinition.discriminator}",
               ${implementingClasses.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}
@@ -84,7 +86,7 @@ object TraitGenerator extends SourceGenerator with DtoGenerationSupport {
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(toInterfaceDefinition.reference),
+        filePath = platform.classReferenceToFilePath(toInterfaceDefinition.classReference),
         content  = source
       )
 

@@ -34,8 +34,8 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
 
   def generate(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr = {
 
-    val className   = headerSegmentClassDefinition.classReference.name
-    val packageName = headerSegmentClassDefinition.classReference.packageName
+    val className   = headerSegmentClassDefinition.reference.name
+    val packageName = headerSegmentClassDefinition.reference.packageName
     val imports     = headerSegmentClassDefinition.imports
     val methods     = headerSegmentClassDefinition.methods
 
@@ -57,7 +57,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
          }
        """
 
-    val filePath = platform.classReferenceToFilePath(headerSegmentClassDefinition.classReference)
+    val filePath = platform.classReferenceToFilePath(headerSegmentClassDefinition.reference)
 
     generationAggr.addSourceFile(SourceFile(filePath = filePath, content = source))
   }

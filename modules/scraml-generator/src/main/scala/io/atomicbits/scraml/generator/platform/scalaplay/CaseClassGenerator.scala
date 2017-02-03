@@ -82,7 +82,7 @@ object CaseClassGenerator extends SourceGenerator with DtoGenerationSupport {
                                 toClassDefinition: TransferObjectClassDefinition,
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
-    val imports: Set[String] = collectImports(toClassDefinition.reference, fields, traits.map(_.reference))
+    val imports: Set[String] = collectImports(toClassDefinition.reference, fields, traits.map(_.classReference))
 
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 

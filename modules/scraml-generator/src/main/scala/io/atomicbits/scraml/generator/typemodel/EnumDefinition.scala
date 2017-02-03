@@ -19,7 +19,13 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.Platform
+
 /**
   * Created by peter on 10/01/17.
   */
-case class EnumDefinition(reference: ClassReference, values: List[String] = List.empty) extends SourceDefinition
+case class EnumDefinition(reference: ClassReference, values: List[String] = List.empty) extends SourceDefinition {
+
+  override def classReference(implicit platform: Platform): ClassReference = reference
+
+}

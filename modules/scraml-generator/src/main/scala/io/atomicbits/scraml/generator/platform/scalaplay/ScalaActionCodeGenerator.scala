@@ -23,7 +23,6 @@ import io.atomicbits.scraml.generator.codegen.ActionCode
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.PrimitiveType
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**

@@ -41,11 +41,11 @@ trait DtoGenerationSupport {
         else None
       }
 
-      val classReferene = classPtr.native
+      val classReference = classPtr.native
       val collectedWithClassRef =
-        importFromClassReference(classReferene).map(classRefImport => collected + classRefImport).getOrElse(collected)
+        importFromClassReference(classReference).map(classRefImport => collected + classRefImport).getOrElse(collected)
 
-      classReferene.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
+      classReference.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
     }
 
     val typeImports: Set[String] = collectTypeImports(Set.empty, toClassReference)

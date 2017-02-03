@@ -19,8 +19,14 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
+import io.atomicbits.scraml.generator.platform.Platform
+
 /**
   * Created by peter on 18/01/17.
   */
-case class HeaderSegmentClassDefinition(classReference: ClassReference, imports: Set[ClassPointer], methods: List[String])
-    extends SourceDefinition
+case class HeaderSegmentClassDefinition(reference: ClassReference, imports: Set[ClassPointer], methods: List[String])
+    extends SourceDefinition {
+
+  override def classReference(implicit platform: Platform): ClassReference = reference
+
+}

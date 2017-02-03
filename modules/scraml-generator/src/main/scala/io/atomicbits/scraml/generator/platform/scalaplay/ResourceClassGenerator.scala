@@ -34,7 +34,7 @@ object ResourceClassGenerator extends SourceGenerator {
   def generate(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = {
 
     val classDefinition        = generateClassDefinition(resourceClassDefinition)
-    val resourceClassReference = resourceClassDefinition.resourceClassReference
+    val resourceClassReference = resourceClassDefinition.classReference
 
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
@@ -86,7 +86,7 @@ object ResourceClassGenerator extends SourceGenerator {
   def generateClassDefinition(resourceClassDefinition: ResourceClassDefinition): String = {
 
     val resource         = resourceClassDefinition.resource
-    val resourceClassRef = resourceClassDefinition.resourceClassReference
+    val resourceClassRef = resourceClassDefinition.classReference
 
     resourceClassDefinition.urlParamClassPointer.map(_.native) match {
       case Some(urlParamClassReference) =>
@@ -102,7 +102,7 @@ object ResourceClassGenerator extends SourceGenerator {
 
     val resource         = resourceClassDefinition.resource
     val cleanUrlSegment  = ScalaPlay.escapeScalaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
-    val resourceClassRef = resourceClassDefinition.resourceClassReference
+    val resourceClassRef = resourceClassDefinition.classReference
 
     resourceClassDefinition.urlParamClassPointer.map(_.native) match {
       case Some(urlParamClassReference) =>

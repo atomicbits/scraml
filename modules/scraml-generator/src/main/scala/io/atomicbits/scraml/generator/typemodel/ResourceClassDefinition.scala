@@ -31,8 +31,10 @@ import io.atomicbits.scraml.ramlparser.model.Resource
 case class ResourceClassDefinition(apiPackage: List[String], precedingUrlSegments: List[String], resource: Resource)
     extends SourceDefinition {
 
+  val nextPackagePart: String = CleanNameTools.cleanPackageName(resource.urlSegment)
+
   lazy val childResourceDefinitions: List[ResourceClassDefinition] = {
-    val nextPrecedingUrlSegments = precedingUrlSegments :+ resource.urlSegment
+    val nextPrecedingUrlSegments = precedingUrlSegments :+ nextPackagePart
     resource.resources.map { childResource =>
       ResourceClassDefinition(
         apiPackage           = apiPackage,
@@ -42,7 +44,7 @@ case class ResourceClassDefinition(apiPackage: List[String], precedingUrlSegment
     }
   }
 
-  lazy val resourcePackage: List[String] = apiPackage ++ precedingUrlSegments
+  lazy val resourcePackage: List[String] = apiPackage ++ precedingUrlSegments :+ nextPackagePart
 
   lazy val urlParamClassPointer: Option[ClassPointer] = {
     resource.urlParameter
@@ -51,15 +53,11 @@ case class ResourceClassDefinition(apiPackage: List[String], precedingUrlSegment
       .map(Platform.typeReferenceToClassPointer(_))
   }
 
-  lazy val resourceClassReference: ClassReference = {
+  override def classReference(implicit platform: Platform): ClassReference = {
 
     val resourceClassName = s"${CleanNameTools.cleanClassName(resource.urlSegment)}Resource"
 
-    val nextPackagePart = CleanNameTools.cleanPackageName(resource.urlSegment)
-
-    val nextPackageBasePath = resourcePackage :+ nextPackagePart
-
-    ClassReference(name = resourceClassName, packageParts = nextPackageBasePath)
+    ClassReference(name = resourceClassName, packageParts = resourcePackage)
   }
 
 }

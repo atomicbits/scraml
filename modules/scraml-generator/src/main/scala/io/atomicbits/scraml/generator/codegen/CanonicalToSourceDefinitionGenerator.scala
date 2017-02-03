@@ -37,7 +37,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   * Created by peter on 14/01/17.
   *
   * Transforms a map containing canonical RAML or json-schema types to a sequence of source definitions. The number of
-  * source definitions isn't always equal to the number of canonical types, because multiple inheritance may produce additional
+  * source definitions isn't always equal to the number of canonical types, because (multiple) inheritance may produce additional
   * source definitions.
   */
 object CanonicalToSourceDefinitionGenerator {
@@ -96,8 +96,9 @@ object CanonicalToSourceDefinitionGenerator {
           jsonTypeInfo = jsonTypeInfoOpt
         )
 
-      genAggr.addToDefinition(canonicalName, transferObjectClassDefinition)
-      genAggr.addSourceDefinition(transferObjectClassDefinition)
+      genAggr
+        .addToDefinition(canonicalName, transferObjectClassDefinition)
+        .addSourceDefinition(transferObjectClassDefinition)
     }
 
     def enumTypeToEnumDefinition(genAggr: GenerationAggr, enumType: EnumType): GenerationAggr = {
