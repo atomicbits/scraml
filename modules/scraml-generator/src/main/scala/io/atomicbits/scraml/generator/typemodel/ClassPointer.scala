@@ -36,7 +36,7 @@ case class ClassReference(name: String,
                           isTypeParameter: Boolean                          = false)
     extends ClassPointer {
 
-  lazy val canonicalName = CanonicalName(name, packageParts)
+  lazy val canonicalName: CanonicalName = CanonicalName.create(name, packageParts)
 
   /**
     * The base form for this class reference. The base form refers to the class in its most unique way,

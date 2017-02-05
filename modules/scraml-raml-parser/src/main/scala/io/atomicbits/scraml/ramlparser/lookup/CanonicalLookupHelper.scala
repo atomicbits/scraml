@@ -32,6 +32,10 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedNul
   *                                        those that are implicitely declared inside the resource's parameters (e.g. GET parameters)
   *                                        and body content of responses and replies. Each type declaration is keyed on its
   *                                        native (RAML) id.
+  * @param referenceOnlyParsedTypeIndex    Like parsedTypeIndex, but the elements in this index will not be used directly to create
+  *                                        canonical types later on. This index will only contain the Selection elements of a json-schema
+  *                                        object. We need to be able to look up those elements, but we will generate their canonical
+  *                                        form through their parent.
   * @param lookupTable                     The canonical lookup map.
   * @param jsonSchemaNativeToAbsoluteIdMap Native references may be used in the RAML definition to refer to json-schema types that
   *                                        have their own json-schema id internally. This map enables us to translate the canonical
@@ -39,6 +43,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedNul
   */
 case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveType]          = Map.empty,
                                  parsedTypeIndex: Map[UniqueId, ParsedType]                 = Map.empty,
+                                 referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType]    = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId] = Map.empty) {
 
   def getParsedType(id: Id): Option[ParsedType] = {
@@ -46,19 +51,25 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
       case NoId => Some(ParsedNull())
       case nativeId: NativeId =>
         val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
-        parsedTypeIndex.get(realIndex)
-      case uniqueId: UniqueId => parsedTypeIndex.get(uniqueId)
-      case other              => None
+        List(parsedTypeIndex.get(realIndex), referenceOnlyParsedTypeIndex.get(realIndex)).flatten.headOption
+      case uniqueId: UniqueId =>
+        List(parsedTypeIndex.get(uniqueId), referenceOnlyParsedTypeIndex.get(uniqueId)).flatten.headOption
+      case other => None
     }
   }
 
   def addCanonicalType(canonicalName: CanonicalName, canonicalType: NonPrimitiveType): CanonicalLookupHelper =
     copy(lookupTable = lookupTable + (canonicalName -> canonicalType))
 
-  def addParsedTypeIndex(id: Id, parsedType: ParsedType): CanonicalLookupHelper = {
+  def addParsedTypeIndex(id: Id, parsedType: ParsedType, lookupOnly: Boolean = false): CanonicalLookupHelper = {
     id match {
-      case uniqueId: UniqueId => copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
-      case _                  => this
+      case uniqueId: UniqueId =>
+        if (lookupOnly) {
+          copy(referenceOnlyParsedTypeIndex = referenceOnlyParsedTypeIndex + (uniqueId -> parsedType))
+        } else {
+          copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
+        }
+      case _ => this
     }
   }
 

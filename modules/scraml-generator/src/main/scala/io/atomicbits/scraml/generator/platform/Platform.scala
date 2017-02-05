@@ -64,7 +64,7 @@ trait Platform {
 
   def fieldExpression(field: Field): String
 
-  def importStatements(imports: Set[ClassPointer]): Set[String]
+  def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String]
 
   def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr
 

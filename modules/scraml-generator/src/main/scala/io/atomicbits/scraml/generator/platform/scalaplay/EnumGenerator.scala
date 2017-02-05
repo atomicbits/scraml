@@ -27,13 +27,13 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 14/01/17.
   */
-object EnumGenerator extends SourceGenerator with DtoGenerationSupport {
+object EnumGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
   def generate(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = {
 
-    val imports: Set[String] = collectImports(enumDefinition.reference)
+    val imports: Set[String] = platform.importStatements(enumDefinition.reference)
 
     val source =
       s"""

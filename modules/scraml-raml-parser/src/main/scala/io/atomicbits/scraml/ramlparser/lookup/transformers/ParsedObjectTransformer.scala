@@ -54,12 +54,15 @@ object ParsedObjectTransformer {
 
     def registerParsedObject(parsedObject: ParsedObject): (TypeReference, CanonicalLookupHelper) = {
 
+      val ownTypeDiscriminatorOpt: Option[String] = parsedObject.typeDiscriminator
+      val typeDescriminatorOpt                    = List(imposedTypeDiscriminatorOpt, ownTypeDiscriminatorOpt).flatten.headOption
+
       // Prepare the empty aggregator
       val aggregator: PropertyAggregator = (Map.empty[String, Property[_ <: GenericReferrable]], canonicalLookupHelper)
 
       // if there is an imposed type discriminator, then we need to find its value and remove the discriminator from the properties.
       val (typeDiscriminatorValue, propertiesWithoutTypeDiscriminator) =
-        processTypeDiscriminator(imposedTypeDiscriminatorOpt, parsedObject.properties)
+        processTypeDiscriminator(typeDescriminatorOpt, parsedObject.properties)
       // Transform and register all properties of this object
       val (properties, propertyUpdatedCanonicalLH) =
         propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer)
@@ -69,7 +72,7 @@ object ParsedObjectTransformer {
 
       // Extract all json-schema children from this parsed object and register them in de canonical lookup helper
       val jsonSchemaChildrenUpdatedCanonicalLH =
-        extractJsonSchemaChildren(parsedObject, propertyUpdatedCanonicalLH, canonicalName, parsedObject.typeDiscriminator)
+        extractJsonSchemaChildren(parsedObject, propertyUpdatedCanonicalLH, canonicalName, typeDescriminatorOpt)
 
       // Get the RAML 1.0 parent from this parsed object, if any
       val parentId: Option[UniqueId] = parsedObject.parent // This is the RAML 1.0 parent

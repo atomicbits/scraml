@@ -41,7 +41,7 @@ object ResourceClassGenerator extends SourceGenerator {
     val ActionFunctionResult(actionImports, actionFunctions, headerPathSourceDefs) =
       ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
 
-    val imports = actionImports
+    val imports = platform.importStatements(resourceClassReference, actionImports)
 
     val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resourceClassDefinition)
     val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resourceClassDefinition)

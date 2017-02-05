@@ -22,7 +22,7 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedArray, ParsedNumber, ParsedString }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedArray, ParsedNumber, ParsedString, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.Matchers._
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
@@ -157,11 +157,12 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
         error
       )
 
-      val canonicalNames = canonicalLookup.map.map {
+      val collectedCanonicalNames = canonicalLookup.map.map {
         case (canonicalName, theType) => canonicalName
       } toSet
 
-      canonicalNames shouldBe expectedCanonicalNames
+      expectedCanonicalNames -- collectedCanonicalNames shouldBe Set.empty
+      collectedCanonicalNames -- expectedCanonicalNames shouldBe Set.empty
 
       val dogType = canonicalLookup(dog).asInstanceOf[ObjectType]
 
@@ -192,6 +193,22 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
         Some(
           ArrayTypeReference(genericType = NonPrimitiveTypeReference(refers = user))
         )
+
+      val userIdDogsResource  = userResource.resourceMap("userid").resourceMap("dogs")
+      val userIdDogsGetAction = userIdDogsResource.actionMap(Get)
+      val pagedListTypeRepresentation =
+        userIdDogsGetAction.responses.responseMap(StatusCode("200")).body.contentMap(MediaType("application/vnd-v1.0+json")).bodyType.get
+
+      val parsedPagedListType: ParsedTypeReference = pagedListTypeRepresentation.parsed.asInstanceOf[ParsedTypeReference]
+      parsedPagedListType.refersTo shouldBe RootId("http://atomicbits.io/schema/paged-list.json")
+      val dogTypeReference = parsedPagedListType.genericTypes("T").asInstanceOf[ParsedTypeReference]
+      dogTypeReference.refersTo shouldBe RootId("http://atomicbits.io/schema/dog.json")
+      parsedPagedListType.genericTypes("U").isInstanceOf[ParsedString] shouldBe true
+
+      val canonicalPagedListType: NonPrimitiveTypeReference =
+        pagedListTypeRepresentation.canonical.get.asInstanceOf[NonPrimitiveTypeReference]
+      canonicalPagedListType.genericTypes(TypeParameter("T")).isInstanceOf[NonPrimitiveTypeReference]
+      canonicalPagedListType.genericTypes(TypeParameter("U")).isInstanceOf[NonPrimitiveTypeReference]
     }
 
   }

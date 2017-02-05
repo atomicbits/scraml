@@ -27,7 +27,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 14/01/17.
   */
-object TraitGenerator extends SourceGenerator with DtoGenerationSupport {
+object TraitGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -55,7 +55,8 @@ object TraitGenerator extends SourceGenerator with DtoGenerationSupport {
     }
 
     val imports: Set[String] =
-      collectImports(toInterfaceDefinition.classReference, fields, implementingClasses.map(_.reference).toSeq)
+      platform
+        .importStatements(toInterfaceDefinition.classReference, fields.map(_.classPointer).toSet ++ implementingClasses.map(_.reference))
 
     val fieldDefinitions = fields.map(_.fieldExpression).map(fieldExpr => s"def $fieldExpr")
 

@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveTypeReference, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ PrimitiveType => _, _ }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**
@@ -48,40 +48,78 @@ object ParsedTypeReferenceTransformer {
       val (typeRefAsGenericReferrable, updatedCanonicalLH) =
         canonicalLookupHelper.getParsedType(parsedTypeReference.refersTo).map {
           case primitiveType: PrimitiveType =>
-            ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
+            val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
+            (typeRef, canonicalLH)
           case parsedDate: ParsedDate =>
-            ParsedToCanonicalTypeTransformer.transform(parsedDate, canonicalLH)
+            val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parsedDate, canonicalLH)
+            (typeRef, canonicalLH)
           case parsedArray: ParsedArray =>
-            ParsedToCanonicalTypeTransformer.transform(parsedArray, canonicalLH)
+            val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parsedArray, canonicalLH)
+            (typeRef, canonicalLH)
           case parsedFile: ParsedFile =>
-            ParsedToCanonicalTypeTransformer.transform(parsedFile, canonicalLH)
+            val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parsedFile, canonicalLH)
+            (typeRef, canonicalLH)
           case parsedEnum: ParsedEnum =>
             val canonicalName = canonicalNameGenerator.generate(parsedEnum.id)
             val typeReference = NonPrimitiveTypeReference(canonicalName)
             (typeReference, canonicalLH)
           case parsedObject: ParsedObject =>
-            val canonicalName = canonicalNameGenerator.generate(parsedObject.id)
-            val typeReference = NonPrimitiveTypeReference(canonicalName)
+            val canonicalName                     = canonicalNameGenerator.generate(parsedObject.id)
+            val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
+            val typeReference =
+              NonPrimitiveTypeReference(
+                refers       = canonicalName,
+                genericTypes = genericTypes
+              )
             (typeReference, canonicalLH)
           case parsedUnionType: ParsedUnionType =>
-            val canonicalName = canonicalNameGenerator.generate(parsedUnionType.id)
-            val typeReference = NonPrimitiveTypeReference(canonicalName)
+            val canonicalName                     = canonicalNameGenerator.generate(parsedUnionType.id)
+            val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
+            val typeReference =
+              NonPrimitiveTypeReference(
+                refers       = canonicalName,
+                genericTypes = genericTypes
+              )
             (typeReference, canonicalLH)
           case parsedMultipleInheritance: ParsedMultipleInheritance =>
-            val canonicalName = canonicalNameGenerator.generate(parsedMultipleInheritance.id)
-            val typeReference = NonPrimitiveTypeReference(canonicalName)
+            val canonicalName                     = canonicalNameGenerator.generate(parsedMultipleInheritance.id)
+            val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
+            val typeReference =
+              NonPrimitiveTypeReference(
+                refers       = canonicalName,
+                genericTypes = genericTypes
+              )
             (typeReference, canonicalLH)
           case parsedTRef: ParsedTypeReference =>
             if (referencesFollowed.contains(parsedTRef))
               sys.error(s"Cyclic reference detected when following $parsedTRef")
             else
               registerParsedTypeReference(parsedTRef, canonicalLH, parsedTypeReference :: referencesFollowed)
-          case unexpected => sys.error(s"Didn't expect to find a type reference to a $unexpected")
-        } getOrElse sys.error(s"The reference ${parsedTypeReference.refersTo} was not found in the parsed type index!")
+          case parsedNull: ParsedNull => (NullType, canonicalLH)
+          case unexpected             => sys.error(s"Didn't expect to find a type reference to a $unexpected")
+        } getOrElse {
+          sys.error(s"The reference ${parsedTypeReference.refersTo} was not found in the parsed type index!")
+        }
 
       typeRefAsGenericReferrable match {
         case typeReference: TypeReference => (typeReference, updatedCanonicalLH)
         case unexpected                   => sys.error(s"Expected $unexpected to be a type referece")
+      }
+
+    }
+
+    def transformGenericTypes(parsedGenericTypes: Map[String, ParsedType],
+                              canonicalLH: CanonicalLookupHelper): (Map[TypeParameter, GenericReferrable], CanonicalLookupHelper) = {
+
+      val aggregator: (Map[TypeParameter, GenericReferrable], CanonicalLookupHelper) = (Map.empty, canonicalLH)
+
+      parsedGenericTypes.foldLeft(aggregator) { (aggr, parsedGenericType) =>
+        val (parsedKey, parsedType)                    = parsedGenericType
+        val (canonicalGenericMap, canonicalLookup)     = aggr
+        val typeParameter                              = TypeParameter(parsedKey)
+        val (genericReferrable, unusedCanonicalLookup) = ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLookup)
+        val updatedCanonicalGenericMap                 = canonicalGenericMap + (typeParameter -> genericReferrable)
+        (updatedCanonicalGenericMap, unusedCanonicalLookup)
       }
 
     }

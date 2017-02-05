@@ -36,7 +36,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
 
     val className   = headerSegmentClassDefinition.reference.name
     val packageName = headerSegmentClassDefinition.reference.packageName
-    val imports     = headerSegmentClassDefinition.imports
+    val imports     = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)
     val methods     = headerSegmentClassDefinition.methods
 
     val source =

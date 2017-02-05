@@ -51,7 +51,7 @@ object ClientClassGenerator extends SourceGenerator {
           (importClasses, dslFields, actionFunctions, List.empty)
       }
 
-    val importStatements: Set[String] = platform.importStatements(importClasses)
+    val importStatements: Set[String] = platform.importStatements(apiClassReference, importClasses)
 
     val sourcecode =
       s"""

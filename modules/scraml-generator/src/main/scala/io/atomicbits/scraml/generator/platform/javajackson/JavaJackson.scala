@@ -132,13 +132,31 @@ object JavaJackson extends Platform with CleanNameTools {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 
-  override def importStatements(imports: Set[ClassPointer]): Set[String] = {
-    imports.map(_.native).collect {
-      case classReference if !classReference.predef => s"import ${classReference.fullyQualifiedName};"
+  override def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
+    val ownPackage = targetClassReference.packageName
+
+    def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
+
+      def importFromClassReference(classRef: ClassReference): Option[String] = {
+        if (classRef.packageName != ownPackage && !classRef.predef) Some(s"import ${classRef.fullyQualifiedName};")
+        else None
+      }
+
+      val classReference = classPtr.native
+      val collectedWithClassRef =
+        importFromClassReference(classReference).map(classRefImport => collected + classRefImport).getOrElse(collected)
+
+      classReference.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
     }
+
+    val targetClassImports: Set[String] = collectTypeImports(Set.empty, targetClassReference)
+
+    val dependencyImports: Set[String] = dependencies.foldLeft(targetClassImports)(collectTypeImports)
+
+    dependencyImports
   }
 
-  override def classFileExtension: String = ".java"
+  override def classFileExtension: String = "java"
 
   override def toSourceFile(generationAggr: GenerationAggr, classDefinition: TransferObjectClassDefinition): GenerationAggr = ???
 

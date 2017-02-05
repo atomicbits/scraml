@@ -28,7 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 /**
   * Created by peter on 14/01/17.
   */
-object CaseClassGenerator extends SourceGenerator with DtoGenerationSupport {
+object CaseClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -82,7 +82,8 @@ object CaseClassGenerator extends SourceGenerator with DtoGenerationSupport {
                                 toClassDefinition: TransferObjectClassDefinition,
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
-    val imports: Set[String] = collectImports(toClassDefinition.reference, fields, traits.map(_.classReference))
+    val imports: Set[String] =
+      platform.importStatements(toClassDefinition.reference, (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet)
 
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 
@@ -126,9 +127,13 @@ object CaseClassGenerator extends SourceGenerator with DtoGenerationSupport {
 
     val extendedTraitDefs = traits.map(_.origin.reference.classDefinition)
 
+    val extendsExpression =
+      if (extendedTraitDefs.nonEmpty) extendedTraitDefs.mkString("extends ", " with ", "")
+      else ""
+
     // format: off
     s"""
-       case class ${toClassDefinition.reference.classDefinition}(${fieldExpressions.mkString(",")}) ${extendedTraitDefs.mkString("extends", "with", "")}
+       case class ${toClassDefinition.reference.classDefinition}(${fieldExpressions.mkString(",")}) $extendsExpression 
      """
     // format: on
   }

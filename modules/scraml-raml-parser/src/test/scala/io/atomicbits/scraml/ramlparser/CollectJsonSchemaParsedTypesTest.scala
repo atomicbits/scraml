@@ -55,23 +55,24 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       val barReference = myFragmentsExpanded.fragments.fragmentMap("bar").asInstanceOf[ParsedTypeReference]
       barReference.refersTo shouldBe NoId
 
-      val collectedParsedTypes: List[ParsedType] = canonicalTypeCollector.collectJsonSchemaParsedTypes(myFragmentsExpanded)
+      val collectedParsedTypes: CanonicalLookupHelper =
+        canonicalTypeCollector.collectJsonSchemaParsedTypes(myFragmentsExpanded, CanonicalLookupHelper())
 
-      collectedParsedTypes.map(_.id) should contain(
+      collectedParsedTypes.parsedTypeIndex.keys should contain(
         AbsoluteFragmentId(
           RootId("http://atomicbits.io/schema/fragments.json"),
           List("definitions", "bars")
         )
       )
 
-      collectedParsedTypes.map(_.id) should contain(
+      collectedParsedTypes.parsedTypeIndex.keys should contain(
         AbsoluteFragmentId(
           RootId("http://atomicbits.io/schema/fragments.json"),
           List("definitions", "barlist")
         )
       )
 
-      collectedParsedTypes.map(_.id) should contain(
+      collectedParsedTypes.parsedTypeIndex.keys should contain(
         AbsoluteFragmentId(
           RootId("http://atomicbits.io/schema/fragments.json"),
           List("definitions", "barpointer")
@@ -102,6 +103,10 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       // ToDo: check for the presence of the Cat and the Fish
       val animalTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedType(NativeId("Animal"))
+
+      canonicalLHWithIndexedParsedTypes.getParsedType(RootId("http://atomicbits.io/schema/animal.json")).isDefined shouldBe true
+
+      canonicalLHWithIndexedParsedTypes.getParsedType(RootId("http://atomicbits.io/schema/dog.json")).isDefined shouldBe true
 
       // println(s"${prettyPrint(canonicalLHWithIndexedParsedTypes)}")
     }

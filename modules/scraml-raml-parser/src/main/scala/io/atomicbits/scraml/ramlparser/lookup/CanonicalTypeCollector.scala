@@ -59,9 +59,9 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
     // Now, we can create all canonical types and fill in all the TypeReferences in the RAML model's TypeRepresentation instances,
     // which are located in the BodyContent and ParsedParameter objects.
-    val canonicalLookupWithCanonicals = transformParsedTypeIndex(canonicalLookupHelper)
+    val canonicalLookupWithCanonicals = transformParsedTypeIndexToCanonicalTypes(canonicalLookupHelper)
 
-    val ramlUpdated = transformResourceParsedTypes(raml, canonicalLookupWithCanonicals)
+    val ramlUpdated = transformResourceParsedTypesToCanonicalTypes(raml, canonicalLookupWithCanonicals)
 
     (ramlUpdated, canonicalLookupWithCanonicals)
   }
@@ -72,22 +72,17 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     val finalCanonicalLookupHelper: CanonicalLookupHelper =
       (parsedType.id, id) match {
         case (absoluteId: AbsoluteId, nativeId: NativeId) =>
-          val expandedParsedType   = expandRelativeToAbsoluteIds(parsedType)
-          val collectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType)
-          val updatedCLH           = canonicalLookupHelper.addJsonSchemaNativeToAbsoluteIdTranslation(nativeId, absoluteId)
-
-          collectedParsedTypes.foldLeft(updatedCLH) { (canonicalLH, parsedType) =>
-            canonicalLH.addParsedTypeIndex(parsedType.id, parsedType)
-          }
+          val expandedParsedType             = expandRelativeToAbsoluteIds(parsedType)
+          val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
+          val updatedCLH =
+            lookupWithCollectedParsedTypes.addJsonSchemaNativeToAbsoluteIdTranslation(nativeId, absoluteId)
+          updatedCLH
         case (nativeId: NativeId, _) =>
           canonicalLookupHelper.addParsedTypeIndex(nativeId, parsedType)
         case (_, NoId) =>
-          val expandedParsedType   = expandRelativeToAbsoluteIds(parsedType)
-          val collectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType)
-
-          collectedParsedTypes.foldLeft(canonicalLookupHelper) { (canonicalLH, parsedType) =>
-            canonicalLH.addParsedTypeIndex(parsedType.id, parsedType)
-          }
+          val expandedParsedType             = expandRelativeToAbsoluteIds(parsedType)
+          val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
+          lookupWithCollectedParsedTypes
         case (ImplicitId, someNativeId) =>
           canonicalLookupHelper.addParsedTypeIndex(someNativeId, parsedType)
         case (unexpected, _) =>
@@ -123,7 +118,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     resource.resources.foldLeft(canonicalLookupHelperWithActionTypes)(indexResourceParsedTypes)
   }
 
-  private def transformParsedTypeIndex(canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
+  private def transformParsedTypeIndexToCanonicalTypes(canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
 
     canonicalLookupHelper.parsedTypeIndex.foldLeft(canonicalLookupHelper) { (canonicalLH, idWithParsedType) =>
       val (id, parsedType) = idWithParsedType
@@ -141,7 +136,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
   }
 
-  private def transformResourceParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
+  private def transformResourceParsedTypesToCanonicalTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
 
     def transformTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
       val expandedParsedType = expandRelativeToAbsoluteIds(typeRepresentation.parsed)
@@ -203,46 +198,81 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     * @param ttype
     * @return
     */
-  def collectJsonSchemaParsedTypes(ttype: ParsedType): List[ParsedType] = {
+  def collectJsonSchemaParsedTypes(ttype: ParsedType, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
 
-    def collectFromProperties(properties: ParsedProperties, collected: List[ParsedType]): List[ParsedType] = {
-      properties.values.foldLeft(collected) { (collection, property) =>
-        collect(property.propertyType.parsed, collection, onlyObjectsAndEnums = true)
+    def collectFromProperties(properties: ParsedProperties,
+                              canonicalLH: CanonicalLookupHelper,
+                              lookupOnly: Boolean,
+                              typeDiscriminator: Option[String]): CanonicalLookupHelper = {
+      properties.values.foldLeft(canonicalLH) { (canLH, property) =>
+        typeDiscriminator
+          .collect {
+            // We don't register type type of the type discriminator property.
+            case typeDisc if property.name == typeDisc =>
+              canonicalLH
+          }
+          .getOrElse {
+            collect(
+              theType             = property.propertyType.parsed,
+              canonicalLH         = canLH,
+              onlyObjectsAndEnums = true, // We only include objects and enums here because ... (?)
+              lookupOnly          = lookupOnly
+            )
+          }
       }
     }
 
-    def collectFromFragments(fragment: Fragments, collected: List[ParsedType]): List[ParsedType] = {
+    def collectFromFragments(fragment: Fragments, canonicalLH: CanonicalLookupHelper, lookupOnly: Boolean): CanonicalLookupHelper = {
       val fragmentTypes: List[ParsedType] = fragment.fragments.values
-      fragmentTypes.foldLeft(collected) { (collection, pType) =>
-        collect(pType, collection)
+      fragmentTypes.foldLeft(canonicalLH) { (canLH, pType) =>
+        collect(theType = pType, canonicalLH = canLH, lookupOnly = lookupOnly)
       }
     }
 
-    def collect(theType: ParsedType, collected: List[ParsedType] = List.empty, onlyObjectsAndEnums: Boolean = false): List[ParsedType] = {
+    def collectFromSelection(selection: Selection,
+                             canonicalLH: CanonicalLookupHelper,
+                             typeDiscriminator: Option[String]): CanonicalLookupHelper = {
+      val selectionTypes: List[ParsedType] = selection.selection
+      selectionTypes.foldLeft(canonicalLH) { (canLH, pType) =>
+        // Selection types will not be added for generation, but for lookup only, they will be generated through their parent definition.
+        collect(theType = pType, canonicalLH = canLH, lookupOnly = true, typeDiscriminator = typeDiscriminator)
+      }
+    }
+
+    def collect(theType: ParsedType,
+                canonicalLH: CanonicalLookupHelper,
+                onlyObjectsAndEnums: Boolean      = false,
+                lookupOnly: Boolean               = false,
+                typeDiscriminator: Option[String] = None): CanonicalLookupHelper = {
 
       theType match {
         case objectType: ParsedObject =>
-          val collectionWithProperties = collectFromProperties(objectType.properties, collected)
-          val collectionWithFragments  = collectFromFragments(objectType.fragments, collectionWithProperties)
-          objectType :: collectionWithFragments
-        case enumType: ParsedEnum => enumType :: collected
-        case fragment: Fragments =>
-          collectFromFragments(fragment.fragments, collected)
+          val actualTypeDiscriminator = List(typeDiscriminator, objectType.typeDiscriminator).flatten.headOption
+          val lookupWithProperties    = collectFromProperties(objectType.properties, canonicalLH, lookupOnly, actualTypeDiscriminator)
+          val lookupWithFragments     = collectFromFragments(objectType.fragments, lookupWithProperties, lookupOnly)
+          val lookupWithSelection =
+            objectType.selection.map(collectFromSelection(_, lookupWithFragments, actualTypeDiscriminator)).getOrElse(lookupWithFragments)
+          lookupWithSelection.addParsedTypeIndex(id = objectType.id, parsedType = objectType, lookupOnly = lookupOnly)
+        case enumType: ParsedEnum => canonicalLH.addParsedTypeIndex(enumType.id, enumType)
+        case fragment: Fragments  => collectFromFragments(fragment.fragments, canonicalLH, lookupOnly)
         case arrayType: ParsedArray =>
-          val collectionWithArrayType = collect(arrayType.items, collected, onlyObjectsAndEnums)
-          val collectionWithFragments = collectFromFragments(arrayType.fragments, collectionWithArrayType)
-          if (onlyObjectsAndEnums) collectionWithFragments else arrayType :: collectionWithFragments
+          val lookupWithArrayType = collect(arrayType.items, canonicalLH, onlyObjectsAndEnums, lookupOnly)
+          val lookupWithFragments = collectFromFragments(arrayType.fragments, lookupWithArrayType, lookupOnly)
+          if (onlyObjectsAndEnums) lookupWithFragments
+          else lookupWithFragments.addParsedTypeIndex(id = arrayType.id, parsedType = arrayType, lookupOnly = lookupOnly)
         case typeReference: ParsedTypeReference =>
-          val collectionWithFragments = collectFromFragments(typeReference.fragments, collected)
-          if (onlyObjectsAndEnums) collectionWithFragments else typeReference :: collectionWithFragments
+          val lookupWithFragments = collectFromFragments(typeReference.fragments, canonicalLH, lookupOnly)
+          if (onlyObjectsAndEnums) lookupWithFragments
+          else lookupWithFragments.addParsedTypeIndex(id = typeReference.id, parsedType = typeReference, lookupOnly = lookupOnly)
         case other =>
-          if (onlyObjectsAndEnums) collected else other :: collected
+          if (onlyObjectsAndEnums) canonicalLH
+          else canonicalLH.addParsedTypeIndex(id = other.id, parsedType = other, lookupOnly = lookupOnly)
       }
     }
 
     ttype.id match {
-      case rootId: RootId => collect(ttype)
-      case other          => List(ttype)
+      case rootId: RootId => collect(ttype, canonicalLookupHelper)
+      case other          => canonicalLookupHelper
     }
 
   }
