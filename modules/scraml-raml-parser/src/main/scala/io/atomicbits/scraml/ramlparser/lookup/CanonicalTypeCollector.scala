@@ -26,6 +26,8 @@ import io.atomicbits.scraml.ramlparser.parser.RamlParseException
 
 /**
   * Created by peter on 17/12/16.
+  *
+  * ToDo: split indexing of parsed types and canonical type collection in separate classes to maintain a better overview
   */
 case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator) {
 
@@ -195,8 +197,6 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
   /**
     * Collect all json-schema types
-    * @param ttype
-    * @return
     */
   def collectJsonSchemaParsedTypes(ttype: ParsedType, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
 
@@ -207,17 +207,17 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       properties.values.foldLeft(canonicalLH) { (canLH, property) =>
         typeDiscriminator
           .collect {
-            // We don't register type type of the type discriminator property.
-            case typeDisc if property.name == typeDisc =>
-              canonicalLH
+            // We don't register the type behind the type discriminator property, because we will handle it separately
+            // when creating canonical types.
+            case typeDisc if property.name == typeDisc => canonicalLH
           }
           .getOrElse {
             collect(
               theType             = property.propertyType.parsed,
               canonicalLH         = canLH,
-              onlyObjectsAndEnums = true, // We only include objects and enums here because ... (?)
+              onlyObjectsAndEnums = true, // We only include objects and enums here because ... (?) {needs documentation!}
               lookupOnly          = lookupOnly
-            )
+            ) // Mind that the typeDiscriminator value is NOT propagated here!
           }
       }
     }
@@ -236,6 +236,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       selectionTypes.foldLeft(canonicalLH) { (canLH, pType) =>
         // Selection types will not be added for generation, but for lookup only, they will be generated through their parent definition.
         collect(theType = pType, canonicalLH = canLH, lookupOnly = true, typeDiscriminator = typeDiscriminator)
+        // Mind that the typeDiscriminator value is MUST be propagated here!
       }
     }
 
@@ -248,10 +249,13 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       theType match {
         case objectType: ParsedObject =>
           val actualTypeDiscriminator = List(typeDiscriminator, objectType.typeDiscriminator).flatten.headOption
-          val lookupWithProperties    = collectFromProperties(objectType.properties, canonicalLH, lookupOnly, actualTypeDiscriminator)
-          val lookupWithFragments     = collectFromFragments(objectType.fragments, lookupWithProperties, lookupOnly)
+          // Mind that the typeDiscriminator value is only propagated with the properties and the selection!
+          val lookupWithProperties = collectFromProperties(objectType.properties, canonicalLH, lookupOnly, actualTypeDiscriminator)
+          val lookupWithFragments  = collectFromFragments(objectType.fragments, lookupWithProperties, lookupOnly)
           val lookupWithSelection =
-            objectType.selection.map(collectFromSelection(_, lookupWithFragments, actualTypeDiscriminator)).getOrElse(lookupWithFragments)
+            objectType.selection
+              .map(collectFromSelection(_, lookupWithFragments, actualTypeDiscriminator))
+              .getOrElse(lookupWithFragments)
           lookupWithSelection.addParsedTypeIndex(id = objectType.id, parsedType = objectType, lookupOnly = lookupOnly)
         case enumType: ParsedEnum => canonicalLH.addParsedTypeIndex(enumType.id, enumType)
         case fragment: Fragments  => collectFromFragments(fragment.fragments, canonicalLH, lookupOnly)
@@ -278,7 +282,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
   }
 
   /**
-    * Expand all relative ids to absolute ids and register them in the type lookup and also expand all $ref pointers.
+    * Expand all relative ids to absolute ids and also expand all $ref pointers.
     *
     * @param ttype
     * @return
@@ -344,10 +348,16 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    ttype.id match {
-      case rootId: RootId     => expandWithRootAndPath(ttype, rootId, rootId)
-      case nativeId: NativeId => ttype
-      case ImplicitId         =>
+    val refersTo: Option[Id] =
+      Option(ttype).collect {
+        case typeReference: ParsedTypeReference => typeReference.refersTo
+      }
+
+    (ttype.id, refersTo) match {
+      case (rootId: RootId, _)                    => expandWithRootAndPath(ttype, rootId, rootId)
+      case (nativeId: NativeId, _)                => ttype
+      case (ImplicitId, Some(nativeId: NativeId)) => ttype
+      case (ImplicitId, _)                        =>
         // We assume we hit an inline schema without an id, so we may just invent a random unique one since it will never be referenced.
         val canonicalName = canonicalNameGenerator.generate(ImplicitId)
         val rootId        = RootId.fromCanonical(canonicalName)

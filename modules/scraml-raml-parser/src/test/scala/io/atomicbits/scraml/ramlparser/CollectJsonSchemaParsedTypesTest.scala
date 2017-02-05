@@ -97,16 +97,18 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       val raml                              = parsedModel.get
       val canonicalLHWithIndexedParsedTypes = canonicalTypeCollector.indexParsedTypes(raml, CanonicalLookupHelper())
 
-      val geometryTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedType(NativeId("geometry"))
+      val geometryTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedTypeWithProperId(NativeId("geometry"))
       geometryTypeOpt.isDefined shouldBe true
       geometryTypeOpt.get.isInstanceOf[ParsedObject] shouldBe true
 
       // ToDo: check for the presence of the Cat and the Fish
-      val animalTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedType(NativeId("Animal"))
+      val animalTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedTypeWithProperId(NativeId("Animal"))
 
-      canonicalLHWithIndexedParsedTypes.getParsedType(RootId("http://atomicbits.io/schema/animal.json")).isDefined shouldBe true
+      canonicalLHWithIndexedParsedTypes
+        .getParsedTypeWithProperId(RootId("http://atomicbits.io/schema/animal.json"))
+        .isDefined shouldBe true
 
-      canonicalLHWithIndexedParsedTypes.getParsedType(RootId("http://atomicbits.io/schema/dog.json")).isDefined shouldBe true
+      canonicalLHWithIndexedParsedTypes.getParsedTypeWithProperId(RootId("http://atomicbits.io/schema/dog.json")).isDefined shouldBe true
 
       // println(s"${prettyPrint(canonicalLHWithIndexedParsedTypes)}")
     }

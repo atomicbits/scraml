@@ -46,7 +46,7 @@ object ParsedTypeReferenceTransformer {
                                     referencesFollowed: List[ParsedTypeReference] = List.empty): (TypeReference, CanonicalLookupHelper) = {
 
       val (typeRefAsGenericReferrable, updatedCanonicalLH) =
-        canonicalLookupHelper.getParsedType(parsedTypeReference.refersTo).map {
+        canonicalLookupHelper.getParsedTypeWithProperId(parsedTypeReference.refersTo).map {
           case primitiveType: PrimitiveType =>
             val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
             (typeRef, canonicalLH)

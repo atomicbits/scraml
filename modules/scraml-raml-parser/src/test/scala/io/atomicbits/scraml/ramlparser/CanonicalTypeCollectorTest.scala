@@ -194,7 +194,8 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
           ArrayTypeReference(genericType = NonPrimitiveTypeReference(refers = user))
         )
 
-      val userIdDogsResource  = userResource.resourceMap("userid").resourceMap("dogs")
+      val userIdResource      = userResource.resourceMap("userid")
+      val userIdDogsResource  = userIdResource.resourceMap("dogs")
       val userIdDogsGetAction = userIdDogsResource.actionMap(Get)
       val pagedListTypeRepresentation =
         userIdDogsGetAction.responses.responseMap(StatusCode("200")).body.contentMap(MediaType("application/vnd-v1.0+json")).bodyType.get

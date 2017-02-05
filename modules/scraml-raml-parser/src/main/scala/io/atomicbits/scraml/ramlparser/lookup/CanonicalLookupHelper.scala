@@ -46,15 +46,23 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
                                  referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType]    = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId] = Map.empty) {
 
-  def getParsedType(id: Id): Option[ParsedType] = {
-    id match {
-      case NoId => Some(ParsedNull())
-      case nativeId: NativeId =>
-        val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
-        List(parsedTypeIndex.get(realIndex), referenceOnlyParsedTypeIndex.get(realIndex)).flatten.headOption
-      case uniqueId: UniqueId =>
-        List(parsedTypeIndex.get(uniqueId), referenceOnlyParsedTypeIndex.get(uniqueId)).flatten.headOption
-      case other => None
+  def getParsedTypeWithProperId(id: Id): Option[ParsedType] = {
+    val parsedTypeOpt =
+      id match {
+        case NoId =>
+          Some(ParsedNull())
+        case nativeId: NativeId =>
+          val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
+          List(parsedTypeIndex.get(realIndex), referenceOnlyParsedTypeIndex.get(realIndex)).flatten.headOption
+        case uniqueId: UniqueId =>
+          List(parsedTypeIndex.get(uniqueId), referenceOnlyParsedTypeIndex.get(uniqueId)).flatten.headOption
+        case other => None
+      }
+    parsedTypeOpt.map { parsedType =>
+      parsedType.id match {
+        case ImplicitId => parsedType.updated(id)
+        case other      => parsedType
+      }
     }
   }
 

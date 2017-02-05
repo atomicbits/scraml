@@ -121,7 +121,7 @@ object ScalaPlay extends Platform with CleanNameTools {
     if (field.required)
       s""" (__ \\ "${field.fieldName}").format[${classDefinition(field.classPointer)}]"""
     else
-      s""" (__ \\ "$field.fieldName").formatNullable[${classDefinition(field.classPointer)}]"""
+      s""" (__ \\ "${field.fieldName}").formatNullable[${classDefinition(field.classPointer)}]"""
 
   override def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
     val ownPackage = targetClassReference.packageName
