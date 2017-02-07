@@ -44,14 +44,14 @@ object CaseClassGenerator extends SourceGenerator {
 
     val toCanonicalName = toClassDefinition.reference.canonicalName
 
-    val initTosWithTrait: Seq[TransferObjectClassDefinition] =
+    val initialTosWithTrait: Seq[TransferObjectClassDefinition] =
       if (generationAggr.hasChildren(toCanonicalName)) Seq(toClassDefinition)
       else Seq.empty
-    val initAllFields: Seq[Field] = toClassDefinition.fields
+    val initialFields: Seq[Field] = toClassDefinition.fields
 
     // Add all parents recursively as traits to implement and collect all fields.
     val parentNames: List[CanonicalName] = generationAggr.allParents(toCanonicalName)
-    val traitsAndFieldsAggr              = (initTosWithTrait, initAllFields)
+    val traitsAndFieldsAggr              = (initialTosWithTrait, initialFields)
 
     val (collectedTosWithTrait, collectedFields) =
       parentNames.foldLeft(traitsAndFieldsAggr) { (aggr, parentName) =>
@@ -73,7 +73,12 @@ object CaseClassGenerator extends SourceGenerator {
         aggr.addInterface(collectedTrait.origin.reference.canonicalName, collectedTrait)
       }
 
-    generateCaseClass(collectedTraits, collectedFields, discriminator, toClassDefinition, generationAggrWithAddedInterfaces)
+    // We know that Play Json 2.4 has trouble with empty case classes, so we inject a random non-required field in that case
+    val atLeastOneField =
+      if (collectedFields.nonEmpty) collectedFields
+      else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassReference, required = false))
+
+    generateCaseClass(collectedTraits, atLeastOneField, discriminator, toClassDefinition, generationAggrWithAddedInterfaces)
   }
 
   private def generateCaseClass(traits: Seq[TransferObjectInterfaceDefinition],
@@ -83,7 +88,10 @@ object CaseClassGenerator extends SourceGenerator {
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
     val imports: Set[String] =
-      platform.importStatements(toClassDefinition.reference, (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet)
+      platform.importStatements(
+        toClassDefinition.reference,
+        (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet
+      )
 
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 

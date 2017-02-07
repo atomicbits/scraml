@@ -22,13 +22,9 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveTypeReference, TypeReference }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import io.atomicbits.util.TestUtils
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
-
-import scala.util.Try
 
 /**
   * Created by peter on 5/02/17.
@@ -67,3 +63,5 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
   }
 
 }
+
+// ToDo: fix polymorphism
