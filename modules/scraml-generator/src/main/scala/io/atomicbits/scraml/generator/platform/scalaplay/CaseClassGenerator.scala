@@ -70,7 +70,7 @@ object CaseClassGenerator extends SourceGenerator {
     // add the collected traits to the generationAggr.toInterfaceMap if they aren't there yet
     val generationAggrWithAddedInterfaces =
       collectedTraits.foldLeft(generationAggr) { (aggr, collectedTrait) =>
-        aggr.addInterface(collectedTrait.origin.reference.canonicalName, collectedTrait)
+        aggr.addInterfaceSourceDefinition(collectedTrait)
       }
 
     // We know that Play Json 2.4 has trouble with empty case classes, so we inject a random non-required field in that case
@@ -133,7 +133,7 @@ object CaseClassGenerator extends SourceGenerator {
 
     val fieldExpressions = sortedFields.map(_.fieldExpression)
 
-    val extendedTraitDefs = traits.map(_.origin.reference.classDefinition)
+    val extendedTraitDefs = traits.map(_.classReference.classDefinition)
 
     val extendsExpression =
       if (extendedTraitDefs.nonEmpty) extendedTraitDefs.mkString("extends ", " with ", "")

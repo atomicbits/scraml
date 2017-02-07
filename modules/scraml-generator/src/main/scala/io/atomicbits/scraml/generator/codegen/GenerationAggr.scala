@@ -63,8 +63,16 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
   def addSourceFiles(sourceFiles: Seq[SourceFile]): GenerationAggr =
     copy(sourceFilesGenerated = sourceFiles ++ sourceFilesGenerated)
 
-  def addInterface(canonicalName: CanonicalName, interfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
-    copy(toInterfaceMap = toInterfaceMap + (canonicalName -> interfaceDefinition))
+  def addInterfaceSourceDefinition(interfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
+    val canonicalName = interfaceDefinition.origin.reference.canonicalName
+    toInterfaceMap.get(canonicalName) match {
+      case Some(toInterfaceDefinition) => this
+      case None =>
+        this
+          .copy(toInterfaceMap = toInterfaceMap + (canonicalName -> interfaceDefinition))
+          .addSourceDefinition(interfaceDefinition)
+    }
+  }
 
   def hasChildren(canonicalName: CanonicalName): Boolean = toParentChildrenMap.get(canonicalName).exists(_.nonEmpty)
 
@@ -113,7 +121,7 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
     import Platform._
 
     sourceDefinitionsToProcess match {
-      case srcDef :: srcDefs => srcDef.toSourceFile(this).markSourceDefinitionsHeadAsProcessed.generate
+      case srcDef :: srcDefs => srcDef.toSourceFile(this.markSourceDefinitionsHeadAsProcessed).generate
       case Nil               => this
     }
 
