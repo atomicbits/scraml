@@ -19,10 +19,13 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel.ClassPointer
 import io.atomicbits.scraml.ramlparser.model.{ Body, MediaType }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
+
+import Platform._
 
 /**
   * Created by peter on 26/08/15.
@@ -39,7 +42,12 @@ case class StringContentType(contentTypeHeader: MediaType) extends ContentType
 
 case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer) extends ContentType
+case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer, interfacePointer: Option[ClassPointer])
+    extends ContentType {
+
+  val actualClassPointer: ClassPointer = interfacePointer.getOrElse(classPointer)
+
+}
 
 case class FormPostContentType(contentTypeHeader: MediaType, formParameters: ParsedParameters) extends ContentType
 
@@ -59,15 +67,16 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(body: Body): Set[ContentType] =
+  def apply(body: Body, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] =
     body.contentMap.map {
       case (mediaType, bodyContent) =>
         val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
         val formParams      = bodyContent.formParameters
-        ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
+        ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams, generationAggr = generationAggr)
     } toSet
 
-  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters): ContentType = {
+  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters, generationAggr: GenerationAggr)(
+      implicit platform: Platform): ContentType = {
 
     val mediaTypeValue = mediaType.value.toLowerCase
 
@@ -76,7 +85,9 @@ object ContentType {
     } else if (formParameters.nonEmpty) {
       FormPostContentType(mediaType, formParameters)
     } else if (content.isDefined) {
-      TypedContentType(mediaType, content.get)
+      val classReference          = content.get.native
+      val interfaceClassReference = generationAggr.getInterfaceDefinition(classReference.canonicalName).map(_.classReference)
+      TypedContentType(mediaType, content.get, interfaceClassReference)
     } else if (mediaTypeValue.contains("json")) {
       JsonContentType(mediaType)
     } else if (mediaTypeValue.contains("text")) {

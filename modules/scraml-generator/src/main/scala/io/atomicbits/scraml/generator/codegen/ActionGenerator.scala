@@ -27,7 +27,7 @@ import io.atomicbits.scraml.ramlparser.model.{ Method, Resource }
 /**
   * Created by peter on 20/01/17.
   */
-case class ActionGenerator(actionCode: ActionCode) {
+case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAggr) {
 
   /**
     * The reason why we treat all actions of a resource together is that certain paths towards the actual action
@@ -51,8 +51,8 @@ case class ActionGenerator(actionCode: ActionCode) {
     val actionsWithTypeSelection: List[ActionSelection] =
       actionSelections.flatMap { actionSelection =>
         for {
-          contentType <- actionSelection.contentTypes
-          responseType <- actionSelection.responseTypes
+          contentType <- actionSelection.contentTypes(generationAggr)
+          responseType <- actionSelection.responseTypes(generationAggr)
           actionWithTypeSelection = actionSelection.withContentTypeSelection(contentType).withResponseTypeSelection(responseType)
         } yield actionWithTypeSelection
       }
@@ -119,7 +119,9 @@ case class ActionGenerator(actionCode: ActionCode) {
     val contentHeaderMethodName      = s"content${CleanNameTools.cleanClassName(contentType.contentTypeHeader.value)}"
     val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment.reference)
 
-    ActionFunctionResult(imports = Set.empty, fields = List(contentHeaderSegment), classes = headerSegment :: acceptHeaderClasses)
+    ActionFunctionResult(imports                    = Set.empty,
+                         actionFunctionDefinitions  = List(contentHeaderSegment),
+                         headerPathClassDefinitions = headerSegment :: acceptHeaderClasses)
   }
 
   private def expandAcceptHeaderMap(resourcePackageParts: List[String], acceptHeaderMap: Map[AcceptHeaderSegment, List[ActionSelection]])(
@@ -127,23 +129,24 @@ case class ActionGenerator(actionCode: ActionCode) {
 
     val actionPathExpansion: List[ActionFunctionResult] =
       acceptHeaderMap.toList match {
-        case (_, actions) :: Nil =>
+        case (_, actionSelections) :: Nil =>
           List(
             ActionFunctionResult(
-              actions.toSet.flatMap(generateActionImports),
-              actions.flatMap(ActionFunctionGenerator(actionCode).generate),
+              actionSelections.toSet.flatMap(generateActionImports),
+              actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate),
               List.empty
             )
           )
         case ahMap @ (ah :: ahs) =>
           ahMap map {
-            case (NoAcceptHeaderSegment, actions) =>
+            case (NoAcceptHeaderSegment, actionSelections) =>
               ActionFunctionResult(
-                actions.toSet.flatMap(generateActionImports),
-                actions.flatMap(ActionFunctionGenerator(actionCode).generate),
+                actionSelections.toSet.flatMap(generateActionImports),
+                actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate),
                 List.empty
               )
-            case (ActualAcceptHeaderSegment(responseType), actions) => expandResponseTypePath(resourcePackageParts, responseType, actions)
+            case (ActualAcceptHeaderSegment(responseType), actionSelections) =>
+              expandResponseTypePath(resourcePackageParts, responseType, actionSelections)
           }
       }
 
@@ -160,7 +163,7 @@ case class ActionGenerator(actionCode: ActionCode) {
     // into the above class
 
     val actionImports = actions.toSet.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate)
+    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate)
 
     // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"
@@ -170,23 +173,25 @@ case class ActionGenerator(actionCode: ActionCode) {
     val acceptHeaderMethodName      = s"accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}"
     val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment.reference)
 
-    ActionFunctionResult(imports = Set.empty, fields = List(acceptHeaderSegment), classes = List(headerSegment))
+    ActionFunctionResult(imports                    = Set.empty,
+                         actionFunctionDefinitions  = List(acceptHeaderSegment),
+                         headerPathClassDefinitions = List(headerSegment))
   }
 
   private def generateActionImports(action: ActionSelection)(implicit platform: Platform): Set[ClassPointer] = {
 
     val contentTypeImports =
       action.selectedContentType match {
-        case BinaryContentType(contentTypeHeader)          => Set[ClassPointer](BinaryDataClassReference)
-        case TypedContentType(contentTypeHeader, classRep) => Set(classRep)
-        case _                                             => Set.empty[ClassPointer]
+        case BinaryContentType(contentTypeHeader) => Set[ClassPointer](BinaryDataClassReference)
+        case typedContentType: TypedContentType   => Set(typedContentType.actualClassPointer)
+        case _                                    => Set.empty[ClassPointer]
       }
 
     val responseTypeImports =
       action.selectedResponsetype match {
-        case BinaryResponseType(acceptHeader)          => Set[ClassPointer](BinaryDataClassReference)
-        case TypedResponseType(acceptHeader, classRep) => Set(classRep)
-        case _                                         => Set.empty[ClassPointer]
+        case BinaryResponseType(acceptHeader)    => Set[ClassPointer](BinaryDataClassReference)
+        case typedContentType: TypedResponseType => Set(typedContentType.actualClassPointer)
+        case _                                   => Set.empty[ClassPointer]
       }
 
     contentTypeImports ++ responseTypeImports

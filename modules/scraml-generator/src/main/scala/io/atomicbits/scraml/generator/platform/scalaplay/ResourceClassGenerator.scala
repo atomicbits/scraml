@@ -39,7 +39,7 @@ object ResourceClassGenerator extends SourceGenerator {
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
     val ActionFunctionResult(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
+      ActionGenerator(ScalaActionCodeGenerator, generationAggr).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 

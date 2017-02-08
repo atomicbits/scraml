@@ -102,7 +102,7 @@ object ScalaPlay extends Platform with CleanNameTools {
 
   override def safePackageParts(classPointer: ClassPointer): List[String] = classPointer.native.packageParts
 
-  override def canonicalName(classPointer: ClassPointer): String = {
+  override def classDefinitionString(classPointer: ClassPointer): String = {
     val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
     parts.mkString(".")
   }

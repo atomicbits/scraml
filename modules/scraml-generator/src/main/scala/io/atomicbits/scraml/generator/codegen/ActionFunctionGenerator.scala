@@ -27,7 +27,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 /**
   * Created by peter on 20/01/17.
   */
-case class ActionFunctionGenerator(actionCode: ActionCode) {
+case class ActionFunctionGenerator(actionCode: ActionCode, generationAggr: GenerationAggr) {
 
   def generate(actionSelection: ActionSelection)(implicit platform: Platform): List[String] = {
 
@@ -56,16 +56,16 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         case (name, parameter) => actionCode.expandQueryOrFormParameterAsMapEntry((name, parameter))
       } toList
 
-    val segType: String = actionCode.createSegmentType(actionSelection.selectedResponsetype)(None)
-
     val formAction: String =
       actionCode.generateAction(
-        action                  = actionSelection,
+        actionSelection         = actionSelection,
+        bodyType                = None,
+        isBinary                = false,
         actionParameters        = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
-        segmentType             = segType,
         contentType             = actionSelection.selectedContentType,
-        responseType            = actionSelection.selectedResponsetype
+        responseType            = actionSelection.selectedResponsetype,
+        generationAggr          = generationAggr
       )
 
     List(formAction)
@@ -73,16 +73,16 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generateMultipartFormPostAction(actionSelection: ActionSelection)(implicit platform: Platform): List[String] = {
 
-    val responseType = actionCode.createSegmentType(actionSelection.selectedResponsetype)(None)
-
     val multipartAction: String =
       actionCode.generateAction(
-        action           = actionSelection,
-        actionParameters = actionCode.expandMethodParameter(List("parts" -> ListClassReference(BodyPartClassReference))),
-        multipartParams  = true,
-        segmentType      = responseType,
-        contentType      = actionSelection.selectedContentType,
-        responseType     = actionSelection.selectedResponsetype
+        actionSelection   = actionSelection,
+        bodyType          = None,
+        isBinary          = false,
+        actionParameters  = actionCode.expandMethodParameter(List("parts" -> ListClassReference(BodyPartClassReference))),
+        isMultipartParams = true,
+        contentType       = actionSelection.selectedContentType,
+        responseType      = actionSelection.selectedResponsetype,
+        generationAggr    = generationAggr
       )
 
     List(multipartAction)
@@ -102,11 +102,6 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         .sortQueryOrFormParameters(actionSelection.action.queryParameters.valueMap.toList)
         .map(actionCode.expandQueryOrFormParameterAsMethodParameter(_, noDefault))
 
-    val queryParameterMapEntries =
-      actionSelection.action.queryParameters.valueMap.toList.map(actionCode.expandQueryOrFormParameterAsMapEntry)
-
-    val segmentTypeFactory = actionCode.createSegmentType(actionSelection.selectedResponsetype) _
-
     bodyTypes.map { bodyType =>
       val actionBodyParameter =
         bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
@@ -116,14 +111,15 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       val segmentBodyType = if (binary) None else bodyType
 
       actionCode.generateAction(
-        action                   = actionSelection,
-        actionParameters         = allActionParameters,
-        queryParameterMapEntries = queryParameterMapEntries,
-        segmentType              = segmentTypeFactory(segmentBodyType),
-        typedBodyParam           = actionBodyParameter.nonEmpty && !binary,
-        binaryParam              = actionBodyParameter.nonEmpty && binary,
-        contentType              = actionSelection.selectedContentType,
-        responseType             = actionSelection.selectedResponsetype
+        actionSelection  = actionSelection,
+        bodyType         = bodyType,
+        isBinary         = binary,
+        actionParameters = allActionParameters,
+        isTypedBodyParam = actionBodyParameter.nonEmpty && !binary,
+        isBinaryParam    = actionBodyParameter.nonEmpty && binary,
+        contentType      = actionSelection.selectedContentType,
+        responseType     = actionSelection.selectedResponsetype,
+        generationAggr   = generationAggr
       )
     }
 
@@ -131,11 +127,13 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
 }
 
-case class ActionFunctionResult(imports: Set[ClassPointer]      = Set.empty,
-                                fields: List[String]            = List.empty,
-                                classes: List[SourceDefinition] = List.empty) {
+case class ActionFunctionResult(imports: Set[ClassPointer]                         = Set.empty,
+                                actionFunctionDefinitions: List[String]            = List.empty,
+                                headerPathClassDefinitions: List[SourceDefinition] = List.empty) {
 
   def ++(other: ActionFunctionResult): ActionFunctionResult =
-    ActionFunctionResult(imports ++ other.imports, fields ++ other.fields, classes ++ other.classes)
+    ActionFunctionResult(imports ++ other.imports,
+                         actionFunctionDefinitions ++ other.actionFunctionDefinitions,
+                         headerPathClassDefinitions ++ other.headerPathClassDefinitions)
 
 }

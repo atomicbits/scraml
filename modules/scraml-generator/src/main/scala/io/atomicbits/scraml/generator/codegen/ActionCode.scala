@@ -39,7 +39,7 @@ trait ActionCode {
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
 
-  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
+//  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
 
   def responseClassDefinition(responseType: ResponseType): String
 
@@ -51,15 +51,16 @@ trait ActionCode {
 
   def quoteString(text: String): String = s""""$text""""
 
-  def generateAction(action: ActionSelection,
-                     segmentType: String,
-                     actionParameters: List[String]         = List.empty,
-                     queryParameterMapEntries: List[String] = List.empty,
-                     formParameterMapEntries: List[String]  = List.empty,
-                     typedBodyParam: Boolean                = false,
-                     multipartParams: Boolean               = false,
-                     binaryParam: Boolean                   = false,
+  def generateAction(actionSelection: ActionSelection,
+                     bodyType: Option[ClassPointer],
+                     isBinary: Boolean,
+                     actionParameters: List[String]        = List.empty,
+                     formParameterMapEntries: List[String] = List.empty,
+                     isTypedBodyParam: Boolean             = false,
+                     isMultipartParams: Boolean            = false,
+                     isBinaryParam: Boolean                = false,
                      contentType: ContentType,
-                     responseType: ResponseType): String
+                     responseType: ResponseType,
+                     generationAggr: GenerationAggr): String
 
 }

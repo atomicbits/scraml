@@ -42,7 +42,7 @@ object ClientClassGenerator extends SourceGenerator {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
           val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
           val ActionFunctionResult(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
+            ActionGenerator(ScalaActionCodeGenerator, generationAggr).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]

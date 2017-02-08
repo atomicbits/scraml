@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.model.Action
 
 /**
@@ -28,14 +30,14 @@ case class ActionSelection(action: Action,
                            selectedContentType: ContentType   = NoContentType,
                            selectedResponsetype: ResponseType = NoResponseType) {
 
-  lazy val contentTypes: Set[ContentType] = {
-    val contentTypes = ContentType(action.body)
+  def contentTypes(generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] = {
+    val contentTypes = ContentType(action.body, generationAggr)
     if (contentTypes.isEmpty) Set(NoContentType)
     else contentTypes
   }
 
-  lazy val responseTypes: Set[ResponseType] = {
-    val responseTypes = action.responses.responseMap.values.flatMap(ResponseType(_)).toSet
+  def responseTypes(generationAggr: GenerationAggr)(implicit platform: Platform): Set[ResponseType] = {
+    val responseTypes = action.responses.responseMap.values.flatMap(ResponseType(_, generationAggr)).toSet
     if (responseTypes.isEmpty) Set(NoResponseType)
     else responseTypes
   }

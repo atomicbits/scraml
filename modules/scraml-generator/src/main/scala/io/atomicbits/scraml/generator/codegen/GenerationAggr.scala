@@ -76,6 +76,10 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
 
   def hasChildren(canonicalName: CanonicalName): Boolean = toParentChildrenMap.get(canonicalName).exists(_.nonEmpty)
 
+  def hasInterface(canonicalName: CanonicalName): Boolean = toInterfaceMap.get(canonicalName).isDefined
+
+  def getInterfaceDefinition(canonicalName: CanonicalName): Option[TransferObjectInterfaceDefinition] = toInterfaceMap.get(canonicalName)
+
   def parents(canonicalName: CanonicalName): Set[CanonicalName] = toChildParentsMap.getOrElse(canonicalName, Set.empty)
 
   def children(canonicalName: CanonicalName): Set[CanonicalName] = toParentChildrenMap.getOrElse(canonicalName, Set.empty)

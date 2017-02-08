@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.ActionCode
+import io.atomicbits.scraml.generator.codegen.{ ActionCode, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
@@ -49,8 +49,8 @@ object ScalaActionCodeGenerator extends ActionCode {
     action.selectedContentType match {
       case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
-      case TypedContentType(contentTypeHeader, classRef) =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(classRef))
+      case typedContentType: TypedContentType =>
+        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedContentType.actualClassPointer))
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassReference),
@@ -70,22 +70,26 @@ object ScalaActionCodeGenerator extends ActionCode {
       case x             => List(Some(StringClassReference))
     }
 
-  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String = {
+  def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer], generationAggr: GenerationAggr): String = {
+
     val bodyType = optBodyType.map(_.classDefinition).getOrElse("String")
+
     responseType match {
-      case BinaryResponseType(acceptHeader)          => s"BinaryMethodSegment[$bodyType]"
-      case JsonResponseType(acceptHeader)            => s"JsonMethodSegment[$bodyType]"
-      case TypedResponseType(acceptHeader, classPtr) => s"TypeMethodSegment[$bodyType, ${classPtr.classDefinition}]"
-      case x                                         => s"StringMethodSegment[$bodyType]"
+      case BinaryResponseType(acceptHeader) => s"BinaryMethodSegment[$bodyType]"
+      case JsonResponseType(acceptHeader)   => s"JsonMethodSegment[$bodyType]"
+      case typedResponseType: TypedResponseType =>
+        s"TypeMethodSegment[$bodyType, ${typedResponseType.actualClassPointer.classDefinition}]"
+      case x => s"StringMethodSegment[$bodyType]"
     }
+
   }
 
   def responseClassDefinition(responseType: ResponseType): String = {
     responseType match {
-      case BinaryResponseType(acceptHeader)          => "BinaryData"
-      case JsonResponseType(acceptHeader)            => "String"
-      case TypedResponseType(acceptHeader, classPtr) => classPtr.classDefinition
-      case x                                         => "String"
+      case BinaryResponseType(acceptHeader)     => "BinaryData"
+      case JsonResponseType(acceptHeader)       => "String"
+      case typedResponseType: TypedResponseType => typedResponseType.actualClassPointer.classDefinition
+      case x                                    => "String"
     }
   }
 
@@ -144,18 +148,24 @@ object ScalaActionCodeGenerator extends ActionCode {
   }
 
   def generateAction(actionSelection: ActionSelection,
-                     segmentType: String,
-                     actionParameters: List[String]         = List.empty,
-                     queryParameterMapEntries: List[String] = List.empty,
-                     formParameterMapEntries: List[String]  = List.empty,
-                     typedBodyParam: Boolean                = false,
-                     multipartParams: Boolean               = false,
-                     binaryParam: Boolean                   = false,
+                     bodyType: Option[ClassPointer],
+                     isBinary: Boolean,
+                     actionParameters: List[String]        = List.empty,
+                     formParameterMapEntries: List[String] = List.empty,
+                     isTypedBodyParam: Boolean             = false,
+                     isMultipartParams: Boolean            = false,
+                     isBinaryParam: Boolean                = false,
                      contentType: ContentType,
-                     responseType: ResponseType): String = {
+                     responseType: ResponseType,
+                     generationAggr: GenerationAggr): String = {
+
+    val segmentBodyType: Option[ClassPointer] = if (isBinary) None else bodyType
+    val segmentType: String                   = createSegmentType(actionSelection.selectedResponsetype, segmentBodyType, generationAggr)
 
     val actionType               = actionSelection.action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase
+
+    val queryParameterMapEntries = actionSelection.action.queryParameters.valueMap.toList.map(expandQueryOrFormParameterAsMapEntry)
 
     val expectedAcceptHeader      = actionSelection.selectedResponsetype.acceptHeaderOpt
     val expectedContentTypeHeader = actionSelection.selectedContentType.contentTypeHeaderOpt
@@ -164,9 +174,9 @@ object ScalaActionCodeGenerator extends ActionCode {
     val contentHeader = expectedContentTypeHeader.map(contentHeader => s"""Some("${contentHeader.value}")""").getOrElse("None")
 
     // The bodyFieldValue is only used for String, JSON and Typed bodies, not for a multipart or binary body
-    val bodyFieldValue       = if (typedBodyParam) "Some(body)" else "None"
-    val multipartParamsValue = if (multipartParams) "parts" else "List.empty"
-    val binaryParamValue     = if (binaryParam) "Some(BinaryRequest(body))" else "None"
+    val bodyFieldValue       = if (isTypedBodyParam) "Some(body)" else "None"
+    val multipartParamsValue = if (isMultipartParams) "parts" else "List.empty"
+    val binaryParamValue     = if (isBinaryParam) "Some(BinaryRequest(body))" else "None"
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
