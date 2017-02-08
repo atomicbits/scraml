@@ -186,9 +186,10 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     }
 
     def transformResource(resource: Resource): Resource = {
+      val transformedUrlParameter = resource.urlParameter.map(transformParsedParameter)
       val transformedActions      = resource.actions.map(transformAction)
       val transformedSubResources = resource.resources.map(transformResource)
-      resource.copy(actions = transformedActions, resources = transformedSubResources)
+      resource.copy(urlParameter = transformedUrlParameter, actions = transformedActions, resources = transformedSubResources)
     }
 
     val updatedResources = raml.resources.map(transformResource)

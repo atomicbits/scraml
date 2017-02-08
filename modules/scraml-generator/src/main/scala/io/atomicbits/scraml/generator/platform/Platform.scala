@@ -96,7 +96,9 @@ trait Platform {
 
 object Platform {
 
-  def typeReferenceToClassPointer(typeReference: TypeReference, primitive: Boolean = false): ClassPointer = {
+  def typeReferenceToClassPointer(typeReference: TypeReference,
+                                  primitive: Boolean                                     = false,
+                                  typeParameterContext: Map[TypeParameter, ClassPointer] = Map.empty): ClassPointer = {
 
     def customClassReference(canonicalName: CanonicalName, genericTypes: Map[CanonicalTypeParameter, GenericReferrable]): ClassReference = {
       val generics: Map[TypeParameter, ClassPointer] =
@@ -105,7 +107,7 @@ object Platform {
             val tParam = TypeParameter(typeParameter.name)
             val typeRef =
               genericReferrable match {
-                case typeReference: TypeReference => typeReferenceToClassPointer(typeReference)
+                case typeRef: TypeReference => typeReferenceToClassPointer(typeRef)
                 case CanonicalTypeParameter(paramName) =>
                   sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
               }
@@ -133,7 +135,10 @@ object Platform {
           case typeReference: TypeReference =>
             val classPointer = typeReferenceToClassPointer(typeReference)
             ListClassReference(classPointer)
-          case CanonicalTypeParameter(paramName) => TypeParameter(paramName)
+          case CanonicalTypeParameter(paramName) =>
+            val typeParameter = TypeParameter(paramName)
+            val classPointer  = typeParameterContext.getOrElse(typeParameter, typeParameter)
+            ListClassReference(classPointer)
         }
       case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
       case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")

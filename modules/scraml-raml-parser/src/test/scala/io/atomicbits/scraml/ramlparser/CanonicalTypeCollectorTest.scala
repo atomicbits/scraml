@@ -197,6 +197,8 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       val userIdResource      = userResource.resourceMap("userid")
       val userIdDogsResource  = userIdResource.resourceMap("dogs")
       val userIdDogsGetAction = userIdDogsResource.actionMap(Get)
+
+      // Check the paged list type representation
       val pagedListTypeRepresentation =
         userIdDogsGetAction.responses.responseMap(StatusCode("200")).body.contentMap(MediaType("application/vnd-v1.0+json")).bodyType.get
 
@@ -210,6 +212,12 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
         pagedListTypeRepresentation.canonical.get.asInstanceOf[NonPrimitiveTypeReference]
       canonicalPagedListType.genericTypes(TypeParameter("T")).isInstanceOf[NonPrimitiveTypeReference]
       canonicalPagedListType.genericTypes(TypeParameter("U")).isInstanceOf[NonPrimitiveTypeReference]
+
+      // Check the paged list type model
+      val pagedListType = canonicalLookup(pagedList).asInstanceOf[ObjectType]
+      pagedListType.properties("elements") shouldBe
+        Property(name = "elements", ttype = ArrayTypeReference(genericType = TypeParameter("T")), required = true, typeConstraints = None)
+
     }
 
   }
