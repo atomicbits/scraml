@@ -109,7 +109,6 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
         .isDefined shouldBe true
 
       canonicalLHWithIndexedParsedTypes.getParsedTypeWithProperId(RootId("http://atomicbits.io/schema/dog.json")).isDefined shouldBe true
-
       // println(s"${prettyPrint(canonicalLHWithIndexedParsedTypes)}")
     }
 

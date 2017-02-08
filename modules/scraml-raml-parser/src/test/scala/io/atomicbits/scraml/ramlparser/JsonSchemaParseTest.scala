@@ -22,13 +22,11 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import io.atomicbits.util.TestUtils
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
 
 import scala.language.postfixOps
 import scala.util.Try
-
 
 /**
   * Created by peter on 6/02/16.
@@ -55,7 +53,6 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       barType shouldBe a[ParsedTypeReference]
       barType.asInstanceOf[ParsedTypeReference].refersTo shouldBe NativeId("baz")
 
-
       val definitionFragment: Fragments = objectWithFragments.fragments.fragmentMap("definitions").asInstanceOf[Fragments]
 
       val addressType = definitionFragment.fragmentMap("address")
@@ -72,21 +69,25 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       //       println(s"Parsed raml: $prettyModel")
     }
 
+    scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
 
-    scenario("test parsing json-schema types in a RAML 1.0 model") {
-
-      Given("a RAML 1.0 specification with json-schema types")
-      val parser = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", List("io", "atomicbits", "model"))
+      Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
+      val defaultBasePath = List("io", "atomicbits", "schemas")
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
 
       When("we parse the specification")
-      val parsedModel = parser.parse
+      val parsedModel: Try[Raml] = parser.parse
 
-      Then("we get a ...")
-      val prettyModel = TestUtils.prettyPrint(parsedModel)
-      //       println(s"Parsed raml: $prettyModel")
+      Then("we get all four actions in the userid resource")
+      val raml = parsedModel.get
+
+      val userObject                            = raml.types.typeReferences(NativeId("user")).asInstanceOf[ParsedObject]
+      val addressParsedProperty: ParsedProperty = userObject.properties.valueMap("address")
+
+      addressParsedProperty.required shouldBe false
+
     }
 
   }
-
 
 }

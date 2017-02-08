@@ -218,6 +218,9 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       pagedListType.properties("elements") shouldBe
         Property(name = "elements", ttype = ArrayTypeReference(genericType = TypeParameter("T")), required = true, typeConstraints = None)
 
+      val userType = canonicalLookup(user).asInstanceOf[ObjectType]
+      userType.properties("address").required shouldBe false
+
     }
 
   }

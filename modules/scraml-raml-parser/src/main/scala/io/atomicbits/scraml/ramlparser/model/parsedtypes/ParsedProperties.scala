@@ -63,10 +63,11 @@ object ParsedProperties {
         jsObject.value.collect {
           case (name, ParsedType(tryType)) =>
             name -> tryType.map { paramType =>
+              val paramTypeWithRightTypeModel = paramType.asTypeModel(model)
               ParsedProperty(
                 name         = name,
-                propertyType = TypeRepresentation(paramType.asTypeModel(model)),
-                required     = paramType.required.getOrElse(paramType.defaultRequiredValue)
+                propertyType = TypeRepresentation(paramTypeWithRightTypeModel),
+                required     = paramTypeWithRightTypeModel.required.getOrElse(paramTypeWithRightTypeModel.defaultRequiredValue)
               )
             }
         } toMap
