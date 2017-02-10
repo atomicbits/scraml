@@ -82,13 +82,19 @@ object CaseClassGenerator extends SourceGenerator {
       if (collectedFields.nonEmpty) collectedFields
       else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassReference, required = false))
 
-    generateCaseClass(collectedTraits, atLeastOneField, discriminator, actualToCanonicalClassReference, generationAggrWithAddedInterfaces)
+    generateCaseClass(collectedTraits,
+                      atLeastOneField,
+                      discriminator,
+                      actualToCanonicalClassReference,
+                      toClassDefinition.jsonTypeInfo,
+                      generationAggrWithAddedInterfaces)
   }
 
   private def generateCaseClass(traits: Seq[TransferObjectInterfaceDefinition],
                                 fields: Seq[Field],
                                 skipFieldName: Option[String],
                                 toClassReference: ClassReference,
+                                jsonTypeInfo: Option[JsonTypeInfo],
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
     val imports: Set[String] =
@@ -97,6 +103,8 @@ object CaseClassGenerator extends SourceGenerator {
         (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet
       )
 
+    val typeHintImport = if (jsonTypeInfo.isDefined) "import io.atomicbits.scraml.dsl.json.TypedJson._" else ""
+
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 
     val source =
@@ -104,12 +112,13 @@ object CaseClassGenerator extends SourceGenerator {
         package ${toClassReference.packageName}
 
         import play.api.libs.json._
+        $typeHintImport
 
         ${imports.mkString("\n")}
 
         ${generateCaseClassDefinition(traits, sortedFields, toClassReference)}
         
-        ${generateCompanionObject(traits, sortedFields, toClassReference)}
+        ${generateCompanionObject(traits, sortedFields, toClassReference, jsonTypeInfo)}
      """
 
     val sourceFile =
@@ -152,26 +161,22 @@ object CaseClassGenerator extends SourceGenerator {
 
   private def generateCompanionObject(traits: Seq[TransferObjectInterfaceDefinition],
                                       sortedFields: Seq[Field],
-                                      toClassReference: ClassReference): String = {
+                                      toClassReference: ClassReference,
+                                      jsonTypeInfo: Option[JsonTypeInfo]): String = {
 
     val formatUnLiftFields = sortedFields.map(field => ScalaPlay.fieldFormatUnlift(field))
 
-    def complexFormatterDefinition =
-      s"""
-          import play.api.libs.functional.syntax._
+    def complexFormatterDefinition: (String, String) =
+      ("import play.api.libs.functional.syntax._", s"def jsonFormatter: Format[${toClassReference.classDefinition}] = ")
 
-          implicit def jsonFormatter: Format[${toClassReference.classDefinition}] = """
-
-    def complexTypedFormatterDefinition = {
+    def complexTypedFormatterDefinition: (String, String) = {
       /*
        * This is the only way we know that formats typed variables, but it has problems with recursive types,
        * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types).
        */
       val typeParametersFormat = toClassReference.typeParameters.map(typeParameter => s"${typeParameter.name}: Format")
-      s"""
-          import play.api.libs.functional.syntax._
-
-          implicit def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${toClassReference.classDefinition}] = """
+      (s"import play.api.libs.functional.syntax._",
+       s"def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${toClassReference.classDefinition}] = ")
     }
 
     def singleFieldFormatterBody =
@@ -243,31 +248,53 @@ object CaseClassGenerator extends SourceGenerator {
       * > implicit val jsonFormatter: Format[Tree] = Json.format[Tree]
       *
       */
-    def simpleFormatter =
-      s"implicit val jsonFormatter: Format[${toClassReference.classDefinition}] = Json.format[${toClassReference.classDefinition}]"
+    def simpleFormatter: (String, String) =
+      ("", s"val jsonFormatter: Format[${toClassReference.classDefinition}] = Json.format[${toClassReference.classDefinition}]")
 
     val hasTypeVariables = toClassReference.typeParameters.nonEmpty
     val anyFieldRenamed  = sortedFields.exists(field => field.fieldName != field.safeFieldName)
     val hasSingleField   = formatUnLiftFields.size == 1
     val hasOver22Fields  = formatUnLiftFields.size > 22
+    val hasJsonTypeInfo  = jsonTypeInfo.isDefined
 
-    val formatter =
-      (hasTypeVariables, anyFieldRenamed, hasSingleField, hasOver22Fields) match {
-        case (true, _, true, _)      => s"$complexTypedFormatterDefinition $singleFieldFormatterBody"
-        case (true, _, _, true)      => s"$complexTypedFormatterDefinition $over22FieldFormatterBody"
-        case (true, _, _, _)         => s"$complexTypedFormatterDefinition $multiFieldFormatterBody"
-        case (false, _, true, _)     => s"$complexFormatterDefinition $singleFieldFormatterBody"
-        case (false, _, _, true)     => s"$complexFormatterDefinition $over22FieldFormatterBody"
-        case (false, true, false, _) => s"$complexFormatterDefinition $multiFieldFormatterBody"
-        case (false, false, _, _)    => simpleFormatter
+    // ToDo: Inject the json type discriminator and its value on the write side if there is one defined.
+    // ToDo: make jsonFormatter not implicit and use it in the TypeHint in Animal and make a new implicit typedJsonFormatter that extends
+    // ToDo: the jsonFormatter with the type discriminator and its value. Peek in the TypeHint implementation for how to do the latter
+    val ((imports, formatter), body) =
+      (hasTypeVariables, anyFieldRenamed, hasSingleField, hasOver22Fields, hasJsonTypeInfo) match {
+        case (true, _, true, _, _)      => (complexTypedFormatterDefinition, singleFieldFormatterBody)
+        case (true, _, _, true, _)      => (complexTypedFormatterDefinition, over22FieldFormatterBody)
+        case (true, _, _, _, _)         => (complexTypedFormatterDefinition, multiFieldFormatterBody)
+        case (false, _, true, _, _)     => (complexFormatterDefinition, singleFieldFormatterBody)
+        case (false, _, _, true, _)     => (complexFormatterDefinition, over22FieldFormatterBody)
+        case (false, true, false, _, _) => (complexFormatterDefinition, multiFieldFormatterBody)
+        case (false, false, _, _, _)    => (simpleFormatter, "")
       }
 
     val objectName = toClassReference.name
 
+    // The default formatter is implicit only when there is no need to inject a type descriminator.
+    val implicitFormatterOrNot = if (hasJsonTypeInfo) "" else "implicit"
+
+    val formatterWithTypeField =
+      jsonTypeInfo.map { jsTypeInfo =>
+        s"""
+           implicit val jsonFormat: Format[$objectName] =
+             TypeHintFormat(
+               "${jsTypeInfo.discriminator}",
+               $objectName.jsonFormatter.withTypeHint("${jsTypeInfo.discriminatorValue}")
+             )
+         """
+      } getOrElse ""
+
     s"""
        object $objectName {
        
-         $formatter
+         $imports
+       
+         $implicitFormatterOrNot $formatter $body
+         
+         $formatterWithTypeField
        
        }
      """
