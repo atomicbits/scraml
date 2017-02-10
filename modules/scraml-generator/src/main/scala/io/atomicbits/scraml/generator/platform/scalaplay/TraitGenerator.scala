@@ -37,28 +37,44 @@ object TraitGenerator extends SourceGenerator {
 
     val fields: Seq[Field] = toInterfaceDefinition.origin.fields
 
-    val implementingClassNames                                  = generationAggr.children(toCanonicalName) + toCanonicalName
-    val implementingClasses: Set[TransferObjectClassDefinition] = implementingClassNames.map(generationAggr.toMap)
+    val implementingNonLeafClassNames                                  = generationAggr.nonLeafChildren(toCanonicalName) + toCanonicalName
+    val implementingLeafClassNames                                     = generationAggr.leafChildren(toCanonicalName)
+    val implementingNonLeafClasses: Set[TransferObjectClassDefinition] = implementingNonLeafClassNames.map(generationAggr.toMap)
+    val implementingLeafClasses: Set[TransferObjectClassDefinition]    = implementingLeafClassNames.map(generationAggr.toMap)
 
-    generateTrait(fields, toInterfaceDefinition, implementingClasses, generationAggr)
+    generateTrait(fields, toInterfaceDefinition, implementingNonLeafClasses, implementingLeafClasses, generationAggr)
   }
 
   private def generateTrait(fields: Seq[Field],
                             toInterfaceDefinition: TransferObjectInterfaceDefinition,
-                            implementingClasses: Set[TransferObjectClassDefinition],
+                            implementingNonLeafClasses: Set[TransferObjectClassDefinition],
+                            implementingLeafClasses: Set[TransferObjectClassDefinition],
                             generationAggr: GenerationAggr): GenerationAggr = {
 
-    def leafClassRepToWithTypeHintExpression(leafClassRep: TransferObjectClassDefinition): String = {
+    def childClassRepToWithTypeHintExpression(childClassRep: TransferObjectClassDefinition, isLeaf: Boolean): String = {
       val discriminatorValue =
-        leafClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(toInterfaceDefinition.origin.reference.name)
-      s"""${leafClassRep.reference.name}.jsonFormatter.withTypeHint("$discriminatorValue")"""
+        childClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(toInterfaceDefinition.origin.reference.name)
+      val childClassName =
+        if (isLeaf) childClassRep.reference.name
+        else childClassRep.implementingInterfaceReference.name
+
+      s"""$childClassName.jsonFormatter.withTypeHint("$discriminatorValue")"""
     }
 
     val imports: Set[String] =
       platform
-        .importStatements(toInterfaceDefinition.classReference, fields.map(_.classPointer).toSet ++ implementingClasses.map(_.reference))
+        .importStatements(
+          toInterfaceDefinition.classReference,
+          fields.map(_.classPointer).toSet ++
+            implementingNonLeafClasses.map(_.implementingInterfaceReference) ++
+            implementingLeafClasses.map(_.reference)
+        )
 
-    val fieldDefinitions = fields.map(_.fieldExpression).map(fieldExpr => s"def $fieldExpr")
+    val fieldDefinitions = fields.map(_.fieldDeclaration).map(fieldExpr => s"def $fieldExpr")
+
+    val typeHintExpressions =
+      implementingNonLeafClasses.map(childClassRepToWithTypeHintExpression(_, isLeaf = false)) ++
+        implementingLeafClasses.map(childClassRepToWithTypeHintExpression(_, isLeaf  = true))
 
     val source =
       s"""
@@ -80,7 +96,7 @@ object TraitGenerator extends SourceGenerator {
           implicit val jsonFormat: Format[${toInterfaceDefinition.classReference.classDefinition}] =
             TypeHintFormat(
               "${toInterfaceDefinition.discriminator}",
-              ${implementingClasses.map(leafClassRepToWithTypeHintExpression).mkString(",\n")}
+              ${typeHintExpressions.mkString(",\n")}
             )
         }
       """

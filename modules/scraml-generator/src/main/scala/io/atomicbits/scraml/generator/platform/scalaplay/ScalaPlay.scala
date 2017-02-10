@@ -72,9 +72,9 @@ object ScalaPlay extends Platform with CleanNameTools {
     }
   }
 
-  override def interfaceReference(classReference: ClassReference): ClassReference =
+  override def implementingInterfaceReference(classReference: ClassReference): ClassReference =
     ClassReference(
-      name         = s"${classReference.name}Trait",
+      name         = s"${classReference.name}Impl",
       packageParts = classReference.packageParts
     )
 
@@ -112,9 +112,17 @@ object ScalaPlay extends Platform with CleanNameTools {
     escapeScalaKeyword(cleanName)
   }
 
-  override def fieldExpression(field: Field): String = {
+  override def fieldDeclarationWithDefaultValue(field: Field): String = {
+    if (field.required) {
+      s"${safeFieldName(field)}: ${classDefinition(field.classPointer)}"
+    } else {
+      s"${safeFieldName(field)}: Option[${classDefinition(field.classPointer)}] = None"
+    }
+  }
+
+  override def fieldDeclaration(field: Field): String = {
     if (field.required) s"${safeFieldName(field)}: ${classDefinition(field.classPointer)}"
-    else s"${safeFieldName(field)}: Option[${classDefinition(field.classPointer)}] = None"
+    else s"${safeFieldName(field)}: Option[${classDefinition(field.classPointer)}]"
   }
 
   def fieldFormatUnlift(field: Field): String =

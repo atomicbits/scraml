@@ -42,15 +42,19 @@ object CaseClassGenerator extends SourceGenerator {
     // We need to mark each parent to need a trait of its own that contains the fields of that parent and we will implement the traits
     // of all parents in this case class.
 
-    val toCanonicalName = toClassDefinition.reference.canonicalName
+    val originalToCanonicalName = toClassDefinition.reference.canonicalName
+
+    val actualToCanonicalClassReference: ClassReference =
+      if (generationAggr.isParent(originalToCanonicalName)) toClassDefinition.implementingInterfaceReference
+      else toClassDefinition.reference
 
     val initialTosWithTrait: Seq[TransferObjectClassDefinition] =
-      if (generationAggr.hasChildren(toCanonicalName)) Seq(toClassDefinition)
+      if (generationAggr.hasChildren(originalToCanonicalName)) Seq(toClassDefinition)
       else Seq.empty
     val initialFields: Seq[Field] = toClassDefinition.fields
 
     // Add all parents recursively as traits to implement and collect all fields.
-    val parentNames: List[CanonicalName] = generationAggr.allParents(toCanonicalName)
+    val parentNames: List[CanonicalName] = generationAggr.allParents(originalToCanonicalName)
     val traitsAndFieldsAggr              = (initialTosWithTrait, initialFields)
 
     val (collectedTosWithTrait, collectedFields) =
@@ -78,18 +82,18 @@ object CaseClassGenerator extends SourceGenerator {
       if (collectedFields.nonEmpty) collectedFields
       else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassReference, required = false))
 
-    generateCaseClass(collectedTraits, atLeastOneField, discriminator, toClassDefinition, generationAggrWithAddedInterfaces)
+    generateCaseClass(collectedTraits, atLeastOneField, discriminator, actualToCanonicalClassReference, generationAggrWithAddedInterfaces)
   }
 
   private def generateCaseClass(traits: Seq[TransferObjectInterfaceDefinition],
                                 fields: Seq[Field],
                                 skipFieldName: Option[String],
-                                toClassDefinition: TransferObjectClassDefinition,
+                                toClassReference: ClassReference,
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
     val imports: Set[String] =
       platform.importStatements(
-        toClassDefinition.reference,
+        toClassReference,
         (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet
       )
 
@@ -97,20 +101,20 @@ object CaseClassGenerator extends SourceGenerator {
 
     val source =
       s"""
-        package ${toClassDefinition.reference.packageName}
+        package ${toClassReference.packageName}
 
         import play.api.libs.json._
 
         ${imports.mkString("\n")}
 
-        ${generateCaseClassDefinition(traits, sortedFields, toClassDefinition)}
+        ${generateCaseClassDefinition(traits, sortedFields, toClassReference)}
         
-        ${generateCompanionObject(traits, sortedFields, toClassDefinition)}
+        ${generateCompanionObject(traits, sortedFields, toClassReference)}
      """
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(toClassDefinition.reference),
+        filePath = platform.classReferenceToFilePath(toClassReference),
         content  = source
       )
 
@@ -129,9 +133,9 @@ object CaseClassGenerator extends SourceGenerator {
 
   private def generateCaseClassDefinition(traits: Seq[TransferObjectInterfaceDefinition],
                                           sortedFields: Seq[Field],
-                                          toClassDefinition: TransferObjectClassDefinition): String = {
+                                          toClassReference: ClassReference): String = {
 
-    val fieldExpressions = sortedFields.map(_.fieldExpression)
+    val fieldExpressions = sortedFields.map(_.fieldDeclarationWithDefaultValue)
 
     val extendedTraitDefs = traits.map(_.classReference.classDefinition)
 
@@ -141,43 +145,42 @@ object CaseClassGenerator extends SourceGenerator {
 
     // format: off
     s"""
-       case class ${toClassDefinition.reference.classDefinition}(${fieldExpressions.mkString(",")}) $extendsExpression 
+       case class ${toClassReference.classDefinition}(${fieldExpressions.mkString(",")}) $extendsExpression 
      """
     // format: on
   }
 
   private def generateCompanionObject(traits: Seq[TransferObjectInterfaceDefinition],
                                       sortedFields: Seq[Field],
-                                      toClassDefinition: TransferObjectClassDefinition): String = {
+                                      toClassReference: ClassReference): String = {
 
     val formatUnLiftFields = sortedFields.map(field => ScalaPlay.fieldFormatUnlift(field))
-    val classReference     = toClassDefinition.reference
 
     def complexFormatterDefinition =
       s"""
           import play.api.libs.functional.syntax._
 
-          implicit def jsonFormatter: Format[${classReference.classDefinition}] = """
+          implicit def jsonFormatter: Format[${toClassReference.classDefinition}] = """
 
     def complexTypedFormatterDefinition = {
       /*
        * This is the only way we know that formats typed variables, but it has problems with recursive types,
        * (see https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators#Recursive-Types).
        */
-      val typeParametersFormat = classReference.typeParameters.map(typeParameter => s"${typeParameter.name}: Format")
+      val typeParametersFormat = toClassReference.typeParameters.map(typeParameter => s"${typeParameter.name}: Format")
       s"""
           import play.api.libs.functional.syntax._
 
-          implicit def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${classReference.classDefinition}] = """
+          implicit def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${toClassReference.classDefinition}] = """
     }
 
     def singleFieldFormatterBody =
-      s"${formatUnLiftFields.head}.inmap(${classReference.name}.apply, unlift(${classReference.name}.unapply))"
+      s"${formatUnLiftFields.head}.inmap(${toClassReference.name}.apply, unlift(${toClassReference.name}.unapply))"
 
     def multiFieldFormatterBody =
       s"""
          ( ${formatUnLiftFields.mkString("~\n")}
-         )(${classReference.name}.apply, unlift(${classReference.name}.unapply))
+         )(${toClassReference.name}.apply, unlift(${toClassReference.name}.unapply))
        """
 
     def over22FieldFormatterBody = {
@@ -205,7 +208,7 @@ object CaseClassGenerator extends SourceGenerator {
           s"(${group.map(_.safeFieldName).mkString(", ")})"
         }
         .mkString(", ")})
-               => ${classReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
+               => ${toClassReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
            }, cclass =>
               (${groupedFields
         .map { group =>
@@ -241,9 +244,9 @@ object CaseClassGenerator extends SourceGenerator {
       *
       */
     def simpleFormatter =
-      s"implicit val jsonFormatter: Format[${classReference.classDefinition}] = Json.format[${classReference.classDefinition}]"
+      s"implicit val jsonFormatter: Format[${toClassReference.classDefinition}] = Json.format[${toClassReference.classDefinition}]"
 
-    val hasTypeVariables = classReference.typeParameters.nonEmpty
+    val hasTypeVariables = toClassReference.typeParameters.nonEmpty
     val anyFieldRenamed  = sortedFields.exists(field => field.fieldName != field.safeFieldName)
     val hasSingleField   = formatUnLiftFields.size == 1
     val hasOver22Fields  = formatUnLiftFields.size > 22
@@ -259,7 +262,7 @@ object CaseClassGenerator extends SourceGenerator {
         case (false, false, _, _)    => simpleFormatter
       }
 
-    val objectName = toClassDefinition.reference.name
+    val objectName = toClassReference.name
 
     s"""
        object $objectName {

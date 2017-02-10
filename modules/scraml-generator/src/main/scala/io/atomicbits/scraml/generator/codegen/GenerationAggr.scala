@@ -38,10 +38,10 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * @param toInterfaceMap The map containing the transfer objects that require an interface definition so far, keyed on the
   *                       canonical name of the original transfer object. This map is expected to grow while source
   *                       definitions for transfer objects are generated.
-  * @param toChildParentsMap The child parents relations are needed to navigate through the class hierarchy of the transfer objects. The
-  *                          toChildParentsMap is build up when the TOs are added to the toMap.
-  * @param toParentChildrenMap The parent children relations are needed to navigate through the class hierarchy of the transfer objects.
-  *                            The toParentChildrenMap is build up when the TOs are added to the toMap.
+  * @param toChildParentsMap The direct child parents relations are needed to navigate through the class hierarchy of the transfer
+  *                          objects. The toChildParentsMap is build up when the TOs are added to the toMap.
+  * @param toParentChildrenMap The direct parent children relations are needed to navigate through the class hierarchy of the transfer
+  *                            objects. The toParentChildrenMap is build up when the TOs are added to the toMap.
   */
 case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]                     = Seq.empty,
                           sourceDefinitionsProcessed: Seq[SourceDefinition]                     = Seq.empty,
@@ -74,15 +74,60 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
     }
   }
 
+  def hasParents(canonicalName: CanonicalName): Boolean = toChildParentsMap.get(canonicalName).exists(_.nonEmpty)
+
   def hasChildren(canonicalName: CanonicalName): Boolean = toParentChildrenMap.get(canonicalName).exists(_.nonEmpty)
 
   def hasInterface(canonicalName: CanonicalName): Boolean = toInterfaceMap.get(canonicalName).isDefined
 
   def getInterfaceDefinition(canonicalName: CanonicalName): Option[TransferObjectInterfaceDefinition] = toInterfaceMap.get(canonicalName)
 
-  def parents(canonicalName: CanonicalName): Set[CanonicalName] = toChildParentsMap.getOrElse(canonicalName, Set.empty)
+  def directParents(canonicalName: CanonicalName): Set[CanonicalName] = toChildParentsMap.getOrElse(canonicalName, Set.empty)
 
-  def children(canonicalName: CanonicalName): Set[CanonicalName] = toParentChildrenMap.getOrElse(canonicalName, Set.empty)
+  def directChildren(canonicalName: CanonicalName): Set[CanonicalName] = toParentChildrenMap.getOrElse(canonicalName, Set.empty)
+
+  /**
+    * Find all leaf children of the given canonical name (itself not included if it is a leaf child).
+    */
+  def leafChildren(canonicalName: CanonicalName): Set[CanonicalName] = {
+
+    def findLeafChildren(childrenToCheck: List[CanonicalName], leafChildrenFound: Set[CanonicalName] = Set.empty): Set[CanonicalName] = {
+      childrenToCheck match {
+        case Nil                                              => leafChildrenFound
+        case child :: remainingChildren if isLeafChild(child) => findLeafChildren(remainingChildren, leafChildrenFound + child)
+        case child :: remainingChildren =>
+          findLeafChildren(directChildren(child).toList ::: remainingChildren, leafChildrenFound)
+      }
+    }
+
+    findLeafChildren(directChildren(canonicalName).toList)
+  }
+
+  /**
+    * Find all non-leaf children of the given canonical name (itself not included if it is a non-leaf child).
+    */
+  def nonLeafChildren(canonicalName: CanonicalName): Set[CanonicalName] = {
+
+    def findNonLeafChildren(childrenToCheck: List[CanonicalName],
+                            nonLeafChildrenFound: Set[CanonicalName] = Set.empty): Set[CanonicalName] = {
+      childrenToCheck match {
+        case Nil => nonLeafChildrenFound
+        case child :: remainingChildren if hasChildren(child) =>
+          findNonLeafChildren(directChildren(child).toList ::: remainingChildren, nonLeafChildrenFound + child)
+        case child :: remainingChildren => findNonLeafChildren(remainingChildren, nonLeafChildrenFound)
+      }
+    }
+
+    findNonLeafChildren(directChildren(canonicalName).toList)
+  }
+
+  def isParent(canonicalName: CanonicalName): Boolean = hasChildren(canonicalName)
+
+  def isChild(canonicalName: CanonicalName): Boolean = hasParents(canonicalName)
+
+  def isLeafChild(canonicalName: CanonicalName): Boolean = isChild(canonicalName) && !isParent(canonicalName)
+
+  def isNonLeafChild(canonicalName: CanonicalName): Boolean = isChild(canonicalName) && isParent(canonicalName)
 
   /**
     * @return A breadth-first list of all parent canonical names.

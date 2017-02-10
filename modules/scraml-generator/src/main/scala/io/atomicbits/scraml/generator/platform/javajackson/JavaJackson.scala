@@ -86,9 +86,9 @@ object JavaJackson extends Platform with CleanNameTools {
     }
   }
 
-  override def interfaceReference(classReference: ClassReference): ClassReference =
+  override def implementingInterfaceReference(classReference: ClassReference): ClassReference =
     ClassReference(
-      name         = s"${classReference.name}Interface",
+      name         = s"${classReference.name}Impl",
       packageParts = classReference.packageParts
     )
 
@@ -128,7 +128,9 @@ object JavaJackson extends Platform with CleanNameTools {
     escapeJavaKeyword(cleanName)
   }
 
-  override def fieldExpression(field: Field): String = {
+  override def fieldDeclarationWithDefaultValue(field: Field): String = fieldDeclaration(field)
+
+  override def fieldDeclaration(field: Field): String = {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 

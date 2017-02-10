@@ -46,7 +46,12 @@ trait Platform {
 
   def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference
 
-  def interfaceReference(classReference: ClassReference): ClassReference
+  /**
+    * The implementing interface reference is the reference to the class (transfer object class) that implements the
+    * interface that replaces it in a multiple inheritance relation (and in Scala also in a regular inheritance relation).
+    * E.g. AnimalImpl implements Animal --> Here, 'Animal' is the interface where resources and cross referencing inside TO's point to.
+    */
+  def implementingInterfaceReference(classReference: ClassReference): ClassReference
 
   def classDefinition(classPointer: ClassPointer): String
 
@@ -62,7 +67,9 @@ trait Platform {
 
   def safeFieldName(field: Field): String
 
-  def fieldExpression(field: Field): String
+  def fieldDeclarationWithDefaultValue(field: Field): String
+
+  def fieldDeclaration(field: Field): String
 
   def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String]
 
@@ -171,7 +178,8 @@ object Platform {
 
     def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
 
-    def interfaceReference(implicit platform: Platform): ClassReference = platform.interfaceReference(classPointer.native)
+    def implementingInterfaceReference(implicit platform: Platform): ClassReference =
+      platform.implementingInterfaceReference(classPointer.native)
 
   }
 
@@ -179,7 +187,10 @@ object Platform {
 
     def safeFieldName(implicit platform: Platform): String = platform.safeFieldName(field)
 
-    def fieldExpression(implicit platform: Platform): String = platform.fieldExpression(field)
+    def fieldDeclarationWithDefaultValue(implicit platform: Platform): String = platform.fieldDeclarationWithDefaultValue(field)
+
+    def fieldDeclaration(implicit platform: Platform): String = platform.fieldDeclaration(field)
+
   }
 
   implicit class PlatformToClassDefinitionOps(val toClassDefinition: TransferObjectClassDefinition) {

@@ -21,6 +21,8 @@ package io.atomicbits.scraml.generator.typemodel
 
 import io.atomicbits.scraml.generator.platform.Platform
 
+import Platform._
+
 /**
   * Created by peter on 10/01/17.
   *
@@ -35,6 +37,8 @@ case class TransferObjectClassDefinition(reference: ClassReference,
     extends SourceDefinition {
 
   override def classReference(implicit platform: Platform): ClassReference = reference
+
+  def implementingInterfaceReference(implicit platform: Platform): ClassReference = reference.implementingInterfaceReference
 
   def hasParents: Boolean = parents.nonEmpty
 
