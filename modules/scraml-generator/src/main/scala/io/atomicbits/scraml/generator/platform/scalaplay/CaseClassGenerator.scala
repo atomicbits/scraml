@@ -67,9 +67,19 @@ object CaseClassGenerator extends SourceGenerator {
         (withParentTrait, withParentFields)
       }
 
-    val discriminator: Option[String] = collectedTosWithTrait.flatMap(_.jsonTypeInfo).headOption.map(_.discriminator)
+    val discriminator: Option[String] =
+      (toClassDefinition.jsonTypeInfo +: collectedTosWithTrait.map(_.jsonTypeInfo)).flatten.headOption.map(_.discriminator)
 
     val collectedTraits = collectedTosWithTrait.map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse("type")))
+
+    val actualJsonTypeInf =
+      toClassDefinition.jsonTypeInfo match {
+        case Some(jsTypeInfo) => toClassDefinition.jsonTypeInfo
+        case None if generationAggr.isChild(originalToCanonicalName) =>
+          val actualDiscriminator = discriminator.getOrElse("type")
+          Some(JsonTypeInfo(discriminator = actualDiscriminator, discriminatorValue = originalToCanonicalName.name))
+        case None => None
+      }
 
     // add the collected traits to the generationAggr.toInterfaceMap if they aren't there yet
     val generationAggrWithAddedInterfaces =
@@ -86,7 +96,7 @@ object CaseClassGenerator extends SourceGenerator {
                       atLeastOneField,
                       discriminator,
                       actualToCanonicalClassReference,
-                      toClassDefinition.jsonTypeInfo,
+                      actualJsonTypeInf,
                       generationAggrWithAddedInterfaces)
   }
 

@@ -20,16 +20,16 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
-import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveTypeReference, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.{ Get, MediaType, StatusCode }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
 
 /**
-  * Created by peter on 5/02/17.
+  * Created by peter on 11/02/17.
   */
-class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class NativeClassHierarchyTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
   feature("json schema native id lookup test") {
 
@@ -37,7 +37,7 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
 
       Given("a RAML 1.0 specification with json-schema types")
       val defaultBasePath = List("io", "atomicbits", "model")
-      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/nativeclasshierarchy/NativeClassHierarchyTest.raml", "UTF-8", defaultBasePath)
 
       When("we parse the specification")
       val parsedModel = parser.parse
@@ -50,14 +50,7 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
 
       val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
 
-      val userResource                 = ramlUpdated.resources.filter(_.urlSegment == "user").head
-      val getBody                      = userResource.actionMap(Get).responses.responseMap(StatusCode("200")).body
-      val canonicalType: TypeReference = getBody.contentMap(MediaType("application/json")).bodyType.get.canonical.get
-
-      canonicalType.isInstanceOf[NonPrimitiveTypeReference] shouldBe true
-
-      val user = canonicalType.asInstanceOf[NonPrimitiveTypeReference]
-      user.refers shouldBe CanonicalName.create("User", List("io", "atomicbits", "model"))
+      canonicalLookup
     }
 
   }
