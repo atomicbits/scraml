@@ -32,6 +32,8 @@ object CaseClassGenerator extends SourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
+  val defaultDiscriminator = "type"
+
   def generate(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr = {
 
     /**
@@ -48,8 +50,9 @@ object CaseClassGenerator extends SourceGenerator {
       if (generationAggr.isParent(originalToCanonicalName)) toClassDefinition.implementingInterfaceReference
       else toClassDefinition.reference
 
+    val hasOwnTrait = generationAggr.hasChildren(originalToCanonicalName)
     val initialTosWithTrait: Seq[TransferObjectClassDefinition] =
-      if (generationAggr.hasChildren(originalToCanonicalName)) Seq(toClassDefinition)
+      if (hasOwnTrait) Seq(toClassDefinition)
       else Seq.empty
     val initialFields: Seq[Field] = toClassDefinition.fields
 
@@ -57,7 +60,7 @@ object CaseClassGenerator extends SourceGenerator {
     val parentNames: List[CanonicalName] = generationAggr.allParents(originalToCanonicalName)
     val traitsAndFieldsAggr              = (initialTosWithTrait, initialFields)
 
-    val (collectedTosWithTrait, collectedFields) =
+    val (recursiveExtendedTraits, collectedFields) =
       parentNames.foldLeft(traitsAndFieldsAggr) { (aggr, parentName) =>
         val (traits, fields) = aggr
         val parentDefinition: TransferObjectClassDefinition =
@@ -68,14 +71,28 @@ object CaseClassGenerator extends SourceGenerator {
       }
 
     val discriminator: Option[String] =
-      (toClassDefinition.jsonTypeInfo +: collectedTosWithTrait.map(_.jsonTypeInfo)).flatten.headOption.map(_.discriminator)
+      (toClassDefinition.jsonTypeInfo +: recursiveExtendedTraits.map(_.jsonTypeInfo)).flatten.headOption.map(_.discriminator)
 
-    val collectedTraits = collectedTosWithTrait.map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse("type")))
+    val traitsToGenerate = recursiveExtendedTraits.map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse(defaultDiscriminator)))
+
+    val traitsToImplement =
+      generationAggr
+        .directParents(originalToCanonicalName)
+        .filter { parent =>
+          if (hasOwnTrait) !generationAggr.isParentOf(parent, originalToCanonicalName)
+          else true
+        }
+        .foldLeft(initialTosWithTrait) { (traitsToImpl, parentName) =>
+          val parentDefinition =
+            generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
+          traitsToImpl :+ parentDefinition
+        }
+        .map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse(defaultDiscriminator)))
 
     val actualJsonTypeInf =
       toClassDefinition.jsonTypeInfo match {
         case Some(jsTypeInfo) => toClassDefinition.jsonTypeInfo
-        case None if generationAggr.isChild(originalToCanonicalName) =>
+        case None if generationAggr.isInHierarchy(originalToCanonicalName) =>
           val actualDiscriminator = discriminator.getOrElse("type")
           Some(JsonTypeInfo(discriminator = actualDiscriminator, discriminatorValue = originalToCanonicalName.name))
         case None => None
@@ -83,7 +100,7 @@ object CaseClassGenerator extends SourceGenerator {
 
     // add the collected traits to the generationAggr.toInterfaceMap if they aren't there yet
     val generationAggrWithAddedInterfaces =
-      collectedTraits.foldLeft(generationAggr) { (aggr, collectedTrait) =>
+      traitsToGenerate.foldLeft(generationAggr) { (aggr, collectedTrait) =>
         aggr.addInterfaceSourceDefinition(collectedTrait)
       }
 
@@ -92,7 +109,7 @@ object CaseClassGenerator extends SourceGenerator {
       if (collectedFields.nonEmpty) collectedFields
       else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassReference, required = false))
 
-    generateCaseClass(collectedTraits,
+    generateCaseClass(traitsToImplement,
                       atLeastOneField,
                       discriminator,
                       actualToCanonicalClassReference,
@@ -128,7 +145,7 @@ object CaseClassGenerator extends SourceGenerator {
 
         ${generateCaseClassDefinition(traits, sortedFields, toClassReference)}
         
-        ${generateCompanionObject(traits, sortedFields, toClassReference, jsonTypeInfo)}
+        ${generateCompanionObject(sortedFields, toClassReference, jsonTypeInfo)}
      """
 
     val sourceFile =
@@ -169,8 +186,7 @@ object CaseClassGenerator extends SourceGenerator {
     // format: on
   }
 
-  private def generateCompanionObject(traits: Seq[TransferObjectInterfaceDefinition],
-                                      sortedFields: Seq[Field],
+  private def generateCompanionObject(sortedFields: Seq[Field],
                                       toClassReference: ClassReference,
                                       jsonTypeInfo: Option[JsonTypeInfo]): String = {
 

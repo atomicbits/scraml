@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedString, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
@@ -36,7 +37,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
   scenario("test parsing types in a RAML 1.0 model") {
 
     Given("a RAML 1.0 specification with some types defined")
-    val parser = RamlParser("/types/TypesTestApi.raml", "UTF-8", List("io", "atomicbits", "types"))
+    val defaultBasePath = List("io", "atomicbits", "types")
+    val parser          = RamlParser("/types/TypesTestApi.raml", "UTF-8", defaultBasePath)
 
     When("we parse the specification")
     val parsedModel: Try[Raml] = parser.parse
@@ -65,6 +67,10 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     }
 
     val prettyModel = TestUtils.prettyPrint(parsedModel)
+
+//    val canonicalTypeCollector         = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
+//    val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
+
 //    println(s"Parsed raml: $prettyModel")
 
   }

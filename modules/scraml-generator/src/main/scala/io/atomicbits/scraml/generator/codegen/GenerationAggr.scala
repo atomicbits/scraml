@@ -84,6 +84,9 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
 
   def directParents(canonicalName: CanonicalName): Set[CanonicalName] = toChildParentsMap.getOrElse(canonicalName, Set.empty)
 
+  def isParentOf(potentialParent: CanonicalName, potentialChild: CanonicalName): Boolean =
+    allParents(potentialChild).contains(potentialParent)
+
   def directChildren(canonicalName: CanonicalName): Set[CanonicalName] = toParentChildrenMap.getOrElse(canonicalName, Set.empty)
 
   /**
@@ -124,6 +127,8 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
   def isParent(canonicalName: CanonicalName): Boolean = hasChildren(canonicalName)
 
   def isChild(canonicalName: CanonicalName): Boolean = hasParents(canonicalName)
+
+  def isInHierarchy(canonicalName: CanonicalName): Boolean = isChild(canonicalName) || isParent(canonicalName)
 
   def isLeafChild(canonicalName: CanonicalName): Boolean = isChild(canonicalName) && !isParent(canonicalName)
 

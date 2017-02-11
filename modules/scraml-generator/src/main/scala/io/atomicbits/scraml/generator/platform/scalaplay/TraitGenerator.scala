@@ -23,6 +23,7 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 
 /**
   * Created by peter on 14/01/17.
@@ -35,17 +36,35 @@ object TraitGenerator extends SourceGenerator {
 
     val toCanonicalName = toInterfaceDefinition.origin.reference.canonicalName
 
-    val fields: Seq[Field] = toInterfaceDefinition.origin.fields
+    val parentNames: List[CanonicalName] = generationAggr.allParents(toCanonicalName)
+
+    val fields: Seq[Field] =
+      parentNames.foldLeft(toInterfaceDefinition.origin.fields) { (collectedFields, parentName) =>
+        val parentDefinition: TransferObjectClassDefinition =
+          generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
+        collectedFields ++ parentDefinition.fields
+      }
+
+    val traitsToImplement =
+      generationAggr
+        .directParents(toCanonicalName)
+        .foldLeft(Seq.empty[TransferObjectClassDefinition]) { (traitsToImpl, parentName) =>
+          val parentDefinition =
+            generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
+          traitsToImpl :+ parentDefinition
+        }
+        .map(TransferObjectInterfaceDefinition(_, toInterfaceDefinition.discriminator))
 
     val implementingNonLeafClassNames                                  = generationAggr.nonLeafChildren(toCanonicalName) + toCanonicalName
     val implementingLeafClassNames                                     = generationAggr.leafChildren(toCanonicalName)
     val implementingNonLeafClasses: Set[TransferObjectClassDefinition] = implementingNonLeafClassNames.map(generationAggr.toMap)
     val implementingLeafClasses: Set[TransferObjectClassDefinition]    = implementingLeafClassNames.map(generationAggr.toMap)
 
-    generateTrait(fields, toInterfaceDefinition, implementingNonLeafClasses, implementingLeafClasses, generationAggr)
+    generateTrait(fields, traitsToImplement, toInterfaceDefinition, implementingNonLeafClasses, implementingLeafClasses, generationAggr)
   }
 
   private def generateTrait(fields: Seq[Field],
+                            traitsToImplement: Seq[TransferObjectInterfaceDefinition],
                             toInterfaceDefinition: TransferObjectInterfaceDefinition,
                             implementingNonLeafClasses: Set[TransferObjectClassDefinition],
                             implementingLeafClasses: Set[TransferObjectClassDefinition],
@@ -67,7 +86,8 @@ object TraitGenerator extends SourceGenerator {
           toInterfaceDefinition.classReference,
           fields.map(_.classPointer).toSet ++
             implementingNonLeafClasses.map(_.implementingInterfaceReference) ++
-            implementingLeafClasses.map(_.reference)
+            implementingLeafClasses.map(_.reference) ++
+            traitsToImplement.map(_.classReference)
         )
 
     val fieldDefinitions = fields.map(_.fieldDeclaration).map(fieldExpr => s"def $fieldExpr")
@@ -75,6 +95,12 @@ object TraitGenerator extends SourceGenerator {
     val typeHintExpressions =
       implementingNonLeafClasses.map(childClassRepToWithTypeHintExpression(_, isLeaf = false)) ++
         implementingLeafClasses.map(childClassRepToWithTypeHintExpression(_, isLeaf  = true))
+
+    val extendedTraitDefs = traitsToImplement.map(_.classReference.classDefinition)
+
+    val extendsExpression =
+      if (extendedTraitDefs.nonEmpty) extendedTraitDefs.mkString("extends ", " with ", "")
+      else ""
 
     val source =
       s"""
@@ -85,7 +111,7 @@ object TraitGenerator extends SourceGenerator {
 
         ${imports.mkString("\n")}
         
-        trait ${toInterfaceDefinition.classReference.classDefinition} {
+        trait ${toInterfaceDefinition.classReference.classDefinition} $extendsExpression {
 
           ${fieldDefinitions.mkString("\n\n")}
 
