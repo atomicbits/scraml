@@ -149,19 +149,21 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
 
       // We assume there can be intermediary levels in the hierarchy.
       val classRepWithParent =
-        objectType.parent map { parentId =>
+        objectType.parents map { parentId =>
           classRp // .withParent(buildClassReference(parentId, lookupTable))
-        } getOrElse classRp
+        } // getOrElse classRp
 
       val classRepWithParentAndChildren =
-        classRepWithParent.withChildren(objectType.children.map(buildClassReference(_, lookupTable)))
+        classRepWithParent // .withChildren(objectType.children.map(buildClassReference(_, lookupTable)))
 
       val classRepWithParentAndChildrenAndJsonTypeInfo =
-        classRepWithParentAndChildren.withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
+        classRepWithParentAndChildren // .withJsonTypeInfo(JsonTypeInfo(typeDiscriminator, None))
 
       val uniqueId = TypeUtils.asUniqueId(objectType.id)
 
       ((uniqueId, classRepWithParentAndChildrenAndJsonTypeInfo) :: childClassReps) toMap
+
+      ???
     }
 
     canonicalMap.foldLeft(canonicalMap) { (updatedCanonicalMap, idWithClassRep) =>

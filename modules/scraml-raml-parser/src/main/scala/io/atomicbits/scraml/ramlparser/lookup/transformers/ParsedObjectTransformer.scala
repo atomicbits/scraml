@@ -76,8 +76,8 @@ object ParsedObjectTransformer {
 
       // Get the RAML 1.0 parent from this parsed object, if any
 
-      val raml10ParentNameOp: Option[NonPrimitiveTypeReference] =
-        parsedObject.parent // This is the RAML 1.0 parent
+      val raml10ParentNameOp: Set[NonPrimitiveTypeReference] =
+        parsedObject.parents.toSeq // These are the RAML 1.0 parents
           .map { parent =>
             val (genericRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parent, canonicalLookupHelper)
             genericRef
@@ -85,16 +85,16 @@ object ParsedObjectTransformer {
           .collect {
             case nonPrimitiveTypeReference: NonPrimitiveTypeReference => nonPrimitiveTypeReference
           }
-      // val raml10ParentNameOp = parentId.map(canonicalNameGenerator.generate)
+          .toSet
 
       // Make a flattened list of all found parents
-      val parents = List(raml10ParentNameOp, parentNameOpt.map(NonPrimitiveTypeReference(_))).flatten
+      val parents = parentNameOpt.map(raml10ParentNameOp + NonPrimitiveTypeReference(_)).getOrElse(raml10ParentNameOp)
 
       val objectType =
         ObjectType(
           canonicalName          = canonicalName,
           properties             = properties,
-          parents                = parents,
+          parents                = parents.toList, // ToDo: make this a Set in ObjectType as well.
           typeParameters         = parsedObject.typeParameters.map(TypeParameter),
           typeDiscriminator      = List(imposedTypeDiscriminatorOpt, parsedObject.typeDiscriminator).flatten.headOption,
           typeDiscriminatorValue = typeDiscriminatorValue
@@ -107,7 +107,8 @@ object ParsedObjectTransformer {
 
     parsed match {
       case parsedObject: ParsedObject => Some(registerParsedObject(parsedObject))
-//      case parsedMultipleInheritance: ParsedMultipleInheritance => Some(registerParsedObject(parsedMultipleInheritance))
+      case parsedMultipleInheritance: ParsedMultipleInheritance =>
+        Some(registerParsedObject(parsedMultipleInheritanceToParsedObject(parsedMultipleInheritance)))
       case _ => None
     }
   }
@@ -158,6 +159,23 @@ object ParsedObjectTransformer {
         selection.foldLeft(canonicalLookupHelper)(registerObject)
       case _ => canonicalLookupHelper
     }
+  }
+
+  def parsedMultipleInheritanceToParsedObject(parsedMultipleInheritance: ParsedMultipleInheritance): ParsedObject = {
+
+    ParsedObject(
+      id                     = parsedMultipleInheritance.id,
+      baseType               = List.empty,
+      properties             = parsedMultipleInheritance.properties,
+      required               = parsedMultipleInheritance.required,
+      requiredProperties     = parsedMultipleInheritance.requiredProperties,
+      parents                = parsedMultipleInheritance.parents,
+      typeParameters         = parsedMultipleInheritance.typeParameters,
+      typeDiscriminator      = parsedMultipleInheritance.typeDiscriminator,
+      typeDiscriminatorValue = parsedMultipleInheritance.typeDiscriminatorValue,
+      model                  = parsedMultipleInheritance.model
+    )
+
   }
 
 }

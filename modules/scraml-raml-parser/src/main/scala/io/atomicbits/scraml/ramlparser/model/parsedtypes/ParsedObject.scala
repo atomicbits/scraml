@@ -37,7 +37,7 @@ case class ParsedObject(id: Id,
                         requiredProperties: List[String]       = List.empty,
                         selection: Option[Selection]           = None,
                         fragments: Fragments                   = Fragments(),
-                        parent: Option[ParsedTypeReference]    = None,
+                        parents: Set[ParsedTypeReference]      = Set.empty,
                         children: List[UniqueId]               = List.empty, // ToDo check if we can we remote this field
                         typeParameters: List[String]           = List.empty,
                         typeDiscriminator: Option[String]      = None,
@@ -59,21 +59,12 @@ case class ParsedObject(id: Id,
 
   def hasChildren: Boolean = children.nonEmpty
 
-  def hasParent: Boolean = parent.isDefined
+  def hasParent: Boolean = parents.nonEmpty
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
   def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = {
 
-//    def findTopLevelParent(uniqueId: UniqueId): ParsedObject = {
-//      val objElExt = typeLookup.objectMap(uniqueId)
-//      objElExt.parent match {
-//        case Some(parentId) => findTopLevelParent(parentId)
-//        case None           => objElExt
-//      }
-//    }
-//
-//    parent.map(findTopLevelParent)
     ???
 
   }
@@ -162,7 +153,7 @@ object ParsedObject {
       Success(requiredFields.getOrElse(List.empty[String])),
       TryUtils.accumulate(selection),
       fragments,
-      Success(None),
+      Success(Set.empty[ParsedTypeReference]),
       Success(List.empty[AbsoluteId]),
       Success(typeVariables),
       Success(typeDiscriminator),
@@ -187,7 +178,7 @@ object ParsedObject {
           triedParent.flatMap { parent =>
             ParsedObject(json).flatMap { objectType =>
               parent.refersTo match {
-                case nativeId: NativeId => Success(objectType.copy(parent = Some(parent)))
+                case nativeId: NativeId => Success(objectType.copy(parents = Set(parent)))
                 case _                  => Failure(RamlParseException(s"Expected a parent reference in RAML1.0 to have a valid native id."))
               }
             }
@@ -222,17 +213,6 @@ object ParsedObject {
         case _ => None
       }
     }
-
-    // removed this from the following match case:
-    // case ObjectType(objectType) => objectType
-    //    case Fragment(fragment)     =>
-    //    fragment.flatMap { frag =>
-    //      typeDiscriminatorFromProperties(frag).flatMap(fixId(frag.id, parentId, _)) map { relativeId =>
-    //        schema + ("type" -> JsString("object")) + ("id" -> JsString(relativeId.id)) match {
-    //          case Type(x) => x
-    //        }
-    //      } getOrElse Success(frag)
-    //    }
 
     schema match {
       case ParsedType(x) => x

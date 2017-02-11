@@ -60,7 +60,7 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
       case _                                  => fail(s"The author property of a book should be a ReferenceType.")
     }
 
-    comicBookType.parent shouldBe Some(ParsedTypeReference(NativeId("Book")))
+    comicBookType.parents shouldBe Set(ParsedTypeReference(NativeId("Book")))
     comicBookType.properties("hero").propertyType.parsed match {
       case stringType: ParsedString => stringType.required shouldBe None
       case _                        => fail(s"The hero property of a comicbook should be a StringType.")
@@ -68,8 +68,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
     val prettyModel = TestUtils.prettyPrint(parsedModel)
 
-//    val canonicalTypeCollector         = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
-//    val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
+    val canonicalTypeCollector         = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
+    val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
 
 //    println(s"Parsed raml: $prettyModel")
 
