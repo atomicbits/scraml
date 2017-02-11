@@ -63,7 +63,6 @@ object ParsedToCanonicalTypeTransformer {
       // Currently not yet supported:
       //      case parsedFile: ParsedFile                               => ???
       //      case parsedNull: ParsedNull                               => ???
-      //      case parsedMultipleInheritance: ParsedMultipleInheritance => ???
       //      case parsedUnionType: ParsedUnionType                     => ???
       //      case parsedDateOnly: ParsedDateOnly                       => ???
       //      case parsedTimeOnly: ParsedTimeOnly                       => ???

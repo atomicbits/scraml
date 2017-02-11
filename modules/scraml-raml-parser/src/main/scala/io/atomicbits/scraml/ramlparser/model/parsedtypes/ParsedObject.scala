@@ -31,18 +31,18 @@ import scala.util.{ Failure, Success, Try }
   * Created by peter on 25/03/16.
   */
 case class ParsedObject(id: Id,
-                        baseType: List[Id],
+                        baseType: List[Id], // ToDo check if we can we remote this field
                         properties: ParsedProperties,
                         required: Option[Boolean]              = None,
                         requiredProperties: List[String]       = List.empty,
                         selection: Option[Selection]           = None,
                         fragments: Fragments                   = Fragments(),
-                        parent: Option[UniqueId]               = None,
-                        children: List[UniqueId]               = List.empty,
+                        parent: Option[ParsedTypeReference]    = None,
+                        children: List[UniqueId]               = List.empty, // ToDo check if we can we remote this field
                         typeParameters: List[String]           = List.empty,
                         typeDiscriminator: Option[String]      = None,
                         typeDiscriminatorValue: Option[String] = None,
-                        model: TypeModel                       = RamlModel)
+                        model: TypeModel                       = RamlModel) // ToDo check if we can we remote this field
     extends Fragmented
     with AllowedAsObjectField
     with NonPrimitiveType {
@@ -65,15 +65,16 @@ case class ParsedObject(id: Id,
 
   def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = {
 
-    def findTopLevelParent(uniqueId: UniqueId): ParsedObject = {
-      val objElExt = typeLookup.objectMap(uniqueId)
-      objElExt.parent match {
-        case Some(parentId) => findTopLevelParent(parentId)
-        case None           => objElExt
-      }
-    }
-
-    parent.map(findTopLevelParent)
+//    def findTopLevelParent(uniqueId: UniqueId): ParsedObject = {
+//      val objElExt = typeLookup.objectMap(uniqueId)
+//      objElExt.parent match {
+//        case Some(parentId) => findTopLevelParent(parentId)
+//        case None           => objElExt
+//      }
+//    }
+//
+//    parent.map(findTopLevelParent)
+    ???
 
   }
 
@@ -186,7 +187,7 @@ object ParsedObject {
           triedParent.flatMap { parent =>
             ParsedObject(json).flatMap { objectType =>
               parent.refersTo match {
-                case nativeId: NativeId => Success(objectType.copy(parent = Some(nativeId)))
+                case nativeId: NativeId => Success(objectType.copy(parent = Some(parent)))
                 case _                  => Failure(RamlParseException(s"Expected a parent reference in RAML1.0 to have a valid native id."))
               }
             }

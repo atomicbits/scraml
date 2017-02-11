@@ -339,7 +339,7 @@ case class OldCanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenera
         sel.selection.flatMap(lookupObjEl)
       } getOrElse List.empty
 
-      val childrenWithParent = children.map(_.copy(parent = Some(absId)))
+      val childrenWithParent = children // .map(_.copy(parent = Some(absId)))
 
       val updatedLookup = childrenWithParent.foldLeft(lookup) { (lkup, childObj) =>
         lkup.copy(objectMap = lkup.objectMap + (TypeUtils.asUniqueId(childObj.id) -> childObj))

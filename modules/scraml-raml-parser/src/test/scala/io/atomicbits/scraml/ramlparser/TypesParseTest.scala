@@ -60,7 +60,7 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
       case _                                  => fail(s"The author property of a book should be a ReferenceType.")
     }
 
-    comicBookType.parent shouldBe Some(NativeId("Book"))
+    comicBookType.parent shouldBe Some(ParsedTypeReference(NativeId("Book")))
     comicBookType.properties("hero").propertyType.parsed match {
       case stringType: ParsedString => stringType.required shouldBe None
       case _                        => fail(s"The hero property of a comicbook should be a StringType.")

@@ -75,11 +75,20 @@ object ParsedObjectTransformer {
         extractJsonSchemaChildren(parsedObject, propertyUpdatedCanonicalLH, canonicalName, typeDescriminatorOpt)
 
       // Get the RAML 1.0 parent from this parsed object, if any
-      val parentId: Option[UniqueId] = parsedObject.parent // This is the RAML 1.0 parent
-      val raml10ParentNameOp         = parentId.map(canonicalNameGenerator.generate)
+
+      val raml10ParentNameOp: Option[NonPrimitiveTypeReference] =
+        parsedObject.parent // This is the RAML 1.0 parent
+          .map { parent =>
+            val (genericRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(parent, canonicalLookupHelper)
+            genericRef
+          }
+          .collect {
+            case nonPrimitiveTypeReference: NonPrimitiveTypeReference => nonPrimitiveTypeReference
+          }
+      // val raml10ParentNameOp = parentId.map(canonicalNameGenerator.generate)
 
       // Make a flattened list of all found parents
-      val parents = List(raml10ParentNameOp, parentNameOpt).flatten.map(NonPrimitiveTypeReference(_))
+      val parents = List(raml10ParentNameOp, parentNameOpt.map(NonPrimitiveTypeReference(_))).flatten
 
       val objectType =
         ObjectType(
@@ -98,7 +107,8 @@ object ParsedObjectTransformer {
 
     parsed match {
       case parsedObject: ParsedObject => Some(registerParsedObject(parsedObject))
-      case _                          => None
+//      case parsedMultipleInheritance: ParsedMultipleInheritance => Some(registerParsedObject(parsedMultipleInheritance))
+      case _ => None
     }
   }
 

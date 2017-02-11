@@ -150,7 +150,7 @@ class TypeClassRepAssembler(nativeToRootId: NativeId => RootId) {
       // We assume there can be intermediary levels in the hierarchy.
       val classRepWithParent =
         objectType.parent map { parentId =>
-          classRp.withParent(buildClassReference(parentId, lookupTable))
+          classRp // .withParent(buildClassReference(parentId, lookupTable))
         } getOrElse classRp
 
       val classRepWithParentAndChildren =
