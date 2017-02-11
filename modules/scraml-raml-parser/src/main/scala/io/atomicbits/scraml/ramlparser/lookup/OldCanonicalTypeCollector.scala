@@ -176,7 +176,7 @@ case class OldCanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenera
           case _             => root
         }
 
-      val expandedId = root.toAbsolute(ttype.id, path)
+      val expandedId = root.toAbsoluteId(ttype.id, path)
 
       def expandProperty(property: ParsedProperty): ParsedProperty = {
         // Treat the property as a fragment to expand it.
@@ -209,7 +209,7 @@ case class OldCanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenera
             )
           case typeReference: ParsedTypeReference =>
             typeReference.copy(
-              refersTo  = currentRoot.toAbsolute(typeReference.refersTo, path),
+              refersTo  = currentRoot.toAbsoluteId(typeReference.refersTo, path),
               fragments = typeReference.fragments.map(expandFragment)
             )
           case _ => ttype

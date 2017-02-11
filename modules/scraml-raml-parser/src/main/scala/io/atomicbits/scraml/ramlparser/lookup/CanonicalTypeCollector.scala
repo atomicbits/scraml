@@ -307,7 +307,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
           case _             => root
         }
 
-      val expandedId = root.toAbsolute(ttype.id, path)
+      val expandedId = root.toAbsoluteId(ttype.id, path)
 
       def expandProperty(property: ParsedProperty): ParsedProperty = {
         // Treat the property as a fragment to expand it.
@@ -340,7 +340,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
             )
           case typeReference: ParsedTypeReference =>
             typeReference.copy(
-              refersTo  = currentRoot.toAbsolute(typeReference.refersTo, path),
+              refersTo  = currentRoot.toAbsoluteId(typeReference.refersTo, path),
               fragments = typeReference.fragments.map(expandFragment)
             )
           case _ => ttype
@@ -349,23 +349,45 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    val refersTo: Option[Id] =
-      Option(ttype).collect {
-        case typeReference: ParsedTypeReference => typeReference.refersTo
+    if (hasNativeIds(ttype)) {
+      ttype
+    } else {
+      ttype.id match {
+        case rootId: RootId => expandWithRootAndPath(ttype, rootId, rootId)
+        case ImplicitId     =>
+          // We assume we hit an inline schema without an id, so we may just invent a random unique one since it will never be referenced.
+          val canonicalName = canonicalNameGenerator.generate(ImplicitId)
+          val rootId        = RootId.fromCanonical(canonicalName)
+          expandWithRootAndPath(ttype.updated(rootId), rootId, rootId)
+        case _ => throw RamlParseException("We cannot expand the ids in a schema that has no absolute root id.")
       }
-
-    (ttype.id, refersTo) match {
-      case (rootId: RootId, _)                    => expandWithRootAndPath(ttype, rootId, rootId)
-      case (nativeId: NativeId, _)                => ttype
-      case (ImplicitId, Some(nativeId: NativeId)) => ttype
-      case (ImplicitId, _)                        =>
-        // We assume we hit an inline schema without an id, so we may just invent a random unique one since it will never be referenced.
-        val canonicalName = canonicalNameGenerator.generate(ImplicitId)
-        val rootId        = RootId.fromCanonical(canonicalName)
-        expandWithRootAndPath(ttype.updated(rootId), rootId, rootId)
-      case _ => throw RamlParseException("We cannot expand the ids in a schema that has no absolute root id.")
     }
 
+  }
+
+  def hasNativeIds(ttype: ParsedType): Boolean = {
+
+    def isNativeId(id: Id): Boolean =
+      id match {
+        case nativeId: NativeId => true
+        case _                  => false
+      }
+
+    def hasDeepNativeIds(deepType: ParsedType): Boolean =
+      deepType match {
+        case objectType: ParsedObject =>
+          val hasNativeIdList = objectType.properties.valueMap.values.map(property => hasNativeIds(property.propertyType.parsed)).toList
+          hasNativeIdList match {
+            case Nil                => false
+            case i1 :: Nil          => i1
+            case atLeastTwoElements => atLeastTwoElements.reduce(_ || _)
+          }
+        case arrayType: ParsedArray             => hasNativeIds(arrayType.items)
+        case typeReference: ParsedTypeReference => isNativeId(typeReference.refersTo)
+        case _                                  => false
+      }
+
+    isNativeId(ttype.id) || hasDeepNativeIds(ttype)
   }
 
 }

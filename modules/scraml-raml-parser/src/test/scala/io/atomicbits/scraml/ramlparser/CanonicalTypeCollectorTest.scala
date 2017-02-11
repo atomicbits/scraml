@@ -223,6 +223,33 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
     }
 
+    scenario("test collecting RAML 1.0 types in a RAML model") {
+
+      Given("a RAML specification containing RAML 1.0 definitions")
+      val defaultBasePath = List("io", "atomicbits", "schema")
+      val parser          = RamlParser("/nativeidlookup/NativeIdLookupTest.raml", "UTF-8", defaultBasePath)
+
+      When("we parse the specification")
+      val parsedModel: Try[Raml] = parser.parse
+      val canonicalTypeCollector = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
+
+      Then("we get all expected canonical representations")
+      val raml = parsedModel.get
+
+      val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
+      val restResource                   = ramlUpdated.resourceMap("rest")
+      val booksResource                  = restResource.resourceMap("books")
+      val booksGetAction                 = booksResource.actionMap(Get)
+      val booksReturnType: TypeRepresentation =
+        booksGetAction.responses.responseMap(StatusCode("200")).body.contentMap(MediaType("application/json")).bodyType.get
+
+      val book = CanonicalName.create(name = "Book", packagePath = List("io", "atomicbits", "schema"))
+
+      val booksArrayTypeReference = booksReturnType.canonical.get.asInstanceOf[ArrayTypeReference]
+      booksArrayTypeReference.genericType.asInstanceOf[NonPrimitiveTypeReference].refers shouldBe book
+
+    }
+
   }
 
 }

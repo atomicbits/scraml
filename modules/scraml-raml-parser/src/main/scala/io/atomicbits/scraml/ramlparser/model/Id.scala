@@ -59,7 +59,7 @@ case class RootId(id: String) extends AbsoluteId {
 
   lazy val anchor: String = id.split('/').toList.dropRight(1).mkString("/")
 
-  def toAbsolute(id: Id, path: List[String] = List.empty): AbsoluteId = {
+  def toAbsoluteId(id: Id, path: List[String] = List.empty): AbsoluteId = {
     id match {
       case absoluteId: RootId                => absoluteId
       case relativeId: RelativeId            => RootId(s"$anchor/${relativeId.id}")
