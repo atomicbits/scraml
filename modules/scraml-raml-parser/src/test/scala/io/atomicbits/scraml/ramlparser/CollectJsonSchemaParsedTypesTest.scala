@@ -50,13 +50,13 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       Then("all our relative fragment IDs and their references are expanded to absolute IDs")
       val raml                = parsedModel.get
       val parsedType          = raml.types.get(NativeId("myfragments")).get
-      val myFragmentsExpanded = canonicalTypeCollector.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
+      val myFragmentsExpanded = canonicalTypeCollector.indexer.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
 
       val barReference = myFragmentsExpanded.fragments.fragmentMap("bar").asInstanceOf[ParsedTypeReference]
       barReference.refersTo shouldBe NoId
 
       val collectedParsedTypes: CanonicalLookupHelper =
-        canonicalTypeCollector.collectJsonSchemaParsedTypes(myFragmentsExpanded, CanonicalLookupHelper())
+        canonicalTypeCollector.indexer.collectJsonSchemaParsedTypes(myFragmentsExpanded, CanonicalLookupHelper())
 
       collectedParsedTypes.parsedTypeIndex.keys should contain(
         AbsoluteFragmentId(
@@ -95,7 +95,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       Then("we get all four actions in the userid resource")
       val raml                              = parsedModel.get
-      val canonicalLHWithIndexedParsedTypes = canonicalTypeCollector.indexParsedTypes(raml, CanonicalLookupHelper())
+      val canonicalLHWithIndexedParsedTypes = canonicalTypeCollector.indexer.indexParsedTypes(raml, CanonicalLookupHelper())
 
       val geometryTypeOpt = canonicalLHWithIndexedParsedTypes.getParsedTypeWithProperId(NativeId("geometry"))
       geometryTypeOpt.isDefined shouldBe true

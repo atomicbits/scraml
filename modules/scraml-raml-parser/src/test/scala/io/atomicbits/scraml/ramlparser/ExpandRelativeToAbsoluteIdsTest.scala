@@ -48,7 +48,7 @@ class ExpandRelativeToAbsoluteIdsTest extends FeatureSpec with GivenWhenThen wit
       Then("we all our relative fragment IDs and their references are expanded to absolute IDs")
       val raml                = parsedModel.get
       val parsedType          = raml.types.get(NativeId("myfragments")).get
-      val myFragmentsExpanded = canonicalTypeCollector.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
+      val myFragmentsExpanded = canonicalTypeCollector.indexer.expandRelativeToAbsoluteIds(parsedType).asInstanceOf[ParsedObject]
 
       val definitionsFragment = myFragmentsExpanded.fragments.fragmentMap("definitions").asInstanceOf[Fragments]
 
