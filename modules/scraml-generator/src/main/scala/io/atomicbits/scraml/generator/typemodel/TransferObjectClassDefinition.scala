@@ -32,8 +32,9 @@ import Platform._
   */
 case class TransferObjectClassDefinition(reference: ClassReference,
                                          fields: List[Field],
-                                         parents: List[ClassReference]      = List.empty,
-                                         jsonTypeInfo: Option[JsonTypeInfo] = None)
+                                         parents: List[ClassReference]          = List.empty,
+                                         typeDiscriminator: Option[String]      = None,
+                                         typeDiscriminatorValue: Option[String] = None)
     extends SourceDefinition {
 
   override def classReference(implicit platform: Platform): ClassReference = reference
@@ -41,5 +42,7 @@ case class TransferObjectClassDefinition(reference: ClassReference,
   def implementingInterfaceReference(implicit platform: Platform): ClassReference = reference.implementingInterfaceReference
 
   def hasParents: Boolean = parents.nonEmpty
+
+  val actualTypeDiscriminatorValue = typeDiscriminatorValue.getOrElse(reference.canonicalName.name)
 
 }

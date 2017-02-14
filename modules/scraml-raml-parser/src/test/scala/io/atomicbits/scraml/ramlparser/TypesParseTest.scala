@@ -71,6 +71,8 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
     val canonicalTypeCollector         = CanonicalTypeCollector(CanonicalNameGenerator(defaultBasePath))
     val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
 
+    // ToDo: parse the RAML 1.0 type discriminator and type discriminator value
+
 //    println(s"Parsed raml: $prettyModel")
 
   }

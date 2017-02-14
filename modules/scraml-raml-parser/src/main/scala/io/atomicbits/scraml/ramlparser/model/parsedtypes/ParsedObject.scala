@@ -63,11 +63,7 @@ case class ParsedObject(id: Id,
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
-  def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = {
-
-    ???
-
-  }
+  def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = ???
 
 }
 
@@ -109,9 +105,16 @@ object ParsedObject {
         case _                       => List.empty[String]
       }
 
-    // Process the typeDiscriminator field
-    val typeDiscriminator: Option[String] =
-      json \ "typeDiscriminator" toOption match {
+    // Process the discriminator field
+    val discriminator: Option[String] =
+      List(json \ "discriminator" toOption, json \ "typeDiscriminator" toOption).flatten.headOption match {
+        case Some(JsString(value)) => Some(value)
+        case _                     => None
+      }
+
+    // Process the discriminatorValue field
+    val discriminatorValue: Option[String] =
+      json \ "discriminatorValue" toOption match {
         case Some(JsString(value)) => Some(value)
         case _                     => None
       }
@@ -121,7 +124,7 @@ object ParsedObject {
         case selections: JsArray =>
           val selectionSchemas = selections.value collect {
             case jsObj: JsObject => jsObj
-          } map (tryToInterpretOneOfSelectionAsObjectType(_, id, typeDiscriminator.getOrElse("type")))
+          } map (tryToInterpretOneOfSelectionAsObjectType(_, id, discriminator.getOrElse("type")))
           TryUtils.accumulate(selectionSchemas.toList).map(selections => OneOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
 
@@ -156,8 +159,8 @@ object ParsedObject {
       Success(Set.empty[ParsedTypeReference]),
       Success(List.empty[AbsoluteId]),
       Success(typeVariables),
-      Success(typeDiscriminator),
-      Success(None),
+      Success(discriminator),
+      Success(discriminatorValue),
       Success(model)
     )(new ParsedObject(_, _, _, _, _, _, _, _, _, _, _, _, _))
   }

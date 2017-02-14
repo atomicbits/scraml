@@ -82,18 +82,13 @@ object CanonicalToSourceDefinitionGenerator {
           typeParameters = objectType.typeParameters.map(tp => TypeParameter(tp.name))
         )
 
-      val jsonTypeInfoOpt =
-        for {
-          typeDiscrimintator <- objectType.typeDiscriminator
-          typeDiscrimintatorValue <- objectType.typeDiscriminatorValue
-        } yield JsonTypeInfo(discriminator = typeDiscrimintator, discriminatorValue = typeDiscrimintatorValue)
-
       val transferObjectClassDefinition =
         TransferObjectClassDefinition(
-          reference    = toClassReference,
-          fields       = objectType.properties.map(propertyToField).toList,
-          parents      = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
-          jsonTypeInfo = jsonTypeInfoOpt
+          reference              = toClassReference,
+          fields                 = objectType.properties.map(propertyToField).toList,
+          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
+          typeDiscriminator      = objectType.typeDiscriminator,
+          typeDiscriminatorValue = objectType.typeDiscriminatorValue
         )
 
       genAggr

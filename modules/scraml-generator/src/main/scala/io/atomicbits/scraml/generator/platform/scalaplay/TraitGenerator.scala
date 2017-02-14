@@ -71,8 +71,7 @@ object TraitGenerator extends SourceGenerator {
                             generationAggr: GenerationAggr): GenerationAggr = {
 
     def childClassRepToWithTypeHintExpression(childClassRep: TransferObjectClassDefinition, isLeaf: Boolean): String = {
-      val discriminatorValue =
-        childClassRep.jsonTypeInfo.map(_.discriminatorValue).getOrElse(childClassRep.reference.name)
+      val discriminatorValue = childClassRep.actualTypeDiscriminatorValue
       val childClassName =
         if (isLeaf) childClassRep.reference.name
         else childClassRep.implementingInterfaceReference.name

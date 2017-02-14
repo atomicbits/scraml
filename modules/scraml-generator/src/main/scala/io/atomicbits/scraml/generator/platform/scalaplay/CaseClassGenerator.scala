@@ -70,10 +70,18 @@ object CaseClassGenerator extends SourceGenerator {
         (withParentTrait, withParentFields)
       }
 
-    val discriminator: Option[String] =
-      (toClassDefinition.jsonTypeInfo +: recursiveExtendedTraits.map(_.jsonTypeInfo)).flatten.headOption.map(_.discriminator)
+    val discriminator: String =
+      (toClassDefinition.typeDiscriminator +: recursiveExtendedTraits.map(_.typeDiscriminator)).flatten.headOption
+        .getOrElse(defaultDiscriminator)
 
-    val traitsToGenerate = recursiveExtendedTraits.map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse(defaultDiscriminator)))
+    val jsonTypeInfo: Option[JsonTypeInfo] =
+      if (generationAggr.isInHierarchy(originalToCanonicalName)) {
+        Some(JsonTypeInfo(discriminator = discriminator, discriminatorValue = toClassDefinition.actualTypeDiscriminatorValue))
+      } else {
+        None
+      }
+
+    val traitsToGenerate = recursiveExtendedTraits.map(TransferObjectInterfaceDefinition(_, discriminator))
 
     val traitsToImplement =
       generationAggr
@@ -87,16 +95,7 @@ object CaseClassGenerator extends SourceGenerator {
             generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
           traitsToImpl :+ parentDefinition
         }
-        .map(TransferObjectInterfaceDefinition(_, discriminator.getOrElse(defaultDiscriminator)))
-
-    val actualJsonTypeInf =
-      toClassDefinition.jsonTypeInfo match {
-        case Some(jsTypeInfo) => toClassDefinition.jsonTypeInfo
-        case None if generationAggr.isInHierarchy(originalToCanonicalName) =>
-          val actualDiscriminator = discriminator.getOrElse("type")
-          Some(JsonTypeInfo(discriminator = actualDiscriminator, discriminatorValue = originalToCanonicalName.name))
-        case None => None
-      }
+        .map(TransferObjectInterfaceDefinition(_, discriminator))
 
     // add the collected traits to the generationAggr.toInterfaceMap if they aren't there yet
     val generationAggrWithAddedInterfaces =
@@ -111,9 +110,9 @@ object CaseClassGenerator extends SourceGenerator {
 
     generateCaseClass(traitsToImplement,
                       atLeastOneField,
-                      discriminator,
+                      jsonTypeInfo.map(_.discriminator),
                       actualToCanonicalClassReference,
-                      actualJsonTypeInf,
+                      jsonTypeInfo,
                       generationAggrWithAddedInterfaces)
   }
 

@@ -19,12 +19,12 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.NativeId
-import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
-import play.api.libs.json.{JsArray, JsObject, JsValue}
+import io.atomicbits.scraml.ramlparser.model.{ ImplicitId, NativeId }
+import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
+import play.api.libs.json.{ JsArray, JsObject, JsValue }
 
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 10/02/16.
@@ -43,7 +43,6 @@ case class Types(typeReferences: Map[NativeId, ParsedType] = Map.empty) {
 
 }
 
-
 object Types {
 
   def apply(typesJson: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
@@ -52,7 +51,7 @@ object Types {
       tpsJson match {
         case typesJsObj: JsObject => typesJsObjToTypes(typesJsObj)
         case typesJsArr: JsArray  => typesJsObjToTypes(KeyedList.toJsObject(typesJsArr))
-        case x                    =>
+        case x =>
           Failure(RamlParseException(s"The types (or schemas) definition in ${parseContext.head} is malformed."))
       }
     }
@@ -68,21 +67,26 @@ object Types {
     def foldTryTypes(tryTypes: Seq[Try[Types]])(implicit parseContext: ParseContext): Try[Types] = {
       tryTypes.foldLeft[Try[Types]](Success(Types())) {
         case (Success(aggr), Success(types))   => Success(aggr ++ types)
-        case (fail@Failure(e), _)              => fail
-        case (_, fail@Failure(e))              => fail
+        case (fail @ Failure(e), _)            => fail
+        case (_, fail @ Failure(e))            => fail
         case (Failure(eAggr), Failure(eTypes)) => Failure(RamlParseException(s"${eAggr.getMessage}\n${eTypes.getMessage}"))
       }
     }
 
     def typeObjectToType(name: String, typeDefinition: JsValue)(implicit parseContext: ParseContext): Try[Types] = {
-
-      val result =
-        typeDefinition match {
-          case ParsedType(sometype) => sometype.map(tp => Types(typeReferences = Map(NativeId(name) -> tp)))
-          case x                    => Failure(RamlParseException(s"Unknown type $x in ${parseContext.head}."))
-        }
-
-      result
+      typeDefinition match {
+        case ParsedType(sometype) =>
+          sometype.map { tp =>
+            val nativeId = NativeId(name)
+            val typeWithProperId =
+              tp.id match {
+                case ImplicitId => tp.updated(nativeId)
+                case _          => tp
+              }
+            Types(typeReferences = Map(nativeId -> typeWithProperId))
+          }
+        case x => Failure(RamlParseException(s"Unknown type $x in ${parseContext.head}."))
+      }
     }
 
     parseContext.withSource(typesJson)(doApply(typesJson))

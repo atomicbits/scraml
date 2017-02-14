@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.UniqueId
+import io.atomicbits.scraml.ramlparser.model.{ NativeId, UniqueId }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
@@ -44,7 +44,11 @@ object ParsedObjectTransformer {
     val parentNameOpt: Option[CanonicalName]         = parsedTypeContext.parentNameOpt // This is the optional json-schema parent
     val imposedTypeDiscriminatorOpt: Option[String]  = parsedTypeContext.imposedTypeDiscriminator
 
-    def processTypeDiscriminator(typeDiscriminatorOpt: Option[String], props: ParsedProperties): (Option[String], ParsedProperties) = {
+    /**
+      * Find the type discriminator value if there is one and subtract the type discriminator field from the parsed properties.
+      */
+    def processJsonSchemaTypeDiscriminator(typeDiscriminatorOpt: Option[String],
+                                           props: ParsedProperties): (Option[String], ParsedProperties) = {
       typeDiscriminatorOpt.flatMap { typeDiscriminator =>
         props.get(typeDiscriminator).map(_.propertyType.parsed) collect {
           case parsed: ParsedEnum => (parsed.choices.headOption, props - typeDiscriminator)
@@ -55,14 +59,23 @@ object ParsedObjectTransformer {
     def registerParsedObject(parsedObject: ParsedObject): (TypeReference, CanonicalLookupHelper) = {
 
       val ownTypeDiscriminatorOpt: Option[String] = parsedObject.typeDiscriminator
-      val typeDescriminatorOpt                    = List(imposedTypeDiscriminatorOpt, ownTypeDiscriminatorOpt).flatten.headOption
+      val typeDescriminatorOpt                    = List(ownTypeDiscriminatorOpt, imposedTypeDiscriminatorOpt).flatten.headOption
 
       // Prepare the empty aggregator
       val aggregator: PropertyAggregator = (Map.empty[String, Property[_ <: GenericReferrable]], canonicalLookupHelper)
 
       // if there is an imposed type discriminator, then we need to find its value and remove the discriminator from the properties.
-      val (typeDiscriminatorValue, propertiesWithoutTypeDiscriminator) =
-        processTypeDiscriminator(typeDescriminatorOpt, parsedObject.properties)
+      val (jsonSchemaTypeDiscriminatorValue, propertiesWithoutTypeDiscriminator) =
+        processJsonSchemaTypeDiscriminator(typeDescriminatorOpt, parsedObject.properties)
+
+      val typeDiscriminatorValue = {
+        val nativeIdOpt =
+          Option(parsedObject.id).collect {
+            case NativeId(native) => native
+          }
+        List(jsonSchemaTypeDiscriminatorValue, parsedObject.typeDiscriminatorValue, nativeIdOpt).flatten.headOption
+      }
+
       // Transform and register all properties of this object
       val (properties, propertyUpdatedCanonicalLH) =
         propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer)

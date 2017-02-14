@@ -20,14 +20,15 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedTypeReference
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{ JsObject, JsValue }
 
 /**
   * Created by peter on 25/03/16.
   */
 object IdExtractor {
 
-  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, "id")
+  def unapply(schema: JsValue): Option[Id] =
+    List(IdAnalyser.idFromField(schema, "id"), IdAnalyser.idFromField(schema, "title")).flatten.headOption
 
 }
 
@@ -50,7 +51,7 @@ object IdAnalyser {
 
     val idType = (schema \ field).asOpt[String] match {
       case Some(idOrRef) => idFromString(idOrRef)
-      case None => ImplicitId
+      case None          => ImplicitId
     }
 
     Option(idType)
@@ -94,5 +95,3 @@ object IdAnalyser {
   }
 
 }
-
-
