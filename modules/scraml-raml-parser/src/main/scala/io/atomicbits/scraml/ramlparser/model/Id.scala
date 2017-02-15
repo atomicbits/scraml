@@ -53,11 +53,11 @@ trait AbsoluteId extends UniqueId {
   * don't have an absolute or relative id.
   * An absolute id is of the form "http://atomicbits.io/schema/User.json" and often it ends with a "#".
   *
-  * @param id The string representation of the id
+  *
   */
-case class RootId(id: String) extends AbsoluteId {
+case class RootId(hostPath: List[String], path: List[String], name: String) extends AbsoluteId {
 
-  lazy val anchor: String = id.split('/').toList.dropRight(1).mkString("/")
+  val anchor: String = s"http://${hostPath.mkString(".")}/${path.mkString("/")}"
 
   def toAbsoluteId(id: Id, path: List[String] = List.empty): AbsoluteId = {
     id match {
@@ -78,21 +78,45 @@ case class RootId(id: String) extends AbsoluteId {
 
   val rootPart: RootId = this
 
-  val rootPath: List[String] = {
-    val withoutProtocol = id.split("://").takeRight(1).head
-    val withoutHost     = withoutProtocol.split('/').drop(1).toList
-    withoutHost
-  }
+  val fileName: String = s"$name.json"
 
-  val hostPath: List[String] = {
-    val withoutProtocol = id.split("://").takeRight(1).head
-    val host            = withoutProtocol.split('/').take(1).head
-    host.split('.').toList
-  }
+  val rootPath: List[String] = path :+ fileName
+
+  val id = s"$anchor/$fileName"
 
 }
 
 object RootId {
+
+  /**
+    * @param id The string representation of the id
+    */
+  def apply(id: String): RootId = {
+
+    val protocolParts       = id.split("://")
+    val protocol            = protocolParts.head
+    val withoutProtocol     = protocolParts.takeRight(1).head
+    val parts               = withoutProtocol.split('/')
+    val host                = parts.take(1).head
+    val hostPath            = host.split('.').toList
+    val filenameWithHashtag = parts.takeRight(1).head
+    val filename            = filenameWithHashtag.split('#').take(1).head
+    val name                = filename.split('.').take(1).head
+    val path                = parts.drop(1).dropRight(1).toList
+
+    RootId(
+      hostPath = hostPath,
+      path     = path,
+      name     = name
+    )
+  }
+
+  def fromPackagePath(packagePath: List[String], name: String): RootId = {
+    packagePath match {
+      case p1 :: p2 :: ps => RootId(hostPath = List(p2, p1), path = ps, name = name)
+      case _              => sys.error(s"A package path must contain at least two elements: $packagePath")
+    }
+  }
 
   def fromCanonical(canonicalName: CanonicalName): RootId = {
 

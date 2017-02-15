@@ -36,6 +36,8 @@ case class CanonicalNameGenerator(defaultBasePath: List[String]) {
     case x                      => sys.error(s"Cannot create a canonical name from a ${x.getClass.getSimpleName}")
   }
 
+  def toRootId(id: Id): RootId = RootId.fromCanonical(generate(id))
+
   private def absoluteIdToCanonicalName(origin: AbsoluteId): CanonicalName = {
 
     val hostPathReversed = origin.hostPath.reverse
