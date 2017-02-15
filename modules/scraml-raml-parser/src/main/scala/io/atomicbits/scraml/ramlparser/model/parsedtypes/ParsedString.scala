@@ -20,22 +20,23 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import play.api.libs.json.{ JsObject, JsString, JsValue, Json }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
-
 
 /**
   * Created by peter on 1/04/16.
   */
-case class ParsedString(id: Id = ImplicitId,
-                        format: Option[String] = None,
-                        pattern: Option[String] = None,
-                        minLength: Option[Int] = None,
-                        maxLength: Option[Int] = None,
+case class ParsedString(id: Id                    = ImplicitId,
+                        format: Option[String]    = None,
+                        pattern: Option[String]   = None,
+                        minLength: Option[Int]    = None,
+                        maxLength: Option[Int]    = None,
                         required: Option[Boolean] = None,
-                        model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+                        model: TypeModel          = RamlModel)
+    extends PrimitiveType
+    with AllowedAsObjectField {
 
   override def updated(updatedId: Id): ParsedString = copy(id = updatedId)
 
@@ -43,33 +44,28 @@ case class ParsedString(id: Id = ImplicitId,
 
 }
 
-
 object ParsedString {
 
   val value = "string"
-
 
   def apply(json: JsValue): Try[ParsedString] = {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     Success(
       ParsedString(
-        id = id,
-        format = json.fieldStringValue("pattern"),
-        pattern = json.fieldStringValue("format"),
+        id        = id,
+        format    = json.fieldStringValue("pattern"),
+        pattern   = json.fieldStringValue("format"),
         minLength = json.fieldIntValue("minLength"),
         maxLength = json.fieldIntValue("maxLength"),
-        required = json.fieldBooleanValue("required"),
-        model = model
+        required  = json.fieldBooleanValue("required"),
+        model     = model
       )
     )
   }
-
 
   def unapply(json: JsValue): Option[Try[ParsedString]] = {
 

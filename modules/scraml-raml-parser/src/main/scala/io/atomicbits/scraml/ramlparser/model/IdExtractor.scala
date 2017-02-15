@@ -27,14 +27,14 @@ import play.api.libs.json.{ JsObject, JsValue }
   */
 object IdExtractor {
 
-  def unapply(schema: JsValue): Option[Id] =
-    List(IdAnalyser.idFromField(schema, "id"), IdAnalyser.idFromField(schema, "title")).flatten.headOption
+  def apply(json: JsValue): Id =
+    List(IdAnalyser.idFromField(json, "id"), IdAnalyser.idFromField(json, "title")).flatten.headOption.getOrElse(ImplicitId)
 
 }
 
 object RefExtractor {
 
-  def unapply(schema: JsValue): Option[Id] = IdAnalyser.idFromField(schema, ParsedTypeReference.value)
+  def unapply(json: JsValue): Option[Id] = IdAnalyser.idFromField(json, ParsedTypeReference.value)
 
 }
 
@@ -43,19 +43,12 @@ object IdAnalyser {
   /**
     * Transform the given field of the schema to an Id if possible.
     *
-    * @param schema The schema
+    * @param json The schema
     * @param field The id field
     * @return The Id
     */
-  def idFromField(schema: JsValue, field: String): Option[Id] = {
-
-    val idType = (schema \ field).asOpt[String] match {
-      case Some(idOrRef) => idFromString(idOrRef)
-      case None          => ImplicitId
-    }
-
-    Option(idType)
-  }
+  def idFromField(json: JsValue, field: String): Option[Id] =
+    (json \ field).asOpt[String] map idFromString
 
   def idFromString(id: String): Id = {
     if (isRoot(id)) RootId(id = cleanRoot(id))
@@ -88,9 +81,9 @@ object IdAnalyser {
     root.trim.stripSuffix("#")
   }
 
-  def isModelObject(schema: JsObject): Boolean = {
+  def isModelObject(json: JsObject): Boolean = {
 
-    (schema \ "type").asOpt[String].exists(_ == "object")
+    (json \ "type").asOpt[String].exists(_ == "object")
 
   }
 

@@ -20,16 +20,15 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
 import io.atomicbits.scraml.util.TryUtils
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 1/04/16.
   */
-
 /**
   * Created by peter on 16/09/15.
   *
@@ -67,16 +66,17 @@ import scala.util.{Failure, Success, Try}
 case class ParsedGenericObject(id: Id,
                                typeVariable: String,
                                required: Option[Boolean] = None,
-                               fragments: Fragments = Fragments(),
-                               model: TypeModel = RamlModel)
-  extends Fragmented with AllowedAsObjectField with NonPrimitiveType {
+                               fragments: Fragments      = Fragments(),
+                               model: TypeModel          = RamlModel)
+    extends Fragmented
+    with AllowedAsObjectField
+    with NonPrimitiveType {
 
   override def updated(updatedId: Id): ParsedGenericObject = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
-
 
 object ParsedGenericObject {
 
@@ -87,9 +87,7 @@ object ParsedGenericObject {
     val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id: Id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id: Id = IdExtractor(json)
 
     // Process the required field
     val required = (json \ "required").asOpt[Boolean]
@@ -98,7 +96,9 @@ object ParsedGenericObject {
       case Fragments(fragment) => fragment
     }
 
-    val genericType = (json \ "genericType").asOpt[String].map(Success(_))
+    val genericType = (json \ "genericType")
+      .asOpt[String]
+      .map(Success(_))
       .getOrElse(Failure[String](RamlParseException(s"A generic object must have a 'genericType' field: $id")))
 
     TryUtils.withSuccess(
@@ -109,7 +109,6 @@ object ParsedGenericObject {
       Success(model)
     )(ParsedGenericObject(_, _, _, _, _))
   }
-
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedGenericObject]] = {
     (ParsedType.typeDeclaration(json), (json \ "properties").toOption, (json \ "genericType").toOption) match {

@@ -53,9 +53,7 @@ object ParsedTypeReference {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     val ref = json match {
       case RefExtractor(refId) => refId

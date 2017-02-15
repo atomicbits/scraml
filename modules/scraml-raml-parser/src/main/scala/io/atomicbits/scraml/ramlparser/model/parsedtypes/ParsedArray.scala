@@ -20,24 +20,27 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 import io.atomicbits.scraml.util.TryUtils
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 25/03/16.
   */
 case class ParsedArray(items: ParsedType,
-                       id: Id = ImplicitId,
+                       id: Id                    = ImplicitId,
                        required: Option[Boolean] = None,
-                       minItems: Option[Int] = None,
-                       maxItems: Option[Int] = None,
-                       uniqueItems: Boolean = false,
-                       fragments: Fragments = Fragments(),
-                       model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField with Fragmented {
+                       minItems: Option[Int]     = None,
+                       maxItems: Option[Int]     = None,
+                       uniqueItems: Boolean      = false,
+                       fragments: Fragments      = Fragments(),
+                       model: TypeModel          = RamlModel)
+    extends NonPrimitiveType
+    with AllowedAsObjectField
+    with Fragmented {
 
   override def updated(updatedId: Id): ParsedArray = copy(id = updatedId)
 
@@ -47,11 +50,9 @@ case class ParsedArray(items: ParsedType,
 
 }
 
-
 object ParsedArray {
 
   val value = "array"
-
 
   def apply(triedPrimitiveType: Try[PrimitiveType])(implicit parseContext: ParseContext): Try[ParsedArray] = {
 
@@ -75,7 +76,6 @@ object ParsedArray {
     )(ParsedArray(_, _, _, _, _, _, _))
   }
 
-
   def apply(arrayExpression: String)(implicit parseContext: ParseContext): Try[ParsedArray] = {
 
     if (arrayExpression.endsWith("[]")) {
@@ -91,26 +91,23 @@ object ParsedArray {
 
   }
 
-
   def apply(json: JsValue)(implicit parseContext: ParseContext): Try[ParsedArray] = {
 
     val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     // Process the items type
     val items =
-    (json \ "items").toOption.collect {
-      case ParsedType(someType) => someType
-    } getOrElse
-      Failure(
-        RamlParseException(
-          s"An array definition in ${parseContext.head} has either no 'items' field or an 'items' field with an invalid type declaration."
+      (json \ "items").toOption.collect {
+        case ParsedType(someType) => someType
+      } getOrElse
+        Failure(
+          RamlParseException(
+            s"An array definition in ${parseContext.head} has either no 'items' field or an 'items' field with an invalid type declaration."
+          )
         )
-      )
 
     // Process the required field
     val required = json.fieldBooleanValue("required")
@@ -131,12 +128,10 @@ object ParsedArray {
     )(ParsedArray(_, _, _, _, _, _, _, _))
   }
 
-
   def unapply(arrayTypeExpression: String)(implicit parseContext: ParseContext): Option[Try[ParsedArray]] = {
     if (arrayTypeExpression.endsWith("[]")) Some(ParsedArray(arrayTypeExpression))
     else None
   }
-
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedArray]] = {
 

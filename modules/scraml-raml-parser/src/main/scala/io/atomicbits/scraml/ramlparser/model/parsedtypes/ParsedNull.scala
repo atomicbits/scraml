@@ -20,18 +20,17 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
-
 
 /**
   * Created by peter on 1/04/16.
   */
-case class ParsedNull(id: Id = ImplicitId,
-                      required: Option[Boolean] = None,
-                      model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+case class ParsedNull(id: Id = ImplicitId, required: Option[Boolean] = None, model: TypeModel = RamlModel)
+    extends PrimitiveType
+    with AllowedAsObjectField {
 
   override def updated(updatedId: Id): ParsedNull = copy(id = updatedId)
 
@@ -39,29 +38,24 @@ case class ParsedNull(id: Id = ImplicitId,
 
 }
 
-
 object ParsedNull {
 
   val value = "null"
-
 
   def apply(json: JsValue): Try[ParsedNull] = {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     Success(
       ParsedNull(
-        id = id,
+        id       = id,
         required = json.fieldBooleanValue("required"),
-        model = model
+        model    = model
       )
     )
   }
-
 
   def unapply(json: JsValue): Option[Try[ParsedNull]] = {
 

@@ -20,24 +20,22 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsArray, JsObject, JsString, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 1/04/16.
   */
-case class ParsedEnum(id: Id,
-                      choices: List[String],
-                      required: Option[Boolean] = None,
-                      model: TypeModel = RamlModel) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedEnum(id: Id, choices: List[String], required: Option[Boolean] = None, model: TypeModel = RamlModel)
+    extends NonPrimitiveType
+    with AllowedAsObjectField {
 
   override def updated(updatedId: Id): ParsedEnum = copy(id = updatedId)
 
   override def asTypeModel(typeModel: TypeModel): ParsedType = copy(model = typeModel)
 
 }
-
 
 object ParsedEnum {
 
@@ -47,9 +45,7 @@ object ParsedEnum {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     val choices = (json \ "enum").asOpt[List[String]]
 
@@ -57,7 +53,6 @@ object ParsedEnum {
 
     Success(ParsedEnum(id, choices.getOrElse(List.empty), required, model))
   }
-
 
   def unapply(json: JsValue): Option[Try[ParsedEnum]] = {
 

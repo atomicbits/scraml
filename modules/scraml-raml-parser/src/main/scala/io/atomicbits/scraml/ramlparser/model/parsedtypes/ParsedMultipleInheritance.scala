@@ -84,9 +84,7 @@ object ParsedMultipleInheritance {
     }
 
     // Process the id
-    val id: Id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id: Id = IdExtractor(json)
 
     val model: TypeModel = TypeModel(json)
 

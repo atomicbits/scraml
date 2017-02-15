@@ -20,22 +20,23 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
-
 
 /**
   * Created by peter on 1/04/16.
   */
-case class ParsedInteger(id: Id = ImplicitId,
-                         format: Option[String] = None,
-                         minimum: Option[Int] = None,
-                         maximum: Option[Int] = None,
-                         multipleOf: Option[Int] = None,
+case class ParsedInteger(id: Id                    = ImplicitId,
+                         format: Option[String]    = None,
+                         minimum: Option[Int]      = None,
+                         maximum: Option[Int]      = None,
+                         multipleOf: Option[Int]   = None,
                          required: Option[Boolean] = None,
-                         model: TypeModel = RamlModel) extends PrimitiveType with AllowedAsObjectField {
+                         model: TypeModel          = RamlModel)
+    extends PrimitiveType
+    with AllowedAsObjectField {
 
   override def updated(updatedId: Id): ParsedInteger = copy(id = updatedId)
 
@@ -43,33 +44,28 @@ case class ParsedInteger(id: Id = ImplicitId,
 
 }
 
-
 object ParsedInteger {
 
   val value = "integer"
-
 
   def apply(json: JsValue): Try[ParsedInteger] = {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = json match {
-      case IdExtractor(schemaId) => schemaId
-    }
+    val id = IdExtractor(json)
 
     Success(
       ParsedInteger(
-        id = id,
-        format = json.fieldStringValue("format"),
-        minimum = json.fieldIntValue("minimum"),
-        maximum = json.fieldIntValue("maximum"),
+        id         = id,
+        format     = json.fieldStringValue("format"),
+        minimum    = json.fieldIntValue("minimum"),
+        maximum    = json.fieldIntValue("maximum"),
         multipleOf = json.fieldIntValue("multipleOf"),
-        required = json.fieldBooleanValue("required"),
-        model = model
+        required   = json.fieldBooleanValue("required"),
+        model      = model
       )
     )
   }
-
 
   def unapply(json: JsValue): Option[Try[ParsedInteger]] = {
 
