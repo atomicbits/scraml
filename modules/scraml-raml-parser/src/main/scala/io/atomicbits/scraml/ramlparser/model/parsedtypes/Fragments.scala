@@ -53,7 +53,7 @@ object Fragments {
 
   def apply(json: JsObject)(implicit parseContext: ParseContext): Try[Fragments] = {
 
-    val id = IdExtractor(json)
+    val id = JsonSchemaIdExtractor(json)
 
     val fragmentsToKeep =
       keysToExclude.foldLeft[Map[String, JsValue]](json.value.toMap) { (schemaMap, excludeKey) =>

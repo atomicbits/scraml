@@ -96,7 +96,7 @@ object ParsedArray {
     val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id = IdExtractor(json)
+    val id = JsonSchemaIdExtractor(json)
 
     // Process the items type
     val items =

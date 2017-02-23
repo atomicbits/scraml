@@ -76,7 +76,7 @@ object ParsedObject {
     val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id: Id = IdExtractor(json)
+    val id: Id = JsonSchemaIdExtractor(json)
 
     // Process the properties
     val properties: Try[ParsedProperties] = ParsedProperties((json \ "properties").toOption, model)

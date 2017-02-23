@@ -93,22 +93,25 @@ object RootId {
     */
   def apply(id: String): RootId = {
 
-    val protocolParts       = id.split("://")
-    val protocol            = protocolParts.head
-    val withoutProtocol     = protocolParts.takeRight(1).head
-    val parts               = withoutProtocol.split('/')
-    val host                = parts.take(1).head
-    val hostPath            = host.split('.').toList
-    val filenameWithHashtag = parts.takeRight(1).head
-    val filename            = filenameWithHashtag.split('#').take(1).head
-    val name                = filename.split('.').take(1).head
-    val path                = parts.drop(1).dropRight(1).toList
+    val protocolParts   = id.split("://")
+    val protocol        = protocolParts.head
+    val withoutProtocol = protocolParts.takeRight(1).head
+    val parts           = withoutProtocol.split('/').filter(_.nonEmpty)
+    val host            = parts.take(1).head
+    val hostPath        = host.split('.').toList
+    val name            = fileNameToName(parts.takeRight(1).head)
+    val path            = parts.drop(1).dropRight(1).toList
 
     RootId(
       hostPath = hostPath,
       path     = path,
       name     = name
     )
+  }
+
+  def fileNameToName(fileNameRep: String): String = {
+    val filenameWithoutHashtags = fileNameRep.split('#').take(1).head
+    filenameWithoutHashtags.split('.').take(1).head
   }
 
   def fromPackagePath(packagePath: List[String], name: String): RootId = {
@@ -139,7 +142,13 @@ object RootId {
   *
   * @param id The string representation of the id
   */
-case class RelativeId(id: String) extends Id
+case class RelativeId(id: String) extends Id {
+
+  val name: String = RootId.fileNameToName(id.split('/').filter(_.nonEmpty).takeRight(1).head)
+
+  val path: List[String] = id.split('/').filter(_.nonEmpty).dropRight(1).toList
+
+}
 
 /**
   * A native id is like a relative id, but it is not expected to have an absolute parent id. NativeId's should not be used in

@@ -45,7 +45,7 @@ object ParsedEnum {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = IdExtractor(json)
+    val id = JsonSchemaIdExtractor(json)
 
     val choices = (json \ "enum").asOpt[List[String]]
 

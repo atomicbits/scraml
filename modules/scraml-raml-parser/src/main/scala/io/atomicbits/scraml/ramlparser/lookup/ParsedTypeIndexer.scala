@@ -30,36 +30,33 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
 
   def indexParsedTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): CanonicalLookupHelper = {
     // First, index all the parsed types on their Id so that we can perform forward lookups when creating the canonical types.
-    val canonicalLookupHelperWithJsonSchemas  = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexParsedTypes)
+    val canonicalLookupHelperWithJsonSchemas  = raml.types.typeReferences.foldLeft(canonicalLookupHelper)(indexParsedTypesInt)
     val canonicalLookupHelperWithResoureTypes = raml.resources.foldLeft(canonicalLookupHelperWithJsonSchemas)(indexResourceParsedTypes)
 
     canonicalLookupHelperWithResoureTypes
   }
 
-  private def indexParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, idWithParsedType: (Id, ParsedType)): CanonicalLookupHelper = {
-    val (id, parsedType) = idWithParsedType
+  private def indexParsedTypesInt(canonicalLookupHelper: CanonicalLookupHelper,
+                                  idWithParsedType: (Id, ParsedType)): CanonicalLookupHelper = {
 
-    val finalCanonicalLookupHelper: CanonicalLookupHelper =
-      (parsedType.id, id) match {
-        case (absoluteId: AbsoluteId, nativeId: NativeId) =>
-          val expandedParsedType             = expandRelativeToAbsoluteIds(parsedType)
-          val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
-          val updatedCLH =
-            lookupWithCollectedParsedTypes.addJsonSchemaNativeToAbsoluteIdTranslation(nativeId, absoluteId)
-          updatedCLH
-        case (nativeId: NativeId, _) =>
-          canonicalLookupHelper.addParsedTypeIndex(nativeId, parsedType)
-        case (_, NoId) =>
-          val expandedParsedType             = expandRelativeToAbsoluteIds(parsedType)
-          val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
-          lookupWithCollectedParsedTypes
-        case (ImplicitId, someNativeId) =>
-          canonicalLookupHelper.addParsedTypeIndex(someNativeId, parsedType)
-        case (unexpected, _) =>
-          sys.error(s"Unexpected id in the types definition: $unexpected")
-      }
+    val (id, parsedType)   = idWithParsedType
+    val expandedParsedType = expandRelativeToAbsoluteIds(parsedType)
 
-    finalCanonicalLookupHelper
+    (expandedParsedType.id, id) match {
+      case (absoluteId: AbsoluteId, nativeId: NativeId) =>
+        val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
+        val updatedCLH                     = lookupWithCollectedParsedTypes.addJsonSchemaNativeToAbsoluteIdTranslation(nativeId, absoluteId)
+        updatedCLH
+      case (nativeId: NativeId, _) =>
+        canonicalLookupHelper.addParsedTypeIndex(nativeId, expandedParsedType)
+      case (_, NoId) => // ToDo: see if we can get rid of this 'NoId' pseudo id
+        val lookupWithCollectedParsedTypes = collectJsonSchemaParsedTypes(expandedParsedType, canonicalLookupHelper)
+        lookupWithCollectedParsedTypes
+      case (ImplicitId, someNativeId) =>
+        canonicalLookupHelper.addParsedTypeIndex(someNativeId, expandedParsedType)
+      case (unexpected, _) =>
+        sys.error(s"Unexpected id in the types definition: $unexpected")
+    }
   }
 
   private def indexResourceParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, resource: Resource): CanonicalLookupHelper = {
@@ -73,7 +70,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
       val bodyParsedTypes: List[ParsedType]                = bodyContentList.flatMap(_.bodyType).map(_.parsed)
       val generatedNativeIds: List[Id]                     = bodyParsedTypes.map(x => NoId)
       val nativeIdsWithParsedTypes: List[(Id, ParsedType)] = generatedNativeIds.zip(bodyParsedTypes)
-      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexParsedTypes)
+      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexParsedTypesInt)
     }
 
     def indexActionParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, action: Action): CanonicalLookupHelper = {
@@ -169,7 +166,10 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
 
     ttype.id match {
       case rootId: RootId => collect(ttype, canonicalLookupHelper)
-      case other          => canonicalLookupHelper
+      case relId: RelativeId =>
+        val rootId: RootId = canonicalNameGenerator.toRootId(relId)
+        collect(ttype.updated(rootId), canonicalLookupHelper)
+      case other => canonicalLookupHelper
     }
 
   }
@@ -195,8 +195,8 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
 
       val currentRoot =
         ttype.id match {
-          case absId: RootId => absId
-          case _             => root
+          case rootId: RootId => rootId
+          case _              => root
         }
 
       val expandedId = root.toAbsoluteId(ttype.id, path)
@@ -241,12 +241,15 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    if (hasNativeIds(ttype)) {
+    if (ttype.model == RamlModel) { // hasNativeIds(ttype)
       ttype
     } else {
       ttype.id match {
         case rootId: RootId => expandWithRootAndPath(ttype, rootId, rootId)
-        case ImplicitId     =>
+        case relativeId: RelativeId =>
+          val anonymousRootId = canonicalNameGenerator.toRootId(NativeId("anonymous"))
+          expandWithRootAndPath(ttype, anonymousRootId, anonymousRootId)
+        case ImplicitId =>
           // We assume we hit an inline schema without an id, so we may just invent a random unique one since it will never be referenced.
           val canonicalName = canonicalNameGenerator.generate(ImplicitId)
           val rootId        = RootId.fromCanonical(canonicalName)

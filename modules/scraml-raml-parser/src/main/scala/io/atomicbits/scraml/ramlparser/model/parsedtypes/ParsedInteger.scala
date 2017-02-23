@@ -52,7 +52,7 @@ object ParsedInteger {
 
     val model: TypeModel = TypeModel(json)
 
-    val id = IdExtractor(json)
+    val id = JsonSchemaIdExtractor(json)
 
     Success(
       ParsedInteger(

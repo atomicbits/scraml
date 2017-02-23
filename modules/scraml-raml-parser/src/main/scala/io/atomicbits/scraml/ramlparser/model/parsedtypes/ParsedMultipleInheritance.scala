@@ -84,7 +84,7 @@ object ParsedMultipleInheritance {
     }
 
     // Process the id
-    val id: Id = IdExtractor(json)
+    val id: Id = JsonSchemaIdExtractor(json)
 
     val model: TypeModel = TypeModel(json)
 

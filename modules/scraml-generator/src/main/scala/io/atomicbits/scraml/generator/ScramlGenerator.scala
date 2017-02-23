@@ -132,7 +132,6 @@ object ScramlGenerator {
 
     val host    = packageBasePath.take(2).reverse.mkString(".")
     val urlPath = packageBasePath.drop(2).mkString("/")
-    val nativeToRootId: NativeId => RootId = nativeId => RootId(s"http://$host/$urlPath/${nativeId.id}.json")
 
     val defaultBasePath: List[String] = packageBasePath
 
@@ -142,31 +141,6 @@ object ScramlGenerator {
       GenerationAggr(apiName = apiClassName, apiBasePackage = packageBasePath, raml = ramlExp, canonicalToMap = canonicalLookup.map)
 
     generationAggregator
-    // Old version from here
-//    val ramlExpanded    = raml.collectCanonicalTypes(defaultBasePath) // old version
-//    val typeLookupTable = ramlExpanded.canonicalMap.get
-//
-//    val canonicalMap: CanonicalMap = new TypeClassRepAssembler(nativeToRootId).deduceClassReps(typeLookupTable)
-//    println(s"Type Lookup generated")
-//
-//    val classMap: ClassMap = canonicalMap.values.map(classRep => classRep.classRef -> classRep).toMap
-//    val richResources      = ramlExpanded.resources.map(RichResource(_, packageBasePath, typeLookupTable, canonicalMap, nativeToRootId))
-//
-//    language match {
-//      case Scala =>
-//        val caseClasses: Seq[ClassRep] = CaseClassGenerator.generateCaseClasses(classMap)
-//        println(s"Case classes generated")
-//        val resources: List[ClassRep] = ScalaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
-//        println(s"Resources DSL generated")
-//        caseClasses ++ resources
-//      case Java =>
-//        val pojos: Seq[ClassRep] = PojoGenerator.generatePojos(classMap)
-//        println(s"POJOs generated")
-//        val resources: List[ClassRep] = JavaResourceClassGenerator.generateResourceClasses(apiClassName, packageBasePath, richResources)
-//        println(s"Resources DSL generated")
-//        pojos ++ resources
-//    }
-
   }
 
   private val formatSettings =

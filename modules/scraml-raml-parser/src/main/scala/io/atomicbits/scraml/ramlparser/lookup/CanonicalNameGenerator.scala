@@ -31,6 +31,7 @@ case class CanonicalNameGenerator(defaultBasePath: List[String]) {
 
   def generate(id: Id): CanonicalName = id match {
     case absoluteId: AbsoluteId => absoluteIdToCanonicalName(absoluteId)
+    case relId: RelativeId      => CanonicalName.create(name = relId.name, packagePath = defaultBasePath ++ relId.path)
     case nativeId: NativeId     => CanonicalName.create(name = nativeId.id, packagePath = defaultBasePath)
     case ImplicitId             => CanonicalName.create(name = s"Implicit${UUID.randomUUID().toString}", packagePath = defaultBasePath)
     case x                      => sys.error(s"Cannot create a canonical name from a ${x.getClass.getSimpleName}")

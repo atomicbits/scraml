@@ -25,20 +25,21 @@ import play.api.libs.json.{ JsObject, JsValue }
 /**
   * Created by peter on 25/03/16.
   */
-object IdExtractor {
+object JsonSchemaIdExtractor {
 
   def apply(json: JsValue): Id =
-    List(IdAnalyser.idFromField(json, "id"), IdAnalyser.idFromField(json, "title")).flatten.headOption.getOrElse(ImplicitId)
+    List(JsonSchemaIdAnalyser.idFromField(json, "id"), JsonSchemaIdAnalyser.idFromField(json, "title")).flatten.headOption
+      .getOrElse(ImplicitId)
 
 }
 
 object RefExtractor {
 
-  def unapply(json: JsValue): Option[Id] = IdAnalyser.idFromField(json, ParsedTypeReference.value)
+  def unapply(json: JsValue): Option[Id] = JsonSchemaIdAnalyser.idFromField(json, ParsedTypeReference.value)
 
 }
 
-object IdAnalyser {
+object JsonSchemaIdAnalyser {
 
   /**
     * Transform the given field of the schema to an Id if possible.

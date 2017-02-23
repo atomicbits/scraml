@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.model.{ ImplicitId, NativeId }
+import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
 import play.api.libs.json.{ JsArray, JsObject, JsValue }
 
@@ -79,9 +79,9 @@ object Types {
           sometype.map { tp =>
             val nativeId = NativeId(name)
             val typeWithProperId =
-              tp.id match {
-                case ImplicitId => tp.updated(nativeId)
-                case _          => tp
+              (tp.id, tp.model) match {
+                case (ImplicitId, RamlModel) => tp.updated(nativeId)
+                case _                       => tp
               }
             Types(typeReferences = Map(nativeId -> typeWithProperId))
           }

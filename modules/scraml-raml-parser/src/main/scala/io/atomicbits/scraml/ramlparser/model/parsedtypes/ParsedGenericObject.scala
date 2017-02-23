@@ -87,7 +87,7 @@ object ParsedGenericObject {
     val model: TypeModel = TypeModel(json)
 
     // Process the id
-    val id: Id = IdExtractor(json)
+    val id: Id = JsonSchemaIdExtractor(json)
 
     // Process the required field
     val required = (json \ "required").asOpt[Boolean]

@@ -1,0 +1,18 @@
+#%RAML 0.8
+---
+title: test01
+version: 1.0
+mediaType: application/json
+
+types:
+  car:          !include car.json
+  engine:       !include engine.json
+  fuel:         !include fuel.json
+
+/cars:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: car
