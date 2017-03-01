@@ -241,7 +241,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    if (ttype.model == RamlModel) { // hasNativeIds(ttype)
+    if (hasNativeIds(ttype)) {
       ttype
     } else {
       ttype.id match {

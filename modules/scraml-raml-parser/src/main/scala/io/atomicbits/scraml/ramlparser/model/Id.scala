@@ -111,7 +111,8 @@ object RootId {
 
   def fileNameToName(fileNameRep: String): String = {
     val filenameWithoutHashtags = fileNameRep.split('#').take(1).head
-    filenameWithoutHashtags.split('.').take(1).head
+    val name                    = filenameWithoutHashtags.split('.').take(1).head
+    name
   }
 
   def fromPackagePath(packagePath: List[String], name: String): RootId = {
