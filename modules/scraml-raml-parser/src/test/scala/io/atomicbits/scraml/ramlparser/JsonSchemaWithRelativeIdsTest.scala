@@ -20,7 +20,8 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
-import io.atomicbits.scraml.ramlparser.model.Raml
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
+import io.atomicbits.scraml.ramlparser.model.{ Get, MediaType, Raml, StatusCode }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
@@ -49,6 +50,21 @@ class JsonSchemaWithRelativeIdsTest extends FeatureSpec with GivenWhenThen with 
       val raml                           = parsedModel.get
       val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
 
+      val carsResource                 = ramlUpdated.resources.filter(_.urlSegment == "cars").head
+      val getBody                      = carsResource.actionMap(Get).responses.responseMap(StatusCode("200")).body
+      val canonicalType: TypeReference = getBody.contentMap(MediaType("application/json")).bodyType.get.canonical.get
+
+      canonicalType.isInstanceOf[NonPrimitiveTypeReference] shouldBe true
+      val car     = canonicalType.asInstanceOf[NonPrimitiveTypeReference]
+      val carName = CanonicalName.create("Car", List("io", "atomicbits", "model"))
+      car.refers shouldBe carName
+
+      val carType = canonicalLookup.map(carName).asInstanceOf[ObjectType]
+      carType.properties("drive") shouldBe
+        Property(
+          name  = "drive",
+          ttype = NonPrimitiveTypeReference(refers = CanonicalName(name = "Engine", packagePath = List("io", "atomicbits", "model")))
+        )
     }
   }
 
