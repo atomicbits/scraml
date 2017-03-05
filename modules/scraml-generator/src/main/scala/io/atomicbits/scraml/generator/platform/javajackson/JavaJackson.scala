@@ -158,22 +158,28 @@ object JavaJackson extends Platform with CleanNameTools {
     dependencyImports
   }
 
-  override def classFileExtension: String = "java"
+  override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr =
+    PojoGenerator.generate(generationAggr, toClassDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, classDefinition: TransferObjectClassDefinition): GenerationAggr = ???
+  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
+    InterfaceGenerator.generate(generationAggr, toInterfaceDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = ???
+  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr =
+    EnumGenerator.generate(generationAggr, enumDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = ???
+  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr =
+    ClientClassGenerator.generate(generationAggr, clientClassDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = ???
-
-  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = ???
+  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr =
+    ResourceClassGenerator.generate(generationAggr, resourceClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
-    ???
+    HeaderSegmentClassGenerator.generate(generationAggr, headerSegmentClassDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr = ???
+  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
+    UnionClassGenerator.generate(generationAggr, unionClassDefinition)
+
+  override def classFileExtension: String = "java"
 
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 

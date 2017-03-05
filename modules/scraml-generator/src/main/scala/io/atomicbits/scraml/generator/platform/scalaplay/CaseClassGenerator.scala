@@ -46,14 +46,16 @@ object CaseClassGenerator extends SourceGenerator {
 
     val originalToCanonicalName = toClassDefinition.reference.canonicalName
 
+    val hasOwnTrait = generationAggr.isParent(originalToCanonicalName)
+
     val actualToCanonicalClassReference: ClassReference =
-      if (generationAggr.isParent(originalToCanonicalName)) toClassDefinition.implementingInterfaceReference
+      if (hasOwnTrait) toClassDefinition.implementingInterfaceReference
       else toClassDefinition.reference
 
-    val hasOwnTrait = generationAggr.hasChildren(originalToCanonicalName)
     val initialTosWithTrait: Seq[TransferObjectClassDefinition] =
       if (hasOwnTrait) Seq(toClassDefinition)
       else Seq.empty
+
     val initialFields: Seq[Field] = toClassDefinition.fields
 
     // Add all parents recursively as traits to implement and collect all fields.
@@ -81,12 +83,10 @@ object CaseClassGenerator extends SourceGenerator {
         None
       }
 
-    val traitsToGenerate = recursiveExtendedTraits.map(TransferObjectInterfaceDefinition(_, discriminator))
-
     val traitsToImplement =
       generationAggr
         .directParents(originalToCanonicalName)
-        .filter { parent =>
+        .filter { parent => // ToDo: simplify this!!! If hasOwnTrait, then no parent traits are implemented, only its own trait is!!!
           if (hasOwnTrait) !generationAggr.isParentOf(parent, originalToCanonicalName)
           else true
         }
@@ -96,6 +96,8 @@ object CaseClassGenerator extends SourceGenerator {
           traitsToImpl :+ parentDefinition
         }
         .map(TransferObjectInterfaceDefinition(_, discriminator))
+
+    val traitsToGenerate = recursiveExtendedTraits.map(TransferObjectInterfaceDefinition(_, discriminator))
 
     // add the collected traits to the generationAggr.toInterfaceMap if they aren't there yet
     val generationAggrWithAddedInterfaces =

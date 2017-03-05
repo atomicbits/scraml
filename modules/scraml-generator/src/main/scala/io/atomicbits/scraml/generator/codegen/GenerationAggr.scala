@@ -135,6 +135,12 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
   def isNonLeafChild(canonicalName: CanonicalName): Boolean = isChild(canonicalName) && isParent(canonicalName)
 
   /**
+    * A class is a parent in a multiple inheritance relation if it has a child (direct or indirect) that has more than one parent.
+    */
+  def isParentInMultipleInheritanceRelation(canonicalName: CanonicalName): Boolean =
+    allChildren(canonicalName).exists(directParents(_).size > 1)
+
+  /**
     * @return A breadth-first list of all parent canonical names.
     */
   def allParents(canonicalName: CanonicalName): List[CanonicalName] = {
@@ -145,13 +151,30 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]     
         case moreParents =>
           val nextLevelOfParents =
             parentsToExpand.flatMap { parent =>
-              toChildParentsMap.getOrElse(parent, Set.empty[CanonicalName]).toList
+              directParents(parent).toList
             }
           findParents(nextLevelOfParents, parentsFound ++ parentsToExpand)
       }
     }
 
-    findParents(toChildParentsMap.getOrElse(canonicalName, Set.empty[CanonicalName]).toList)
+    findParents(directParents(canonicalName).toList)
+  }
+
+  def allChildren(canonicalName: CanonicalName): List[CanonicalName] = {
+
+    def findChildren(childrenToExpand: List[CanonicalName], childrenFound: List[CanonicalName] = List.empty): List[CanonicalName] = {
+      childrenToExpand match {
+        case Nil => childrenFound
+        case moreChildren =>
+          val nextLevelOfChildren =
+            childrenToExpand.flatMap { child =>
+              directChildren(child).toList
+            }
+          findChildren(nextLevelOfChildren, childrenFound ++ childrenToExpand)
+      }
+    }
+
+    findChildren(directChildren(canonicalName).toList)
   }
 
   /**

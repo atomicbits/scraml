@@ -21,7 +21,6 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType }
 import Platform._
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 
