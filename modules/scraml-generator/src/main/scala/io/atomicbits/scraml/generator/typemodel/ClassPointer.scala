@@ -30,7 +30,7 @@ case class ClassReference(name: String,
                           packageParts: List[String]                        = List.empty,
                           typeParameters: List[TypeParameter]               = List.empty,
                           typeParamValues: Map[TypeParameter, ClassPointer] = Map.empty,
-                          isArray: Boolean                                  = false,
+                          arrayType: Option[ClassReference]                 = None,
                           predef: Boolean                                   = false,
                           library: Boolean                                  = false,
                           isTypeParameter: Boolean                          = false)
@@ -44,6 +44,8 @@ case class ClassReference(name: String,
     * e.g. List[T] and not List[Dog]
     */
   lazy val base: ClassReference = if (typeParamValues.isEmpty) this else copy(typeParamValues = Map.empty)
+
+  val isArray: Boolean = arrayType.isDefined
 
 }
 

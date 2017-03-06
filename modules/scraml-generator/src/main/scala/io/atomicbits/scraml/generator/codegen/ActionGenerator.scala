@@ -180,21 +180,10 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
 
   private def generateActionImports(action: ActionSelection)(implicit platform: Platform): Set[ClassPointer] = {
 
-    val contentTypeImports =
-      action.selectedContentType match {
-        case BinaryContentType(contentTypeHeader) => Set[ClassPointer](BinaryDataClassReference)
-        case typedContentType: TypedContentType   => Set(typedContentType.actualClassPointer)
-        case _                                    => Set.empty[ClassPointer]
-      }
+    val bodyTypes     = actionCode.bodyTypes(action).flatten.toSet
+    val responseTypes = actionCode.responseTypes(action).flatten.toSet
 
-    val responseTypeImports =
-      action.selectedResponsetype match {
-        case BinaryResponseType(acceptHeader)    => Set[ClassPointer](BinaryDataClassReference)
-        case typedContentType: TypedResponseType => Set(typedContentType.actualClassPointer)
-        case _                                   => Set.empty[ClassPointer]
-      }
-
-    contentTypeImports ++ responseTypeImports
+    bodyTypes ++ responseTypes
   }
 
   private def createHeaderSegment(packageParts: List[String],

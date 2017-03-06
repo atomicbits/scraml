@@ -61,7 +61,7 @@ object ResourceClassGenerator extends SourceGenerator {
            import java.util.concurrent.CompletableFuture;
            import java.io.*;
 
-           ${imports.mkString("", ";\n", ";")}
+           ${imports.mkString("\n")}
 
            $classDefinition
 

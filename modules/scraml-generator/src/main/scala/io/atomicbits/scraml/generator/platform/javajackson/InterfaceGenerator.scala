@@ -149,7 +149,7 @@ object InterfaceGenerator extends SourceGenerator {
 
         import com.fasterxml.jackson.annotation.*;
 
-        ${imports.mkString("", ";\n", ";")};
+        ${imports.mkString("\n")};
 
         $jsonTypeAnnotations
         ${generateInterfaceSource(interfaceClassReference, interfacesToImplement, fieldsToGenerate, skipFieldName)}

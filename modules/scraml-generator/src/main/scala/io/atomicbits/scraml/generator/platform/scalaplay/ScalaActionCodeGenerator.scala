@@ -70,6 +70,23 @@ object ScalaActionCodeGenerator extends ActionCode {
       case x             => List(Some(StringClassReference))
     }
 
+  def responseTypes(action: ActionSelection): List[Option[ClassPointer]] =
+    action.selectedResponsetype match {
+      case StringResponseType(acceptHeader) => List(Some(StringClassReference))
+      case JsonResponseType(acceptHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
+      case BinaryResponseType(acceptHeader) =>
+        List(
+          Some(StringClassReference),
+          Some(FileClassReference),
+          Some(InputStreamClassReference),
+          Some(ArrayClassReference(arrayType = ByteClassReference))
+        )
+      case typedResponseType: TypedResponseType =>
+        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedResponseType.actualClassPointer))
+      case NoResponseType => List(None)
+      case x              => List(Some(StringClassReference))
+    }
+
   def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer], generationAggr: GenerationAggr): String = {
 
     val bodyType = optBodyType.map(_.classDefinition).getOrElse("String")

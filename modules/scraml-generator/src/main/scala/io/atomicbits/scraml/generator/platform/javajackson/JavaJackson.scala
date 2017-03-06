@@ -38,11 +38,11 @@ object JavaJackson extends Platform with CleanNameTools {
     classPointer match {
       case classReference: ClassReference => classReference
       case ArrayClassReference(arrayType) =>
-        ClassReference(name = arrayType.native.name, packageParts = arrayType.native.safePackageParts, isArray = true)
+        ClassReference(name = arrayType.native.name, packageParts = arrayType.native.safePackageParts, arrayType = Some(arrayType.native))
       case StringClassReference =>
         ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
       case ByteClassReference =>
-        ClassReference(name = "Byte", packageParts = List("java", "lang"), predef = true)
+        ClassReference(name = "byte", packageParts = List.empty, predef = true)
       case BinaryDataClassReference =>
         ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
       case FileClassReference =>
@@ -97,14 +97,17 @@ object JavaJackson extends Platform with CleanNameTools {
   override def classDefinition(classPointer: ClassPointer): String = {
     val classReference = classPointer.native
 
-    if (classReference.typeParameters.isEmpty) {
-      classReference.name
-    } else {
-      val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-        classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+    val classDefinition =
+      if (classReference.typeParameters.isEmpty) {
+        classReference.name
+      } else {
+        val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
+          classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+        }
+        s"${classReference.name}<${typeParametersOrValues.mkString(",")}>"
       }
-      s"${classReference.name}<${typeParametersOrValues.mkString(",")}>"
-    }
+    if (classReference.isArray) s"$classDefinition[]"
+    else classDefinition
   }
 
   override def className(classPointer: ClassPointer): String = classPointer.native.name
@@ -142,8 +145,12 @@ object JavaJackson extends Platform with CleanNameTools {
     def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
 
       def importFromClassReference(classRef: ClassReference): Option[String] = {
-        if (classRef.packageName != ownPackage && !classRef.predef) Some(s"import ${classRef.fullyQualifiedName};")
-        else None
+        if (classRef.isArray) {
+          importFromClassReference(classRef.arrayType.get)
+        } else {
+          if (classRef.packageName != ownPackage && !classRef.predef) Some(s"import ${classRef.fullyQualifiedName};")
+          else None
+        }
       }
 
       val classReference = classPtr.native

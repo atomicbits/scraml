@@ -25,6 +25,7 @@ import io.atomicbits.scraml.generator.codegen.{ ActionCode, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**
@@ -71,6 +72,23 @@ object JavaActionCodeGenerator extends ActionCode {
         )
       case NoContentType => List(None)
       case x             => List(Some(StringClassReference))
+    }
+
+  def responseTypes(action: ActionSelection): List[Option[ClassPointer]] =
+    action.selectedResponsetype match {
+      case StringResponseType(acceptHeader) => List(Some(StringClassReference))
+      case JsonResponseType(acceptHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
+      case BinaryResponseType(acceptHeader) =>
+        List(
+          Some(StringClassReference),
+          Some(FileClassReference),
+          Some(InputStreamClassReference),
+          Some(ArrayClassReference(arrayType = ByteClassReference))
+        )
+      case typedResponseType: TypedResponseType =>
+        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedResponseType.actualClassPointer))
+      case NoResponseType => List(None)
+      case x              => List(Some(StringClassReference))
     }
 
   def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer], generationAggr: GenerationAggr): String = {
@@ -131,23 +149,17 @@ object JavaActionCodeGenerator extends ActionCode {
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String = {
     val (queryParameterName, parameter) = qParam
 
-    val sanitizedParameterName = CleanNameTools.cleanFieldName(queryParameterName)
+    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
 
     parameter.parameterType.parsed match {
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
-        if (parameter.required) {
-          s"$sanitizedParameterName: $primitive"
-        } else {
-          val defaultValue = if (noDefault) "" else s"= None"
-          s"$sanitizedParameterName: Option[$primitive] $defaultValue"
-        }
+        s"$primitive $sanitizedParameterName"
       case arrayType: ParsedArray =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
-            val primitive    = primitiveTypeToJavaType(primitiveType, parameter.repeated)
-            val defaultValue = if (noDefault) "" else s"= List.empty[$primitive]"
-            s"$sanitizedParameterName: List[$primitive] $defaultValue"
+            val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+            s"List<$primitive> $sanitizedParameterName"
           case other =>
             sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
         }

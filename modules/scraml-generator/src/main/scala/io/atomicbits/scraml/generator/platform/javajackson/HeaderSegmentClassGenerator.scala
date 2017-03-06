@@ -49,7 +49,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
          import java.util.concurrent.CompletableFuture;
          import java.io.*;
 
-         ${imports.mkString(";\n")};
+         ${imports.mkString("\n")};
 
 
          public class $className extends HeaderSegment {

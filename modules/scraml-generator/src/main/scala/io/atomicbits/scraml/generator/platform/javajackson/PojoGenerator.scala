@@ -171,7 +171,7 @@ object PojoGenerator extends SourceGenerator {
 
         import com.fasterxml.jackson.annotation.*;
 
-        ${imports.mkString("", ";\n", ";")};
+        ${imports.mkString("\n")}
 
         $jsonTypeAnnotations
         ${generatePojoSource(toClassReference, interfaceToImplement, classToExtend, fieldsToGenerate, skipFieldName)}

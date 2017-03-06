@@ -37,6 +37,8 @@ trait ActionCode {
     */
   def bodyTypes(action: ActionSelection): List[Option[ClassPointer]]
 
+  def responseTypes(action: ActionSelection): List[Option[ClassPointer]]
+
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
 
 //  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
