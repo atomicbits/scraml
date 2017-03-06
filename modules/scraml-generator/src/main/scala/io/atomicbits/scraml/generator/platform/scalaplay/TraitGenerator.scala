@@ -128,7 +128,7 @@ object TraitGenerator extends SourceGenerator {
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(toInterfaceDefinition.classReference),
+        filePath = toInterfaceDefinition.classReference.toFilePath,
         content  = source
       )
 

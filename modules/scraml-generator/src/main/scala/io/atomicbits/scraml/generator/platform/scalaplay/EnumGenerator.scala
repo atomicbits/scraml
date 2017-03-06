@@ -52,7 +52,7 @@ object EnumGenerator extends SourceGenerator {
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(enumDefinition.reference),
+        filePath = enumDefinition.reference.toFilePath,
         content  = source
       )
 

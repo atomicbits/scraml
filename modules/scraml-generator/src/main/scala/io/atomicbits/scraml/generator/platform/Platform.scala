@@ -92,12 +92,10 @@ trait Platform {
   /**
     * Transforms a given class reference to a file path. The given class reference already has clean package and class names.
     *
-    * @param classReference The class reference for which a file path is generated.
+    * @param classPointer The class reference for which a file path is generated.
     * @return The relative file name for the given class.
     */
-  def classReferenceToFilePath(classReference: ClassReference): String = {
-    s"${classReference.packageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
-  }
+  def toFilePath(classPointer: ClassPointer): String
 
 }
 
@@ -177,6 +175,8 @@ object Platform {
     def canonicalName(implicit platform: Platform): String = platform.classDefinitionString(classPointer)
 
     def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
+
+    def toFilePath(implicit platform: Platform): String = platform.toFilePath(classPointer)
 
     def implementingInterfaceReference(implicit platform: Platform): ClassReference =
       platform.implementingInterfaceReference(classPointer.native)

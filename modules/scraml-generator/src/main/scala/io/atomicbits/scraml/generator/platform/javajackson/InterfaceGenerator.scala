@@ -157,7 +157,7 @@ object InterfaceGenerator extends SourceGenerator {
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(interfaceClassReference),
+        filePath = interfaceClassReference.toFilePath,
         content  = source
       )
 

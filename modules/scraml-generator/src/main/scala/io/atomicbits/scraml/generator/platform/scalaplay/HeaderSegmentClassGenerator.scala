@@ -57,7 +57,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
          }
        """
 
-    val filePath = platform.classReferenceToFilePath(headerSegmentClassDefinition.reference)
+    val filePath = headerSegmentClassDefinition.reference.toFilePath
 
     generationAggr.addSourceFile(SourceFile(filePath = filePath, content = source))
   }

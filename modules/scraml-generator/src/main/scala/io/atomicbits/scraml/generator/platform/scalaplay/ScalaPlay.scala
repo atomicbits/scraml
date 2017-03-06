@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
+import java.io.File
+
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
 import Platform._
@@ -176,6 +178,14 @@ object ScalaPlay extends Platform with CleanNameTools {
     UnionClassGenerator.generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = "scala"
+
+  override def toFilePath(classPointer: ClassPointer): String = {
+    classPointer match {
+      case classReference: ClassReference =>
+        s"${classReference.safePackageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
+      case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
+    }
+  }
 
   def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
     val scalaReservedwords =

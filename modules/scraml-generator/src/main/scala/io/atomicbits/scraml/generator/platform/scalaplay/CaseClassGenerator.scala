@@ -151,7 +151,7 @@ object CaseClassGenerator extends SourceGenerator {
 
     val sourceFile =
       SourceFile(
-        filePath = platform.classReferenceToFilePath(toClassReference),
+        filePath = toClassReference.toFilePath,
         content  = source
       )
 

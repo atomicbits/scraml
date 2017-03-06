@@ -159,8 +159,8 @@ object JavaActionCodeGenerator extends ActionCode {
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
     (parameter.parameterType.parsed, parameter.required) match {
-      case primitive: PrimitiveType => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedParameterName));"""
-      case arrayType: ParsedArray   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedParameterName));"""
+      case (primitive: PrimitiveType, _) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedParameterName));"""
+      case (arrayType: ParsedArray, _)   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedParameterName));"""
     }
   }
 

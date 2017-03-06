@@ -150,74 +150,72 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       bboxFieldClassPointer shouldBe ListClassReference(DoubleClassReference(primitive = false))
     }
 
-    ignore("We ignore this test as long as the Java implementation of the code generation is missing.") {
-      scenario("test generated Java DSL") {
+    scenario("test generated Java DSL") {
 
-        Given("a RAML specification")
-        val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+      Given("a RAML specification")
+      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
 
-        When("we generate the RAMl specification into class representations")
-        implicit val platform = JavaJackson
+      When("we generate the RAMl specification into class representations")
+      implicit val platform = JavaJackson
 
-        val generationAggr: GenerationAggr =
-          ScramlGenerator
-            .generateSourceFiles(
-              ramlApiPath    = apiResourceUrl.toString,
-              apiPackageName = "io.atomicbits.scraml",
-              apiClassName   = "TestApi",
-              platform
-            )
-            .generate
+      val generationAggr: GenerationAggr =
+        ScramlGenerator
+          .generateSourceFiles(
+            ramlApiPath    = apiResourceUrl.toString,
+            apiPackageName = "io.atomicbits.scraml",
+            apiClassName   = "TestApi",
+            platform
+          )
+          .generate
 
-        Then("we should get valid class representations")
+      Then("we should get valid class representations")
 
-        val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
 
-        val expectedFilePaths = Set(
-          "io/atomicbits/scraml/TestApi.java",
-          "io/atomicbits/scraml/rest/RestResource.java",
-          "io/atomicbits/scraml/rest/user/UserResource.java",
-          "io/atomicbits/scraml/rest/user/userid/dogs/DogsResource.java",
-          "io/atomicbits/scraml/rest/user/userid/UseridResource.java",
-          "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV01JsonHeaderSegment.java",
-          "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV10JsonHeaderSegment.java",
-          "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV01JsonHeaderSegment.java",
-          "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV10JsonHeaderSegment.java",
-          "io/atomicbits/scraml/rest/user/upload/UploadResource.java",
-          "io/atomicbits/scraml/rest/user/activate/ActivateResource.java",
-          "io/atomicbits/scraml/rest/animals/AnimalsResource.java",
-          "io/atomicbits/schema/User.java",
-          "io/atomicbits/schema/UserOther.java",
-          "io/atomicbits/schema/UserDefinitionsAddress.java",
-          "io/atomicbits/schema/Link.java",
-          "io/atomicbits/schema/PagedList.java",
-          "io/atomicbits/schema/AnimalImpl.java",
-          "io/atomicbits/schema/Animal.java",
-          "io/atomicbits/schema/Dog.java",
-          "io/atomicbits/schema/Cat.java",
-          "io/atomicbits/schema/Fish.java",
-          "io/atomicbits/schema/Method.java",
-          "io/atomicbits/schema/GeometryImpl.java",
-          "io/atomicbits/schema/Geometry.java",
-          "io/atomicbits/schema/Point.java",
-          "io/atomicbits/schema/LineString.java",
-          "io/atomicbits/schema/MultiPoint.java",
-          "io/atomicbits/schema/MultiLineString.java",
-          "io/atomicbits/schema/Polygon.java",
-          "io/atomicbits/schema/MultiPolygon.java",
-          "io/atomicbits/schema/GeometryCollection.java",
-          "io/atomicbits/schema/Crs.java",
-          "io/atomicbits/schema/NamedCrsProperty.java",
-          "io/atomicbits/scraml/rest/user/voidesc/VoidResource.java",
-          "io/atomicbits/scraml/rest/user/voidesc/location/LocationResource.java",
-          "io/atomicbits/scraml/Book.java",
-          "io/atomicbits/scraml/Author.java",
-          "io/atomicbits/scraml/books/BooksResource.java"
-        )
+      val expectedFilePaths = Set(
+        "io/atomicbits/scraml/TestApi.java",
+        "io/atomicbits/scraml/rest/RestResource.java",
+        "io/atomicbits/scraml/rest/user/UserResource.java",
+        "io/atomicbits/scraml/rest/user/userid/dogs/DogsResource.java",
+        "io/atomicbits/scraml/rest/user/userid/UseridResource.java",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV01JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV10JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV01JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV10JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/upload/UploadResource.java",
+        "io/atomicbits/scraml/rest/user/activate/ActivateResource.java",
+        "io/atomicbits/scraml/rest/animals/AnimalsResource.java",
+        "io/atomicbits/schema/User.java",
+        "io/atomicbits/schema/UserOther.java",
+        "io/atomicbits/schema/UserDefinitionsAddress.java",
+        "io/atomicbits/schema/Link.java",
+        "io/atomicbits/schema/PagedList.java",
+        // "io/atomicbits/schema/AnimalImpl.java", // Java Pojo can extend one another, the interfaces are introduced only when multiple-inheritance is involved!
+        "io/atomicbits/schema/Animal.java",
+        "io/atomicbits/schema/Dog.java",
+        "io/atomicbits/schema/Cat.java",
+        "io/atomicbits/schema/Fish.java",
+        "io/atomicbits/schema/Method.java",
+        // "io/atomicbits/schema/GeometryImpl.java",
+        "io/atomicbits/schema/Geometry.java",
+        "io/atomicbits/schema/Point.java",
+        "io/atomicbits/schema/LineString.java",
+        "io/atomicbits/schema/MultiPoint.java",
+        "io/atomicbits/schema/MultiLineString.java",
+        "io/atomicbits/schema/Polygon.java",
+        "io/atomicbits/schema/MultiPolygon.java",
+        "io/atomicbits/schema/GeometryCollection.java",
+        "io/atomicbits/schema/Crs.java",
+        "io/atomicbits/schema/NamedCrsProperty.java",
+        "io/atomicbits/scraml/rest/user/voidesc/VoidResource.java",
+        "io/atomicbits/scraml/rest/user/voidesc/location/LocationResource.java",
+        "io/atomicbits/scraml/Book.java",
+        "io/atomicbits/scraml/Author.java",
+        "io/atomicbits/scraml/books/BooksResource.java"
+      )
 
-        generatedFilePaths -- expectedFilePaths shouldBe Set.empty
-        expectedFilePaths -- generatedFilePaths shouldBe Set.empty
-      }
+      generatedFilePaths -- expectedFilePaths shouldBe Set.empty
+      expectedFilePaths -- generatedFilePaths shouldBe Set.empty
     }
 
   }

@@ -34,7 +34,7 @@ object ClientClassGenerator extends SourceGenerator {
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
-    val apiPackage        = clientClassDefinition.classReference.packageParts
+    val apiPackage        = clientClassDefinition.classReference.safePackageParts
     val apiClassName      = clientClassDefinition.classReference.name
     val apiClassReference = clientClassDefinition.classReference
 
@@ -114,7 +114,7 @@ object ClientClassGenerator extends SourceGenerator {
 
     generationAggr
       .addSourceDefinitions(headerPathSourceDefs)
-      .addSourceFile(SourceFile(filePath = platform.classReferenceToFilePath(apiClassReference), content = sourcecode))
+      .addSourceFile(SourceFile(filePath = apiClassReference.toFilePath, content = sourcecode))
   }
 
 }

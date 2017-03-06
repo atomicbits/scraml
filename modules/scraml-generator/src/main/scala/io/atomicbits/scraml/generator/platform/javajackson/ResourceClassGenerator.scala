@@ -91,7 +91,7 @@ object ResourceClassGenerator extends SourceGenerator {
 
     generationAggr
       .addSourceDefinitions(headerPathSourceDefs)
-      .addSourceFile(SourceFile(filePath = platform.classReferenceToFilePath(resourceClassReference), content = sourcecode))
+      .addSourceFile(SourceFile(filePath = resourceClassReference.toFilePath, content = sourcecode))
   }
 
   def generateResourceConstructors(resourceClassDefinition: ResourceClassDefinition): List[String] = {

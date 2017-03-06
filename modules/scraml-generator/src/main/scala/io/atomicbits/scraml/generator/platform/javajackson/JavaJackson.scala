@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
+import java.io.File
+
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
 import Platform._
@@ -36,7 +38,7 @@ object JavaJackson extends Platform with CleanNameTools {
     classPointer match {
       case classReference: ClassReference => classReference
       case ArrayClassReference(arrayType) =>
-        ClassReference(name = arrayType.native.name, packageParts = arrayType.native.packageParts, isArray = true)
+        ClassReference(name = arrayType.native.name, packageParts = arrayType.native.safePackageParts, isArray = true)
       case StringClassReference =>
         ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
       case ByteClassReference =>
@@ -82,7 +84,7 @@ object JavaJackson extends Platform with CleanNameTools {
           library         = true
         )
       case typeParameter: TypeParameter =>
-        sys.error(s"Cannot transform a type parameter to a native class reference: $typeParameter.")
+        ClassReference(name = typeParameter.name, predef = true, isTypeParameter = true)
     }
   }
 
@@ -180,6 +182,14 @@ object JavaJackson extends Platform with CleanNameTools {
     UnionClassGenerator.generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = "java"
+
+  override def toFilePath(classPointer: ClassPointer): String = {
+    classPointer match {
+      case classReference: ClassReference =>
+        s"${classReference.safePackageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
+      case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
+    }
+  }
 
   def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
 
