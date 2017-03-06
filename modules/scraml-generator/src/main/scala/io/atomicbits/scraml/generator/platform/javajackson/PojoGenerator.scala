@@ -117,6 +117,7 @@ object PojoGenerator extends SourceGenerator {
       classToExtend,
       childrenToSerialize,
       fieldsToGenerate,
+      allFields,
       jsonTypeInfo.map(_.discriminator),
       actualToCanonicalClassReference,
       toClassDefinition,
@@ -129,6 +130,7 @@ object PojoGenerator extends SourceGenerator {
                            classToExtend: Option[TransferObjectClassDefinition],
                            childrenToSerialize: List[TransferObjectClassDefinition],
                            fieldsToGenerate: Seq[Field],
+                           allFields: Seq[Field],
                            skipFieldName: Option[String],
                            toClassReference: ClassReference,
                            toClassDefinition: TransferObjectClassDefinition,
@@ -174,7 +176,7 @@ object PojoGenerator extends SourceGenerator {
         ${imports.mkString("\n")}
 
         $jsonTypeAnnotations
-        ${generatePojoSource(toClassReference, interfaceToImplement, classToExtend, fieldsToGenerate, skipFieldName)}
+        ${generatePojoSource(toClassReference, interfaceToImplement, classToExtend, fieldsToGenerate, allFields, skipFieldName)}
      """
 
     val sourceFile =
@@ -190,14 +192,20 @@ object PojoGenerator extends SourceGenerator {
                                  interfaceToImplement: Option[TransferObjectInterfaceDefinition],
                                  classToExtend: Option[TransferObjectClassDefinition],
                                  fieldsToGenerate: Seq[Field],
+                                 allFields: Seq[Field],
                                  skipFieldName: Option[String] = None): String = {
 
-    val selectedFields =
+    def fieldsWithoutSkipField(fields: Seq[Field]): Seq[Field] = {
       skipFieldName map { skipField =>
-        fieldsToGenerate.filterNot(_.fieldName == skipField)
-      } getOrElse fieldsToGenerate
+        fields.filterNot(_.fieldName == skipField)
+      } getOrElse fields
+    }
 
-    val sortedFields = selectedFields.sortBy(_.safeFieldName) // In Java Pojo's, we sort by field name!
+    val selectedFields = fieldsWithoutSkipField(fieldsToGenerate)
+    val sortedFields   = selectedFields.sortBy(_.safeFieldName) // In Java Pojo's, we sort by field name!
+
+    val selectedFieldsWithParentFields = fieldsWithoutSkipField(allFields)
+    val sortedFieldsWithParentFields   = selectedFieldsWithParentFields.sortBy(_.safeFieldName)
 
     val privateFieldExpressions = sortedFields.map { field =>
       s"""
@@ -225,17 +233,17 @@ object PojoGenerator extends SourceGenerator {
     val implementsClass =
       interfaceToImplement.map(classToImpl => s"implements ${classToImpl.origin.reference.classDefinition}").getOrElse("")
 
-    val constructorInitialization = sortedFields map { sf =>
+    val constructorInitialization = sortedFieldsWithParentFields map { sf =>
       val fieldNameCap = sf.safeFieldName.capitalize
       s"this.set$fieldNameCap(${sf.safeFieldName});"
     }
 
-    val fieldDeclarations = sortedFields.map(_.fieldDeclaration)
+    val constructorFieldDeclarations = sortedFieldsWithParentFields.map(_.fieldDeclaration)
 
     val fieldConstructor =
-      if (fieldDeclarations.nonEmpty)
+      if (constructorFieldDeclarations.nonEmpty)
         s"""
-          public ${toClassReference.name}(${fieldDeclarations.mkString(", ")}) {
+          public ${toClassReference.name}(${constructorFieldDeclarations.mkString(", ")}) {
             ${constructorInitialization.mkString("\n")}
           }
          """

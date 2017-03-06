@@ -79,16 +79,24 @@ object ScalaPlay extends Platform with CleanNameTools {
       packageParts = classReference.packageParts
     )
 
-  override def classDefinition(classPointer: ClassPointer): String = {
+  override def classDefinition(classPointer: ClassPointer, fullyQualified: Boolean = false): String = {
     val classReference = classPointer.native
 
-    if (classReference.typeParameters.isEmpty) {
-      classReference.name
-    } else {
-      val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-        classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+    val classDef =
+      if (classReference.typeParameters.isEmpty) {
+        classReference.name
+      } else {
+        val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
+          classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+        }
+        s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
       }
-      s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
+
+    if (fullyQualified) {
+      val parts = safePackageParts(classPointer) :+ classDef
+      parts.mkString(".")
+    } else {
+      classDef
     }
   }
 
@@ -103,7 +111,7 @@ object ScalaPlay extends Platform with CleanNameTools {
 
   override def safePackageParts(classPointer: ClassPointer): List[String] = classPointer.native.packageParts
 
-  override def classDefinitionString(classPointer: ClassPointer): String = {
+  override def fullyQualifiedClassDefinition(classPointer: ClassPointer): String = {
     val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
     parts.mkString(".")
   }

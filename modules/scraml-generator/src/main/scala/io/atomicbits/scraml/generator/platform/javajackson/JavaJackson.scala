@@ -94,20 +94,35 @@ object JavaJackson extends Platform with CleanNameTools {
       packageParts = classReference.packageParts
     )
 
-  override def classDefinition(classPointer: ClassPointer): String = {
+  override def classDefinition(classPointer: ClassPointer, fullyQualified: Boolean = false): String = {
     val classReference = classPointer.native
 
-    val classDefinition =
+    val typedClassDefinition =
       if (classReference.typeParameters.isEmpty) {
         classReference.name
       } else {
         val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-          classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+          classReference.typeParamValues
+            .get(typeParam)
+            .map { classPointer =>
+              if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
+              else classPointer.native.classDefinition
+            }
+            .getOrElse(typeParam.name)
         }
         s"${classReference.name}<${typeParametersOrValues.mkString(",")}>"
       }
-    if (classReference.isArray) s"$classDefinition[]"
-    else classDefinition
+
+    val arrayedClassDefinition =
+      if (classReference.isArray) s"$typedClassDefinition[]"
+      else typedClassDefinition
+
+    if (fullyQualified) {
+      val parts = safePackageParts(classPointer) :+ arrayedClassDefinition
+      parts.mkString(".")
+    } else {
+      arrayedClassDefinition
+    }
   }
 
   override def className(classPointer: ClassPointer): String = classPointer.native.name
@@ -123,7 +138,7 @@ object JavaJackson extends Platform with CleanNameTools {
     classPointer.native.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
   }
 
-  override def classDefinitionString(classPointer: ClassPointer): String = {
+  override def fullyQualifiedClassDefinition(classPointer: ClassPointer): String = {
     val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
     parts.mkString(".")
   }

@@ -54,7 +54,7 @@ object JavaActionCodeGenerator extends ActionCode {
       case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedContentType.actualClassPointer))
+        List(Some(StringClassReference), Some(typedContentType.actualClassPointer))
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassReference),
@@ -117,16 +117,16 @@ object JavaActionCodeGenerator extends ActionCode {
     responseType match {
       case BinaryResponseType(acceptHeader)     => None
       case JsonResponseType(acceptHeader)       => None
-      case typedResponseType: TypedResponseType => Some(typedResponseType.actualClassPointer.canonicalName)
+      case typedResponseType: TypedResponseType => Some(typedResponseType.actualClassPointer.fullyQualifiedClassDefinition)
       case x                                    => None
     }
   }
 
   def canonicalContentType(contentType: ContentType): Option[String] = {
     contentType match {
-      case JsonContentType(contentTypeHeader)   => None
-      case typedResponseType: TypedResponseType => Some(typedResponseType.actualClassPointer.canonicalName)
-      case x                                    => None
+      case JsonContentType(contentTypeHeader) => None
+      case typedContentType: TypedContentType => Some(typedContentType.actualClassPointer.fullyQualifiedClassDefinition)
+      case x                                  => None
     }
   }
 

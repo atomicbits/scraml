@@ -53,7 +53,7 @@ trait Platform {
     */
   def implementingInterfaceReference(classReference: ClassReference): ClassReference
 
-  def classDefinition(classPointer: ClassPointer): String
+  def classDefinition(classPointer: ClassPointer, fullyQualified: Boolean = false): String
 
   def className(classPointer: ClassPointer): String
 
@@ -63,7 +63,7 @@ trait Platform {
 
   def safePackageParts(classPointer: ClassPointer): List[String]
 
-  def classDefinitionString(classPointer: ClassPointer): String
+  def fullyQualifiedClassDefinition(classPointer: ClassPointer): String
 
   def safeFieldName(field: Field): String
 
@@ -172,7 +172,7 @@ object Platform {
 
     def safePackageParts(implicit platform: Platform): List[String] = platform.safePackageParts(classPointer)
 
-    def canonicalName(implicit platform: Platform): String = platform.classDefinitionString(classPointer)
+    def fullyQualifiedClassDefinition(implicit platform: Platform): String = platform.classDefinition(classPointer, fullyQualified = true)
 
     def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
 
