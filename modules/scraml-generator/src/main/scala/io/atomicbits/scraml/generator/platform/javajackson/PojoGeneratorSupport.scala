@@ -40,8 +40,9 @@ trait PojoGeneratorSupport {
                                  generationAggr: GenerationAggr): Set[ChildToSerialize] = {
 
     val isTopLevelParent = !generationAggr.hasParents(canonicalName)
+    val hasChildren      = generationAggr.hasChildren(canonicalName)
 
-    if (isTopLevelParent) {
+    if (isTopLevelParent && hasChildren) {
 
       val selfAndChildrenWithClassDefinitions =
         generationAggr
