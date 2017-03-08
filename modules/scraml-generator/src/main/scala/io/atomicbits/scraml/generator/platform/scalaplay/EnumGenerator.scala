@@ -23,6 +23,7 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 /**
   * Created by peter on 14/01/17.
@@ -61,18 +62,26 @@ object EnumGenerator extends SourceGenerator {
 
   private def generateEnumCompanionObject(enumDefinition: EnumDefinition): String = {
 
-    def enumValue(value: String): String = {
+    // Accompany the enum names with their 'Scala-safe' name.
+    val enumsValuesWithSafeName =
+      enumDefinition.values map { value =>
+        val safeName = CleanNameUtil.escapeScalaKeyword(CleanNameUtil.cleanEnumName(value))
+        value -> safeName
+      }
+
+    def enumValue(valueWithSafeName: (String, String)): String = {
+      val (value, safeName) = valueWithSafeName
       s"""
-         case object $value extends ${enumDefinition.reference.name} {
+         case object $safeName extends ${enumDefinition.reference.name} {
            val name = "$value"
          }
       """
     }
 
     val enumMapValues =
-      enumDefinition.values
-        .map { v =>
-          s"$v.name -> $v"
+      enumsValuesWithSafeName
+        .map {
+          case (value, safeName) => s"$safeName.name -> $safeName"
         }
         .mkString(",")
 
@@ -80,7 +89,7 @@ object EnumGenerator extends SourceGenerator {
     s"""
         object $name {
 
-          ${enumDefinition.values.map(enumValue).mkString("\n")}
+          ${enumsValuesWithSafeName.map(enumValue).mkString("\n")}
 
           val byName = Map($enumMapValues)
 

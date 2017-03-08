@@ -28,7 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 /**
   * Created by peter on 1/03/17.
   */
-object PojoGenerator extends SourceGenerator {
+object PojoGenerator extends SourceGenerator with PojoGeneratorSupport {
 
   implicit val platform: Platform = JavaJackson
 
@@ -43,14 +43,14 @@ object PojoGenerator extends SourceGenerator {
       */
     val originalToCanonicalName = toClassDefinition.reference.canonicalName
 
-    val hasOwnInterface = generationAggr.isParentInMultipleInheritanceRelation(originalToCanonicalName)
+    val toHasOwnInterface = hasOwnInterface(originalToCanonicalName, generationAggr)
 
     val actualToCanonicalClassReference: ClassReference =
-      if (hasOwnInterface) toClassDefinition.implementingInterfaceReference
+      if (toHasOwnInterface) toClassDefinition.implementingInterfaceReference
       else toClassDefinition.reference
 
     val initialTosWithInterface: Seq[TransferObjectClassDefinition] =
-      if (hasOwnInterface) Seq(toClassDefinition)
+      if (toHasOwnInterface) Seq(toClassDefinition)
       else Seq.empty
 
     val ownFields: Seq[Field]            = toClassDefinition.fields
@@ -78,14 +78,16 @@ object PojoGenerator extends SourceGenerator {
         None
       }
 
-    val (interfaceToImplement, fieldsToGenerate, classToExtend) =
-      if (hasOwnInterface) {
-        val interfaceToImpl = Some(TransferObjectInterfaceDefinition(toClassDefinition, discriminator))
+    val hasMultipleDirectParents = generationAggr.directParents(originalToCanonicalName).size > 1
+
+    val (interfacesToImplement, fieldsToGenerate, classToExtend) = (toHasOwnInterface, hasMultipleDirectParents) match {
+      case (true, _) =>
+        val interfaceToImpl = List(TransferObjectInterfaceDefinition(toClassDefinition, discriminator))
         val fieldsToGen     = allFields
         val classToExt      = None
         (interfaceToImpl, fieldsToGen, classToExt)
-      } else {
-        val interfaceToImpl = None
+      case (false, false) =>
+        val interfaceToImpl = List.empty[TransferObjectInterfaceDefinition]
         val fieldsToGen     = ownFields
         val classToExt =
           generationAggr
@@ -93,103 +95,63 @@ object PojoGenerator extends SourceGenerator {
             .headOption // There should be at most one direct parent.
             .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
         (interfaceToImpl, fieldsToGen, classToExt)
-      }
+      case (false, true) =>
+        val interfaceToImpl =
+          generationAggr
+            .directParents(originalToCanonicalName)
+            .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
+            .map(TransferObjectInterfaceDefinition(_, discriminator))
+        val fieldsToGen = allFields
+        val classToExt  = None
+        (interfaceToImpl.toList, fieldsToGen, classToExt)
+    }
 
-    val generationAggrWithAddedInterfaces = interfaceToImplement.map(generationAggr.addInterfaceSourceDefinition).getOrElse(generationAggr)
+    val skipFieldName = jsonTypeInfo.map(_.discriminator)
 
     val childrenToSerialize =
-      if (hasOwnInterface) {
-        // serialization annotations will be kept in the top-level interface
-        List.empty[TransferObjectClassDefinition]
-      } else {
-        if (!generationAggr.hasParents(originalToCanonicalName)) { // We're the top-level parent
-          generationAggr
-            .allChildren(originalToCanonicalName)
-            .map(child => generationAggr.toMap.getOrElse(child, sys.error(s"Expected to find $child in the generation aggregate.")))
-        } else {
-          // serialization annotations only needs to be kept in the top-level parent
-          List.empty[TransferObjectClassDefinition]
-        }
-      }
-
-    generatePojo(
-      interfaceToImplement,
-      classToExtend,
-      childrenToSerialize,
-      fieldsToGenerate,
-      allFields,
-      jsonTypeInfo.map(_.discriminator),
-      actualToCanonicalClassReference,
-      toClassDefinition,
-      jsonTypeInfo,
-      generationAggrWithAddedInterfaces
-    )
-  }
-
-  private def generatePojo(interfaceToImplement: Option[TransferObjectInterfaceDefinition],
-                           classToExtend: Option[TransferObjectClassDefinition],
-                           childrenToSerialize: List[TransferObjectClassDefinition],
-                           fieldsToGenerate: Seq[Field],
-                           allFields: Seq[Field],
-                           skipFieldName: Option[String],
-                           toClassReference: ClassReference,
-                           toClassDefinition: TransferObjectClassDefinition,
-                           jsonTypeInfo: Option[JsonTypeInfo],
-                           generationAggr: GenerationAggr): GenerationAggr = {
+      if (!toHasOwnInterface) compileChildrenToSerialize(originalToCanonicalName, toClassDefinition, generationAggr)
+      else Set.empty[ChildToSerialize]
 
     val importPointers: Seq[ClassPointer] = {
-      fieldsToGenerate.map(_.classPointer) ++ childrenToSerialize.map(_.reference.classPointer) ++
-        Seq(interfaceToImplement.map(_.origin.reference.classPointer), classToExtend.map(_.reference.classPointer)).flatten
+      fieldsToGenerate.map(_.classPointer) ++ childrenToSerialize.map(_.classReference) ++
+        interfacesToImplement.map(_.origin.reference.classPointer) ++ Seq(classToExtend.map(_.reference.classPointer)).flatten
     }
-    val imports: Set[String] = platform.importStatements(toClassReference, importPointers.toSet)
+    val imports: Set[String] = platform.importStatements(actualToCanonicalClassReference, importPointers.toSet)
 
-    val jsonTypeAnnotations =
-      if (childrenToSerialize.nonEmpty) {
-
-        val jsonSubTypes =
-          (toClassDefinition :: childrenToSerialize).map { toSerialize =>
-            val discriminatorValue = toSerialize.actualTypeDiscriminatorValue
-            val name               = toSerialize.reference.name
-            s"""
-               @JsonSubTypes.Type(value = $name.class, name = "$discriminatorValue")
-             """
-          }
-
-        val typeDiscriminator = jsonTypeInfo.map(_.discriminator).getOrElse("type")
-
-        s"""
-           @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "$typeDiscriminator")
-           @JsonSubTypes({
-                 ${jsonSubTypes.mkString(",\n")}
-           })
-         """
-      } else {
-        ""
-      }
+    val jsonTypeAnnotations = generateJsonTypeAnnotations(childrenToSerialize, jsonTypeInfo)
 
     val source =
       s"""
-        package ${toClassReference.packageName};
+        package ${actualToCanonicalClassReference.packageName};
 
         import com.fasterxml.jackson.annotation.*;
 
         ${imports.mkString("\n")}
 
         $jsonTypeAnnotations
-        ${generatePojoSource(toClassReference, interfaceToImplement, classToExtend, fieldsToGenerate, allFields, skipFieldName)}
+        ${generatePojoSource(actualToCanonicalClassReference,
+                             interfacesToImplement,
+                             classToExtend,
+                             fieldsToGenerate,
+                             allFields,
+                             skipFieldName)}
      """
+
+    val generationAggrWithAddedInterfaces = interfacesToImplement.foldLeft(generationAggr) { (aggr, interf) =>
+      generationAggr.addInterfaceSourceDefinition(interf)
+    }
 
     val sourceFile =
       SourceFile(
-        filePath = toClassReference.toFilePath,
+        filePath = actualToCanonicalClassReference.toFilePath,
         content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggrWithAddedInterfaces.copy(sourceFilesGenerated = sourceFile +: generationAggrWithAddedInterfaces.sourceFilesGenerated)
   }
 
   private def generatePojoSource(toClassReference: ClassReference,
-                                 interfaceToImplement: Option[TransferObjectInterfaceDefinition],
+                                 interfacesToImplement: List[TransferObjectInterfaceDefinition],
                                  classToExtend: Option[TransferObjectClassDefinition],
                                  fieldsToGenerate: Seq[Field],
                                  allFields: Seq[Field],
@@ -231,7 +193,9 @@ object PojoGenerator extends SourceGenerator {
 
     val extendsClass = classToExtend.map(classToExt => s"extends ${classToExt.reference.classDefinition}").getOrElse("")
     val implementsClass =
-      interfaceToImplement.map(classToImpl => s"implements ${classToImpl.origin.reference.classDefinition}").getOrElse("")
+      if (interfacesToImplement.nonEmpty)
+        interfacesToImplement.map(classToImpl => classToImpl.origin.reference.classDefinition).mkString("implements ", ", ", "")
+      else ""
 
     val constructorInitialization = sortedFieldsWithParentFields map { sf =>
       val fieldNameCap = sf.safeFieldName.capitalize

@@ -23,21 +23,22 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.generator.platform.javajackson.PojoGenerator.{ compileChildrenToSerialize, generateJsonTypeAnnotations }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 
 /**
   * Created by peter on 1/03/17.
   */
-object InterfaceGenerator extends SourceGenerator {
+object InterfaceGenerator extends SourceGenerator with PojoGeneratorSupport {
 
   implicit val platform: Platform = JavaJackson
 
   def generate(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
 
-    val toClassDefinition = toInterfaceDefinition.origin
-    val toCanonicalName   = toClassDefinition.reference.canonicalName
+    val toClassDefinition       = toInterfaceDefinition.origin
+    val originalToCanonicalName = toClassDefinition.reference.canonicalName
 
-    val parentNames: List[CanonicalName] = generationAggr.allParents(toCanonicalName)
+    val parentNames: List[CanonicalName] = generationAggr.allParents(originalToCanonicalName)
 
     val initialTosWithInterface: Seq[TransferObjectClassDefinition] = Seq(toInterfaceDefinition.origin)
     val ownFields: Seq[Field]                                       = toInterfaceDefinition.origin.fields
@@ -52,7 +53,7 @@ object InterfaceGenerator extends SourceGenerator {
 
     val interfacesToImplement =
       generationAggr
-        .directParents(toCanonicalName)
+        .directParents(originalToCanonicalName)
         .foldLeft(Seq.empty[TransferObjectClassDefinition]) { (intsToImpl, parentName) =>
           val parentDefinition =
             generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
@@ -60,12 +61,12 @@ object InterfaceGenerator extends SourceGenerator {
         }
         .map(TransferObjectInterfaceDefinition(_, toInterfaceDefinition.discriminator))
 
-    val isTopLevelInterface = !generationAggr.hasParents(toCanonicalName)
+    val isTopLevelInterface = !generationAggr.hasParents(originalToCanonicalName)
 
     val childrenToSerialize =
       if (isTopLevelInterface) {
         generationAggr
-          .allChildren(toCanonicalName)
+          .allChildren(originalToCanonicalName)
           .map(child => generationAggr.toMap.getOrElse(child, sys.error(s"Expected to find $child in the generation aggregate.")))
       } else {
         List.empty[TransferObjectClassDefinition]
@@ -86,13 +87,14 @@ object InterfaceGenerator extends SourceGenerator {
         .getOrElse(PojoGenerator.defaultDiscriminator)
 
     val jsonTypeInfo: Option[JsonTypeInfo] =
-      if (generationAggr.isInHierarchy(toCanonicalName)) {
+      if (generationAggr.isInHierarchy(originalToCanonicalName)) {
         Some(JsonTypeInfo(discriminator = discriminator, discriminatorValue = toClassDefinition.actualTypeDiscriminatorValue))
       } else {
         None
       }
 
     generateInterface(
+      originalToCanonicalName,
       interfacesToImplement.toList,
       childrenToSerialize,
       allFields,
@@ -104,7 +106,8 @@ object InterfaceGenerator extends SourceGenerator {
     )
   }
 
-  private def generateInterface(interfacesToImplement: List[TransferObjectInterfaceDefinition],
+  private def generateInterface(originalToCanonicalName: CanonicalName,
+                                interfacesToImplement: List[TransferObjectInterfaceDefinition],
                                 childrenToSerialize: List[TransferObjectClassDefinition],
                                 fieldsToGenerate: Seq[Field],
                                 skipFieldName: Option[String],
@@ -113,35 +116,15 @@ object InterfaceGenerator extends SourceGenerator {
                                 jsonTypeInfo: Option[JsonTypeInfo],
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
+    val childrenToSerialize = compileChildrenToSerialize(originalToCanonicalName, interfaceClassDefinition, generationAggr)
+
     val importPointers: Seq[ClassPointer] = {
-      fieldsToGenerate.map(_.classPointer) ++ childrenToSerialize.map(_.reference.classPointer) ++
+      fieldsToGenerate.map(_.classPointer) ++ childrenToSerialize.map(_.classReference) ++
         interfacesToImplement.map(_.origin.reference.classPointer)
     }
     val imports: Set[String] = platform.importStatements(interfaceClassReference, importPointers.toSet)
 
-    val jsonTypeAnnotations =
-      if (childrenToSerialize.nonEmpty) {
-
-        val jsonSubTypes =
-          (interfaceClassDefinition :: childrenToSerialize).map { toSerialize =>
-            val discriminatorValue = toSerialize.actualTypeDiscriminatorValue
-            val name               = toSerialize.reference.name
-            s"""
-               @JsonSubTypes.Type(value = $name.class, name = "$discriminatorValue")
-             """
-          }
-
-        val typeDiscriminator = jsonTypeInfo.map(_.discriminator).getOrElse("type")
-
-        s"""
-           @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "$typeDiscriminator")
-           @JsonSubTypes({
-                 ${jsonSubTypes.mkString(",\n")}
-           })
-         """
-      } else {
-        ""
-      }
+    val jsonTypeAnnotations = generateJsonTypeAnnotations(childrenToSerialize, jsonTypeInfo)
 
     val source =
       s"""
@@ -186,12 +169,15 @@ object InterfaceGenerator extends SourceGenerator {
          """
     }
 
-    val implementsClass = interfacesToImplement.map(classToImpl => s"implements ${classToImpl.origin.reference.classDefinition}")
+    val implementsInterfaces = interfacesToImplement.map(classToImpl => s"${classToImpl.origin.reference.classDefinition}")
+    val implementsStatement =
+      if (implementsInterfaces.nonEmpty) implementsInterfaces.mkString("implements ", ",", "")
+      else ""
 
     val fieldDeclarations = sortedFields.map(_.fieldDeclaration)
 
     s"""
-      public interface ${toClassReference.classDefinition} $implementsClass {
+      public interface ${toClassReference.classDefinition} $implementsStatement {
 
         ${getterAndSetters.mkString("\n")}
 
