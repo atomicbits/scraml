@@ -23,3 +23,10 @@ package io.atomicbits.scraml.ramlparser.model
   * Created by peter on 26/08/16.
   */
 case class StatusCode(code: String)
+
+object StatusCode {
+
+  implicit def ordering[A <: StatusCode]: Ordering[A] =
+    Ordering.by(e => e.code)
+
+}

@@ -21,43 +21,76 @@ package io.atomicbits.scraml.generator.restmodel
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.ramlparser.model.Action
+import io.atomicbits.scraml.ramlparser.model.{ Action, MediaType, NoMediaType, StatusCode }
 
 /**
   * Created by peter on 20/01/17.
   */
 case class ActionSelection(action: Action,
-                           selectedContentType: ContentType   = NoContentType,
-                           selectedResponsetype: ResponseType = NoResponseType) {
+                           contentTypeMap: Map[MediaType, ContentType],
+                           responseTypeMap: Map[MediaType, Set[ResponseTypeWithStatus]],
+                           selectedContentTypeHeader: MediaType  = NoMediaType,
+                           selectedResponsetypeHeader: MediaType = NoMediaType) {
 
-  def contentTypes(generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] = {
-    val contentTypes = ContentType(action.body, generationAggr)
-    if (contentTypes.isEmpty) Set(NoContentType)
-    else contentTypes
+  val contentTypeHeaders: Set[MediaType] = contentTypeMap.keys.toSet
+
+  val responseTypeHeaders: Set[MediaType] = responseTypeMap.keys.toSet
+
+  def selectedContentType: ContentType = contentTypeMap.getOrElse(selectedContentTypeHeader, NoContentType)
+
+  def selectedResponseType: ResponseType = {
+    if (selectedResponseTypesWithStatus.isEmpty) NoResponseType
+    else {
+      val smallestStatusCode                 = selectedResponseTypesWithStatus.map(_.status).min
+      val responseTypeWithSmallestStatusCode = selectedResponseTypesWithStatus.groupBy(_.status)(smallestStatusCode)
+      responseTypeWithSmallestStatusCode.head.responseType
+    }
   }
 
-  def responseTypes(generationAggr: GenerationAggr)(implicit platform: Platform): Set[ResponseType] = {
-    val responseTypes = action.responses.responseMap.values.flatMap(ResponseType(_, generationAggr)).toSet
-    if (responseTypes.isEmpty) Set(NoResponseType)
-    else responseTypes
-  }
+  def selectedResponseTypesWithStatus: Set[ResponseTypeWithStatus] = responseTypeMap.getOrElse(selectedResponsetypeHeader, Set.empty)
 
-  def withContentTypeSelection(contentType: ContentType): ActionSelection = copy(selectedContentType = contentType)
+  def withContentTypeSelection(contentTypeHeader: MediaType): ActionSelection = copy(selectedContentTypeHeader = contentTypeHeader)
 
-  def withResponseTypeSelection(responseType: ResponseType): ActionSelection = copy(selectedResponsetype = responseType)
+  def withResponseTypeSelection(responseTypeHeader: MediaType): ActionSelection = copy(selectedResponsetypeHeader = responseTypeHeader)
 
 }
 
 object ActionSelection {
 
+  def apply(action: Action, generationAggr: GenerationAggr)(implicit platform: Platform): ActionSelection = {
+
+    val contentTypeMap: Map[MediaType, ContentType] = {
+      val contentTypes = ContentType(action.body, generationAggr)
+      if (contentTypes.isEmpty) Map(NoMediaType -> NoContentType)
+      else contentTypes.groupBy(_.contentTypeHeader).mapValues(_.head) // There can be only one content type per content type header.
+    }
+
+    val responseTypeMap: Map[MediaType, Set[ResponseTypeWithStatus]] = {
+      val responseTypes = action.responses.responseMap.flatMap {
+        case (status, response) =>
+          val responseTypes = ResponseType(response, generationAggr)
+          responseTypes.map(ResponseTypeWithStatus(_, status))
+      }.toSet
+      if (responseTypes.isEmpty) Map(NoMediaType -> Set())
+      else
+        responseTypes.groupBy(_.responseType.acceptHeader) // There can be multiple accept types per accept type header (with different status codes).
+    }
+
+    ActionSelection(action, contentTypeMap, responseTypeMap)
+  }
+
   implicit class ActionOps(val action: Action) {
 
-    def withContentTypeSelection(contentType: ContentType): ActionSelection =
-      ActionSelection(action, selectedContentType = contentType)
+    def withContentTypeSelection(contentTypeHeader: MediaType, generationAggr: GenerationAggr)(
+        implicit platform: Platform): ActionSelection =
+      ActionSelection(action, generationAggr).withContentTypeSelection(contentTypeHeader)
 
-    def withResponseTypeSelection(responseType: ResponseType): ActionSelection =
-      ActionSelection(action, selectedResponsetype = responseType)
+    def withResponseTypeSelection(responseTypeHeader: MediaType, generationAggr: GenerationAggr)(
+        implicit platform: Platform): ActionSelection =
+      ActionSelection(action, generationAggr).withResponseTypeSelection(responseTypeHeader)
 
   }
 
 }
+
+case class ResponseTypeWithStatus(responseType: ResponseType, status: StatusCode)

@@ -31,7 +31,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
 
   /**
     * The reason why we treat all actions of a resource together is that certain paths towards the actual action
-    * execution of the resource's actions may be overlapping when it concerns actions that have overlapping mandatory
+    * execution of the resource's actions may overlap when it concerns actions that have overlapping mandatory
     * content-type and/or accept header paths. Although such situations may be rare, we want to support them well,
     * so we pass all actions of a single resource together.
     *
@@ -46,22 +46,22 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
     val resourcePackageParts: List[String] = resourceClassDefinition.resourcePackage
     val resource: Resource                 = resourceClassDefinition.resource
 
-    val actionSelections: List[ActionSelection] = resource.actions.map(ActionSelection(_))
+    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_, generationAggr)).toSet
 
-    val actionsWithTypeSelection: List[ActionSelection] =
+    val actionsWithTypeSelection: Set[ActionSelection] =
       actionSelections.flatMap { actionSelection =>
         for {
-          contentType <- actionSelection.contentTypes(generationAggr)
-          responseType <- actionSelection.responseTypes(generationAggr)
+          contentType <- actionSelection.contentTypeHeaders
+          responseType <- actionSelection.responseTypeHeaders
           actionWithTypeSelection = actionSelection.withContentTypeSelection(contentType).withResponseTypeSelection(responseType)
         } yield actionWithTypeSelection
       }
 
-    val groupedByActionType: Map[Method, List[ActionSelection]] = actionsWithTypeSelection.groupBy(_.action.actionType)
+    val groupedByActionType: Map[Method, Set[ActionSelection]] = actionsWithTypeSelection.groupBy(_.action.actionType)
 
     // now, we have to map the actions onto a segment path if necessary
-    val actionPathToAction: List[ActionPath] =
-      groupedByActionType.values flatMap {
+    val actionPathToAction: Set[ActionPath] =
+      groupedByActionType.values.toList.map(_.toList) flatMap {
         case actionOfKindList @ (aok :: Nil) => List(ActionPath(NoContentHeaderSegment, NoAcceptHeaderSegment, actionOfKindList.head))
         case actionOfKindList @ (aok :: aoks) =>
           actionOfKindList map { actionOfKind =>
@@ -71,22 +71,22 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
                 case ct: ContentType => ActualContentHeaderSegment(ct)
               }
             val acceptHeader =
-              actionOfKind.selectedResponsetype match {
+              actionOfKind.selectedResponseType match { // The selectedResponseTypesWithStatus have the same media type.
                 case NoResponseType   => NoAcceptHeaderSegment
                 case rt: ResponseType => ActualAcceptHeaderSegment(rt)
               }
             ActionPath(contentHeader, acceptHeader, actionOfKind)
           }
-      } toList
+      } toSet
 
-    val uniqueActionPaths: Map[ContentHeaderSegment, Map[AcceptHeaderSegment, List[ActionSelection]]] =
+    val uniqueActionPaths: Map[ContentHeaderSegment, Map[AcceptHeaderSegment, Set[ActionSelection]]] =
       actionPathToAction
         .groupBy(_.contentHeader)
         .mapValues(_.groupBy(_.acceptHeader))
         .mapValues(_.mapValues(_.map(_.action)))
 
-    val actionPathExpansion: List[ActionFunctionResult] =
-      uniqueActionPaths.toList map {
+    val actionPathExpansion =
+      uniqueActionPaths map {
         case (NoContentHeaderSegment, acceptHeaderMap) =>
           expandAcceptHeaderMap(resourcePackageParts, acceptHeaderMap)
 
@@ -101,7 +101,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
   private def expandContentTypePath(
       resourcePackageParts: List[String],
       contentType: ContentType,
-      acceptHeaderMap: Map[AcceptHeaderSegment, List[ActionSelection]])(implicit platform: Platform): ActionFunctionResult = {
+      acceptHeaderMap: Map[AcceptHeaderSegment, Set[ActionSelection]])(implicit platform: Platform): ActionFunctionResult = {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
@@ -124,7 +124,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
                          headerPathClassDefinitions = headerSegment :: acceptHeaderClasses)
   }
 
-  private def expandAcceptHeaderMap(resourcePackageParts: List[String], acceptHeaderMap: Map[AcceptHeaderSegment, List[ActionSelection]])(
+  private def expandAcceptHeaderMap(resourcePackageParts: List[String], acceptHeaderMap: Map[AcceptHeaderSegment, Set[ActionSelection]])(
       implicit platform: Platform): ActionFunctionResult = {
 
     val actionPathExpansion: List[ActionFunctionResult] =
@@ -132,8 +132,8 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
         case (_, actionSelections) :: Nil =>
           List(
             ActionFunctionResult(
-              actionSelections.toSet.flatMap(generateActionImports),
-              actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate),
+              actionSelections.flatMap(generateActionImports),
+              actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList,
               List.empty
             )
           )
@@ -141,8 +141,8 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
           ahMap map {
             case (NoAcceptHeaderSegment, actionSelections) =>
               ActionFunctionResult(
-                actionSelections.toSet.flatMap(generateActionImports),
-                actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate),
+                actionSelections.flatMap(generateActionImports),
+                actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList,
                 List.empty
               )
             case (ActualAcceptHeaderSegment(responseType), actionSelections) =>
@@ -154,7 +154,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
     else ActionFunctionResult()
   }
 
-  private def expandResponseTypePath(resourcePackageParts: List[String], responseType: ResponseType, actions: List[ActionSelection])(
+  private def expandResponseTypePath(resourcePackageParts: List[String], responseType: ResponseType, actions: Set[ActionSelection])(
       implicit platform: Platform): ActionFunctionResult = {
 
     // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
@@ -162,8 +162,8 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
     // add the List[String] results of the expansion of the actions to the above class and also add the imports needed by the actions
     // into the above class
 
-    val actionImports = actions.toSet.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate)
+    val actionImports = actions.flatMap(generateActionImports)
+    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList
 
     // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"

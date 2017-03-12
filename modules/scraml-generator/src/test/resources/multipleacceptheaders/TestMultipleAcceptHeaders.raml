@@ -1,0 +1,36 @@
+#%RAML 0.8
+---
+title: test01
+version: v1
+
+types:
+  Book:
+    type: object
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+        required: true
+
+
+/books:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+      412:
+        body:
+          application/json:
+            type: Error

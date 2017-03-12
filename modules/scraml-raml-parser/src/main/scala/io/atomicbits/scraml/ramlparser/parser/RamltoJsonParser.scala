@@ -19,14 +19,14 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import java.net.{URI, URL}
-import java.nio.file.{Files, Paths}
+import java.net.{ URI, URL }
+import java.nio.file.{ Files, Paths }
 import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions.mapAsScalaMap
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 10/02/16.
@@ -37,12 +37,11 @@ object RamlToJsonParser {
     parseToJson(source, "UTF-8")
   }
 
-
   def parseToJson(source: String, charsetName: String): (String, JsValue) = {
     Try {
       val (path, ramlContent) = read(source, charsetName)
-      val ramlContentNoTabs = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
-      val yaml = new Yaml(SimpleRamlConstructor())
+      val ramlContentNoTabs   = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
+      val yaml                = new Yaml(SimpleRamlConstructor())
       val ramlMap: Any = {
         val yamled = yaml.load(ramlContentNoTabs)
         Try(yamled.asInstanceOf[java.util.Map[Any, Any]]).getOrElse(yamled.asInstanceOf[String])
@@ -53,7 +52,6 @@ object RamlToJsonParser {
       case Failure(ex)                      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
-
 
   private def read(source: String, charsetName: String): (String, String) = {
 
@@ -79,20 +77,19 @@ object RamlToJsonParser {
       else path
     }
 
+    val resource            = Try(this.getClass.getResource(source).toURI).toOption
+    val classLoaderResource = Try(this.getClass.getClassLoader.getResource(source).toURI).toOption
+    val file                = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
+    val url                 = Try(new URL(source).toURI).toOption
 
-    val resource = Try(this.getClass.getResource(source).toURI).toOption
-    val file = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
-    val url = Try(new URL(source).toURI).toOption
-
-    val uris: List[Option[URI]] = List(resource, file, url)
+    val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
 
     val uri: URI = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
 
-    val path = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
+    val path                 = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
     val encoded: Array[Byte] = Files.readAllBytes(Paths.get(uri))
     (cleanWindowsTripleSlashIssue(path), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
   }
-
 
   private def anyToJson(value: Any): JsValue = {
     value match {
@@ -102,15 +99,15 @@ object RamlToJsonParser {
       case l: java.lang.Long              => Json.toJson(l.doubleValue())
       case d: Double                      => Json.toJson(d)
       case list: java.util.ArrayList[Any] => JsArray(list.asScala.map(anyToJson))
-      case map: java.util.Map[Any, Any]   =>
+      case map: java.util.Map[Any, Any] =>
         val mapped =
           mapAsScalaMap(map).map {
             case (field, theValue) => field.toString -> anyToJson(theValue)
           }
         JsObject(mapped.toSeq)
-      case include: Include               => Json.toJson(include)
-      case null                           => JsNull
-      case x                              => sys.error(s"Cannot parse unknown type $x (${x.getClass.getCanonicalName})")
+      case include: Include => Json.toJson(include)
+      case null             => JsNull
+      case x                => sys.error(s"Cannot parse unknown type $x (${x.getClass.getCanonicalName})")
     }
   }
 
@@ -124,7 +121,7 @@ object RamlToJsonParser {
           case Success(nonStringJsValue) => nonStringJsValue
           case _                         => json
         }
-      case _                   => json
+      case _ => json
     }
   }
 

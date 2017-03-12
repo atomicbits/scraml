@@ -49,8 +49,8 @@ object JavaActionCodeGenerator extends ActionCode {
     }
   }
 
-  def bodyTypes(action: ActionSelection): List[Option[ClassPointer]] =
-    action.selectedContentType match {
+  def bodyTypes(actionSelection: ActionSelection): List[Option[ClassPointer]] =
+    actionSelection.selectedContentType match {
       case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference))
       case typedContentType: TypedContentType =>
@@ -74,8 +74,8 @@ object JavaActionCodeGenerator extends ActionCode {
       case x             => List(Some(StringClassReference))
     }
 
-  def responseTypes(action: ActionSelection): List[Option[ClassPointer]] =
-    action.selectedResponsetype match {
+  def responseTypes(actionSelection: ActionSelection): List[Option[ClassPointer]] =
+    actionSelection.selectedResponseType match {
       case StringResponseType(acceptHeader) => List(Some(StringClassReference))
       case JsonResponseType(acceptHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
       case BinaryResponseType(acceptHeader) =>
@@ -86,7 +86,7 @@ object JavaActionCodeGenerator extends ActionCode {
           Some(ArrayClassReference(arrayType = ByteClassReference))
         )
       case typedResponseType: TypedResponseType =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedResponseType.actualClassPointer))
+        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedResponseType.classPointer))
       case NoResponseType => List(None)
       case x              => List(Some(StringClassReference))
     }
@@ -98,7 +98,7 @@ object JavaActionCodeGenerator extends ActionCode {
     responseType match {
       case BinaryResponseType(acceptHeader)     => s"BinaryMethodSegment<$bodyType>"
       case JsonResponseType(acceptHeader)       => s"StringMethodSegment<$bodyType>"
-      case typedResponseType: TypedResponseType => s"TypeMethodSegment<$bodyType, ${typedResponseType.actualClassPointer.classDefinition}>"
+      case typedResponseType: TypedResponseType => s"TypeMethodSegment<$bodyType, ${typedResponseType.classPointer.classDefinition}>"
       case x                                    => s"StringMethodSegment<$bodyType>"
     }
 
@@ -108,7 +108,7 @@ object JavaActionCodeGenerator extends ActionCode {
     responseType match {
       case BinaryResponseType(acceptHeader)     => "CompletableFuture<Response<BinaryData>>"
       case JsonResponseType(acceptHeader)       => "CompletableFuture<Response<String>>"
-      case typedResponseType: TypedResponseType => s"CompletableFuture<Response<${typedResponseType.actualClassPointer.classDefinition}>>"
+      case typedResponseType: TypedResponseType => s"CompletableFuture<Response<${typedResponseType.classPointer.classDefinition}>>"
       case x                                    => "CompletableFuture<Response<String>>"
     }
   }
@@ -117,7 +117,7 @@ object JavaActionCodeGenerator extends ActionCode {
     responseType match {
       case BinaryResponseType(acceptHeader)     => None
       case JsonResponseType(acceptHeader)       => None
-      case typedResponseType: TypedResponseType => Some(typedResponseType.actualClassPointer.fullyQualifiedClassDefinition)
+      case typedResponseType: TypedResponseType => Some(typedResponseType.classPointer.fullyQualifiedClassDefinition)
       case x                                    => None
     }
   }
@@ -189,7 +189,7 @@ object JavaActionCodeGenerator extends ActionCode {
                      generationAggr: GenerationAggr): String = {
 
     val segmentBodyType: Option[ClassPointer] = if (isBinary) None else bodyType
-    val segmentType: String                   = createSegmentType(actionSelection.selectedResponsetype, segmentBodyType, generationAggr)
+    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType, generationAggr)
 
     val actionType               = actionSelection.action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase
@@ -201,7 +201,7 @@ object JavaActionCodeGenerator extends ActionCode {
     val multipartParamsValue = if (isMultipartParams) "parts" else "null"
     val binaryParamValue     = if (isBinaryParam) "BinaryRequest.create(body)" else "null"
 
-    val expectedAcceptHeader      = actionSelection.selectedResponsetype.acceptHeaderOpt
+    val expectedAcceptHeader      = actionSelection.selectedResponseType.acceptHeaderOpt
     val expectedContentTypeHeader = actionSelection.selectedContentType.contentTypeHeaderOpt
 
     val acceptHeader  = expectedAcceptHeader.map(acceptH            => s""""${acceptH.value}"""").getOrElse("null")

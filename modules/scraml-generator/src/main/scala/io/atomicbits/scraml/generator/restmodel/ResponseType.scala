@@ -41,12 +41,7 @@ case class StringResponseType(acceptHeader: MediaType) extends ResponseType
 
 case class JsonResponseType(acceptHeader: MediaType) extends ResponseType
 
-case class TypedResponseType(acceptHeader: MediaType, classPointer: ClassPointer, interfacePointer: Option[ClassPointer])
-    extends ResponseType {
-
-  val actualClassPointer: ClassPointer = interfacePointer.getOrElse(classPointer)
-
-}
+case class TypedResponseType(acceptHeader: MediaType, classPointer: ClassPointer) extends ResponseType
 
 case class BinaryResponseType(acceptHeader: MediaType) extends ResponseType
 
@@ -76,8 +71,8 @@ object ResponseType {
 
     if (classPointer.isDefined) {
       val classReference          = classPointer.get.native
-      val interfaceClassReference = generationAggr.getInterfaceDefinition(classReference.canonicalName).map(_.classReference)
-      TypedResponseType(acceptHeader, classPointer.get, interfaceClassReference)
+      val interfaceClassReference = None // generationAggr.getInterfaceDefinition(classReference.canonicalName).map(_.classReference)
+      TypedResponseType(acceptHeader, classPointer.get)
     } else if (mediaTypeValue.contains("json")) {
       JsonResponseType(acceptHeader)
     } else if (mediaTypeValue.contains("text")) {

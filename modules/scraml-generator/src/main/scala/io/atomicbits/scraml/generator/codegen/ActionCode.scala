@@ -30,8 +30,6 @@ trait ActionCode {
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String
 
-  // def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[ClassPointer], methods: List[String]): String
-
   /**
     * The list of body types that need to be available on a specific action function.
     */
@@ -40,8 +38,6 @@ trait ActionCode {
   def responseTypes(action: ActionSelection): List[Option[ClassPointer]]
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
-
-//  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
 
   def responseClassDefinition(responseType: ResponseType): String
 
