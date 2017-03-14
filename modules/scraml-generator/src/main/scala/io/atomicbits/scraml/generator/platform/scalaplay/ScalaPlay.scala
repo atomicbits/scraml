@@ -87,7 +87,13 @@ object ScalaPlay extends Platform with CleanNameTools {
         classReference.name
       } else {
         val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-          classReference.typeParamValues.get(typeParam).map(classPointer => classPointer.native.classDefinition).getOrElse(typeParam.name)
+          classReference.typeParamValues
+            .get(typeParam)
+            .map { classPointer =>
+              if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
+              else classPointer.native.classDefinition
+            }
+            .getOrElse(typeParam.name)
         }
         s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
       }
@@ -110,11 +116,6 @@ object ScalaPlay extends Platform with CleanNameTools {
   }
 
   override def safePackageParts(classPointer: ClassPointer): List[String] = classPointer.native.packageParts
-
-  override def fullyQualifiedClassDefinition(classPointer: ClassPointer): String = {
-    val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
-    parts.mkString(".")
-  }
 
   override def safeFieldName(field: Field): String = {
     val cleanName = cleanFieldName(field.fieldName)

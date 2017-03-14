@@ -27,7 +27,7 @@ import io.atomicbits.scraml.ramlparser.model.{ Method, Resource }
 /**
   * Created by peter on 20/01/17.
   */
-case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAggr) {
+case class ActionGenerator(actionCode: ActionCode) {
 
   /**
     * The reason why we treat all actions of a resource together is that certain paths towards the actual action
@@ -46,7 +46,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
     val resourcePackageParts: List[String] = resourceClassDefinition.resourcePackage
     val resource: Resource                 = resourceClassDefinition.resource
 
-    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_, generationAggr)).toSet
+    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_)).toSet
 
     val actionsWithTypeSelection: Set[ActionSelection] =
       actionSelections.flatMap { actionSelection =>
@@ -133,7 +133,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
           List(
             ActionFunctionResult(
               actionSelections.flatMap(generateActionImports),
-              actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList,
+              actionSelections.flatMap(ActionFunctionGenerator(actionCode).generate).toList,
               List.empty
             )
           )
@@ -142,7 +142,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
             case (NoAcceptHeaderSegment, actionSelections) =>
               ActionFunctionResult(
                 actionSelections.flatMap(generateActionImports),
-                actionSelections.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList,
+                actionSelections.flatMap(ActionFunctionGenerator(actionCode).generate).toList,
                 List.empty
               )
             case (ActualAcceptHeaderSegment(responseType), actionSelections) =>
@@ -163,7 +163,7 @@ case class ActionGenerator(actionCode: ActionCode, generationAggr: GenerationAgg
     // into the above class
 
     val actionImports = actions.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode, generationAggr).generate).toList
+    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate).toList
 
     // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"

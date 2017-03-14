@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.generator.platform
 
-import java.io.File
-
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   ArrayTypeReference,
@@ -53,6 +51,12 @@ trait Platform {
     */
   def implementingInterfaceReference(classReference: ClassReference): ClassReference
 
+  /**
+    * The definition of a class.
+    * E.g. List[String] or List<String> or Element or PagedList<T> or PagedList[Element]
+    * or their fully qualified verions
+    * E.g. List[String] or java.util.List<String> or io.atomicbits.Element or io.atomicbits.PagedList<T> or io.atomicbits.PagedList[Element]
+    */
   def classDefinition(classPointer: ClassPointer, fullyQualified: Boolean = false): String
 
   def className(classPointer: ClassPointer): String
@@ -62,8 +66,6 @@ trait Platform {
   def fullyQualifiedName(classPointer: ClassPointer): String
 
   def safePackageParts(classPointer: ClassPointer): List[String]
-
-  def fullyQualifiedClassDefinition(classPointer: ClassPointer): String
 
   def safeFieldName(field: Field): String
 

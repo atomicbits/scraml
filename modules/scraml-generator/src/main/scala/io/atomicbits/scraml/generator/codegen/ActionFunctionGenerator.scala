@@ -27,7 +27,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 /**
   * Created by peter on 20/01/17.
   */
-case class ActionFunctionGenerator(actionCode: ActionCode, generationAggr: GenerationAggr) {
+case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   def generate(actionSelection: ActionSelection)(implicit platform: Platform): List[String] = {
 

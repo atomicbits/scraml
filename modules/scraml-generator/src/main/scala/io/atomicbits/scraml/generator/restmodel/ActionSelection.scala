@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.model.{ Action, MediaType, NoMediaType, StatusCode }
 
@@ -57,7 +56,7 @@ case class ActionSelection(action: Action,
 
 object ActionSelection {
 
-  def apply(action: Action, generationAggr: GenerationAggr)(implicit platform: Platform): ActionSelection = {
+  def apply(action: Action)(implicit platform: Platform): ActionSelection = {
 
     val contentTypeMap: Map[MediaType, ContentType] = {
       val contentTypes = ContentType(action.body)
@@ -77,18 +76,6 @@ object ActionSelection {
     }
 
     ActionSelection(action, contentTypeMap, responseTypeMap)
-  }
-
-  implicit class ActionOps(val action: Action) {
-
-    def withContentTypeSelection(contentTypeHeader: MediaType, generationAggr: GenerationAggr)(
-        implicit platform: Platform): ActionSelection =
-      ActionSelection(action, generationAggr).withContentTypeSelection(contentTypeHeader)
-
-    def withResponseTypeSelection(responseTypeHeader: MediaType, generationAggr: GenerationAggr)(
-        implicit platform: Platform): ActionSelection =
-      ActionSelection(action, generationAggr).withResponseTypeSelection(responseTypeHeader)
-
   }
 
 }

@@ -80,31 +80,32 @@ object PojoGenerator extends SourceGenerator with PojoGeneratorSupport {
 
     val hasMultipleDirectParents = generationAggr.directParents(originalToCanonicalName).size > 1
 
-    val (interfacesToImplement, fieldsToGenerate, classToExtend) = (toHasOwnInterface, hasMultipleDirectParents) match {
-      case (true, _) =>
-        val interfaceToImpl = List(TransferObjectInterfaceDefinition(toClassDefinition, discriminator))
-        val fieldsToGen     = allFields
-        val classToExt      = None
-        (interfaceToImpl, fieldsToGen, classToExt)
-      case (false, false) =>
-        val interfaceToImpl = List.empty[TransferObjectInterfaceDefinition]
-        val fieldsToGen     = ownFields
-        val classToExt =
-          generationAggr
-            .directParents(originalToCanonicalName)
-            .headOption // There should be at most one direct parent.
-            .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
-        (interfaceToImpl, fieldsToGen, classToExt)
-      case (false, true) =>
-        val interfaceToImpl =
-          generationAggr
-            .directParents(originalToCanonicalName)
-            .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
-            .map(TransferObjectInterfaceDefinition(_, discriminator))
-        val fieldsToGen = allFields
-        val classToExt  = None
-        (interfaceToImpl.toList, fieldsToGen, classToExt)
-    }
+    val (interfacesToImplement, fieldsToGenerate, classToExtend) =
+      (toHasOwnInterface, hasMultipleDirectParents) match {
+        case (true, _) =>
+          val interfaceToImpl = List(TransferObjectInterfaceDefinition(toClassDefinition, discriminator))
+          val fieldsToGen     = allFields
+          val classToExt      = None
+          (interfaceToImpl, fieldsToGen, classToExt)
+        case (false, false) =>
+          val interfaceToImpl = List.empty[TransferObjectInterfaceDefinition]
+          val fieldsToGen     = ownFields
+          val classToExt =
+            generationAggr
+              .directParents(originalToCanonicalName)
+              .headOption // There should be at most one direct parent.
+              .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
+          (interfaceToImpl, fieldsToGen, classToExt)
+        case (false, true) =>
+          val interfaceToImpl =
+            generationAggr
+              .directParents(originalToCanonicalName)
+              .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
+              .map(TransferObjectInterfaceDefinition(_, discriminator))
+          val fieldsToGen = allFields
+          val classToExt  = None
+          (interfaceToImpl.toList, fieldsToGen, classToExt)
+      }
 
     val skipFieldName = jsonTypeInfo.map(_.discriminator)
 

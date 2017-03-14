@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
-import io.atomicbits.scraml.generator.platform.scalaplay.{ ResourceClassGenerator, ScalaActionCodeGenerator }
+import io.atomicbits.scraml.generator.platform.scalaplay.ScalaActionCodeGenerator
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -43,7 +43,7 @@ object ClientClassGenerator extends SourceGenerator {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
           val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
           val ActionFunctionResult(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator, generationAggr).generateActionFunctions(oneRoot)
+            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]

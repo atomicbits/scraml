@@ -138,11 +138,6 @@ object JavaJackson extends Platform with CleanNameTools {
     classPointer.native.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
   }
 
-  override def fullyQualifiedClassDefinition(classPointer: ClassPointer): String = {
-    val parts: List[String] = safePackageParts(classPointer) :+ classDefinition(classPointer)
-    parts.mkString(".")
-  }
-
   override def safeFieldName(field: Field): String = {
     val cleanName = cleanFieldName(field.fieldName)
     escapeJavaKeyword(cleanName)
