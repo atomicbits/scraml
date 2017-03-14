@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/raml10/attributes.json",
+  "type": "object",
+  "description": "An attributes map",
+  "properties": {
+    "map": {
+      "type": "object",
+      "required": true,
+      "properties": {
+        "lastName": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "callName": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "account": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

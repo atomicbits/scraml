@@ -42,12 +42,7 @@ case class StringContentType(contentTypeHeader: MediaType) extends ContentType
 
 case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
-case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer, interfacePointer: Option[ClassPointer])
-    extends ContentType {
-
-  val actualClassPointer: ClassPointer = interfacePointer.getOrElse(classPointer)
-
-}
+case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer) extends ContentType
 
 case class FormPostContentType(contentTypeHeader: MediaType, formParameters: ParsedParameters) extends ContentType
 
@@ -67,15 +62,15 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(body: Body, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] =
+  def apply(body: Body)(implicit platform: Platform): Set[ContentType] =
     body.contentMap.map {
       case (mediaType, bodyContent) =>
         val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
         val formParams      = bodyContent.formParameters
-        ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams, generationAggr = generationAggr)
+        ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
     } toSet
 
-  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters, generationAggr: GenerationAggr)(
+  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters)(
       implicit platform: Platform): ContentType = {
 
     val mediaTypeValue = mediaType.value.toLowerCase
@@ -85,9 +80,7 @@ object ContentType {
     } else if (formParameters.nonEmpty) {
       FormPostContentType(mediaType, formParameters)
     } else if (content.isDefined) {
-      val classReference          = content.get.native
-      val interfaceClassReference = generationAggr.getInterfaceDefinition(classReference.canonicalName).map(_.classReference)
-      TypedContentType(mediaType, content.get, interfaceClassReference)
+      TypedContentType(mediaType, content.get)
     } else if (mediaTypeValue.contains("json")) {
       JsonContentType(mediaType)
     } else if (mediaTypeValue.contains("text")) {

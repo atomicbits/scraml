@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionCode, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.ActionCode
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
@@ -50,7 +50,7 @@ object ScalaActionCodeGenerator extends ActionCode {
       case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedContentType.actualClassPointer))
+        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedContentType.classPointer))
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassReference),
@@ -87,7 +87,7 @@ object ScalaActionCodeGenerator extends ActionCode {
       case x              => List(Some(StringClassReference))
     }
 
-  def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer], generationAggr: GenerationAggr): String = {
+  def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer]): String = {
 
     val bodyType = optBodyType.map(_.classDefinition).getOrElse("String")
 
@@ -173,11 +173,10 @@ object ScalaActionCodeGenerator extends ActionCode {
                      isMultipartParams: Boolean            = false,
                      isBinaryParam: Boolean                = false,
                      contentType: ContentType,
-                     responseType: ResponseType,
-                     generationAggr: GenerationAggr): String = {
+                     responseType: ResponseType): String = {
 
     val segmentBodyType: Option[ClassPointer] = if (isBinary) None else bodyType
-    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType, generationAggr)
+    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType)
 
     val actionType               = actionSelection.action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase

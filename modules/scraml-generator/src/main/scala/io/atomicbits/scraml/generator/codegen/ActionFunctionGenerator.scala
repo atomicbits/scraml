@@ -64,8 +64,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode, generationAggr: Gener
         actionParameters        = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
         contentType             = actionSelection.selectedContentType,
-        responseType            = actionSelection.selectedResponseType,
-        generationAggr          = generationAggr
+        responseType            = actionSelection.selectedResponseType
       )
 
     List(formAction)
@@ -81,8 +80,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode, generationAggr: Gener
         actionParameters  = actionCode.expandMethodParameter(List("parts" -> ListClassReference(BodyPartClassReference))),
         isMultipartParams = true,
         contentType       = actionSelection.selectedContentType,
-        responseType      = actionSelection.selectedResponseType,
-        generationAggr    = generationAggr
+        responseType      = actionSelection.selectedResponseType
       )
 
     List(multipartAction)
@@ -118,8 +116,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode, generationAggr: Gener
         isTypedBodyParam = actionBodyParameter.nonEmpty && !binary,
         isBinaryParam    = actionBodyParameter.nonEmpty && binary,
         contentType      = actionSelection.selectedContentType,
-        responseType     = actionSelection.selectedResponseType,
-        generationAggr   = generationAggr
+        responseType     = actionSelection.selectedResponseType
       )
     }
 

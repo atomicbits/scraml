@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.platform.javajackson
 
 import java.util.Locale
 
-import io.atomicbits.scraml.generator.codegen.{ ActionCode, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.ActionCode
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
@@ -54,7 +54,7 @@ object JavaActionCodeGenerator extends ActionCode {
       case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassReference), Some(typedContentType.actualClassPointer))
+        List(Some(StringClassReference), Some(typedContentType.classPointer))
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassReference),
@@ -91,7 +91,7 @@ object JavaActionCodeGenerator extends ActionCode {
       case x              => List(Some(StringClassReference))
     }
 
-  def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer], generationAggr: GenerationAggr): String = {
+  def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer]): String = {
 
     val bodyType = optBodyType.map(_.classDefinition).getOrElse("String")
 
@@ -125,7 +125,7 @@ object JavaActionCodeGenerator extends ActionCode {
   def canonicalContentType(contentType: ContentType): Option[String] = {
     contentType match {
       case JsonContentType(contentTypeHeader) => None
-      case typedContentType: TypedContentType => Some(typedContentType.actualClassPointer.fullyQualifiedClassDefinition)
+      case typedContentType: TypedContentType => Some(typedContentType.classPointer.fullyQualifiedClassDefinition)
       case x                                  => None
     }
   }
@@ -161,7 +161,7 @@ object JavaActionCodeGenerator extends ActionCode {
             val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
             s"List<$primitive> $sanitizedParameterName"
           case other =>
-            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: $other")
         }
     }
   }
@@ -185,11 +185,10 @@ object JavaActionCodeGenerator extends ActionCode {
                      isMultipartParams: Boolean            = false,
                      isBinaryParam: Boolean                = false,
                      contentType: ContentType,
-                     responseType: ResponseType,
-                     generationAggr: GenerationAggr): String = {
+                     responseType: ResponseType): String = {
 
     val segmentBodyType: Option[ClassPointer] = if (isBinary) None else bodyType
-    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType, generationAggr)
+    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType)
 
     val actionType               = actionSelection.action.actionType
     val actionTypeMethod: String = actionType.toString.toLowerCase

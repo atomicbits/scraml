@@ -55,23 +55,20 @@ case object NoResponseType extends ResponseType {
 
 object ResponseType {
 
-  def apply(response: Response, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ResponseType] = {
+  def apply(response: Response)(implicit platform: Platform): Set[ResponseType] = {
     response.body.contentMap.map {
       case (mediaType, bodyContent) =>
         val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
         val formParams      = bodyContent.formParameters
-        ResponseType(acceptHeader = mediaType, classPointer = classPointerOpt, generationAggr)
+        ResponseType(acceptHeader = mediaType, classPointer = classPointerOpt)
     } toSet
   }
 
-  def apply(acceptHeader: MediaType, classPointer: Option[ClassPointer], generationAggr: GenerationAggr)(
-      implicit platform: Platform): ResponseType = {
+  def apply(acceptHeader: MediaType, classPointer: Option[ClassPointer])(implicit platform: Platform): ResponseType = {
 
     val mediaTypeValue = acceptHeader.value.toLowerCase
 
     if (classPointer.isDefined) {
-      val classReference          = classPointer.get.native
-      val interfaceClassReference = None // generationAggr.getInterfaceDefinition(classReference.canonicalName).map(_.classReference)
       TypedResponseType(acceptHeader, classPointer.get)
     } else if (mediaTypeValue.contains("json")) {
       JsonResponseType(acceptHeader)

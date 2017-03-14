@@ -60,7 +60,7 @@ object ActionSelection {
   def apply(action: Action, generationAggr: GenerationAggr)(implicit platform: Platform): ActionSelection = {
 
     val contentTypeMap: Map[MediaType, ContentType] = {
-      val contentTypes = ContentType(action.body, generationAggr)
+      val contentTypes = ContentType(action.body)
       if (contentTypes.isEmpty) Map(NoMediaType -> NoContentType)
       else contentTypes.groupBy(_.contentTypeHeader).mapValues(_.head) // There can be only one content type per content type header.
     }
@@ -68,7 +68,7 @@ object ActionSelection {
     val responseTypeMap: Map[MediaType, Set[ResponseTypeWithStatus]] = {
       val responseTypes = action.responses.responseMap.flatMap {
         case (status, response) =>
-          val responseTypes = ResponseType(response, generationAggr)
+          val responseTypes = ResponseType(response)
           responseTypes.map(ResponseTypeWithStatus(_, status))
       }.toSet
       if (responseTypes.isEmpty) Map(NoMediaType -> Set())

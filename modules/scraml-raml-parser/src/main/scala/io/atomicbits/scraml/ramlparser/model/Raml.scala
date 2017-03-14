@@ -41,23 +41,7 @@ case class Raml(title: String,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
-                resources: List[Resource],
-                canonicalMap: Option[OldCanonicalLookupHelper] = None) {
-
-  /**
-    * Collect all types in the type lookup table and replace all inline types with native type references that point to the
-    * nativeIdMap map of the type lookup table.
-    *
-    * @return This changed Raml model with a type lookup table.
-    */
-  @Deprecated
-  def collectCanonicalTypes(defaultBasePath: List[String]): Raml = {
-    // uniqueIdToCanonicalName: UniqueId => CanonicalName
-    val canonicalNameGenerator                                         = CanonicalNameGenerator(defaultBasePath)
-    val canonicalTypeCollector                                         = OldCanonicalTypeCollector(canonicalNameGenerator)
-    val (ramlExpanded, canonicalMap): (Raml, OldCanonicalLookupHelper) = canonicalTypeCollector.collect(this)
-    ramlExpanded.copy(canonicalMap = Some(canonicalMap))
-  }
+                resources: List[Resource]) {
 
   def collectCanonicals(defaultBasePath: List[String]): (Raml, CanonicalLookup) = {
     implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)

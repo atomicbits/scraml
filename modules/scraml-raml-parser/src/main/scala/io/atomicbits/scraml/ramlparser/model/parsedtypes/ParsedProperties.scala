@@ -60,14 +60,16 @@ object ParsedProperties {
     def jsObjectToProperties(jsObject: JsObject): Try[ParsedProperties] = {
 
       val valueMap: Map[String, Try[ParsedProperty]] =
-        jsObject.value.collect {
-          case (name, ParsedType(tryType)) =>
-            name -> tryType.map { paramType =>
-              val paramTypeWithRightTypeModel = paramType.asTypeModel(model)
-              ParsedProperty(
-                name         = name,
-                propertyType = TypeRepresentation(paramTypeWithRightTypeModel),
-                required     = paramTypeWithRightTypeModel.required.getOrElse(paramTypeWithRightTypeModel.defaultRequiredValue)
+        jsObject.value
+          .mapValues(model.mark)
+          .collect {
+            case (name, ParsedType(tryType)) => // the 'model' value is not incorporated in recursive type parsing
+              name -> tryType.map { paramType =>
+                val paramTypeWithRightTypeModel = paramType.asTypeModel(model)
+                ParsedProperty(
+                  name         = name,
+                  propertyType = TypeRepresentation(paramTypeWithRightTypeModel),
+                  required     = paramTypeWithRightTypeModel.required.getOrElse(paramTypeWithRightTypeModel.defaultRequiredValue)
               )
             }
         } toMap

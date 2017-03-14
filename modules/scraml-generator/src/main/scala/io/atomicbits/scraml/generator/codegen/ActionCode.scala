@@ -58,7 +58,6 @@ trait ActionCode {
                      isMultipartParams: Boolean            = false,
                      isBinaryParam: Boolean                = false,
                      contentType: ContentType,
-                     responseType: ResponseType,
-                     generationAggr: GenerationAggr): String
+                     responseType: ResponseType): String
 
 }

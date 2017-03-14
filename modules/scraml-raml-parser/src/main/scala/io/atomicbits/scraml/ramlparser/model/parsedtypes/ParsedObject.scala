@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import io.atomicbits.scraml.ramlparser.lookup.OldCanonicalLookupHelper
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
 import io.atomicbits.scraml.util.TryUtils
@@ -62,8 +61,6 @@ case class ParsedObject(id: Id,
   def hasParent: Boolean = parents.nonEmpty
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
-
-  def topLevelParent(typeLookup: OldCanonicalLookupHelper): Option[ParsedObject] = ???
 
 }
 

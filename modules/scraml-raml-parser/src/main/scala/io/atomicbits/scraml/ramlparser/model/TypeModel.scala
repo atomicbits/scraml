@@ -19,17 +19,35 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.{ JsObject, JsString, JsValue }
 
 /**
   * Created by peter on 26/09/16.
   */
-sealed trait TypeModel
+sealed trait TypeModel {
 
-case object RamlModel extends TypeModel
+  def mark(json: JsValue): JsValue
 
-case object JsonSchemaModel extends TypeModel
+}
 
+case object RamlModel extends TypeModel {
+
+  def mark(json: JsValue): JsValue = json
+
+}
+
+case object JsonSchemaModel extends TypeModel {
+
+  val markerField = "$schema"
+
+  val markerValue = "http://json-schema.org/draft-04/schema"
+
+  def mark(json: JsValue): JsValue = json match {
+    case jsObj: JsObject => jsObj + (markerField -> JsString(markerValue))
+    case other           => other
+  }
+
+}
 
 object TypeModel {
 
