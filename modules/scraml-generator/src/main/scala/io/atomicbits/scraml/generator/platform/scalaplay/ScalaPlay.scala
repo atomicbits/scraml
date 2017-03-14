@@ -36,35 +36,35 @@ object ScalaPlay extends Platform with CleanNameTools {
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
     classPointer match {
       case classReference: ClassReference => classReference
-      case ArrayClassReference(arrayType) =>
+      case ArrayClassPointer(arrayType) =>
         val typeParameter = TypeParameter("T")
         ClassReference(name            = "Array",
                        typeParameters  = List(typeParameter),
                        typeParamValues = Map(typeParameter -> arrayType),
                        predef          = true)
-      case StringClassReference =>
+      case StringClassPointer =>
         ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
-      case ByteClassReference =>
+      case ByteClassPointer =>
         ClassReference(name = "Byte", packageParts = List("scala"), predef = true)
-      case BinaryDataClassReference =>
+      case BinaryDataClassPointer =>
         ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
-      case FileClassReference =>
+      case FileClassPointer =>
         ClassReference(name = "File", packageParts = List("java", "io"), library = true)
-      case InputStreamClassReference =>
+      case InputStreamClassPointer =>
         ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
-      case JsObjectClassReference =>
+      case JsObjectClassPointer =>
         ClassReference(name = "JsObject", packageParts = List("play", "api", "libs", "json"), library = true)
-      case JsValueClassReference =>
+      case JsValueClassPointer =>
         ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
-      case BodyPartClassReference =>
+      case BodyPartClassPointer =>
         ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
-      case LongClassReference(primitive) =>
+      case LongClassPointer(primitive) =>
         ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
-      case DoubleClassReference(primitive) =>
+      case DoubleClassPointer(primitive) =>
         ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
-      case BooleanClassReference(primitive) =>
+      case BooleanClassPointer(primitive) =>
         ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
-      case ListClassReference(typeParamValue) =>
+      case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
         val typeParamValues = Map(typeParameter -> typeParamValue)
         ClassReference(name = "List", typeParameters = List(typeParameter), typeParamValues = typeParamValues, predef = true)

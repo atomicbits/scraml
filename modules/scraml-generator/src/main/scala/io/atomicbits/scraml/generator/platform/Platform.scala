@@ -130,22 +130,22 @@ object Platform {
     }
 
     typeReference match {
-      case BooleanType        => BooleanClassReference(primitive)
-      case StringType         => StringClassReference
-      case IntegerType        => LongClassReference(primitive)
-      case NumberType         => DoubleClassReference(primitive)
-      case NullType           => StringClassReference // not sure what we have to do in this case
-      case FileType           => FileClassReference
-      case dateType: DateType => StringClassReference // ToDo: support date types
+      case BooleanType        => BooleanClassPointer(primitive)
+      case StringType         => StringClassPointer
+      case IntegerType        => LongClassPointer(primitive)
+      case NumberType         => DoubleClassPointer(primitive)
+      case NullType           => StringClassPointer // not sure what we have to do in this case
+      case FileType           => FileClassPointer
+      case dateType: DateType => StringClassPointer // ToDo: support date types
       case ArrayTypeReference(genericType) =>
         genericType match {
           case typeReference: TypeReference =>
             val classPointer = typeReferenceToClassPointer(typeReference)
-            ListClassReference(classPointer)
+            ListClassPointer(classPointer)
           case CanonicalTypeParameter(paramName) =>
             val typeParameter = TypeParameter(paramName)
             val classPointer  = typeParameterContext.getOrElse(typeParameter, typeParameter)
-            ListClassReference(classPointer)
+            ListClassPointer(classPointer)
         }
       case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
       case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")

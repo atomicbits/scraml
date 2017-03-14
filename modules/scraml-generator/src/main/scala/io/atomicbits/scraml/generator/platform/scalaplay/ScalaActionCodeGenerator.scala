@@ -47,44 +47,44 @@ object ScalaActionCodeGenerator extends ActionCode {
 
   def bodyTypes(action: ActionSelection): List[Option[ClassPointer]] =
     action.selectedContentType match {
-      case StringContentType(contentTypeHeader) => List(Some(StringClassReference))
-      case JsonContentType(contentTypeHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
+      case StringContentType(contentTypeHeader) => List(Some(StringClassPointer))
+      case JsonContentType(contentTypeHeader)   => List(Some(StringClassPointer), Some(JsValueClassPointer))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedContentType.classPointer))
+        List(Some(StringClassPointer), Some(JsValueClassPointer), Some(typedContentType.classPointer))
       case BinaryContentType(contentTypeHeader) =>
         List(
-          Some(StringClassReference),
-          Some(FileClassReference),
-          Some(InputStreamClassReference),
-          Some(ArrayClassReference(arrayType = ByteClassReference))
+          Some(StringClassPointer),
+          Some(FileClassPointer),
+          Some(InputStreamClassPointer),
+          Some(ArrayClassPointer(arrayType = ByteClassPointer))
         )
       case AnyContentType(contentTypeHeader) =>
         List(
           None,
-          Some(StringClassReference),
-          Some(FileClassReference),
-          Some(InputStreamClassReference),
-          Some(ArrayClassReference(arrayType = ByteClassReference))
+          Some(StringClassPointer),
+          Some(FileClassPointer),
+          Some(InputStreamClassPointer),
+          Some(ArrayClassPointer(arrayType = ByteClassPointer))
         )
       case NoContentType => List(None)
-      case x             => List(Some(StringClassReference))
+      case x             => List(Some(StringClassPointer))
     }
 
   def responseTypes(action: ActionSelection): List[Option[ClassPointer]] =
     action.selectedResponseType match {
-      case StringResponseType(acceptHeader) => List(Some(StringClassReference))
-      case JsonResponseType(acceptHeader)   => List(Some(StringClassReference), Some(JsValueClassReference))
+      case StringResponseType(acceptHeader) => List(Some(StringClassPointer))
+      case JsonResponseType(acceptHeader)   => List(Some(StringClassPointer), Some(JsValueClassPointer))
       case BinaryResponseType(acceptHeader) =>
         List(
-          Some(StringClassReference),
-          Some(FileClassReference),
-          Some(InputStreamClassReference),
-          Some(ArrayClassReference(arrayType = ByteClassReference))
+          Some(StringClassPointer),
+          Some(FileClassPointer),
+          Some(InputStreamClassPointer),
+          Some(ArrayClassPointer(arrayType = ByteClassPointer))
         )
       case typedResponseType: TypedResponseType =>
-        List(Some(StringClassReference), Some(JsValueClassReference), Some(typedResponseType.classPointer))
+        List(Some(StringClassPointer), Some(JsValueClassPointer), Some(typedResponseType.classPointer))
       case NoResponseType => List(None)
-      case x              => List(Some(StringClassReference))
+      case x              => List(Some(StringClassPointer))
     }
 
   def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer]): String = {

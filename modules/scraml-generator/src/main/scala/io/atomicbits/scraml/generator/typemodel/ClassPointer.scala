@@ -51,28 +51,28 @@ case class ClassReference(name: String,
 
 case class TypeParameter(name: String) extends ClassPointer
 
-case class ArrayClassReference(arrayType: ClassPointer) extends ClassPointer
+case class ArrayClassPointer(arrayType: ClassPointer) extends ClassPointer
 
-case object StringClassReference extends ClassPointer
+case object StringClassPointer extends ClassPointer
 
-case object ByteClassReference extends ClassPointer
+case object ByteClassPointer extends ClassPointer
 
-case object BinaryDataClassReference extends ClassPointer
+case object BinaryDataClassPointer extends ClassPointer
 
-case object InputStreamClassReference extends ClassPointer
+case object InputStreamClassPointer extends ClassPointer
 
-case object FileClassReference extends ClassPointer
+case object FileClassPointer extends ClassPointer
 
-case object JsObjectClassReference extends ClassPointer
+case object JsObjectClassPointer extends ClassPointer
 
-case object JsValueClassReference extends ClassPointer
+case object JsValueClassPointer extends ClassPointer
 
-case class LongClassReference(primitive: Boolean = true) extends ClassPointer
+case class LongClassPointer(primitive: Boolean = true) extends ClassPointer
 
-case class DoubleClassReference(primitive: Boolean = true) extends ClassPointer
+case class DoubleClassPointer(primitive: Boolean = true) extends ClassPointer
 
-case class BooleanClassReference(primitive: Boolean = true) extends ClassPointer
+case class BooleanClassPointer(primitive: Boolean = true) extends ClassPointer
 
-case class ListClassReference(typeParamValue: ClassPointer) extends ClassPointer
+case class ListClassPointer(typeParamValue: ClassPointer) extends ClassPointer
 
-case object BodyPartClassReference extends ClassPointer
+case object BodyPartClassPointer extends ClassPointer

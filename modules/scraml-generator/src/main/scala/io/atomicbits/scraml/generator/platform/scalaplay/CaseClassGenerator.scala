@@ -108,7 +108,7 @@ object CaseClassGenerator extends SourceGenerator {
     // We know that Play Json 2.4 has trouble with empty case classes, so we inject a random non-required field in that case
     val atLeastOneField =
       if (collectedFields.nonEmpty) collectedFields
-      else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassReference, required = false))
+      else Seq(Field(fieldName = s"__injected_field", classPointer = StringClassPointer, required = false))
 
     generateCaseClass(traitsToImplement,
                       atLeastOneField,

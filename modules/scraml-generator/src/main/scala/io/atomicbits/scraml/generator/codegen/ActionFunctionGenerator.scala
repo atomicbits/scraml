@@ -77,7 +77,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         actionSelection   = actionSelection,
         bodyType          = None,
         isBinary          = false,
-        actionParameters  = actionCode.expandMethodParameter(List("parts" -> ListClassReference(BodyPartClassReference))),
+        actionParameters  = actionCode.expandMethodParameter(List("parts" -> ListClassPointer(BodyPartClassPointer))),
         isMultipartParams = true,
         contentType       = actionSelection.selectedContentType,
         responseType      = actionSelection.selectedResponseType

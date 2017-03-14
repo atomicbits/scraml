@@ -147,7 +147,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val bboxFieldClassPointer = generationAggr.toMap(geometryToClassName).fields.filter(_.fieldName == "bbox").head.classPointer
 
-      bboxFieldClassPointer shouldBe ListClassReference(DoubleClassReference(primitive = false))
+      bboxFieldClassPointer shouldBe ListClassPointer(DoubleClassPointer(primitive = false))
     }
 
     scenario("test generated Java DSL") {

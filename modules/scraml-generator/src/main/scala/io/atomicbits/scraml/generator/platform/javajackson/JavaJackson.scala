@@ -37,43 +37,43 @@ object JavaJackson extends Platform with CleanNameTools {
 
     classPointer match {
       case classReference: ClassReference => classReference
-      case ArrayClassReference(arrayType) =>
+      case ArrayClassPointer(arrayType) =>
         ClassReference(name = arrayType.native.name, packageParts = arrayType.native.safePackageParts, arrayType = Some(arrayType.native))
-      case StringClassReference =>
+      case StringClassPointer =>
         ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
-      case ByteClassReference =>
+      case ByteClassPointer =>
         ClassReference(name = "byte", packageParts = List.empty, predef = true)
-      case BinaryDataClassReference =>
+      case BinaryDataClassPointer =>
         ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
-      case FileClassReference =>
+      case FileClassPointer =>
         ClassReference(name = "File", packageParts = List("java", "io"), library = true)
-      case InputStreamClassReference =>
+      case InputStreamClassPointer =>
         ClassReference(name = "InputStream", packageParts = List("java", "io"), library = true)
-      case JsObjectClassReference =>
+      case JsObjectClassPointer =>
         ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
-      case JsValueClassReference =>
+      case JsValueClassPointer =>
         ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
-      case BodyPartClassReference =>
+      case BodyPartClassPointer =>
         ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
-      case LongClassReference(primitive) =>
+      case LongClassPointer(primitive) =>
         if (primitive) {
           ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
         } else {
           ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
         }
-      case DoubleClassReference(primitive) =>
+      case DoubleClassPointer(primitive) =>
         if (primitive) {
           ClassReference(name = "double", packageParts = List("java", "lang"), predef = true)
         } else {
           ClassReference(name = "Double", packageParts = List("java", "lang"), predef = true)
         }
-      case BooleanClassReference(primitive) =>
+      case BooleanClassPointer(primitive) =>
         if (primitive) {
           ClassReference(name = "boolean", packageParts = List("java", "lang"), predef = true)
         } else {
           ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
         }
-      case ListClassReference(typeParamValue) =>
+      case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
         val typeParamValues = Map(typeParameter -> typeParamValue)
         ClassReference(
