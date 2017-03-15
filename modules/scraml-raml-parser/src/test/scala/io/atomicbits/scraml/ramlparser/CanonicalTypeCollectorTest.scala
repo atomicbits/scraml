@@ -123,7 +123,6 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
       val dog                    = CanonicalName.create(name = "Dog", packagePath                    = List("io", "atomicbits", "schema"))
       val cat                    = CanonicalName.create(name = "Cat", packagePath                    = List("io", "atomicbits", "schema"))
       val fish                   = CanonicalName.create(name = "Fish", packagePath                   = List("io", "atomicbits", "schema"))
-      val userOther              = CanonicalName.create(name = "UserOther", packagePath              = List("io", "atomicbits", "schema"))
       val link                   = CanonicalName.create(name = "Link", packagePath                   = List("io", "atomicbits", "schema"))
       val book                   = CanonicalName.create(name = "Book", packagePath                   = List("io", "atomicbits", "schema"))
       val userDefinitionsAddress = CanonicalName.create(name = "UserDefinitionsAddress", packagePath = List("io", "atomicbits", "schema"))
@@ -148,7 +147,6 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
         dog,
         cat,
         fish,
-        userOther,
         link,
         book,
         userDefinitionsAddress,

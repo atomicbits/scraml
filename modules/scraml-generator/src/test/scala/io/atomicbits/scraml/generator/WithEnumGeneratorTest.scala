@@ -22,7 +22,7 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
       When("we generate the RAMl specification into class representations")
       val generationAggr: GenerationAggr =
         ScramlGenerator
-          .generateSourceFiles(
+          .buildGenerationAggr(
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits",
             apiClassName   = "EnumApi",

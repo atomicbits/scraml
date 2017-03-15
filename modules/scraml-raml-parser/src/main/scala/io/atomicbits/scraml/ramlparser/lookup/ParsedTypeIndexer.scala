@@ -180,7 +180,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
     * @param ttype
     * @return
     */
-  def expandRelativeToAbsoluteIds(ttype: ParsedType): ParsedType = {
+  def expandRelativeToAbsoluteIds(ttype: ParsedType): ParsedType = { // ToDo: move this into a separate class
 
     /**
       * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
@@ -241,7 +241,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    if (hasNativeIds(ttype)) {
+    if (hasNativeIds(ttype)) { // ToDo: see if we can refactor this to another way of detecting RAML 1.0 versus json-schema types
       ttype
     } else {
       ttype.id match {

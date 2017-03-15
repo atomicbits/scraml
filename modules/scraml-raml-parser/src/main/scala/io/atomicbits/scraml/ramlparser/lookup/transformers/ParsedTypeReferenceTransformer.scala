@@ -63,6 +63,8 @@ object ParsedTypeReferenceTransformer {
             val canonicalName = canonicalNameGenerator.generate(parsedEnum.id)
             val typeReference = NonPrimitiveTypeReference(canonicalName)
             (typeReference, canonicalLH)
+          case parsedObject: ParsedObject if parsedObject.isEmpty =>
+            (JsonType, canonicalLH)
           case parsedObject: ParsedObject =>
             val canonicalName                     = canonicalNameGenerator.generate(parsedObject.id)
             val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)

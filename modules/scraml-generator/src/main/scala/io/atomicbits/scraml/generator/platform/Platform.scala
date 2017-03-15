@@ -28,6 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   FileType,
   GenericReferrable,
   IntegerType,
+  JsonType,
   NonPrimitiveTypeReference,
   NullType,
   NumberType,
@@ -132,6 +133,7 @@ object Platform {
     typeReference match {
       case BooleanType        => BooleanClassPointer(primitive)
       case StringType         => StringClassPointer
+      case JsonType           => JsObjectClassPointer
       case IntegerType        => LongClassPointer(primitive)
       case NumberType         => DoubleClassPointer(primitive)
       case NullType           => StringClassPointer // not sure what we have to do in this case

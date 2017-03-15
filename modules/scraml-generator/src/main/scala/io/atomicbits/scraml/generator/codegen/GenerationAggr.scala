@@ -264,7 +264,7 @@ object GenerationAggr {
 
     val sourceDefinitions: Seq[SourceDefinition] = clientClassDefinition +: collectedResourceDefinitions
 
-    val generationAggrBeforeCanonicalDefinitions = GenerationAggr(sourceDefinitions)
+    val generationAggrBeforeCanonicalDefinitions = GenerationAggr(sourceDefinitionsToProcess = sourceDefinitions)
 
     val finalGenerationAggregate: GenerationAggr =
       CanonicalToSourceDefinitionGenerator.transferObjectsToClassDefinitions(generationAggrBeforeCanonicalDefinitions, canonicalToMap)

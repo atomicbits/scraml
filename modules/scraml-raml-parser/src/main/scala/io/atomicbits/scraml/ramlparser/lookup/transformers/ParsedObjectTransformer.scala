@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.{ NativeId, UniqueId }
+import io.atomicbits.scraml.ramlparser.model.{ ImplicitId, NativeId, UniqueId }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
@@ -114,12 +114,12 @@ object ParsedObjectTransformer {
         )
 
       val typeReference: TypeReference = NonPrimitiveTypeReference(canonicalName) // We don't 'fill in' type parameter values here.
-
       (typeReference, jsonSchemaChildrenUpdatedCanonicalLH.addCanonicalType(canonicalName, objectType))
     }
 
     parsed match {
-      case parsedObject: ParsedObject => Some(registerParsedObject(parsedObject))
+      case parsedObject: ParsedObject if parsedObject.isEmpty => Some((JsonType, canonicalLookupHelper))
+      case parsedObject: ParsedObject                         => Some(registerParsedObject(parsedObject))
       case parsedMultipleInheritance: ParsedMultipleInheritance =>
         Some(registerParsedObject(parsedMultipleInheritanceToParsedObject(parsedMultipleInheritance)))
       case _ => None

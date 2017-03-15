@@ -26,7 +26,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 /**
   * Created by peter on 17/12/16.
   *
-  * ToDo: split indexing of parsed types and canonical type collection in separate classes to maintain a better overview
+  *
   */
 case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator) {
 

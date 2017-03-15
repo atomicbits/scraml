@@ -47,7 +47,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
-          .generateSourceFiles(
+          .buildGenerationAggr(
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits.scraml",
             apiClassName   = "TestObjectHierarchyApi",
@@ -86,7 +86,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
-          .generateSourceFiles(
+          .buildGenerationAggr(
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits.scraml",
             apiClassName   = "TestApi",
@@ -112,7 +112,6 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io/atomicbits/scraml/rest/user/activate/ActivateResource.scala",
         "io/atomicbits/scraml/rest/animals/AnimalsResource.scala",
         "io/atomicbits/schema/User.scala",
-        "io/atomicbits/schema/UserOther.scala",
         "io/atomicbits/schema/UserDefinitionsAddress.scala",
         "io/atomicbits/schema/Link.scala",
         "io/atomicbits/schema/PagedList.scala",
@@ -160,7 +159,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
-          .generateSourceFiles(
+          .buildGenerationAggr(
             ramlApiPath    = apiResourceUrl.toString,
             apiPackageName = "io.atomicbits.scraml",
             apiClassName   = "TestApi",
@@ -186,7 +185,6 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io/atomicbits/scraml/rest/user/activate/ActivateResource.java",
         "io/atomicbits/scraml/rest/animals/AnimalsResource.java",
         "io/atomicbits/schema/User.java",
-        "io/atomicbits/schema/UserOther.java",
         "io/atomicbits/schema/UserDefinitionsAddress.java",
         "io/atomicbits/schema/Link.java",
         "io/atomicbits/schema/PagedList.java",

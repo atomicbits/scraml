@@ -130,8 +130,8 @@ object CanonicalToSourceDefinitionGenerator {
       genAggr.addSourceDefinition(unionClassDefinition)
     }
 
-    canonicalToMap.values.foldLeft(generationAggr) { (genAggr, theType) =>
-      theType match {
+    canonicalToMap.values.foldLeft(generationAggr) { (genAggr, nonPrimitiveType) =>
+      nonPrimitiveType match {
         case objectType: ObjectType => objectTypeToTransferObjectClassDefinition(genAggr, objectType)
         case enumType: EnumType     => enumTypeToEnumDefinition(genAggr, enumType)
         case unionType: UnionType   => unionTypeToUnionClassDefinition(genAggr, unionType)

@@ -86,7 +86,7 @@ object ScramlGenerator {
 
     val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
 
-    val generationAggregator = generateSourceFiles(ramlApiPath, apiPackageName, apiClassName, platform)
+    val generationAggregator = buildGenerationAggr(ramlApiPath, apiPackageName, apiClassName, platform)
 
     val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
 
@@ -98,7 +98,7 @@ object ScramlGenerator {
     mapAsJavaMap[String, String](tupleList.toMap)
   }
 
-  private[generator] def generateSourceFiles(ramlApiPath: String,
+  private[generator] def buildGenerationAggr(ramlApiPath: String,
                                              apiPackageName: String,
                                              apiClassName: String,
                                              thePlatform: Platform): GenerationAggr = {

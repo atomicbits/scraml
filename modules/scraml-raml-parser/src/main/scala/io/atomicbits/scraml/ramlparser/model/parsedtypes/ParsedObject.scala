@@ -62,6 +62,11 @@ case class ParsedObject(id: Id,
 
   def isInTypeHiearchy: Boolean = hasChildren || hasParent
 
+  def isEmpty: Boolean = {
+    properties.valueMap.isEmpty && selection.isEmpty && fragments.fragmentMap.isEmpty && parents.isEmpty && children.isEmpty &&
+    typeParameters.isEmpty && typeDiscriminator.isEmpty && typeDiscriminatorValue.isEmpty
+  }
+
 }
 
 object ParsedObject {
