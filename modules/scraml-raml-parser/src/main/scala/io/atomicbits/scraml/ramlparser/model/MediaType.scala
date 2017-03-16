@@ -37,16 +37,21 @@ case object NoMediaType extends MediaType {
 
 object MediaType {
 
-  def apply(value: String): MediaType =
-    value match {
-      case "" => NoMediaType
-      case x  => ActualMediaType(x)
-    }
+  def apply(mimeType: String): MediaType = unapply(mimeType).getOrElse(NoMediaType)
 
   def unapply(mimeType: String): Option[MediaType] = {
-    mimeType.split('/').toList match {
-      case ttype :: subtype :: anything => Some(MediaType(mimeType))
-      case _                            => None
+    val (typeAndSubT, params) =
+      mimeType.split(';').toList match {
+        case typeAndSubType :: Nil                      => (Some(typeAndSubType.trim), None)
+        case typeAndSubType :: parameters :: unexpected => (Some(typeAndSubType.trim), Some(parameters.trim))
+        case Nil                                        => (None, None)
+      }
+
+    typeAndSubT.flatMap { typeSub =>
+      typeSub.split('/').toList match {
+        case ttype :: subtype :: anything => Some(ActualMediaType(typeSub))
+        case _                            => None
+      }
     }
   }
 

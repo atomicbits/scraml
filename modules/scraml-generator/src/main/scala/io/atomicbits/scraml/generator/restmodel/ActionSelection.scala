@@ -65,14 +65,18 @@ object ActionSelection {
     }
 
     val responseTypeMap: Map[MediaType, Set[ResponseTypeWithStatus]] = {
-      val responseTypes = action.responses.responseMap.flatMap {
-        case (status, response) =>
-          val responseTypes = ResponseType(response)
-          responseTypes.map(ResponseTypeWithStatus(_, status))
-      }.toSet
-      if (responseTypes.isEmpty) Map(NoMediaType -> Set())
-      else
-        responseTypes.groupBy(_.responseType.acceptHeader) // There can be multiple accept types per accept type header (with different status codes).
+      val statusCodes = action.responses.responseMap.keys
+      if (statusCodes.isEmpty) {
+        Map(NoMediaType -> Set())
+      } else {
+        val minStatusCode          = statusCodes.min
+        val response               = action.responses.responseMap(minStatusCode)
+        val actualResponseTypes    = ResponseType(response)
+        val responseTypes          = if (actualResponseTypes.isEmpty) Set(NoResponseType) else actualResponseTypes
+        val responseTypeWithStatus = responseTypes.map(ResponseTypeWithStatus(_, minStatusCode))
+
+        responseTypeWithStatus.groupBy(_.responseType.acceptHeader) // There can be multiple accept types per accept type header (with different status codes).
+      }
     }
 
     ActionSelection(action, contentTypeMap, responseTypeMap)
