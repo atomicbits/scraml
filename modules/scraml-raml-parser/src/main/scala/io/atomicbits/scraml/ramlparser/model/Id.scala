@@ -19,22 +19,20 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+
 /**
   * Created by peter on 25/03/16.
   */
-
-
 /**
   * The base class for all Id's.
   */
 sealed trait Id
 
-
 /**
   * UniqueId's are Id's that are expected to be unique by value within a RAML document.
   */
 sealed trait UniqueId extends Id
-
 
 trait AbsoluteId extends UniqueId {
 
@@ -55,13 +53,13 @@ trait AbsoluteId extends UniqueId {
   * don't have an absolute or relative id.
   * An absolute id is of the form "http://atomicbits.io/schema/User.json" and often it ends with a "#".
   *
-  * @param id The string representation of the id
+  *
   */
-case class RootId(id: String) extends AbsoluteId {
+case class RootId(hostPath: List[String], path: List[String], name: String) extends AbsoluteId {
 
-  lazy val anchor: String = id.split('/').toList.dropRight(1).mkString("/")
+  val anchor: String = s"http://${hostPath.mkString(".")}/${path.mkString("/")}"
 
-  def toAbsolute(id: Id, path: List[String] = List.empty): AbsoluteId = {
+  def toAbsoluteId(id: Id, path: List[String] = List.empty): AbsoluteId = {
     id match {
       case absoluteId: RootId                => absoluteId
       case relativeId: RelativeId            => RootId(s"$anchor/${relativeId.id}")
@@ -70,30 +68,72 @@ case class RootId(id: String) extends AbsoluteId {
       case ImplicitId                        => AbsoluteFragmentId(this, path)
       case nativeId: NativeId                =>
         // We should not expect native ids inside a json-schema, but our parser doesn't separate json-schema and RAML 1.0 types,
-        // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here and
-        // the best way to do that is using an absolute fragment id.
-        AbsoluteFragmentId(this, path)
-      case absId: AbsoluteId                 => sys.error("All absolute IDs should be covered already.")
-      case other                             => sys.error(s"Cannot transform $other to an absolute id.")
+        // so we can get fragments that are interpreted as having a native ID. This is OK, but we need to resolve them here
+        // by using the NoId.
+        NoId
+      case absId: AbsoluteId => sys.error("All absolute IDs should be covered already.")
+      case other             => sys.error(s"Cannot transform $other to an absolute id.")
     }
   }
 
   val rootPart: RootId = this
 
-  val rootPath: List[String] = {
-    val withoutProtocol = id.split("://").takeRight(1).head
-    val withoutHost = withoutProtocol.split('/').drop(1).toList
-    withoutHost
-  }
+  val fileName: String = s"$name.json"
 
-  val hostPath: List[String] = {
-    val withoutProtocol = id.split("://").takeRight(1).head
-    val host = withoutProtocol.split('/').take(1).head
-    host.split('.').toList
-  }
+  val rootPath: List[String] = path :+ fileName
+
+  val id = s"$anchor/$fileName"
 
 }
 
+object RootId {
+
+  /**
+    * @param id The string representation of the id
+    */
+  def apply(id: String): RootId = {
+
+    val protocolParts   = id.split("://")
+    val protocol        = protocolParts.head
+    val withoutProtocol = protocolParts.takeRight(1).head
+    val parts           = withoutProtocol.split('/').filter(_.nonEmpty)
+    val host            = parts.take(1).head
+    val hostPath        = host.split('.').toList
+    val name            = fileNameToName(parts.takeRight(1).head)
+    val path            = parts.drop(1).dropRight(1).toList
+
+    RootId(
+      hostPath = hostPath,
+      path     = path,
+      name     = name
+    )
+  }
+
+  def fileNameToName(fileNameRep: String): String = {
+    val filenameWithoutHashtags = fileNameRep.split('#').take(1).head
+    val name                    = filenameWithoutHashtags.split('.').take(1).head
+    name
+  }
+
+  def fromPackagePath(packagePath: List[String], name: String): RootId = {
+    packagePath match {
+      case p1 :: p2 :: ps => RootId(hostPath = List(p2, p1), path = ps, name = name)
+      case _              => sys.error(s"A package path must contain at least two elements: $packagePath")
+    }
+  }
+
+  def fromCanonical(canonicalName: CanonicalName): RootId = {
+
+    val domain = canonicalName.packagePath.take(2).reverse.mkString(".")
+    val path = canonicalName.packagePath.drop(2) match {
+      case Nil      => "/"
+      case somePath => somePath.mkString("/", "/", "/")
+    }
+
+    RootId(s"http://$domain$path${canonicalName.name}.json")
+  }
+
+}
 
 /**
   * A relative id identifies its schema uniquely when expanded with the anchor of its root schema. Its root schema
@@ -103,8 +143,13 @@ case class RootId(id: String) extends AbsoluteId {
   *
   * @param id The string representation of the id
   */
-case class RelativeId(id: String) extends Id
+case class RelativeId(id: String) extends Id {
 
+  val name: String = RootId.fileNameToName(id.split('/').filter(_.nonEmpty).takeRight(1).head)
+
+  val path: List[String] = id.split('/').filter(_.nonEmpty).dropRight(1).toList
+
+}
 
 /**
   * A native id is like a relative id, but it is not expected to have an absolute parent id. NativeId's should not be used in
@@ -156,3 +201,18 @@ case class AbsoluteFragmentId(root: RootId, override val fragments: List[String]
   * It is not a UniqueId since may items can have ImplicitId's.
   */
 case object ImplicitId extends Id
+
+/**
+  * Placeholder object for an ID that points to nowhere.
+  */
+case object NoId extends AbsoluteId {
+
+  override def id: String = "http://no.where"
+
+  override def rootPart: RootId = RootId(id)
+
+  override def rootPath: List[String] = List.empty
+
+  override def hostPath: List[String] = List("no", "where")
+
+}

@@ -19,31 +19,34 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.types.StringType
-import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException}
-import play.api.libs.json.{JsArray, JsObject}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameter, ParsedParameters, ParsedString }
+import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
+import play.api.libs.json.{ JsArray, JsObject }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import io.atomicbits.scraml.util.TryUtils._
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 import scala.language.postfixOps
 
-
 /**
   * Created by peter on 10/02/16.
   */
 case class Resource(urlSegment: String,
-                    urlParameter: Option[Parameter] = None,
-                    displayName: Option[String] = None,
-                    description: Option[String] = None,
-                    actions: List[Action] = List.empty,
-                    resources: List[Resource] = List.empty,
-                    parent: Option[Resource] = None)
+                    urlParameter: Option[ParsedParameter] = None,
+                    displayName: Option[String]           = None,
+                    description: Option[String]           = None,
+                    actions: List[Action]                 = List.empty,
+                    resources: List[Resource]             = List.empty,
+                    parent: Option[Resource]              = None) {
 
+  lazy val resourceMap: Map[String, Resource] = resources.map(resource => resource.urlSegment -> resource).toMap
+
+  lazy val actionMap: Map[Method, Action] = actions.map(action => action.actionType -> action).toMap
+
+}
 
 object Resource {
-
 
   def apply(resourceUrl: String, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Resource] = {
 
@@ -53,14 +56,12 @@ object Resource {
       // recursively to adhere to the trait priority as described in:
       // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/#algorithm-of-merging-traits-and-methods
       parseContext.traits.applyTo(jsObject) { jsObj =>
-
         val displayName: Try[Option[String]] = Try(jsObj.fieldStringValue("displayName"))
 
         val description: Try[Option[String]] = Try(jsObj.fieldStringValue("description"))
 
-
         // URI parameters
-        val uriParameterMap: Try[Parameters] = Parameters((jsObj \ "uriParameters").toOption)
+        val uriParameterMap: Try[ParsedParameters] = ParsedParameters((jsObj \ "uriParameters").toOption)
 
         // Actions
 
@@ -71,7 +72,6 @@ object Resource {
 
         val actions = accumulate(tryActions)
 
-
         // Subresources
 
         val subResourceMap =
@@ -80,8 +80,6 @@ object Resource {
           } toSeq
 
         val subResources: Try[Seq[Resource]] = accumulate(subResourceMap)
-
-
 
         /**
           * Resources in the Java RAML model can have relative URLs that consist of multiple segments in a single Resource,
@@ -94,7 +92,7 @@ object Resource {
           */
         def createResource(displayN: Option[String],
                            desc: Option[String],
-                           uriParamMap: Parameters,
+                           uriParamMap: ParsedParameters,
                            actionSeq: Seq[Action],
                            childResources: Seq[Resource]): Resource = {
 
@@ -102,9 +100,11 @@ object Resource {
             if (segment.startsWith("{") && segment.endsWith("}")) {
               val pathParameterName = segment.stripPrefix("{").stripSuffix("}")
               val pathParameterMeta =
-                uriParamMap.byName(pathParameterName).getOrElse(Parameter(pathParameterName, new StringType(), true, false))
+                uriParamMap
+                  .byName(pathParameterName)
+                  .getOrElse(ParsedParameter(pathParameterName, TypeRepresentation(new ParsedString()), true, false))
               Resource(
-                urlSegment = pathParameterName,
+                urlSegment   = pathParameterName,
                 urlParameter = Some(pathParameterMeta)
               )
             } else {
@@ -121,16 +121,16 @@ object Resource {
 
           def breakdownResourceUrl(segments: List[String]): Resource = {
             segments match {
-              case segment :: Nil  =>
-                val resource: Resource = buildResourceSegment(segment)
+              case segment :: Nil =>
+                val resource: Resource          = buildResourceSegment(segment)
                 val connectedResource: Resource = connectParentChildren(resource, childResources.toList)
                 connectedResource.copy(actions = actionSeq.toList)
               case segment :: segs =>
                 val resource: Resource = buildResourceSegment(segment)
                 connectParentChildren(resource, List(breakdownResourceUrl(segs)))
-              case Nil             =>
-                val resource: Resource = buildResourceSegment("") // Root segment.
-              val connectedResource: Resource = connectParentChildren(resource, childResources.toList)
+              case Nil =>
+                val resource: Resource          = buildResourceSegment("") // Root segment.
+                val connectedResource: Resource = connectParentChildren(resource, childResources.toList)
                 connectedResource.copy(actions = actionSeq.toList)
             }
           }
@@ -145,7 +145,6 @@ object Resource {
 
           breakdownResourceUrl(urlSegments)
         }
-
 
         withSuccess(displayName, description, uriParameterMap, actions, subResources)(createResource)
       }

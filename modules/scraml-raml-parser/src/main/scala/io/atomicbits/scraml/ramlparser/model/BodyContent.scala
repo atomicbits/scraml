@@ -19,21 +19,19 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.types.Type
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameters, ParsedType }
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{ JsObject, JsValue }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import io.atomicbits.scraml.util.TryUtils._
-
 
 /**
   * Created by peter on 10/02/16.
   */
 case class BodyContent(mediaType: MediaType,
-                       bodyType: Option[Type] = None,
-                       formParameters: Parameters = Parameters())
-
+                       bodyType: Option[TypeRepresentation] = None,
+                       formParameters: ParsedParameters     = new ParsedParameters())
 
 object BodyContentAsMediaTypeMap {
 
@@ -44,49 +42,46 @@ object BodyContentAsMediaTypeMap {
     */
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[List[BodyContent]]] = {
 
-
     def fromJsObjectValues(mediaTypeAndJsValue: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
 
       val (medType, json) = mediaTypeAndJsValue
 
       medType match {
-        case mediaType@MediaType(mt) =>
-          val tryFormParameters = Parameters((json \ "formParameters").toOption)
+        case mediaType @ MediaType(mt) =>
+          val tryFormParameters = ParsedParameters((json \ "formParameters").toOption)
 
           val bodyType =
             json match {
-              case Type(bType) => Some(bType)
-              case _           => None
+              case ParsedType(bType) => Some(bType)
+              case _                 => None
             }
 
           val triedBodyContent =
             for {
               bType <- accumulate(bodyType)
               formParameters <- tryFormParameters
-            } yield BodyContent(MediaType(medType), bType, formParameters)
+            } yield BodyContent(MediaType(medType), bType.map(TypeRepresentation(_)), formParameters)
 
           Some(triedBodyContent)
-        case _                       => None
+        case _ => None
       }
 
     }
-
 
     json match {
       case jsObj: JsObject =>
         val bodyContentList = jsObj.value.toList.map(fromJsObjectValues).flatten
         accumulate(bodyContentList) match {
-          case Success(Nil)         => None
-          case Success(someContent) => Some(Success(someContent))
-          case failure@Failure(exc) => Some(failure)
+          case Success(Nil)           => None
+          case Success(someContent)   => Some(Success(someContent))
+          case failure @ Failure(exc) => Some(failure)
         }
-      case _               => None
+      case _ => None
     }
 
   }
 
 }
-
 
 object BodyContentAsDefaultMediaType {
 
@@ -98,14 +93,13 @@ object BodyContentAsDefaultMediaType {
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[BodyContent]] = {
 
     parseContext.defaultMediaType.map { defaultMediaType =>
-
       val bodyType =
         json match {
-          case Type(bType) => Some(bType)
-          case _           => None
+          case ParsedType(bType) => Some(bType)
+          case _                 => None
         }
 
-      accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType))
+      accumulate(bodyType).map(bType => BodyContent(defaultMediaType, bType.map(TypeRepresentation(_))))
 
     }
 

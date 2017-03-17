@@ -19,22 +19,18 @@
 import sbt._
 import sbt.Keys._
 
-
-trait BuildSettings {
-  this: Build =>
-
+trait BuildSettings { this: Build =>
 
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val Version = "0.5.3" + snapshotSuffix
+  val Version = "0.6.0" + snapshotSuffix
 
   val scala2_10 = "2.10.5"
   val scala2_11 = "2.11.8"
 
   val ScalaVersion = scala2_11
-
 
   val defaultCrossScalaVersions = Seq(scala2_10, scala2_11)
 
@@ -56,17 +52,13 @@ trait BuildSettings {
   val publishingCredentials = (for {
     username <- Option(System.getenv().get("SONATYPE_USERNAME"))
     password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-  } yield
-    Seq(Credentials(
-      "Sonatype Nexus Repository Manager",
-      "oss.sonatype.org",
-      username,
-      password)
-    )).getOrElse(Seq())
+  } yield Seq(Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password))).getOrElse(Seq())
 
   val publishSettings = Seq(
     publishMavenStyle := true,
-    pomIncludeRepository := { _ => false },
+    pomIncludeRepository := { _ =>
+      false
+    },
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)

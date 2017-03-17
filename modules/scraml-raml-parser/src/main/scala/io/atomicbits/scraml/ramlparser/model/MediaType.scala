@@ -22,14 +22,36 @@ package io.atomicbits.scraml.ramlparser.model
 /**
   * Created by peter on 26/08/16.
   */
-case class MediaType(value: String)
+trait MediaType {
+
+  def value: String
+
+}
+case class ActualMediaType(value: String) extends MediaType
+
+case object NoMediaType extends MediaType {
+
+  val value: String = ""
+
+}
 
 object MediaType {
 
+  def apply(mimeType: String): MediaType = unapply(mimeType).getOrElse(NoMediaType)
+
   def unapply(mimeType: String): Option[MediaType] = {
-    mimeType.split('/').toList match {
-      case ttype :: subtype :: anything => Some(MediaType(mimeType))
-      case _                            => None
+    val (typeAndSubT, params) =
+      mimeType.split(';').toList match {
+        case typeAndSubType :: Nil                      => (Some(typeAndSubType.trim), None)
+        case typeAndSubType :: parameters :: unexpected => (Some(typeAndSubType.trim), Some(parameters.trim))
+        case Nil                                        => (None, None)
+      }
+
+    typeAndSubT.flatMap { typeSub =>
+      typeSub.split('/').toList match {
+        case ttype :: subtype :: anything => Some(ActualMediaType(typeSub))
+        case _                            => None
+      }
     }
   }
 

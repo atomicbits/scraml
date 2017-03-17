@@ -19,45 +19,44 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.model._
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.generator.restmodel.{ ActionSelection, ContentType, ResponseType }
+import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClassReference }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 
 /**
- * Created by peter on 30/09/15.
- */
+  * Created by peter on 20/01/17.
+  */
 trait ActionCode {
 
-  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassRep): String
-
-  def headerSegmentClass(headerSegmentClassRef: ClassReference, imports: Set[String], methods: List[String]): String
+  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String
 
   /**
-   * The list of body types that need to be available on a specific action function.
-   */
-  def bodyTypes(action: RichAction): List[Option[ClassPointer]]
+    * The list of body types that need to be available on a specific action function.
+    */
+  def bodyTypes(action: ActionSelection): List[Option[ClassPointer]]
+
+  def responseTypes(action: ActionSelection): List[Option[ClassPointer]]
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
 
-  def createSegmentType(responseType: ResponseType)(optBodyType: Option[ClassPointer]): String
-
   def responseClassDefinition(responseType: ResponseType): String
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
+  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)]
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): String
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String
 
   def quoteString(text: String): String = s""""$text""""
 
-  def generateAction(action: RichAction,
-                     segmentType: String,
-                     actionParameters: List[String] = List.empty,
-                     queryParameterMapEntries: List[String] = List.empty,
+  def generateAction(actionSelection: ActionSelection,
+                     bodyType: Option[ClassPointer],
+                     isBinary: Boolean,
+                     actionParameters: List[String]        = List.empty,
                      formParameterMapEntries: List[String] = List.empty,
-                     typedBodyParam: Boolean = false,
-                     multipartParams: Boolean = false,
-                     binaryParam: Boolean = false,
+                     isTypedBodyParam: Boolean             = false,
+                     isMultipartParams: Boolean            = false,
+                     isBinaryParam: Boolean                = false,
                      contentType: ContentType,
                      responseType: ResponseType): String
 

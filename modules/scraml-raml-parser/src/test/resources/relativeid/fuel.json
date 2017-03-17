@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "fuel",
+  "type": "object",
+  "description": "fuel",
+  "properties": {
+    "cost": {
+      "type": "number",
+      "required": true
+    }
+  }
+}

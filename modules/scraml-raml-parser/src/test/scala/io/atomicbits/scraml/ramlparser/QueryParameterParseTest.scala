@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.types._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.Matchers._
@@ -48,11 +48,11 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
       val userResource: Resource = restResource.resources.filter(_.urlSegment == "user").head
       val getAction: Action = userResource.actions.filter(_.actionType == Get).head
 
-      val organizationQueryParameter: Parameter = getAction.queryParameters.byName("organization").get
+      val organizationQueryParameter: ParsedParameter = getAction.queryParameters.byName("organization").get
 
-      organizationQueryParameter.parameterType shouldBe a[ArrayType]
+      organizationQueryParameter.parameterType.parsed shouldBe a[ParsedArray]
 
-      organizationQueryParameter.parameterType.asInstanceOf[ArrayType].items shouldBe a[StringType]
+      organizationQueryParameter.parameterType.parsed.asInstanceOf[ParsedArray].items shouldBe a[ParsedString]
 
 
       //      val prettyModel = TestUtils.prettyPrint(parsedModel)

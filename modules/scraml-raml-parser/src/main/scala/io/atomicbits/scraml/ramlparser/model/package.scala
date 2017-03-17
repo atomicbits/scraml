@@ -24,7 +24,4 @@ package io.atomicbits.scraml.ramlparser
   */
 package object model {
 
-  type Property = Parameter
-  type Properties = Parameters
-
 }

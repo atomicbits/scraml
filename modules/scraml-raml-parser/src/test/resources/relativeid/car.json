@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "title": "car",
+  "type": "object",
+  "description": "A car",
+  "properties": {
+    "seats": {
+      "type": "integer",
+      "required": true
+    },
+    "drive": {
+      "$ref": "engine",
+      "required": true
+    }
+  }
+}

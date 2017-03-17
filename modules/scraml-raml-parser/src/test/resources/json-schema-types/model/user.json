@@ -2,19 +2,6 @@
   "$schema": "http://json-schema.org/draft-03/schema",
   "id": "http://atomicbits.io/model/user.json#",
   "type": "object",
-  "description": "A user object.",
-  "definitions": {
-    "address": {
-      "id": "#/definitions/address",
-      "type": "object",
-      "properties": {
-        "streetAddress": { "type": "string" },
-        "city":          { "type": "string" },
-        "state":         { "type": "string" }
-      },
-      "required": ["streetAddress", "city", "state"]
-    }
-  },
   "properties": {
     "id": {
       "required": true,
@@ -33,17 +20,6 @@
       "minimum": 0,
       "required": true,
       "type": "integer"
-    },
-    "homePage": {
-      "required": false,
-      "$ref": "http://atomicbits.io/model/link.json#"
-    },
-    "address": {
-      "$ref": "#/definitions/address"
-    },
-    "other": {
-      "type": "object",
-      "properties": {}
     }
   }
 }

@@ -33,6 +33,39 @@ types:
     properties:
       hero:
         type: string
+  Phone:
+    type: object
+    properties:
+      manufacturer:
+        type: string
+      numberOfSIMCards:
+        type: number
+  Notebook:
+    type: object
+    properties:
+      manufacturer:
+        type: string
+      numberOfUSBPorts:
+        type: number
+#  Person:
+#    type: object
+#    properties:
+#      devices: ( Phone | Notebook )[]
+#      reports: Person[]
+#  PhoneOrNotebook: ( Phone | Notebook )
+  HasHome:
+    type: object
+    properties:
+      homeAddress: string
+  Dog:
+    type: object
+    properties:
+      name: string
+      fangs: string
+  HomeAnimal:
+    type: [ HasHome , Dog ]
+    properties:
+      indoor: boolean
 
 
 /rest/books:
