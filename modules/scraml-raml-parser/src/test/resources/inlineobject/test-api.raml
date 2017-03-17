@@ -1,0 +1,16 @@
+#%RAML 1.0
+---
+title: test-inline-object
+version: 1.0
+mediaType: application/json
+
+types:
+  attributes:          !include attributes.json
+
+/attributes:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: attributes

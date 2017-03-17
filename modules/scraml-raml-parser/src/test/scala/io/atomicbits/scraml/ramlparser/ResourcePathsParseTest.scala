@@ -19,11 +19,14 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.{Raml, Resource}
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ StringType, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
+import io.atomicbits.scraml.ramlparser.model.{ Raml, Resource, TypeRepresentation }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
 import org.scalatest.Matchers._
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 
 import scala.util.Try
 
@@ -37,7 +40,8 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
     scenario("test resource paths in a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
-      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+      val defaultBasePath = List("io", "atomicbits", "schema")
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse
@@ -61,13 +65,12 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
 
         currentResource.resources match {
           case Nil => List(nextPath)
-          case rs  =>
+          case rs =>
             if (currentResource.actions.isEmpty) rs.flatMap(collectResourcePaths(_, nextPath))
             else nextPath :: rs.flatMap(collectResourcePaths(_, nextPath))
         }
 
       }
-
 
       val collectedResources = collectResources(raml.resources)
       //      println(s"collected resources:\n$collectedResources")
@@ -91,7 +94,18 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
         collectedResources should contain(expected)
       }
 
-      val prettyModel = TestUtils.prettyPrint(parsedModel)
+      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
+      val (ramlUpdated, canonicalLookup)  = canonicalTypeCollector.collect(raml)
+
+      val userIdUrlParameter: Option[ParsedParameter] =
+        ramlUpdated.resourceMap("rest").resourceMap("user").resourceMap("userid").urlParameter
+
+      userIdUrlParameter.isDefined shouldBe true
+      val canonicalUrlParamTypeRef: Option[TypeReference] = userIdUrlParameter.flatMap(_.parameterType.canonical)
+      canonicalUrlParamTypeRef shouldBe Some(StringType)
+
+      // val prettyModel = TestUtils.prettyPrint(parsedModel)
       //            println(s"Parsed raml: $prettyModel")
     }
 

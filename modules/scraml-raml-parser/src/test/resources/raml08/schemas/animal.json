@@ -6,6 +6,7 @@
   "description": "An animal object.",
   "oneOf": [
     {
+      "id": "cat.json",
       "properties": {
         "_type": {
           "enum": [
@@ -46,6 +47,7 @@
       }
     },
     {
+      "id": "fish.json",
       "properties": {
         "_type": {
           "enum": [

@@ -19,19 +19,16 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
-import play.api.libs.json.{JsObject, JsValue, Json}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
+import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
+import play.api.libs.json.{ JsObject, JsValue, Json }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 10/02/16.
   */
-case class Action(actionType: Method,
-                  headers: Parameters,
-                  queryParameters: Parameters,
-                  body: Body,
-                  responses: Responses)
+case class Action(actionType: Method, headers: ParsedParameters, queryParameters: ParsedParameters, body: Body, responses: Responses)
 
 object Action {
 
@@ -50,14 +47,12 @@ object Action {
 
   }
 
-
   private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
 
     parseContext.traits.applyTo(jsObject) { json =>
+      val tryQueryParameters = ParsedParameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
 
-      val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
-
-      val tryHeaders = Parameters((json \ "headers").toOption)
+      val tryHeaders = ParsedParameters((json \ "headers").toOption)
 
       val tryBody = Body(json)
 
@@ -68,13 +63,14 @@ object Action {
         headers <- tryHeaders
         body <- tryBody
         responses <- tryResponses
-      } yield Action(
-        actionType = actionType,
-        headers = headers,
-        queryParameters = queryParameters,
-        body = body,
-        responses = responses
-      )
+      } yield
+        Action(
+          actionType      = actionType,
+          headers         = headers,
+          queryParameters = queryParameters,
+          body            = body,
+          responses       = responses
+        )
     }
 
   }

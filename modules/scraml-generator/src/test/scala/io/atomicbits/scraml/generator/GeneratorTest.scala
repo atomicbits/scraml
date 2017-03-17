@@ -19,16 +19,21 @@
 
 package io.atomicbits.scraml.generator
 
-import io.atomicbits.scraml.generator.model.{ClassReference, _}
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
+import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
+import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
 import org.scalatest.Matchers._
 
-
 /**
- * Created by peter on 10/09/15. 
- */
+  * Created by peter on 10/09/15.
+  */
 class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+
+  import io.atomicbits.scraml.generator.platform.Platform._
 
   feature("The scraml generator generates DSL classes") {
 
@@ -38,63 +43,38 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiResourceUrl = this.getClass.getClassLoader.getResource("objecthierarchy/TestObjectHierarchyApi.raml")
 
       When("we generate the RAMl specification into class representations")
-      val classReps: Seq[ClassRep] =
-        ScramlGenerator.generateClassReps(
-          ramlApiPath = apiResourceUrl.toString,
-          apiPackageName = "io.atomicbits.scraml",
-          apiClassName = "TestObjectHierarchyApi",
-          Scala
-        )
+      implicit val platform = ScalaPlay
+
+      val generationAggr: GenerationAggr =
+        ScramlGenerator
+          .buildGenerationAggr(
+            ramlApiPath    = apiResourceUrl.toString,
+            apiPackageName = "io.atomicbits.scraml",
+            apiClassName   = "TestObjectHierarchyApi",
+            ScalaPlay
+          )
+          .generate
 
       Then("we should get valid a class hierarchy")
-      val animalClassRep =
-        classReps.filter(_.classRef == ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false)).head
 
-      animalClassRep.subClasses should contain (ClassReference("Cat", List("io", "atomicbits", "schema"), List(), false, false))
-      animalClassRep.subClasses should contain (ClassReference("Dog", List("io", "atomicbits", "schema"), List(), false, false))
-      animalClassRep.subClasses should contain (ClassReference("Fish", List("io", "atomicbits", "schema"), List(), false, false))
-      animalClassRep.parentClass shouldBe None
+      val animalToClassName = CanonicalName("Animal", List("io", "atomicbits", "schema"))
+      val catToClassName    = CanonicalName("Cat", List("io", "atomicbits", "schema"))
+      val dogToClassName    = CanonicalName("Dog", List("io", "atomicbits", "schema"))
+      val fishToClassName   = CanonicalName("Fish", List("io", "atomicbits", "schema"))
 
-      val dogClassRep =
-        classReps.filter(_.classRef == ClassReference("Dog", List("io", "atomicbits", "schema"), List(), false, false)).head
+      val animalToDef: TransferObjectClassDefinition = generationAggr.toMap(animalToClassName)
 
-      dogClassRep.subClasses shouldBe empty
-      dogClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
+      val animalChildren: Set[CanonicalName] = generationAggr.directChildren(animalToClassName)
 
-      val catClassRep =
-        classReps.filter(_.classRef == ClassReference("Cat", List("io", "atomicbits", "schema"), List(), false, false)).head
+      animalChildren should contain(catToClassName)
+      animalChildren should contain(dogToClassName)
+      animalChildren should contain(fishToClassName)
 
-      catClassRep.subClasses shouldBe empty
-      catClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
-
-      val fishClassRep =
-        classReps.filter(_.classRef == ClassReference("Fish", List("io", "atomicbits", "schema"), List(), false, false)).head
-
-      fishClassRep.subClasses shouldBe empty
-      fishClassRep.parentClass shouldBe Some(ClassReference("Animal", List("io", "atomicbits", "schema"), List(), false, false))
-
+      generationAggr.directParents(animalToClassName) shouldBe Set.empty
+      generationAggr.directParents(catToClassName) shouldBe Set(animalToClassName)
+      generationAggr.directParents(dogToClassName) shouldBe Set(animalToClassName)
+      generationAggr.directParents(fishToClassName) shouldBe Set(animalToClassName)
     }
-
-
-    scenario("test the generation of a rich action with a typed array response") {
-
-      Given("a json-schema containing an action with a typed array response")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("richaction/TestRichActionApi.raml")
-
-      When("we generate the RAMl specification into class representations")
-      val classReps: Seq[ClassRep] =
-        ScramlGenerator.generateClassReps(
-          ramlApiPath = apiResourceUrl.toString,
-          apiPackageName = "io.atomicbits.scraml",
-          apiClassName = "TestRichActionApi",
-          Scala
-        )
-
-      Then("we should get typed response body")
-//      println(s"class reps: $classReps")
-
-    }
-
 
     scenario("test generated Scala DSL") {
 
@@ -102,90 +82,72 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
 
       When("we generate the RAMl specification into class representations")
-      val classReps: Seq[ClassRep] =
-        ScramlGenerator.generateClassReps(
-          ramlApiPath = apiResourceUrl.toString,
-          apiPackageName = "io.atomicbits.scraml",
-          apiClassName = "TestApi",
-          Scala
-        )
+      implicit val platform = ScalaPlay
+
+      val generationAggr: GenerationAggr =
+        ScramlGenerator
+          .buildGenerationAggr(
+            ramlApiPath    = apiResourceUrl.toString,
+            apiPackageName = "io.atomicbits.scraml",
+            apiClassName   = "TestApi",
+            platform
+          )
+          .generate
 
       Then("we should get valid class representations")
-      val classRepsByFullName: Map[String, ClassRep] = classReps.map(rep => rep.fullyQualifiedName -> rep).toMap
 
-      val classes = List(
-        "io.atomicbits.scraml.TestApi",
-        "io.atomicbits.scraml.rest.RestResource",
-        "io.atomicbits.scraml.rest.user.UserResource",
-        "io.atomicbits.scraml.rest.user.userid.dogs.DogsResource",
-        "io.atomicbits.scraml.rest.user.userid.UseridResource",
-        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV01JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV10JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV01JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV10JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.upload.UploadResource",
-        "io.atomicbits.scraml.rest.user.activate.ActivateResource",
-        "io.atomicbits.scraml.rest.animals.AnimalsResource",
-        "io.atomicbits.schema.User",
-        "io.atomicbits.schema.UserDefinitionsAddress",
-        "io.atomicbits.schema.Link",
-        "io.atomicbits.schema.PagedList",
-        "io.atomicbits.schema.Animal",
-        "io.atomicbits.schema.Dog",
-        "io.atomicbits.schema.Cat",
-        "io.atomicbits.schema.Fish",
-        "io.atomicbits.schema.Method",
-        "io.atomicbits.schema.Geometry",
-        "io.atomicbits.schema.Point",
-        "io.atomicbits.schema.LineString",
-        "io.atomicbits.schema.MultiPoint",
-        "io.atomicbits.schema.MultiLineString",
-        "io.atomicbits.schema.Polygon",
-        "io.atomicbits.schema.MultiPolygon",
-        "io.atomicbits.schema.GeometryCollection",
-        "io.atomicbits.schema.Crs",
-        "io.atomicbits.schema.NamedCrsProperty",
-        "io.atomicbits.schema.Bbox",
-        "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
-        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
-        "play.api.libs.json.JsObject",
-        "io.atomicbits.scraml.Book",
-        "io.atomicbits.scraml.Author",
-        "io.atomicbits.scraml.books.BooksResource"
+      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+
+      val expectedFilePaths = Set(
+        "io/atomicbits/scraml/TestApi.scala",
+        "io/atomicbits/scraml/rest/RestResource.scala",
+        "io/atomicbits/scraml/rest/user/UserResource.scala",
+        "io/atomicbits/scraml/rest/user/userid/dogs/DogsResource.scala",
+        "io/atomicbits/scraml/rest/user/userid/UseridResource.scala",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV01JsonHeaderSegment.scala",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV10JsonHeaderSegment.scala",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV01JsonHeaderSegment.scala",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV10JsonHeaderSegment.scala",
+        "io/atomicbits/scraml/rest/user/upload/UploadResource.scala",
+        "io/atomicbits/scraml/rest/user/activate/ActivateResource.scala",
+        "io/atomicbits/scraml/rest/animals/AnimalsResource.scala",
+        "io/atomicbits/schema/User.scala",
+        "io/atomicbits/schema/UserDefinitionsAddress.scala",
+        "io/atomicbits/schema/Link.scala",
+        "io/atomicbits/schema/PagedList.scala",
+        "io/atomicbits/schema/Animal.scala",
+        "io/atomicbits/schema/AnimalImpl.scala",
+        "io/atomicbits/schema/Dog.scala",
+        "io/atomicbits/schema/Cat.scala",
+        "io/atomicbits/schema/Fish.scala",
+        "io/atomicbits/schema/Method.scala",
+        "io/atomicbits/schema/Geometry.scala",
+        "io/atomicbits/schema/GeometryImpl.scala",
+        "io/atomicbits/schema/Point.scala",
+        "io/atomicbits/schema/LineString.scala",
+        "io/atomicbits/schema/MultiPoint.scala",
+        "io/atomicbits/schema/MultiLineString.scala",
+        "io/atomicbits/schema/Polygon.scala",
+        "io/atomicbits/schema/MultiPolygon.scala",
+        "io/atomicbits/schema/GeometryCollection.scala",
+        "io/atomicbits/schema/Crs.scala",
+        "io/atomicbits/schema/NamedCrsProperty.scala",
+        "io/atomicbits/scraml/rest/user/void/VoidResource.scala",
+        "io/atomicbits/scraml/rest/user/void/location/LocationResource.scala",
+        "io/atomicbits/scraml/Book.scala",
+        "io/atomicbits/scraml/Author.scala",
+        "io/atomicbits/scraml/books/BooksResource.scala"
       )
 
-      classRepsByFullName.keys.foreach { key =>
-        assert(classes.contains(key), s"Class $key is not generated.")
-      }
+      generatedFilePaths -- expectedFilePaths shouldBe Set.empty
+      expectedFilePaths -- generatedFilePaths shouldBe Set.empty
 
-      val userResource = classRepsByFullName("io.atomicbits.scraml.rest.user.UserResource")
-      val expectedUserResource = CommonClassRep(
-        classRef = ClassReference("UserResource", List("io", "atomicbits", "scraml", "rest", "user")),
-        List(),
-        None,
-        List(),
-        Some(""),
-        None
-      )
-      assert(userResource.withContent("") == expectedUserResource)
+      val geometryToClassName = CanonicalName("Geometry", List("io", "atomicbits", "schema"))
 
-      val animalClass = classRepsByFullName("io.atomicbits.schema.Animal")
-      val expectedAnimalClassRep = CommonClassRep(
-        classRef = ClassReference("Animal", List("io", "atomicbits", "schema")),
-        List(),
-        None,
-        List(
-          ClassReference("Cat", List("io", "atomicbits", "schema")),
-          ClassReference("Dog", List("io", "atomicbits", "schema")),
-          ClassReference("Fish", List("io", "atomicbits", "schema"))
-        ),
-        Some(""),
-        Some(JsonTypeInfo("_type", None))
-      )
-      assert(animalClass.withContent("") == expectedAnimalClassRep)
+      val bboxFieldClassPointer = generationAggr.toMap(geometryToClassName).fields.filter(_.fieldName == "bbox").head.classPointer
+
+      bboxFieldClassPointer shouldBe ListClassPointer(DoubleClassPointer(primitive = false))
     }
-
-
 
     scenario("test generated Java DSL") {
 
@@ -193,65 +155,66 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
 
       When("we generate the RAMl specification into class representations")
-      val classReps: Seq[ClassRep] =
-        ScramlGenerator.generateClassReps(
-          ramlApiPath = apiResourceUrl.toString,
-          apiPackageName = "io.atomicbits.scraml",
-          apiClassName = "TestApi",
-          Java
-        )
+      implicit val platform = JavaJackson
+
+      val generationAggr: GenerationAggr =
+        ScramlGenerator
+          .buildGenerationAggr(
+            ramlApiPath    = apiResourceUrl.toString,
+            apiPackageName = "io.atomicbits.scraml",
+            apiClassName   = "TestApi",
+            platform
+          )
+          .generate
 
       Then("we should get valid class representations")
-      val classRepsByFullName: Map[String, ClassRep] = classReps.map(rep => rep.fullyQualifiedName -> rep).toMap
 
-      val classes = List(
-        "io.atomicbits.scraml.TestApi",
-        "io.atomicbits.scraml.rest.RestResource",
-        "io.atomicbits.scraml.rest.user.UserResource",
-        "io.atomicbits.scraml.rest.user.userid.dogs.DogsResource",
-        "io.atomicbits.scraml.rest.user.userid.UseridResource",
-        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV01JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.AcceptApplicationVndV10JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV01JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.userid.ContentApplicationVndV10JsonHeaderSegment",
-        "io.atomicbits.scraml.rest.user.upload.UploadResource",
-        "io.atomicbits.scraml.rest.user.activate.ActivateResource",
-        "io.atomicbits.scraml.rest.animals.AnimalsResource",
-        "io.atomicbits.schema.User",
-        "io.atomicbits.schema.UserDefinitionsAddress",
-        "io.atomicbits.schema.Link",
-        "io.atomicbits.schema.PagedList",
-        "io.atomicbits.schema.Animal",
-        "io.atomicbits.schema.Dog",
-        "io.atomicbits.schema.Cat",
-        "io.atomicbits.schema.Fish",
-        "io.atomicbits.schema.Method",
-        "io.atomicbits.schema.Geometry",
-        "io.atomicbits.schema.Point",
-        "io.atomicbits.schema.LineString",
-        "io.atomicbits.schema.MultiPoint",
-        "io.atomicbits.schema.MultiLineString",
-        "io.atomicbits.schema.Polygon",
-        "io.atomicbits.schema.MultiPolygon",
-        "io.atomicbits.schema.GeometryCollection",
-        "io.atomicbits.schema.Crs",
-        "io.atomicbits.schema.NamedCrsProperty",
-        "io.atomicbits.schema.Bbox",
-        "io.atomicbits.scraml.rest.user.voidesc.VoidResource",
-        "io.atomicbits.scraml.rest.user.voidesc.location.LocationResource",
-        "com.fasterxml.jackson.databind.JsonNode",
-        "io.atomicbits.scraml.Book",
-        "io.atomicbits.scraml.Author",
-        "io.atomicbits.scraml.books.BooksResource"
+      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+
+      val expectedFilePaths = Set(
+        "io/atomicbits/scraml/TestApi.java",
+        "io/atomicbits/scraml/rest/RestResource.java",
+        "io/atomicbits/scraml/rest/user/UserResource.java",
+        "io/atomicbits/scraml/rest/user/userid/dogs/DogsResource.java",
+        "io/atomicbits/scraml/rest/user/userid/UseridResource.java",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV01JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/AcceptApplicationVndV10JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV01JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/userid/ContentApplicationVndV10JsonHeaderSegment.java",
+        "io/atomicbits/scraml/rest/user/upload/UploadResource.java",
+        "io/atomicbits/scraml/rest/user/activate/ActivateResource.java",
+        "io/atomicbits/scraml/rest/animals/AnimalsResource.java",
+        "io/atomicbits/schema/User.java",
+        "io/atomicbits/schema/UserDefinitionsAddress.java",
+        "io/atomicbits/schema/Link.java",
+        "io/atomicbits/schema/PagedList.java",
+        // "io/atomicbits/schema/AnimalImpl.java", // Java Pojo can extend one another, the interfaces are introduced only when multiple-inheritance is involved!
+        "io/atomicbits/schema/Animal.java",
+        "io/atomicbits/schema/Dog.java",
+        "io/atomicbits/schema/Cat.java",
+        "io/atomicbits/schema/Fish.java",
+        "io/atomicbits/schema/Method.java",
+        // "io/atomicbits/schema/GeometryImpl.java",
+        "io/atomicbits/schema/Geometry.java",
+        "io/atomicbits/schema/Point.java",
+        "io/atomicbits/schema/LineString.java",
+        "io/atomicbits/schema/MultiPoint.java",
+        "io/atomicbits/schema/MultiLineString.java",
+        "io/atomicbits/schema/Polygon.java",
+        "io/atomicbits/schema/MultiPolygon.java",
+        "io/atomicbits/schema/GeometryCollection.java",
+        "io/atomicbits/schema/Crs.java",
+        "io/atomicbits/schema/NamedCrsProperty.java",
+        "io/atomicbits/scraml/rest/user/voidesc/VoidResource.java",
+        "io/atomicbits/scraml/rest/user/voidesc/location/LocationResource.java",
+        "io/atomicbits/scraml/Book.java",
+        "io/atomicbits/scraml/Author.java",
+        "io/atomicbits/scraml/books/BooksResource.java"
       )
 
-      classRepsByFullName.keys.foreach { key =>
-        assert(classes.contains(key), s"Class $key is not generated.")
-      }
-
-
+      generatedFilePaths -- expectedFilePaths shouldBe Set.empty
+      expectedFilePaths -- generatedFilePaths shouldBe Set.empty
     }
 
   }
 }
-
