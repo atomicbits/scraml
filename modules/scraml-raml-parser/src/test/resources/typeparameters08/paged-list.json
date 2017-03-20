@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/raml10/paged-list.json#",
+  "type": "object",
+  "typeVariables": ["T", "U"],
+  "description": "A paged list with an optional owner of the list",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "required": true
+    },
+    "elements": {
+      "required": true,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "genericType": "T"
+      }
+    },
+    "owner": {
+      "required": false,
+      "type": "object",
+      "genericType": "U"
+    }
+  }
+}

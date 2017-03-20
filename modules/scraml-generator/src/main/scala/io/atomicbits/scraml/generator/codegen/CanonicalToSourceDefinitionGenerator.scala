@@ -42,8 +42,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   */
 object CanonicalToSourceDefinitionGenerator {
 
-  def transferObjectsToClassDefinitions(generationAggr: GenerationAggr,
-                                        canonicalToMap: Map[CanonicalName, NonPrimitiveType]): GenerationAggr = {
+  def transferObjectsToClassDefinitions(generationAggr: GenerationAggr): GenerationAggr = {
 
     // ToDo: see if the following assertion is true for all languages, for now we put this logic in the sourcecode generators.
     // We assume here that all our target languages support inheritance, but no multiple inheritance and that
@@ -63,7 +62,7 @@ object CanonicalToSourceDefinitionGenerator {
         val fieldClassPointer =
           property.ttype match {
             case CanonicalTypeParameter(tParamName) => TypeParameter(tParamName)
-            case typeReference: TypeReference       => Platform.typeReferenceToClassPointer(typeReference)
+            case typeReference: TypeReference       => Platform.typeReferenceToClassPointer(typeReference, genAggr)
           }
 
         Field(
@@ -86,7 +85,7 @@ object CanonicalToSourceDefinitionGenerator {
         TransferObjectClassDefinition(
           reference              = toClassReference,
           fields                 = objectType.properties.map(propertyToField).toList,
-          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
+          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference(_, genAggr)),
           typeDiscriminator      = objectType.typeDiscriminator,
           typeDiscriminatorValue = objectType.typeDiscriminatorValue
         )
@@ -124,13 +123,13 @@ object CanonicalToSourceDefinitionGenerator {
       val unionClassDefinition =
         UnionClassDefinition(
           reference = unionClassReference,
-          union     = unionType.types.map(Platform.typeReferenceToClassPointer(_))
+          union     = unionType.types.map(Platform.typeReferenceToClassPointer(_, genAggr))
         )
 
       genAggr.addSourceDefinition(unionClassDefinition)
     }
 
-    canonicalToMap.values.foldLeft(generationAggr) { (genAggr, nonPrimitiveType) =>
+    generationAggr.canonicalToMap.values.foldLeft(generationAggr) { (genAggr, nonPrimitiveType) =>
       nonPrimitiveType match {
         case objectType: ObjectType => objectTypeToTransferObjectClassDefinition(genAggr, objectType)
         case enumType: EnumType     => enumTypeToEnumDefinition(genAggr, enumType)

@@ -19,6 +19,7 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.model.{ Action, MediaType, NoMediaType, StatusCode }
 
@@ -56,10 +57,10 @@ case class ActionSelection(action: Action,
 
 object ActionSelection {
 
-  def apply(action: Action)(implicit platform: Platform): ActionSelection = {
+  def apply(action: Action, generationAggr: GenerationAggr)(implicit platform: Platform): ActionSelection = {
 
     val contentTypeMap: Map[MediaType, ContentType] = {
-      val contentTypes = ContentType(action.body)
+      val contentTypes = ContentType(action.body, generationAggr)
       if (contentTypes.isEmpty) Map(NoMediaType -> NoContentType)
       else contentTypes.groupBy(_.contentTypeHeader).mapValues(_.head) // There can be only one content type per content type header.
     }
@@ -71,7 +72,7 @@ object ActionSelection {
       } else {
         val minStatusCode          = statusCodes.min
         val response               = action.responses.responseMap(minStatusCode)
-        val actualResponseTypes    = ResponseType(response)
+        val actualResponseTypes    = ResponseType(response, generationAggr)
         val responseTypes          = if (actualResponseTypes.isEmpty) Set(NoResponseType) else actualResponseTypes
         val responseTypeWithStatus = responseTypes.map(ResponseTypeWithStatus(_, minStatusCode))
 

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/raml10/animal.json#",
+  "type": "object",
+  "description": "An animal object.",
+  "properties": {
+    "kind": {
+      "required": true,
+      "type": "string"
+    },
+    "gender": {
+      "required": true,
+      "type": "string"
+    }
+  }
+}

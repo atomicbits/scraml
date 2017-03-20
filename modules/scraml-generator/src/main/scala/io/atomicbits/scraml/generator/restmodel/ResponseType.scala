@@ -55,10 +55,10 @@ case object NoResponseType extends ResponseType {
 
 object ResponseType {
 
-  def apply(response: Response)(implicit platform: Platform): Set[ResponseType] = {
+  def apply(response: Response, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ResponseType] = {
     response.body.contentMap.map {
       case (mediaType, bodyContent) =>
-        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_))
+        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_, generationAggr))
         val formParams      = bodyContent.formParameters
         ResponseType(acceptHeader = mediaType, classPointer = classPointerOpt)
     } toSet

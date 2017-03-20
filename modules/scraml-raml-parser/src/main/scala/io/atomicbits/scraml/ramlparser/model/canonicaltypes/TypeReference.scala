@@ -30,7 +30,6 @@ trait TypeReference extends GenericReferrable {
 
 }
 
-// ToDo: also keep a List[TypeParameter] so that we maintain the order of the type parameters in the generated code later on.
 case class NonPrimitiveTypeReference(refers: CanonicalName, genericTypes: Map[TypeParameter, GenericReferrable] = Map.empty)
     extends TypeReference
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/raml10/zoo.json",
+  "type": "object",
+  "description": "a zoo",
+  "properties": {
+    "name": {
+      "required": true,
+      "type": "string"
+    },
+    "animals": {
+      "$ref": "http://atomicbits.io/raml10/paged-list.json#",
+      "genericTypes": {
+        "T": {
+          "$ref": "http://atomicbits.io/raml10/animal.json"
+        },
+        "U": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

@@ -30,7 +30,6 @@ trait CanonicalType {
 
 }
 
-
 /**
   * A primitive type is interpreted in the broad sense of all types that are not customly made by the user in the RAML model.
   * These are all types that are not an Object or an Enum.
@@ -42,7 +41,6 @@ trait PrimitiveType extends CanonicalType with TypeReference {
   def genericTypes: Map[TypeParameter, TypeReference] = Map.empty
 
 }
-
 
 /**
   * Nonprimitive types are the custom types created by the RAML model that will need to be generated as 'new' types.
