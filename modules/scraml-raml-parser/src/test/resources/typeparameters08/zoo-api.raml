@@ -1,0 +1,18 @@
+#%RAML 0.8
+---
+title: zoo-api
+version: 1.0
+mediaType: application/json
+
+types:
+  paged-list:           !include paged-list.json
+  animal:               !include animal.json
+  zoo:                  !include zoo.json
+
+/zoo:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: zoo

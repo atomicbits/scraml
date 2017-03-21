@@ -41,12 +41,13 @@ case class ActionGenerator(actionCode: ActionCode) {
     *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
     *         don't support those yet, but we will do so in the future).
     */
-  def generateActionFunctions(resourceClassDefinition: ResourceClassDefinition)(implicit platform: Platform): ActionFunctionResult = {
+  def generateActionFunctions(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr)(
+      implicit platform: Platform): ActionFunctionResult = {
 
     val resourcePackageParts: List[String] = resourceClassDefinition.resourcePackage
     val resource: Resource                 = resourceClassDefinition.resource
 
-    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_)).toSet
+    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_, generationAggr)).toSet
 
     val actionsWithTypeSelection: Set[ActionSelection] =
       actionSelections.flatMap { actionSelection =>

@@ -54,7 +54,11 @@ object JavaActionCodeGenerator extends ActionCode {
       case StringContentType(contentTypeHeader) => List(Some(StringClassPointer))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassPointer))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassPointer), Some(typedContentType.classPointer))
+        typedContentType.classPointer match {
+          case StringClassPointer | JsValueClassPointer | JsObjectClassPointer => List(Some(StringClassPointer))
+          case _ =>
+            List(Some(StringClassPointer), Some(typedContentType.classPointer))
+        }
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassPointer),

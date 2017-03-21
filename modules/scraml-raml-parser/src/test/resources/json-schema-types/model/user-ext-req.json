@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/model/user-ext-req.json#",
+  "description": "A user object with its required properties defined outside the properties.",
+  "type": "object",
+  "required": [
+    "id",
+    "firstName",
+    "lastName"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "age": {
+      "maximum": 4294967295,
+      "minimum": 0,
+      "type": "integer"
+    }
+  }
+}

@@ -29,9 +29,11 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   GenericReferrable,
   IntegerType,
   JsonType,
+  NonPrimitiveType,
   NonPrimitiveTypeReference,
   NullType,
   NumberType,
+  ObjectType,
   StringType,
   TypeReference,
   TypeParameter => CanonicalTypeParameter
@@ -105,6 +107,7 @@ trait Platform {
 object Platform {
 
   def typeReferenceToClassPointer(typeReference: TypeReference,
+                                  generationAggr: GenerationAggr,
                                   primitive: Boolean                                     = false,
                                   typeParameterContext: Map[TypeParameter, ClassPointer] = Map.empty): ClassPointer = {
 
@@ -115,13 +118,17 @@ object Platform {
             val tParam = TypeParameter(typeParameter.name)
             val typeRef =
               genericReferrable match {
-                case typeRef: TypeReference => typeReferenceToClassPointer(typeRef)
+                case typeRef: TypeReference => typeReferenceToClassPointer(typeRef, generationAggr)
                 case CanonicalTypeParameter(paramName) =>
                   sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
               }
             tParam -> typeRef
         }
-      val typeParameters = generics.keys.toList // ToDo: we lost any order of the type parameters, fix this in NonPrimitiveTypeReference!
+      val typeParameters =
+        generationAggr.canonicalToMap.get(canonicalName) match {
+          case Some(objectType: ObjectType) => objectType.typeParameters.map(tp => TypeParameter(tp.name))
+          case _                            => List.empty[TypeParameter]
+        }
       ClassReference(
         name            = canonicalName.name,
         packageParts    = canonicalName.packagePath,
@@ -142,7 +149,7 @@ object Platform {
       case ArrayTypeReference(genericType) =>
         genericType match {
           case typeReference: TypeReference =>
-            val classPointer = typeReferenceToClassPointer(typeReference)
+            val classPointer = typeReferenceToClassPointer(typeReference, generationAggr)
             ListClassPointer(classPointer)
           case CanonicalTypeParameter(paramName) =>
             val typeParameter = TypeParameter(paramName)
@@ -160,8 +167,8 @@ object Platform {
     }
   }
 
-  def typeReferenceToClassReference(typeReference: TypeReference): Option[ClassReference] = {
-    Some(typeReferenceToClassPointer(typeReference)).collect {
+  def typeReferenceToClassReference(typeReference: TypeReference, generationAggr: GenerationAggr): Option[ClassReference] = {
+    Some(typeReferenceToClassPointer(typeReference, generationAggr)).collect {
       case classReference: ClassReference => classReference
     }
   }

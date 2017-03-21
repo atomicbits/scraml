@@ -34,6 +34,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   *
   * @param sourceDefinitionsToProcess The collected source definitions up to 'now'.
   * @param sourceFilesGenerated The generated source files so far.
+  * @param canonicalToMap The canonical TO map.
   * @param toMap The TO map is needed to find all fields that we have to put in a class extending from one or more parents.
   * @param toInterfaceMap The map containing the transfer objects that require an interface definition so far, keyed on the
   *                       canonical name of the original transfer object. This map is expected to grow while source
@@ -43,7 +44,8 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * @param toParentChildrenMap The direct parent children relations are needed to navigate through the class hierarchy of the transfer
   *                            objects. The toParentChildrenMap is build up when the TOs are added to the toMap.
   */
-case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition]                     = Seq.empty,
+case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
+                          canonicalToMap: Map[CanonicalName, NonPrimitiveType],
                           sourceDefinitionsProcessed: Seq[SourceDefinition]                     = Seq.empty,
                           sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty,
                           toMap: Map[CanonicalName, TransferObjectClassDefinition]              = Map.empty,
@@ -264,10 +266,11 @@ object GenerationAggr {
 
     val sourceDefinitions: Seq[SourceDefinition] = clientClassDefinition +: collectedResourceDefinitions
 
-    val generationAggrBeforeCanonicalDefinitions = GenerationAggr(sourceDefinitionsToProcess = sourceDefinitions)
+    val generationAggrBeforeCanonicalDefinitions =
+      GenerationAggr(sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)
 
     val finalGenerationAggregate: GenerationAggr =
-      CanonicalToSourceDefinitionGenerator.transferObjectsToClassDefinitions(generationAggrBeforeCanonicalDefinitions, canonicalToMap)
+      CanonicalToSourceDefinitionGenerator.transferObjectsToClassDefinitions(generationAggrBeforeCanonicalDefinitions)
 
     finalGenerationAggregate
   }
