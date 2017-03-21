@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.{ ImplicitId, NativeId, UniqueId }
+import io.atomicbits.scraml.ramlparser.model.{ ImplicitId, JsonSchemaModel, NativeId, UniqueId }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
@@ -78,7 +78,7 @@ object ParsedObjectTransformer {
 
       // Transform and register all properties of this object
       val (properties, propertyUpdatedCanonicalLH) =
-        propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer)
+        propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer(parsedObject.requiredProperties))
 
       // Generate the canonical name for this object
       val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
@@ -127,7 +127,8 @@ object ParsedObjectTransformer {
   }
 
   // format: off
-  def propertyTransformer(propertyAggregator: PropertyAggregator,
+  def propertyTransformer(requiredPropertyNames: List[String])
+                         (propertyAggregator: PropertyAggregator,
                           propKeyValue: (String, ParsedProperty))
                          (implicit canonicalNameGenerator: CanonicalNameGenerator): PropertyAggregator = { // format: on
 
@@ -135,11 +136,12 @@ object ParsedObjectTransformer {
     val (propName, propValue)                   = propKeyValue
     val (typeReference, updatedCanonicalLH) =
       ParsedToCanonicalTypeTransformer.transform(propValue.propertyType.parsed, currentCanonicalLH)
+    val required = requiredPropertyNames.contains(propName) || propValue.required
     val property =
       Property(
         name     = propName,
         ttype    = typeReference,
-        required = propValue.required
+        required = required
         // ToDo: process and add the typeConstraints
       )
     val updatedProperties = currentProperties + (propName -> property)

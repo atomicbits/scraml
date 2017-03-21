@@ -24,7 +24,7 @@ import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json.{ JsObject, JsString, JsValue }
 
-import scala.util.{ Success, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 1/04/16.
@@ -61,15 +61,7 @@ object ParsedTypeReference {
 
     val required = (json \ "required").asOpt[Boolean]
 
-    val genericTypes: Try[Map[String, ParsedType]] =
-      (json \ "genericTypes").toOption.collect {
-        case genericTs: JsObject =>
-          val genericTsMap =
-            genericTs.value collect {
-              case (field, ParsedType(t)) => (field, t)
-            }
-          TryUtils.accumulate[String, ParsedType](genericTsMap.toMap)
-      } getOrElse Try(Map.empty[String, ParsedType])
+    val genericTypes = getGenericTypes(json)
 
     val fragments = json match {
       case Fragments(fragment) => fragment
@@ -87,20 +79,46 @@ object ParsedTypeReference {
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedTypeReference]] = {
 
-    def checkOtherType(theOtherType: String): Option[Try[ParsedTypeReference]] = {
-      ParsedType(theOtherType) match {
-        case typeRef: Try[ParsedTypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
-        case _                                 => None
+    def simpleStringTypeReference(theOtherType: String): Option[Try[ParsedTypeReference]] = {
+
+      val triedOption: Try[Option[ParsedTypeReference]] =
+        ParsedType(theOtherType).map {
+          case typeRef: ParsedTypeReference => Some(typeRef)
+          case _                            => None
+        }
+
+      triedOption match {
+        case Success(Some(typeRef)) => Some(Success(typeRef))
+        case Success(None)          => None
+        case Failure(x)             => Some(Failure[ParsedTypeReference](x))
       }
     }
 
     (ParsedType.typeDeclaration(json), (json \ ParsedTypeReference.value).toOption, json) match {
-      case (None, Some(_), _)                   => Some(ParsedTypeReference(json))
-      case (Some(JsString(otherType)), None, _) => checkOtherType(otherType)
-      case (_, _, JsString(otherType))          => checkOtherType(otherType)
-      case _                                    => None
+      case (None, Some(_), _) => Some(ParsedTypeReference(json))
+      case (Some(JsString(otherType)), None, _) =>
+        simpleStringTypeReference(otherType).map { triedParsedTypeRef =>
+          for {
+            parsedTypeRef <- triedParsedTypeRef
+            genericTypes <- getGenericTypes(json)
+            req = (json \ "required").asOpt[Boolean]
+          } yield parsedTypeRef.copy(genericTypes = genericTypes, required = req)
+        }
+      case (_, _, JsString(otherType)) => simpleStringTypeReference(otherType)
+      case _                           => None
     }
 
+  }
+
+  private def getGenericTypes(json: JsValue)(implicit parseContext: ParseContext): Try[Map[String, ParsedType]] = {
+    (json \ "genericTypes").toOption.collect {
+      case genericTs: JsObject =>
+        val genericTsMap =
+          genericTs.value collect {
+            case (field, ParsedType(t)) => (field, t)
+          }
+        TryUtils.accumulate[String, ParsedType](genericTsMap.toMap)
+    } getOrElse Try(Map.empty[String, ParsedType])
   }
 
 }

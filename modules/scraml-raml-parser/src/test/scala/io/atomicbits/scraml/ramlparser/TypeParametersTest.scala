@@ -73,6 +73,43 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
 
     }
 
+    scenario("a RAML 1.0 definition with a reference to a paged-list in an object field") {
+
+      Given("a RAML specification containing a RAML 1.0 definition with type parameters")
+      val defaultBasePath = List("io", "atomicbits", "raml10")
+      val parser          = RamlParser("/typeparameters10/zoo-api.raml", "UTF-8", defaultBasePath)
+
+      When("we parse the specification")
+      val raml: Raml                     = parser.parse.get
+      val canonicalNameGenerator         = CanonicalNameGenerator(defaultBasePath)
+      val canonicalTypeCollector         = CanonicalTypeCollector(canonicalNameGenerator)
+      val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
+
+      Then("we find the type parameters in the parsed and the canonical types")
+      val pagedListNonPrimitive: NonPrimitiveType =
+        canonicalLookup.map(CanonicalName.create(name = "PagedList", packagePath = List("io", "atomicbits", "raml10")))
+      val pagedListObject = pagedListNonPrimitive.asInstanceOf[ObjectType]
+
+      pagedListObject.typeParameters shouldBe List(TypeParameter("T"), TypeParameter("U"))
+
+      val zooNonPrimitive: NonPrimitiveType =
+        canonicalLookup.map(CanonicalName.create(name = "Zoo", packagePath = List("io", "atomicbits", "raml10")))
+      val zooObject = zooNonPrimitive.asInstanceOf[ObjectType]
+
+      val pagedListTypeReference: Property[NonPrimitiveTypeReference] =
+        zooObject.properties("animals").asInstanceOf[Property[NonPrimitiveTypeReference]]
+
+      val animalTypeRef: NonPrimitiveTypeReference =
+        pagedListTypeReference.ttype.genericTypes(TypeParameter("T")).asInstanceOf[NonPrimitiveTypeReference]
+
+      animalTypeRef.refers shouldBe CanonicalName.create(name = "Animal", packagePath = List("io", "atomicbits", "raml10"))
+
+      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes(TypeParameter("U"))
+
+      intTypeRef shouldBe IntegerType
+
+    }
+
   }
 
 }

@@ -115,7 +115,8 @@ object ScalaPlay extends Platform with CleanNameTools {
     parts.mkString(".")
   }
 
-  override def safePackageParts(classPointer: ClassPointer): List[String] = classPointer.native.packageParts
+  override def safePackageParts(classPointer: ClassPointer): List[String] =
+    classPointer.native.packageParts.map(escapeScalaKeyword(_, "esc"))
 
   override def safeFieldName(field: Field): String = {
     val cleanName = cleanFieldName(field.fieldName)
@@ -251,7 +252,7 @@ object ScalaPlay extends Platform with CleanNameTools {
       )
 
     scalaReservedwords.foldLeft(someName) { (name, resWord) =>
-      if (name == resWord) s"$name$$"
+      if (name == resWord) s"$name$escape"
       else name
     }
 

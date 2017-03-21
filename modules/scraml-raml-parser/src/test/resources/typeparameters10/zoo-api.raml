@@ -1,0 +1,42 @@
+#%RAML 1.0
+---
+title: zoo-api
+version: 1.0
+mediaType: application/json
+
+types:
+  PagedList:
+    type: object
+    typeVariables: [T, U]
+    properties:
+      count: integer
+      elements:
+        type: array
+        items:
+          type: object
+          genericType: T
+      owner:
+        type: object
+        genericType: U
+  Animal:
+    type: object
+    properties:
+      kind: string
+      gender: string
+  Zoo:
+    type: object
+    properties:
+      name: string
+      animals:
+        type: PagedList
+        genericTypes:
+          T: Animal
+          U: integer
+
+/zoo:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: zoo

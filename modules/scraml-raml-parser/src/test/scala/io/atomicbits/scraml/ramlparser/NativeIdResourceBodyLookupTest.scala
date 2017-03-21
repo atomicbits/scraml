@@ -21,7 +21,7 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveTypeReference, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
@@ -58,6 +58,43 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
 
       val user = canonicalType.asInstanceOf[NonPrimitiveTypeReference]
       user.refers shouldBe CanonicalName.create("User", List("io", "atomicbits", "model"))
+    }
+
+  }
+
+  feature("json schema with required fields defined outside the properties list of the object") {
+
+    scenario("a test json-schema with required fields list defined outside the properties") {
+
+      Given("A RAML 0.8 specification with a json-schema that has its required fields defined outside the object properties")
+      val defaultBasePath = List("io", "atomicbits", "model")
+      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", defaultBasePath)
+
+      When("we parse the spec")
+      val parsedModel = parser.parse
+
+      Then("the required fields are marked as required")
+      val raml = parsedModel.get
+
+      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
+
+      val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)
+
+      val userExtReq = canonicalLookup.map(CanonicalName.create("UserExtReq", List("io", "atomicbits", "model"))).asInstanceOf[ObjectType]
+
+      val idProperty = userExtReq.properties("id").asInstanceOf[Property[StringType.type]]
+      idProperty.required shouldBe true
+
+      val firstNameProperty = userExtReq.properties("firstName").asInstanceOf[Property[StringType.type]]
+      firstNameProperty.required shouldBe true
+
+      val lastNameProperty = userExtReq.properties("lastName").asInstanceOf[Property[StringType.type]]
+      lastNameProperty.required shouldBe true
+
+      val ageProperty = userExtReq.properties("age").asInstanceOf[Property[NumberType.type]]
+      ageProperty.required shouldBe false
+
     }
 
   }

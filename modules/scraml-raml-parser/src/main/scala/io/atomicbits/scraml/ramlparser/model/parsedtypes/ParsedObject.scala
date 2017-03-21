@@ -53,7 +53,13 @@ case class ParsedObject(id: Id,
       properties.map { property =>
         property.copy(propertyType = TypeRepresentation(property.propertyType.parsed.asTypeModel(typeModel)))
       }
-    copy(model = typeModel, properties = updatedProperties)
+    val updatedSelection =
+      selection.map { effectiveSelection =>
+        effectiveSelection.map { ptype =>
+          ptype.asTypeModel(typeModel)
+        }
+      }
+    copy(model = typeModel, properties = updatedProperties, selection = updatedSelection)
   }
 
   def hasChildren: Boolean = children.nonEmpty
@@ -91,9 +97,11 @@ object ParsedObject {
     val (required, requiredFields) =
       json \ "required" toOption match {
         case Some(req: JsArray) =>
-          (None, Some(req.value.toList collect {
-            case JsString(value) => value
-          }))
+          val reqFields =
+            req.value.toList collect {
+              case JsString(fieldName) => fieldName
+            }
+          (None, Some(reqFields))
         case Some(JsBoolean(b)) => (Some(b), None)
         case _                  => (None, None)
       }
