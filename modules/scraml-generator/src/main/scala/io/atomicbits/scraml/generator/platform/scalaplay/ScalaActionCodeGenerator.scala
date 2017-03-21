@@ -50,7 +50,12 @@ object ScalaActionCodeGenerator extends ActionCode {
       case StringContentType(contentTypeHeader) => List(Some(StringClassPointer))
       case JsonContentType(contentTypeHeader)   => List(Some(StringClassPointer), Some(JsValueClassPointer))
       case typedContentType: TypedContentType =>
-        List(Some(StringClassPointer), Some(JsValueClassPointer), Some(typedContentType.classPointer))
+        typedContentType.classPointer match {
+          case StringClassPointer                         => List(Some(StringClassPointer))
+          case JsValueClassPointer | JsObjectClassPointer => List(Some(StringClassPointer), Some(JsValueClassPointer))
+          case _ =>
+            List(Some(StringClassPointer), Some(JsValueClassPointer), Some(typedContentType.classPointer))
+        }
       case BinaryContentType(contentTypeHeader) =>
         List(
           Some(StringClassPointer),
