@@ -19,21 +19,18 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-
-import io.atomicbits.scraml.ramlparser.model.{Id, JsInclude, Raml, RootId}
+import io.atomicbits.scraml.ramlparser.model.{ JsInclude, Raml }
 import play.api.libs.json._
 
 import scala.util.Try
-
 
 /**
   * Created by peter on 6/02/16.
   */
 case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
 
-
   def parse: Try[Raml] = {
-    val (path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
+    val (FilePath(path), ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
     val parsed: JsObject =
       ramlJson match {
         case ramlJsObj: JsObject => parseRamlJsonDocument(path, ramlJsObj)
@@ -67,23 +64,22 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
           val nextPath =
             if (currentBasePath.isEmpty) source
             else s"$currentBasePath/$source"
-          val (newBasePath, included) = RamlToJsonParser.parseToJson(nextPath)
+          val (FilePath(newBasePath), included) = RamlToJsonParser.parseToJson(nextPath)
           included match {
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)
           }
-        case jsObj: JsObject   =>
+        case jsObj: JsObject =>
           val mappedFields = jsObj.fields.collect {
             case (key, value) => key -> parseNested(value, currentBasePath)
           }
           JsObject(mappedFields)
-        case jsArr: JsArray    => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
-        case x                 => x
+        case jsArr: JsArray => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
+        case x              => x
       }
     }
 
     parseNested(raml, basePath).asInstanceOf[JsObject]
   }
-
 
 }

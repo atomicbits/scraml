@@ -33,11 +33,11 @@ import scala.util.{ Failure, Success, Try }
   */
 object RamlToJsonParser {
 
-  def parseToJson(source: String): (String, JsValue) = {
+  def parseToJson(source: String): (FilePath, JsValue) = {
     parseToJson(source, "UTF-8")
   }
 
-  def parseToJson(source: String, charsetName: String): (String, JsValue) = {
+  def parseToJson(source: String, charsetName: String): (FilePath, JsValue) = {
     Try {
       val (path, ramlContent) = read(source, charsetName)
       val ramlContentNoTabs   = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
@@ -48,12 +48,12 @@ object RamlToJsonParser {
       }
       (path, anyToJson(ramlMap))
     } match {
-      case Success((path: String, jsvalue)) => (path, jsvalue)
-      case Failure(ex)                      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
+      case Success((path, jsvalue)) => (path, jsvalue)
+      case Failure(ex)              => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
 
-  private def read(source: String, charsetName: String): (String, String) = {
+  private def read(source: String, charsetName: String): (FilePath, String) = {
 
     /**
       * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
@@ -77,10 +77,21 @@ object RamlToJsonParser {
       else path
     }
 
-    val resource            = Try(this.getClass.getResource(source).toURI).toOption
+    // Resource loading
+    // See: http://stackoverflow.com/questions/6608795/what-is-the-difference-between-class-getresource-and-classloader-getresource
+    // What we see is that if resources start with a '/', then they get found by 'this.getClass.getResource'. If they don't start with
+    // a '/', then they are found with 'this.getClass.getClassLoader.getResource'.
+    val resource = Try(this.getClass.getResource(source).toURI).toOption
+    // printReadStatus("regular resource", resource)
+    // We want to assume that all resources given have an absolute path, also when they don't start with a '/'
     val classLoaderResource = Try(this.getClass.getClassLoader.getResource(source).toURI).toOption
-    val file                = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
-    val url                 = Try(new URL(source).toURI).toOption
+    // printReadStatus("class loader resource", classLoaderResource)
+    // File loading
+    val file = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
+    // printReadStatus("file resource", file)
+    // URL loading
+    val url = Try(new URL(source).toURI).toOption
+    // printReadStatus("url resource", url)
 
     val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
 
@@ -88,7 +99,15 @@ object RamlToJsonParser {
 
     val path                 = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
     val encoded: Array[Byte] = Files.readAllBytes(Paths.get(uri))
-    (cleanWindowsTripleSlashIssue(path), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+    (FilePath(cleanWindowsTripleSlashIssue(path)), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+  }
+
+  private def printReadStatus(resourceType: String, resourceOpt: Option[URI]): Any = {
+    resourceOpt.map { resource =>
+      println(s"Resource found $resourceType: $resource")
+    } getOrElse {
+      println(s"Resource NOT found $resourceType")
+    }
   }
 
   private def anyToJson(value: Any): JsValue = {
@@ -126,3 +145,5 @@ object RamlToJsonParser {
   }
 
 }
+
+case class FilePath(path: String)
