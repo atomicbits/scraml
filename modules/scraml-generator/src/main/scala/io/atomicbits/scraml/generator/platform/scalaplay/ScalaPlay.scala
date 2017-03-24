@@ -38,10 +38,7 @@ object ScalaPlay extends Platform with CleanNameTools {
       case classReference: ClassReference => classReference
       case ArrayClassPointer(arrayType) =>
         val typeParameter = TypeParameter("T")
-        ClassReference(name            = "Array",
-                       typeParameters  = List(typeParameter),
-                       typeParamValues = Map(typeParameter -> arrayType),
-                       predef          = true)
+        ClassReference(name = "Array", typeParameters = List(typeParameter), typeParamValues = List(arrayType), predef = true)
       case StringClassPointer =>
         ClassReference(name = "String", packageParts = List("java", "lang"), predef = true)
       case ByteClassPointer =>
@@ -66,7 +63,7 @@ object ScalaPlay extends Platform with CleanNameTools {
         ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
       case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
-        val typeParamValues = Map(typeParameter -> typeParamValue)
+        val typeParamValues = List(typeParamValue)
         ClassReference(name = "List", typeParameters = List(typeParameter), typeParamValues = typeParamValues, predef = true)
       case typeParameter: TypeParameter =>
         ClassReference(name = typeParameter.name, predef = true, isTypeParameter = true)
@@ -86,15 +83,12 @@ object ScalaPlay extends Platform with CleanNameTools {
       if (classReference.typeParameters.isEmpty) {
         classReference.name
       } else {
-        val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-          classReference.typeParamValues
-            .get(typeParam)
-            .map { classPointer =>
-              if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
-              else classPointer.native.classDefinition
-            }
-            .getOrElse(typeParam.name)
-        }
+        val typeParametersOrValues =
+          classReference.typeParamValues.map { classPointer =>
+            if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
+            else classPointer.native.classDefinition
+          }
+
         s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
       }
 
@@ -156,7 +150,7 @@ object ScalaPlay extends Platform with CleanNameTools {
       val collectedWithClassRef =
         importFromClassReference(classReference).map(classRefImport => collected + classRefImport).getOrElse(collected)
 
-      classReference.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
+      classReference.typeParamValues.foldLeft(collectedWithClassRef)(collectTypeImports)
     }
 
     val targetClassImports: Set[String] = collectTypeImports(Set.empty, targetClassReference)

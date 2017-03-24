@@ -63,11 +63,11 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
         zooObject.properties("animals").asInstanceOf[Property[NonPrimitiveTypeReference]]
 
       val animalTypeRef: NonPrimitiveTypeReference =
-        pagedListTypeReference.ttype.genericTypes(TypeParameter("T")).asInstanceOf[NonPrimitiveTypeReference]
+        pagedListTypeReference.ttype.genericTypes.head.asInstanceOf[NonPrimitiveTypeReference]
 
       animalTypeRef.refers shouldBe CanonicalName.create(name = "Animal", packagePath = List("io", "atomicbits", "raml10"))
 
-      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes(TypeParameter("U"))
+      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes.tail.head
 
       intTypeRef shouldBe IntegerType
 
@@ -100,14 +100,13 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
         zooObject.properties("animals").asInstanceOf[Property[NonPrimitiveTypeReference]]
 
       val animalTypeRef: NonPrimitiveTypeReference =
-        pagedListTypeReference.ttype.genericTypes(TypeParameter("T")).asInstanceOf[NonPrimitiveTypeReference]
+        pagedListTypeReference.ttype.genericTypes.head.asInstanceOf[NonPrimitiveTypeReference]
 
       animalTypeRef.refers shouldBe CanonicalName.create(name = "Animal", packagePath = List("io", "atomicbits", "raml10"))
 
-      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes(TypeParameter("U"))
+      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes.tail.head
 
       intTypeRef shouldBe IntegerType
-
     }
 
   }

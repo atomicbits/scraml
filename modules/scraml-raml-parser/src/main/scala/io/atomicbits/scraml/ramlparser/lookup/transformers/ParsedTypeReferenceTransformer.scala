@@ -110,18 +110,16 @@ object ParsedTypeReferenceTransformer {
 
     }
 
-    def transformGenericTypes(parsedGenericTypes: Map[String, ParsedType],
-                              canonicalLH: CanonicalLookupHelper): (Map[TypeParameter, GenericReferrable], CanonicalLookupHelper) = {
+    def transformGenericTypes(parsedGenericTypes: List[ParsedType],
+                              canonicalLH: CanonicalLookupHelper): (List[GenericReferrable], CanonicalLookupHelper) = {
 
-      val aggregator: (Map[TypeParameter, GenericReferrable], CanonicalLookupHelper) = (Map.empty, canonicalLH)
+      val aggregator: (List[GenericReferrable], CanonicalLookupHelper) = (List.empty, canonicalLH)
 
       parsedGenericTypes.foldLeft(aggregator) { (aggr, parsedGenericType) =>
-        val (parsedKey, parsedType)                    = parsedGenericType
-        val (canonicalGenericMap, canonicalLookup)     = aggr
-        val typeParameter                              = TypeParameter(parsedKey)
-        val (genericReferrable, unusedCanonicalLookup) = ParsedToCanonicalTypeTransformer.transform(parsedType, canonicalLookup)
-        val updatedCanonicalGenericMap                 = canonicalGenericMap + (typeParameter -> genericReferrable)
-        (updatedCanonicalGenericMap, unusedCanonicalLookup)
+        val (canonicalGenericList, canonicalLookup)    = aggr
+        val (genericReferrable, unusedCanonicalLookup) = ParsedToCanonicalTypeTransformer.transform(parsedGenericType, canonicalLookup)
+        val updatedCanonicalGenericList                = canonicalGenericList :+ genericReferrable
+        (updatedCanonicalGenericList, unusedCanonicalLookup)
       }
 
     }

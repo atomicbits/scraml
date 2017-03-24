@@ -75,7 +75,7 @@ object JavaJackson extends Platform with CleanNameTools {
         }
       case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
-        val typeParamValues = Map(typeParameter -> typeParamValue)
+        val typeParamValues = List(typeParamValue)
         ClassReference(
           name            = "List",
           packageParts    = List("java", "util"),
@@ -101,15 +101,13 @@ object JavaJackson extends Platform with CleanNameTools {
       if (classReference.typeParameters.isEmpty) {
         classReference.name
       } else {
-        val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
+        val typeParametersOrValues =
           classReference.typeParamValues
-            .get(typeParam)
             .map { classPointer =>
               if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
               else classPointer.native.classDefinition
             }
-            .getOrElse(typeParam.name)
-        }
+
         s"${classReference.name}<${typeParametersOrValues.mkString(",")}>"
       }
 
@@ -167,7 +165,7 @@ object JavaJackson extends Platform with CleanNameTools {
       val collectedWithClassRef =
         importFromClassReference(classReference).map(classRefImport => collected + classRefImport).getOrElse(collected)
 
-      classReference.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
+      classReference.typeParamValues.foldLeft(collectedWithClassRef)(collectTypeImports)
     }
 
     val targetClassImports: Set[String] = collectTypeImports(Set.empty, targetClassReference)

@@ -27,13 +27,13 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 sealed trait ClassPointer
 
 case class ClassReference(name: String,
-                          packageParts: List[String]                        = List.empty,
-                          typeParameters: List[TypeParameter]               = List.empty,
-                          typeParamValues: Map[TypeParameter, ClassPointer] = Map.empty,
-                          arrayType: Option[ClassReference]                 = None,
-                          predef: Boolean                                   = false,
-                          library: Boolean                                  = false,
-                          isTypeParameter: Boolean                          = false)
+                          packageParts: List[String]          = List.empty,
+                          typeParameters: List[TypeParameter] = List.empty,
+                          typeParamValues: List[ClassPointer] = List.empty,
+                          arrayType: Option[ClassReference]   = None,
+                          predef: Boolean                     = false,
+                          library: Boolean                    = false,
+                          isTypeParameter: Boolean            = false)
     extends ClassPointer {
 
   lazy val canonicalName: CanonicalName = CanonicalName.create(name, packageParts)
@@ -43,7 +43,7 @@ case class ClassReference(name: String,
     * without type parameter values.
     * e.g. List[T] and not List[Dog]
     */
-  lazy val base: ClassReference = if (typeParamValues.isEmpty) this else copy(typeParamValues = Map.empty)
+  lazy val base: ClassReference = if (typeParamValues.isEmpty) this else copy(typeParamValues = List.empty)
 
   val isArray: Boolean = arrayType.isDefined
 

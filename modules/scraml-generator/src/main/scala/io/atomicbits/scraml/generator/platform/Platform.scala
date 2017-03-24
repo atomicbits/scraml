@@ -29,7 +29,6 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   GenericReferrable,
   IntegerType,
   JsonType,
-  NonPrimitiveType,
   NonPrimitiveTypeReference,
   NullType,
   NumberType,
@@ -111,18 +110,12 @@ object Platform {
                                   primitive: Boolean                                     = false,
                                   typeParameterContext: Map[TypeParameter, ClassPointer] = Map.empty): ClassPointer = {
 
-    def customClassReference(canonicalName: CanonicalName, genericTypes: Map[CanonicalTypeParameter, GenericReferrable]): ClassReference = {
-      val generics: Map[TypeParameter, ClassPointer] =
+    def customClassReference(canonicalName: CanonicalName, genericTypes: List[GenericReferrable]): ClassReference = {
+      val generics: List[ClassPointer] =
         genericTypes.map {
-          case (typeParameter, genericReferrable) =>
-            val tParam = TypeParameter(typeParameter.name)
-            val typeRef =
-              genericReferrable match {
-                case typeRef: TypeReference => typeReferenceToClassPointer(typeRef, generationAggr)
-                case CanonicalTypeParameter(paramName) =>
-                  sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
-              }
-            tParam -> typeRef
+          case typeRef: TypeReference => typeReferenceToClassPointer(typeRef, generationAggr)
+          case CanonicalTypeParameter(paramName) =>
+            sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
         }
       val typeParameters =
         generationAggr.canonicalToMap.get(canonicalName) match {
