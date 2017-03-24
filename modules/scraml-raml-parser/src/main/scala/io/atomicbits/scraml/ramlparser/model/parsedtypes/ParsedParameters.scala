@@ -46,21 +46,29 @@ case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) 
   */
 object ParsedParameters {
 
-  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[ParsedParameters] = apply(jsValueOpt, None)
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[ParsedParameters] = {
 
-  def apply(jsValueOpt: Option[JsValue], overrideRequired: Option[Boolean])(implicit parseContext: ParseContext): Try[ParsedParameters] = {
+    /**
+      * @param name The name of the parameter
+      * @return A pair whose first element is de actual parameter name and the second element indicates whether or not the
+      *         parameter is an optional parameter. None (no indication for optional is given) Some(false) (it is an optional parameter).
+      */
+    def detectRequiredParameterName(name: String): (String, Option[Boolean]) = {
+      if (name.length > 1 && name.endsWith("?")) (name.dropRight(1), Some(false))
+      else (name, None)
+    }
 
     def jsObjectToParameters(jsObject: JsObject): Try[ParsedParameters] = {
 
       val valueMap: Map[String, Try[ParsedParameter]] =
         jsObject.value.collect {
           case (name, ParsedType(tryType)) =>
-            name -> tryType.map { paramType =>
+            val (actualName, requiredProp) = detectRequiredParameterName(name)
+            actualName -> tryType.map { paramType =>
               ParsedParameter(
-                name          = name,
+                name          = actualName,
                 parameterType = TypeRepresentation(paramType),
-                required      = paramType.required.getOrElse(overrideRequired.getOrElse(paramType.defaultRequiredValue)),
-                repeated      = false
+                required      = requiredProp.getOrElse(paramType.required.getOrElse(true)) // paramType.defaultRequiredValue
               )
             }
         } toMap

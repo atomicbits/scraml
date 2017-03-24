@@ -178,10 +178,10 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       val userGetAction     = userResource.actionMap(Get)
       val queryParameterMap = userGetAction.queryParameters.valueMap
-      queryParameterMap("age").required shouldBe false
+      queryParameterMap("age").required shouldBe true
       queryParameterMap("age").parameterType.parsed.isInstanceOf[ParsedNumber] shouldBe true
       queryParameterMap("age").parameterType.canonical shouldBe Some(NumberType)
-      queryParameterMap("organization").required shouldBe false
+      queryParameterMap("organization").required shouldBe true
       queryParameterMap("organization").parameterType.parsed.isInstanceOf[ParsedArray] shouldBe true
       queryParameterMap("organization").parameterType.canonical shouldBe Some(ArrayTypeReference(genericType = StringType))
       val okResponse            = userGetAction.responses.responseMap(StatusCode("200"))

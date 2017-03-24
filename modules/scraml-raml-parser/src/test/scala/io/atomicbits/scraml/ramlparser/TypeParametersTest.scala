@@ -19,15 +19,12 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedTypeReference }
-import io.atomicbits.scraml.ramlparser.model.{ AbsoluteFragmentId, NativeId, Raml, RootId }
+import io.atomicbits.scraml.ramlparser.model.{ Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
-
-import scala.util.Try
 
 /**
   * Created by peter on 20/03/17.

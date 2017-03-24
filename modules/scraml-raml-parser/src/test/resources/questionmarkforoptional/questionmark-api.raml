@@ -1,0 +1,34 @@
+#%RAML 1.0
+---
+title: questionmark-api
+version: 1.0
+mediaType: application/json
+
+types:
+  Animal:
+    type: object
+    properties:
+      kind: string
+      gender: string
+      isNice?: boolean
+      isVeryNice??: boolean
+
+/animals:
+  get:
+    queryParameters:
+      kind:
+        type: string
+      gender?:
+        type: string
+      name?:
+        type: string
+        repeat: true
+      caretaker?:
+        type: string[]
+      food:
+        type: string[]
+    responses:
+      200:
+        body:
+          application/json:
+            type: Animal[]

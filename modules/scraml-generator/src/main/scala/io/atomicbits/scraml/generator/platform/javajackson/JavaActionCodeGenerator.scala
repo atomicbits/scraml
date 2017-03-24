@@ -138,7 +138,7 @@ object JavaActionCodeGenerator extends ActionCode {
 
   def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
     primitiveType match {
-      // The cases below goe wrong when the primitive ends up in a list like List<double> versus List<Double>.
+      // The cases below go wrong when the primitive ends up in a list like List<double> versus List<Double>.
       //      case integerType: IntegerType if required => "long"
       //      case numbertype: NumberType if required   => "double"
       //      case booleanType: BooleanType if required => "boolean"
@@ -157,12 +157,12 @@ object JavaActionCodeGenerator extends ActionCode {
 
     parameter.parameterType.parsed match {
       case primitiveType: PrimitiveType =>
-        val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+        val primitive = primitiveTypeToJavaType(primitiveType, parameter.required)
         s"$primitive $sanitizedParameterName"
       case arrayType: ParsedArray =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
-            val primitive = primitiveTypeToJavaType(primitiveType, parameter.repeated)
+            val primitive = primitiveTypeToJavaType(primitiveType, parameter.required)
             s"List<$primitive> $sanitizedParameterName"
           case other =>
             sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: $other")

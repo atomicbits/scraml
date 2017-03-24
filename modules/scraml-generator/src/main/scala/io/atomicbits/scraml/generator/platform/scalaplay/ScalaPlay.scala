@@ -80,16 +80,26 @@ object ScalaPlay extends Platform with CleanNameTools {
     val classReference = classPointer.native
 
     val classDef =
-      if (classReference.typeParameters.isEmpty) {
-        classReference.name
-      } else {
-        val typeParametersOrValues =
-          classReference.typeParamValues.map { classPointer =>
-            if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
-            else classPointer.native.classDefinition
-          }
-
-        s"${classReference.name}[${typeParametersOrValues.mkString(",")}]"
+      (classReference.typeParameters, classReference.typeParamValues) match {
+        case (Nil, _) => classReference.name
+        case (tps, Nil) =>
+          val typeParameterNames = tps.map(_.name)
+          s"${classReference.name}[${typeParameterNames.mkString(",")}]"
+        case (tps, tpvs) if tps.size == tpvs.size =>
+          val typeParameterValueClassDefinitions =
+            tpvs.map { classPointer =>
+              if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
+              else classPointer.native.classDefinition
+            }
+          s"${classReference.name}[${typeParameterValueClassDefinitions.mkString(",")}]"
+        case (tps, tpvs) =>
+          val message =
+            s"""
+               |The following class definition has a different number of type parameter 
+               |values than there are type parameters: 
+               |$classPointer
+             """.stripMargin
+          sys.error(message)
       }
 
     if (fullyQualified) {

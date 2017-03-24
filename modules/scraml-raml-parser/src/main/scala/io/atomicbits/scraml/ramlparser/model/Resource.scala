@@ -102,7 +102,7 @@ object Resource {
               val pathParameterMeta =
                 uriParamMap
                   .byName(pathParameterName)
-                  .getOrElse(ParsedParameter(pathParameterName, TypeRepresentation(new ParsedString()), true, false))
+                  .getOrElse(ParsedParameter(pathParameterName, TypeRepresentation(new ParsedString()), required = true))
               Resource(
                 urlSegment   = pathParameterName,
                 urlParameter = Some(pathParameterMeta)

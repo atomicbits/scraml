@@ -50,7 +50,7 @@ object Action {
   private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
 
     parseContext.traits.applyTo(jsObject) { json =>
-      val tryQueryParameters = ParsedParameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
+      val tryQueryParameters = ParsedParameters(jsValueOpt = (json \ "queryParameters").toOption)
 
       val tryHeaders = ParsedParameters((json \ "headers").toOption)
 

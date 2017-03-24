@@ -118,7 +118,7 @@ object ScalaActionCodeGenerator extends ActionCode {
   def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)] = {
     fieldParams.sortBy { t =>
       val (field, param) = t
-      (!param.required, !param.repeated, field)
+      (!param.required, field)
     }
   }
 
