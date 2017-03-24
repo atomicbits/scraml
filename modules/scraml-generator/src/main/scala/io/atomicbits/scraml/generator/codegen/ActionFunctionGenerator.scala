@@ -94,6 +94,8 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       * are multiple body types.
       */
     val bodyTypes = actionCode.bodyTypes(actionSelection)
+    // Scala action methods will have trouble with default query parameter values when there are more than one body types.
+    // Repetition of the action method will cause compiler conflicts in that case, so default values must be omitted then.
     val noDefault = bodyTypes.size > 1
     val queryParameterMethodParameters =
       actionCode

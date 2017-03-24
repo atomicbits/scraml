@@ -149,9 +149,14 @@ object ScalaActionCodeGenerator extends ActionCode {
       case arrayType: ParsedArray =>
         arrayType.items match {
           case primitiveType: PrimitiveType =>
-            val primitive    = primitiveTypeToScalaType(primitiveType)
-            val defaultValue = if (noDefault) "" else s"= List.empty[$primitive]"
-            s"$sanitizedParameterName: List[$primitive] $defaultValue"
+            val primitive = primitiveTypeToScalaType(primitiveType)
+            if (parameter.required) {
+              // Required query parameters should NOT have a default value! It may be confusing for the API user.
+              s"$sanitizedParameterName: List[$primitive] "
+            } else {
+              val defaultValue = if (noDefault) "" else s"= None"
+              s"$sanitizedParameterName: Option[List[$primitive]] $defaultValue"
+            }
           case other =>
             sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
         }
@@ -162,10 +167,10 @@ object ScalaActionCodeGenerator extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
-    (parameter.parameterType.parsed, parameter.required) match {
-      case (primitive: PrimitiveType, false) => s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
-      case (primitive: PrimitiveType, true)  => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
-      case (arrayType: ParsedArray, _)       => s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+    if (parameter.required) {
+      s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+    } else {
+      s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
     }
   }
 
