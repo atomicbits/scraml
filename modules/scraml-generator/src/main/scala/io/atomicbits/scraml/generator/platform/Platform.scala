@@ -105,10 +105,7 @@ trait Platform {
 
 object Platform {
 
-  def typeReferenceToClassPointer(typeReference: TypeReference,
-                                  generationAggr: GenerationAggr,
-                                  primitive: Boolean                                     = false,
-                                  typeParameterContext: Map[TypeParameter, ClassPointer] = Map.empty): ClassPointer = {
+  def typeReferenceToClassPointer(typeReference: TypeReference, generationAggr: GenerationAggr): ClassPointer = {
 
     def customClassReference(canonicalName: CanonicalName, genericTypes: List[GenericReferrable]): ClassReference = {
       val generics: List[ClassPointer] =
@@ -131,11 +128,11 @@ object Platform {
     }
 
     typeReference match {
-      case BooleanType        => BooleanClassPointer(primitive)
+      case BooleanType        => BooleanClassPointer(false)
       case StringType         => StringClassPointer
       case JsonType           => JsObjectClassPointer
-      case IntegerType        => LongClassPointer(primitive)
-      case NumberType         => DoubleClassPointer(primitive)
+      case IntegerType        => LongClassPointer(false)
+      case NumberType         => DoubleClassPointer(false)
       case NullType           => StringClassPointer // not sure what we have to do in this case
       case FileType           => FileClassPointer
       case dateType: DateType => StringClassPointer // ToDo: support date types
@@ -146,8 +143,7 @@ object Platform {
             ListClassPointer(classPointer)
           case CanonicalTypeParameter(paramName) =>
             val typeParameter = TypeParameter(paramName)
-            val classPointer  = typeParameterContext.getOrElse(typeParameter, typeParameter)
-            ListClassPointer(classPointer)
+            ListClassPointer(typeParameter)
         }
       case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
       case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")

@@ -23,6 +23,7 @@ import io.atomicbits.scraml.generator.codegen.ActionCode
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 
 /**
@@ -137,6 +138,11 @@ object ScalaActionCodeGenerator extends ActionCode {
 
     val sanitizedParameterName = CleanNameTools.cleanFieldName(queryParameterName)
 
+//    val typeRef: TypeReference =
+//      parameter.parameterType.canonical
+//        .getOrElse(sys.error(s"The following parameter type has no canonical type:\n$parameter"))
+//    typeRef.
+
     parameter.parameterType.parsed match {
       case primitiveType: PrimitiveType =>
         val primitive = primitiveTypeToScalaType(primitiveType)
@@ -158,8 +164,20 @@ object ScalaActionCodeGenerator extends ActionCode {
               s"$sanitizedParameterName: Option[List[$primitive]] $defaultValue"
             }
           case other =>
-            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
+            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: $other")
         }
+//      case enumType: ParsedEnum =>
+//        enumType.
+      case unexpected =>
+        val message =
+          s"""
+             | - - -
+             |A query or form parameter had an unexpected type: 
+             |
+             |$parameter
+             | - - -
+           """.stripMargin
+        sys.error(message)
     }
   }
 
