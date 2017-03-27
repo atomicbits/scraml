@@ -33,17 +33,13 @@ trait Client extends AutoCloseable {
 
   def defaultHeaders: Map[String, String]
 
-  def callToStringResponse[B](request: RequestBuilder, body: Option[B])
-                             (implicit bodyFormat: Format[B]): Future[Response[String]]
+  def callToStringResponse(request: RequestBuilder, body: Option[String]): Future[Response[String]]
 
-  def callToJsonResponse[B](requestBuilder: RequestBuilder, body: Option[B])
-                           (implicit bodyFormat: Format[B]): Future[Response[JsValue]]
+  def callToJsonResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[JsValue]]
 
-  def callToTypeResponse[B, R](request: RequestBuilder, body: Option[B])
-                              (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]]
+  def callToTypeResponse[R](request: RequestBuilder, body: Option[String])(implicit responseFormat: Format[R]): Future[Response[R]]
 
-  def callToBinaryResponse[B](request: RequestBuilder, body: Option[B])
-                             (implicit bodyFormat: Format[B]): Future[Response[BinaryData]]
+  def callToBinaryResponse(request: RequestBuilder, body: Option[String]): Future[Response[BinaryData]]
 
   def close(): Unit
 

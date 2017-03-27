@@ -92,6 +92,13 @@ object ScalaActionCodeGenerator extends ActionCode {
       case x              => List(Some(StringClassPointer))
     }
 
+  def chooseCallBodySerialization(optBodyType: Option[ClassPointer]): String = {
+    optBodyType.collect {
+      case StringClassPointer | ByteClassPointer | BooleanClassPointer(_) | LongClassPointer(_) | DoubleClassPointer(_) =>
+        "callWithPrimitiveBody"
+    } getOrElse "call"
+  }
+
   def createSegmentType(responseType: ResponseType, optBodyType: Option[ClassPointer]): String = {
 
     val bodyType = optBodyType.map(_.classDefinition).getOrElse("String")
@@ -199,6 +206,8 @@ object ScalaActionCodeGenerator extends ActionCode {
     val multipartParamsValue = if (isMultipartParams) "parts" else "List.empty"
     val binaryParamValue     = if (isBinaryParam) "Some(BinaryRequest(body))" else "None"
 
+    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
          new $segmentType(
@@ -215,7 +224,7 @@ object ScalaActionCodeGenerator extends ActionCode {
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = _requestBuilder
-         ).call()
+         ).$callMethod()
      """
   }
 

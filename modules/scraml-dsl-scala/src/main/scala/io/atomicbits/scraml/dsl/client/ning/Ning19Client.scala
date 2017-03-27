@@ -21,19 +21,19 @@ package io.atomicbits.scraml.dsl.client.ning
 
 import java.nio.charset.Charset
 import java.util.concurrent.CompletionStage
-import java.util.function.{BiConsumer, Function => JFunction}
+import java.util.function.{ BiConsumer, Function => JFunction }
 
 import com.ning.http.client.generators.InputStreamBodyGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.ning.http.client.{AsyncCompletionHandler, AsyncHttpClient, AsyncHttpClientConfig, Request}
+import com.ning.http.client.{ AsyncCompletionHandler, AsyncHttpClient, AsyncHttpClientConfig, Request }
 import io.atomicbits.scraml.dsl.client.ClientConfig
 import io.atomicbits.scraml.dsl._
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
-import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ Future, Promise }
+import scala.util.{ Failure, Success, Try }
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -45,7 +45,8 @@ case class Ning19Client(protocol: String,
                         port: Int,
                         prefix: Option[String],
                         config: ClientConfig,
-                        defaultHeaders: Map[String, String]) extends Client {
+                        defaultHeaders: Map[String, String])
+    extends Client {
 
   val LOGGER: Logger = LoggerFactory.getLogger(classOf[Ning19Client])
 
@@ -59,9 +60,8 @@ case class Ning19Client(protocol: String,
     new AsyncHttpClient(applyConfiguration(configBuilder).build)
   }
 
-
-  def callToJsonResponse[B](requestBuilder: RequestBuilder, body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
-    callToStringResponse[B](requestBuilder, body).map { response =>
+  def callToJsonResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[JsValue]] = {
+    callToStringResponse(requestBuilder, body).map { response =>
       if (response.status >= 200 && response.status < 300) {
         // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
         // there are many responses in the 200 range with different typed responses.
@@ -77,13 +77,12 @@ case class Ning19Client(protocol: String,
     }
   }
 
-
-  def callToTypeResponse[B, R](requestBuilder: RequestBuilder, body: Option[B])
-                              (implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = {
+  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(
+      implicit responseFormat: Format[R]): Future[Response[R]] = {
     // In case of a non-200 or non-204 response, we set the typed body to None and keep the future successful and return the
     // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
     // in that case we violate the RAML specs.
-    callToJsonResponse[B](requestBuilder, body) map { response =>
+    callToJsonResponse(requestBuilder, body) map { response =>
       if (response.status >= 200 && response.status < 300) {
         // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
         // there are many responses in the 200 range with different typed responses.
@@ -94,15 +93,14 @@ case class Ning19Client(protocol: String,
         response.map(_ => JsError(Nil))
       }
     } flatMap {
-      case response@Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
-      case response@Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
-      case response@Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
-      case Response(_, _, _, Some(JsError(e)), _)                  =>
+      case response @ Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
+      case response @ Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
+      case response @ Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
+      case Response(_, _, _, Some(JsError(e)), _) =>
         val validationMessages: Seq[String] = {
-          e flatMap {
-            errorsByPath =>
-              val (path, errors) = errorsByPath
-              errors map (error => s"$path -> ${error.message}")
+          e flatMap { errorsByPath =>
+            val (path, errors) = errorsByPath
+            errors map (error => s"$path -> ${error.message}")
           }
         }
         Future.failed(
@@ -111,12 +109,9 @@ case class Ning19Client(protocol: String,
     }
   }
 
-
-  def callToStringResponse[B](requestBuilder: RequestBuilder, body: Option[B])
-                             (implicit bodyFormat: Format[B]): Future[Response[String]] = {
+  def callToStringResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[String]] = {
 
     val transformer: com.ning.http.client.Response => Response[String] = { response =>
-
       val headers: Map[String, List[String]] =
         mapAsScalaMap(response.getHeaders).foldLeft(Map.empty[String, List[String]]) { (map, headerPair) =>
           val (key, value) = headerPair
@@ -133,12 +128,9 @@ case class Ning19Client(protocol: String,
     callToResponse(requestBuilder, body, transformer)
   }
 
-
-  def callToBinaryResponse[B](requestBuilder: RequestBuilder, body: Option[B])
-                             (implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
+  def callToBinaryResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[BinaryData]] = {
 
     val transformer: com.ning.http.client.Response => Response[BinaryData] = { response =>
-
       val binaryData: BinaryData = new Ning19BinaryData(response)
 
       val headers: Map[String, List[String]] =
@@ -153,15 +145,13 @@ case class Ning19Client(protocol: String,
     callToResponse(requestBuilder, body, transformer)
   }
 
-
-  private def callToResponse[B, T](requestBuilder: RequestBuilder,
-                                   body: Option[B],
-                                   transformer: com.ning.http.client.Response => Response[T])
-                                  (implicit bodyFormat: Format[B]): Future[Response[T]] = {
+  private def callToResponse[T](requestBuilder: RequestBuilder,
+                                body: Option[String],
+                                transformer: com.ning.http.client.Response => Response[T]): Future[Response[T]] = {
     val ningBuilder = {
       // Create builder
       val ningRb: com.ning.http.client.RequestBuilder = new com.ning.http.client.RequestBuilder
-      val baseUrl: String = protocol + "://" + host + ":" + port + cleanPrefix
+      val baseUrl: String                             = protocol + "://" + host + ":" + port + cleanPrefix
       ningRb.setUrl(baseUrl + "/" + requestBuilder.relativePath.stripPrefix("/"))
       ningRb.setMethod(requestBuilder.method.toString)
       ningRb
@@ -177,15 +167,14 @@ case class Ning19Client(protocol: String,
     requestBuilder.queryParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter)    => ningBuilder.addQueryParam(key, parameter)
+          case SingleHttpParam(parameter) => ningBuilder.addQueryParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addQueryParam(key, parameter))
         }
     }
 
-    val bodyToSend = body.map(bodyFormat.writes(_).toString())
-    bodyToSend.foreach {
-      body => ningBuilder.setBody(body)
+    body.foreach { body =>
+      ningBuilder.setBody(body)
     }
 
     requestBuilder.binaryBody.foreach {
@@ -198,7 +187,7 @@ case class Ning19Client(protocol: String,
     requestBuilder.formParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter)    => ningBuilder.addFormParam(key, parameter)
+          case SingleHttpParam(parameter) => ningBuilder.addFormParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addFormParam(key, parameter))
         }
@@ -216,7 +205,7 @@ case class Ning19Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
-      case part: FilePart      =>
+      case part: FilePart =>
         ningBuilder.addBodyPart(
           new com.ning.http.client.multipart.FilePart(
             part.name,
@@ -228,7 +217,7 @@ case class Ning19Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
-      case part: StringPart    =>
+      case part: StringPart =>
         ningBuilder.addBodyPart(
           new com.ning.http.client.multipart.StringPart(
             part.name,
@@ -244,31 +233,32 @@ case class Ning19Client(protocol: String,
     val ningRequest: Request = ningBuilder.build()
     LOGGER.debug(s"Executing request: $ningRequest")
     LOGGER.trace(s"Request body encoding: ${ningRequest.getBodyEncoding}")
-    LOGGER.trace(s"Request body: $bodyToSend")
+    LOGGER.trace(s"Request body: $body")
 
     val promise = Promise[Response[T]]()
 
-    client.executeRequest(ningRequest, new AsyncCompletionHandler[String]() {
-      @throws(classOf[Exception])
-      def onCompleted(response: com.ning.http.client.Response): String = {
-        val resp: Try[Response[T]] = Try(transformer(response))
-        promise.complete(resp)
-        null
-      }
+    client.executeRequest(
+      ningRequest,
+      new AsyncCompletionHandler[String]() {
+        @throws(classOf[Exception])
+        def onCompleted(response: com.ning.http.client.Response): String = {
+          val resp: Try[Response[T]] = Try(transformer(response))
+          promise.complete(resp)
+          null
+        }
 
-      override def onThrowable(t: Throwable) {
-        super.onThrowable(t)
-        promise.failure(t)
-      }
+        override def onThrowable(t: Throwable) {
+          super.onThrowable(t)
+          promise.failure(t)
+        }
 
-    })
+      }
+    )
 
     promise.future
   }
 
-
   def close(): Unit = client.close()
-
 
   private def applyConfiguration(builder: AsyncHttpClientConfig.Builder): AsyncHttpClientConfig.Builder = {
     builder.setReadTimeout(config.readTimeout)
@@ -288,7 +278,6 @@ case class Ning19Client(protocol: String,
     builder.setStrict302Handling(config.strict302Handling)
   }
 
-
   private[ning] def getResponseCharsetFromHeaders(headers: Map[String, List[String]]): Option[String] = {
 
     val contentTypeValuesOpt =
@@ -307,12 +296,11 @@ case class Ning19Client(protocol: String,
           case _ :: value :: other =>
             val cleanValue = value.trim.stripPrefix("=").trim
             Try(Charset.forName(cleanValue)).toOption.map(_.name())
-          case _                   => None
+          case _ => None
         }
       }
     } yield charsetString
   }
-
 
   private def toJavaFunction[A, B](f: A => B): JFunction[A, B] = new JFunction[A, B] {
     override def apply(a: A): B = f(a)
