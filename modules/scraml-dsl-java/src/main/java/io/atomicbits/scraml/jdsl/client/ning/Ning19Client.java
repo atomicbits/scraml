@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,19 @@ public class Ning19Client implements Client {
      * Source: http://wiki.fasterxml.com/JacksonBestPracticesPerformance
      */
     private ObjectMapper objectMapper = new ObjectMapper();
+
+    private ArrayList<String> javaPrimitiveTypes = new ArrayList<String>() {{
+        add("java.lang.String");
+        add("java.lang.Boolean");
+        add("java.lang.Byte");
+        add("java.lang.Character");
+        add("java.lang.Double");
+        add("java.lang.Float");
+        add("java.lang.Integer");
+        add("java.lang.Number");
+        add("java.lang.Long");
+        add("java.lang.Short");
+    }};
 
 
     public Ning19Client(String host,
@@ -448,7 +462,7 @@ public class Ning19Client implements Client {
      * @return The JSON representation of the body as a string.
      */
     private <B> String writeBodyToString(String canonicalRequestType, B body) {
-        if (canonicalRequestType != null) {
+        if (canonicalRequestType != null && !isPrimitiveType(canonicalRequestType)) {
             JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
             ObjectWriter writer = this.objectMapper.writerFor(javaType);
             try {
@@ -457,14 +471,13 @@ public class Ning19Client implements Client {
                 throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
             }
         } else {
-            try {
-                return this.objectMapper.writeValueAsString(body);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-            }
+            return body.toString();
         }
     }
 
+    private boolean isPrimitiveType(String type) {
+        return javaPrimitiveTypes.contains(type);
+    }
 
     private <R> R parseBodyToObject(String body, String canonicalResponseType) {
         JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);

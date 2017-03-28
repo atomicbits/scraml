@@ -19,18 +19,16 @@
 
 package io.atomicbits.scraml.dsl
 
-import play.api.libs.json.{JsValue, Format}
+import play.api.libs.json.{ JsValue, Format }
 
 import scala.concurrent.Future
 import scala.language.reflectiveCalls
-
 
 sealed trait Segment {
 
   protected def _requestBuilder: RequestBuilder
 
 }
-
 
 /**
   * We DON'T use case classes here to hide the internals from the resulting DSL.
@@ -53,7 +51,6 @@ class HeaderSegment(_req: RequestBuilder) extends Segment {
 
 }
 
-
 abstract class MethodSegment[B, R](method: Method,
                                    theBody: Option[B],
                                    queryParams: Map[String, Option[HttpParam]],
@@ -62,7 +59,8 @@ abstract class MethodSegment[B, R](method: Method,
                                    binaryBody: Option[BinaryRequest] = None,
                                    expectedAcceptHeader: Option[String],
                                    expectedContentTypeHeader: Option[String],
-                                   req: RequestBuilder) extends Segment {
+                                   req: RequestBuilder)
+    extends Segment {
 
   val body = theBody
 
@@ -73,11 +71,11 @@ abstract class MethodSegment[B, R](method: Method,
   protected val _requestBuilder = {
     val reqUpdated =
       req.copy(
-        method = method,
+        method          = method,
         queryParameters = queryParameterMap,
-        formParameters = formParameterMap,
+        formParameters  = formParameterMap,
         multipartParams = multipartParams,
-        binaryBody = binaryBody
+        binaryBody      = binaryBody
       )
 
     val reqWithAccept =
@@ -105,10 +103,10 @@ abstract class MethodSegment[B, R](method: Method,
     val reqWithRequestCharset =
       reqWithContentType.headers.get("Content-Type").map { headerValues =>
         val hasCharset = !headerValues.exists(_.toLowerCase.contains("charset"))
-        val isBinary = headerValues.exists(_.toLowerCase.contains("octet-stream"))
+        val isBinary   = headerValues.exists(_.toLowerCase.contains("octet-stream"))
         if (hasCharset && !isBinary && headerValues.nonEmpty) {
           val newFirstHeaderValue = s"${headerValues.head}; charset=${reqWithContentType.client.config.requestCharset.name}"
-          val updatedHeaders = reqWithContentType.headers setMany ("Content-Type", newFirstHeaderValue :: headerValues.tail)
+          val updatedHeaders      = reqWithContentType.headers setMany ("Content-Type", newFirstHeaderValue :: headerValues.tail)
           reqWithContentType.copy(headers = updatedHeaders)
         } else reqWithContentType
       } getOrElse reqWithContentType
@@ -118,70 +116,126 @@ abstract class MethodSegment[B, R](method: Method,
 
 }
 
-
 class StringMethodSegment[B](method: Method,
                              theBody: Option[B] = None,
                              queryParams: Map[String, Option[HttpParam]],
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
-                             multipartParams: List[BodyPart] = List.empty,
-                             binaryParam: Option[BinaryRequest] = None,
-                             expectedAcceptHeader: Option[String] = None,
-                             expectedContentTypeHeader: Option[String] = None,
+                             multipartParams: List[BodyPart]            = List.empty,
+                             binaryParam: Option[BinaryRequest]         = None,
+                             expectedAcceptHeader: Option[String]       = None,
+                             expectedContentTypeHeader: Option[String]  = None,
                              req: RequestBuilder)
-  extends MethodSegment[B, String](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
+    extends MethodSegment[B, String](method,
+                                     theBody,
+                                     queryParams,
+                                     formParams,
+                                     multipartParams,
+                                     binaryParam,
+                                     expectedAcceptHeader,
+                                     expectedContentTypeHeader,
+                                     req) {
 
-  def call()(implicit bodyFormat: Format[B], responseFormat: Format[String]): Future[Response[String]] =
-    _requestBuilder.callToStringResponse[B](body)
+  def callWithPrimitiveBody(): Future[Response[String]] = {
+    val bodyToSend = body.map(_.toString())
+    _requestBuilder.callToStringResponse(bodyToSend)
+  }
+
+  def call()(implicit bodyFormat: Format[B]): Future[Response[String]] = {
+    val bodyToSend = body.map(bodyFormat.writes(_).toString())
+    _requestBuilder.callToStringResponse(bodyToSend)
+  }
 
 }
-
 
 class JsonMethodSegment[B](method: Method,
                            theBody: Option[B] = None,
                            queryParams: Map[String, Option[HttpParam]],
                            formParams: Map[String, Option[HttpParam]] = Map.empty,
-                           multipartParams: List[BodyPart] = List.empty,
-                           binaryParam: Option[BinaryRequest] = None,
-                           expectedAcceptHeader: Option[String] = None,
-                           expectedContentTypeHeader: Option[String] = None,
+                           multipartParams: List[BodyPart]            = List.empty,
+                           binaryParam: Option[BinaryRequest]         = None,
+                           expectedAcceptHeader: Option[String]       = None,
+                           expectedContentTypeHeader: Option[String]  = None,
                            req: RequestBuilder)
-  extends MethodSegment[B, JsValue](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
+    extends MethodSegment[B, JsValue](method,
+                                      theBody,
+                                      queryParams,
+                                      formParams,
+                                      multipartParams,
+                                      binaryParam,
+                                      expectedAcceptHeader,
+                                      expectedContentTypeHeader,
+                                      req) {
 
-  def call()(implicit bodyFormat: Format[B], responseFormat: Format[JsValue]): Future[Response[JsValue]] =
-    _requestBuilder.callToJsonResponse[B](body)
+  def callWithPrimitiveBody(): Future[Response[JsValue]] = {
+    val bodyToSend = body.map(_.toString())
+    _requestBuilder.callToJsonResponse(bodyToSend)
+  }
+
+  def call()(implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
+    val bodyToSend = body.map(bodyFormat.writes(_).toString())
+    _requestBuilder.callToJsonResponse(bodyToSend)
+  }
 
 }
-
 
 class TypeMethodSegment[B, R](method: Method,
-                              theBody: Option[B] = None,
+                              theBody: Option[B]                          = None,
                               queryParams: Map[String, Option[HttpParam]] = Map.empty,
-                              formParams: Map[String, Option[HttpParam]] = Map.empty,
-                              multipartParams: List[BodyPart] = List.empty,
-                              binaryParam: Option[BinaryRequest] = None,
-                              expectedAcceptHeader: Option[String] = None,
-                              expectedContentTypeHeader: Option[String] = None,
+                              formParams: Map[String, Option[HttpParam]]  = Map.empty,
+                              multipartParams: List[BodyPart]             = List.empty,
+                              binaryParam: Option[BinaryRequest]          = None,
+                              expectedAcceptHeader: Option[String]        = None,
+                              expectedContentTypeHeader: Option[String]   = None,
                               req: RequestBuilder)
-  extends MethodSegment[B, R](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
+    extends MethodSegment[B, R](method,
+                                theBody,
+                                queryParams,
+                                formParams,
+                                multipartParams,
+                                binaryParam,
+                                expectedAcceptHeader,
+                                expectedContentTypeHeader,
+                                req) {
 
-  def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
-    _requestBuilder.callToTypeResponse[B, R](body)
+  def callWithPrimitiveBody()(implicit responseFormat: Format[R]): Future[Response[R]] = {
+    val bodyToSend = body.map(_.toString())
+    _requestBuilder.callToTypeResponse[R](bodyToSend)
+  }
+
+  def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = {
+    val bodyToSend = body.map(bodyFormat.writes(_).toString())
+    _requestBuilder.callToTypeResponse[R](bodyToSend)
+  }
 
 }
-
 
 class BinaryMethodSegment[B](method: Method,
                              theBody: Option[B] = None,
                              queryParams: Map[String, Option[HttpParam]],
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
-                             multipartParams: List[BodyPart] = List.empty,
-                             binaryParam: Option[BinaryRequest] = None,
-                             expectedAcceptHeader: Option[String] = None,
-                             expectedContentTypeHeader: Option[String] = None,
+                             multipartParams: List[BodyPart]            = List.empty,
+                             binaryParam: Option[BinaryRequest]         = None,
+                             expectedAcceptHeader: Option[String]       = None,
+                             expectedContentTypeHeader: Option[String]  = None,
                              req: RequestBuilder)
-  extends MethodSegment[B, BinaryData](method, theBody, queryParams, formParams, multipartParams, binaryParam, expectedAcceptHeader, expectedContentTypeHeader, req) {
+    extends MethodSegment[B, BinaryData](method,
+                                         theBody,
+                                         queryParams,
+                                         formParams,
+                                         multipartParams,
+                                         binaryParam,
+                                         expectedAcceptHeader,
+                                         expectedContentTypeHeader,
+                                         req) {
 
-  def call()(implicit bodyFormat: Format[B], responseFormat: Format[String]): Future[Response[BinaryData]] =
-    _requestBuilder.callToBinaryResponse[B](body)
+  def callWithPrimitiveBody(): Future[Response[BinaryData]] = {
+    val bodyToSend = body.map(_.toString())
+    _requestBuilder.callToBinaryResponse(bodyToSend)
+  }
+
+  def call()(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
+    val bodyToSend = body.map(bodyFormat.writes(_).toString())
+    _requestBuilder.callToBinaryResponse(bodyToSend)
+  }
 
 }
