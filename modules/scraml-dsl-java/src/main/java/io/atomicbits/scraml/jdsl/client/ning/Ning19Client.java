@@ -29,6 +29,7 @@ import io.atomicbits.scraml.jdsl.client.ClientConfig;
 import io.atomicbits.scraml.jdsl.ByteArrayPart;
 import io.atomicbits.scraml.jdsl.FilePart;
 import io.atomicbits.scraml.jdsl.StringPart;
+import io.atomicbits.scraml.jdsl.json.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,27 +57,6 @@ public class Ning19Client implements Client {
     private AsyncHttpClient ningClient;
 
     private Logger LOGGER = LoggerFactory.getLogger(Ning19Client.class);
-
-    /**
-     * Reuse of ObjectMapper and JsonFactory is very easy: they are thread-safe provided that configuration is done before any use
-     * (and from a single thread). After initial configuration use is fully thread-safe and does not need to be explicitly synchronized.
-     * Source: http://wiki.fasterxml.com/JacksonBestPracticesPerformance
-     */
-    private ObjectMapper objectMapper = new ObjectMapper();
-
-    private ArrayList<String> javaPrimitiveTypes = new ArrayList<String>() {{
-        add("java.lang.String");
-        add("java.lang.Boolean");
-        add("java.lang.Byte");
-        add("java.lang.Character");
-        add("java.lang.Double");
-        add("java.lang.Float");
-        add("java.lang.Integer");
-        add("java.lang.Number");
-        add("java.lang.Long");
-        add("java.lang.Short");
-    }};
-
 
     public Ning19Client(String host,
                         Integer port,
@@ -110,8 +90,6 @@ public class Ning19Client implements Client {
         } else {
             this.defaultHeaders = new HashMap<>();
         }
-
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
         this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());
@@ -243,7 +221,7 @@ public class Ning19Client implements Client {
         }
 
         if (body != null) {
-            ningRb.setBody(writeBodyToString(canonicalContentType, body));
+            ningRb.setBody(Json.writeBodyToString(canonicalContentType, body));
         }
 
         if (requestBuilder.getBinaryRequest() != null) {
@@ -420,7 +398,7 @@ public class Ning19Client implements Client {
                 // there are many responses in the 200 range with different typed responses.
                 return new io.atomicbits.scraml.jdsl.Response<R>(
                         responseBody,
-                        parseBodyToObject(responseBody, canonicalResponseType),
+                        Json.parseBodyToObject(responseBody, canonicalResponseType),
                         response.getStatusCode(),
                         response.getHeaders()
                 );
@@ -444,50 +422,6 @@ public class Ning19Client implements Client {
             ningClient.close();
         }
     }
-
-
-    /**
-     * Write the body to a JSON string.
-     * <p>
-     * The main reason why we need the canonical form of the request type to serialize the body is in cases where
-     * Java type erasure hides access to the Json annotations of our transfer objects.
-     * <p>
-     * Examples of such type erasure are cases where types in a hierarchy are put inside a java.util.List<B>. Then, the type of
-     * <B> is hidden in java.util.List<?>, which hides the @JsonTypeInfo annotations for the objectmapper so that all type info
-     * disappears form the resulting JSON objects.
-     *
-     * @param canonicalRequestType The canonical form of the request body.
-     * @param body                 The actual body.
-     * @param <B>                  The type of the body.
-     * @return The JSON representation of the body as a string.
-     */
-    private <B> String writeBodyToString(String canonicalRequestType, B body) {
-        if (canonicalRequestType != null && !isPrimitiveType(canonicalRequestType)) {
-            JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
-            ObjectWriter writer = this.objectMapper.writerFor(javaType);
-            try {
-                return writer.writeValueAsString(body);
-            } catch (IOException e) {
-                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-            }
-        } else {
-            return body.toString();
-        }
-    }
-
-    private boolean isPrimitiveType(String type) {
-        return javaPrimitiveTypes.contains(type);
-    }
-
-    private <R> R parseBodyToObject(String body, String canonicalResponseType) {
-        JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);
-        try {
-            return this.objectMapper.readValue(body, javaType);
-        } catch (IOException e) {
-            throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-        }
-    }
-
 
     String getResponseCharsetFromHeaders(Map<String, List<String>> headers, String defaultCharset) {
         for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
