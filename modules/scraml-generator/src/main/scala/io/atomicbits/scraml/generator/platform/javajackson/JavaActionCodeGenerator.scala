@@ -244,6 +244,8 @@ object JavaActionCodeGenerator extends ActionCode {
 
     val callResponseType = responseClassDefinition(responseType)
 
+    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+
     s"""
        public $callResponseType $actionTypeMethod(${actionParameters.mkString(", ")}) {
 
@@ -263,7 +265,7 @@ object JavaActionCodeGenerator extends ActionCode {
            this.getRequestBuilder(),
            $canonicalContentT,
            $canonicalResponseT
-         ).call();
+         ).$callMethod();
        }
      """
 

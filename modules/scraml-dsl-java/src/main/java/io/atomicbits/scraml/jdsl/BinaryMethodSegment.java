@@ -19,8 +19,6 @@
 
 package io.atomicbits.scraml.jdsl;
 
-import io.atomicbits.scraml.jdsl.json.Json;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -49,8 +47,12 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
     }
 
 
+    public CompletableFuture<Response<BinaryData>> callWithPrimitiveBody() {
+        return getRequestBuilder().callToBinaryResponse(getPlainStringBody());
+    }
+
     public CompletableFuture<Response<BinaryData>> call() {
-        return getRequestBuilder().callToBinaryResponse(getStringBody(canonicalContentType));
+        return getRequestBuilder().callToBinaryResponse(getJsonStringBody(canonicalContentType));
     }
 
 }

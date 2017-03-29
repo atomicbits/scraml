@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.restmodel.{ ActionSelection, ContentType, ResponseType }
-import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClassReference }
+import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 
 /**
@@ -38,6 +38,13 @@ trait ActionCode {
   def responseTypes(action: ActionSelection): List[Option[ClassPointer]]
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
+
+  def chooseCallBodySerialization(optBodyType: Option[ClassPointer]): String = {
+    optBodyType.collect {
+      case StringClassPointer | ByteClassPointer | BooleanClassPointer(_) | LongClassPointer(_) | DoubleClassPointer(_) =>
+        "callWithPrimitiveBody"
+    } getOrElse "call"
+  }
 
   def responseClassDefinition(responseType: ResponseType): String
 

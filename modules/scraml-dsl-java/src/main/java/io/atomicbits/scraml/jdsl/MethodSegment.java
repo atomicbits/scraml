@@ -93,7 +93,15 @@ public abstract class MethodSegment<B, R> extends Segment {
         return body;
     }
 
-    protected String getStringBody(String canonicalContentType) {
+    protected String getPlainStringBody() {
+        String stringBody = null;
+        if (this.getBody() != null) {
+            stringBody = this.getBody().toString();
+        }
+        return stringBody;
+    }
+
+    protected String getJsonStringBody(String canonicalContentType) {
         String stringBody = null;
         if (this.getBody() != null) {
             stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);

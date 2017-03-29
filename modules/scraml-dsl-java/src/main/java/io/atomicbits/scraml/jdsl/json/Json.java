@@ -40,19 +40,6 @@ public class Json {
      */
     private static ObjectMapper objectMapper = new ObjectMapper();
 
-    private static ArrayList<String> javaPrimitiveTypes = new ArrayList<String>() {{
-        add("java.lang.String");
-        add("java.lang.Boolean");
-        add("java.lang.Byte");
-        add("java.lang.Character");
-        add("java.lang.Double");
-        add("java.lang.Float");
-        add("java.lang.Integer");
-        add("java.lang.Number");
-        add("java.lang.Long");
-        add("java.lang.Short");
-    }};
-
     static {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -73,7 +60,7 @@ public class Json {
      * @return The JSON representation of the body as a string.
      */
     public static <B> String writeBodyToString(B body, String canonicalRequestType) {
-        if (canonicalRequestType != null && !isPrimitiveType(canonicalRequestType)) {
+        if (canonicalRequestType != null) {
             JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
             ObjectWriter writer = objectMapper.writerFor(javaType);
             try {
@@ -84,10 +71,6 @@ public class Json {
         } else {
             return body.toString();
         }
-    }
-
-    private static boolean isPrimitiveType(String type) {
-        return javaPrimitiveTypes.contains(type);
     }
 
     public static <R> R parseBodyToObject(String body, String canonicalResponseType) {
