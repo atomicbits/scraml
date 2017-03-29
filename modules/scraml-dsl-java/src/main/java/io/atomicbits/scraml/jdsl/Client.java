@@ -29,13 +29,11 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface Client extends AutoCloseable {
 
-    <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, B body, String canonicalContentType);
+    CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, String body);
 
-    <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder request, B body, String canonicalContentType);
+    CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder request, String body);
 
-    // <B> Future<Response<JsValue>> callToJsonResponse(RequestBuilder requestBuilder, B body);
-
-    <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, B body, String canonicalContentType, String canonicalResponseType);
+    <R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType);
 
     ClientConfig getConfig();
 

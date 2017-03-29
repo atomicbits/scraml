@@ -67,19 +67,19 @@ public class Json {
      * {@code <B>} is hidden in {@code java.util.List<?>}, which hides the @JsonTypeInfo annotations for the objectmapper so that all type info
      * disappears form the resulting JSON objects.
      *
-     * @param canonicalRequestType The canonical form of the request body.
      * @param body                 The actual body.
+     * @param canonicalRequestType The canonical form of the request body.
      * @param <B>                  The type of the body.
      * @return The JSON representation of the body as a string.
      */
-    public static <B> String writeBodyToString(String canonicalRequestType, B body) {
+    public static <B> String writeBodyToString(B body, String canonicalRequestType) {
         if (canonicalRequestType != null && !isPrimitiveType(canonicalRequestType)) {
             JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
             ObjectWriter writer = objectMapper.writerFor(javaType);
             try {
                 return writer.writeValueAsString(body);
             } catch (IOException e) {
-                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
+                throw new RuntimeException("JSON serialization error: " + e.getMessage(), e);
             }
         } else {
             return body.toString();

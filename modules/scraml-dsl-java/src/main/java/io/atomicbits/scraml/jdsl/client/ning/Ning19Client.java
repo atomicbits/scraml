@@ -160,34 +160,30 @@ public class Ning19Client implements Client {
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.Response<String>> callToStringResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                                  B body,
-                                                                                                  String canonicalContentType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToStringBody);
+    public CompletableFuture<io.atomicbits.scraml.jdsl.Response<String>> callToStringResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                              String body) {
+        return callToResponse(requestBuilder, body, this::transformToStringBody);
     }
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.Response<BinaryData>> callToBinaryResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                                      B body,
-                                                                                                      String canonicalContentType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToBinaryBody);
+    public CompletableFuture<io.atomicbits.scraml.jdsl.Response<BinaryData>> callToBinaryResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                                  String body) {
+        return callToResponse(requestBuilder, body, this::transformToBinaryBody);
     }
 
 
     @Override
-    public <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToTypeResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                              B body,
-                                                                                              String canonicalContentType,
-                                                                                              String canonicalResponseType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, (result) -> transformToTypedBody(result, canonicalResponseType));
+    public <R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToTypeResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                           String body,
+                                                                                           String canonicalResponseType) {
+        return callToResponse(requestBuilder, body, (result) -> transformToTypedBody(result, canonicalResponseType));
     }
 
 
-    protected <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                             B body,
-                                                                                             String canonicalContentType,
-                                                                                             Function<com.ning.http.client.Response, io.atomicbits.scraml.jdsl.Response<R>> transformer) {
+    private <R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                        String body,
+                                                                                        Function<com.ning.http.client.Response, io.atomicbits.scraml.jdsl.Response<R>> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -221,7 +217,7 @@ public class Ning19Client implements Client {
         }
 
         if (body != null) {
-            ningRb.setBody(Json.writeBodyToString(canonicalContentType, body));
+            ningRb.setBody(body);
         }
 
         if (requestBuilder.getBinaryRequest() != null) {
