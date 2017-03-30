@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * Created by peter on 28/03/17.

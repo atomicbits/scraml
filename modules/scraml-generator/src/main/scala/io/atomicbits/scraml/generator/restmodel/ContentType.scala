@@ -62,10 +62,10 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(body: Body, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] =
+  def apply(body: Body)(implicit platform: Platform): Set[ContentType] =
     body.contentMap.map {
       case (mediaType, bodyContent) =>
-        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_, generationAggr))
+        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer)
         val formParams      = bodyContent.formParameters
         ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
     } toSet

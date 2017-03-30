@@ -28,15 +28,22 @@ trait TypeReference extends GenericReferrable {
 
   def genericTypes: List[GenericReferrable]
 
+  def genericTypeParameters: List[TypeParameter]
+
 }
 
-case class NonPrimitiveTypeReference(refers: CanonicalName, genericTypes: List[GenericReferrable] = List.empty) extends TypeReference
+case class NonPrimitiveTypeReference(refers: CanonicalName,
+                                     genericTypes: List[GenericReferrable]      = List.empty,
+                                     genericTypeParameters: List[TypeParameter] = List.empty)
+    extends TypeReference
 
 case class ArrayTypeReference(genericType: GenericReferrable) extends TypeReference {
 
   val refers = ArrayType.canonicalName
 
   val genericTypes: List[GenericReferrable] = List(genericType)
+
+  val genericTypeParameters: List[TypeParameter] = List(TypeParameter("T"))
 
 }
 

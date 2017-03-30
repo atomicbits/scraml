@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.platform
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ TypeParameter => ParserTypeParameter }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   ArrayTypeReference,
   BooleanType,
@@ -105,20 +106,19 @@ trait Platform {
 
 object Platform {
 
-  def typeReferenceToClassPointer(typeReference: TypeReference, generationAggr: GenerationAggr): ClassPointer = {
+  def typeReferenceToClassPointer(typeReference: TypeReference): ClassPointer = {
 
-    def customClassReference(canonicalName: CanonicalName, genericTypes: List[GenericReferrable]): ClassReference = {
+    def customClassReference(canonicalName: CanonicalName,
+                             genericTypes: List[GenericReferrable],
+                             genericTypeParameters: List[ParserTypeParameter]): ClassReference = {
       val generics: List[ClassPointer] =
         genericTypes.map {
-          case typeRef: TypeReference => typeReferenceToClassPointer(typeRef, generationAggr)
+          case typeRef: TypeReference => typeReferenceToClassPointer(typeRef)
           case CanonicalTypeParameter(paramName) =>
             sys.error(s"Didn't expect a type parameter when constructing a custom class reference at this stage.")
         }
-      val typeParameters =
-        generationAggr.canonicalToMap.get(canonicalName) match {
-          case Some(objectType: ObjectType) => objectType.typeParameters.map(tp => TypeParameter(tp.name))
-          case _                            => List.empty[TypeParameter]
-        }
+      val typeParameters = genericTypeParameters.map(tp => TypeParameter(tp.name))
+
       ClassReference(
         name            = canonicalName.name,
         packageParts    = canonicalName.packagePath,
@@ -139,25 +139,26 @@ object Platform {
       case ArrayTypeReference(genericType) =>
         genericType match {
           case typeReference: TypeReference =>
-            val classPointer = typeReferenceToClassPointer(typeReference, generationAggr)
+            val classPointer = typeReferenceToClassPointer(typeReference)
             ListClassPointer(classPointer)
           case CanonicalTypeParameter(paramName) =>
             val typeParameter = TypeParameter(paramName)
             ListClassPointer(typeParameter)
         }
-      case NonPrimitiveTypeReference(refers, genericTypes) => customClassReference(refers, genericTypes)
-      case unexpected                                      => sys.error(s"Didn't expect type reference in generator: $unexpected")
+      case NonPrimitiveTypeReference(refers, genericTypes, genericTypeParameters) =>
+        customClassReference(refers, genericTypes, genericTypeParameters)
+      case unexpected => sys.error(s"Didn't expect type reference in generator: $unexpected")
     }
   }
 
   def typeReferenceToNonPrimitiveCanonicalName(typeReference: TypeReference): Option[CanonicalName] = {
     Some(typeReference).collect {
-      case NonPrimitiveTypeReference(refers, genericTypes) => refers
+      case NonPrimitiveTypeReference(refers, genericTypes, genericTypeParameters) => refers
     }
   }
 
-  def typeReferenceToClassReference(typeReference: TypeReference, generationAggr: GenerationAggr): Option[ClassReference] = {
-    Some(typeReferenceToClassPointer(typeReference, generationAggr)).collect {
+  def typeReferenceToClassReference(typeReference: TypeReference): Option[ClassReference] = {
+    Some(typeReferenceToClassPointer(typeReference)).collect {
       case classReference: ClassReference => classReference
     }
   }
