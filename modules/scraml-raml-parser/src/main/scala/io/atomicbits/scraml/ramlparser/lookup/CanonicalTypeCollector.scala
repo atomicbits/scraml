@@ -22,6 +22,7 @@ package io.atomicbits.scraml.ramlparser.lookup
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import org.slf4j.{ Logger, LoggerFactory }
 
 /**
   * Created by peter on 17/12/16.
@@ -81,11 +82,12 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
   private def transformResourceParsedTypesToCanonicalTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
 
-    def transformTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
+    def injectCanonicalTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
       val expandedParsedType = indexer.expandRelativeToAbsoluteIds(typeRepresentation.parsed)
       val (genericReferrable, updatedCanonicalLH) =
         ParsedToCanonicalTypeTransformer.transform(expandedParsedType, canonicalLookupHelper, None)
-      // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndex
+      // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndexToCanonicalTypes
+
       genericReferrable match {
         case typeReference: TypeReference => typeRepresentation.copy(canonical = Some(typeReference))
         case other =>
@@ -94,13 +96,13 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     }
 
     def transformParsedParameter(parsedParameter: Parameter): Parameter = {
-      val updatedParameterType = transformTypeRepresentation(parsedParameter.parameterType)
+      val updatedParameterType = injectCanonicalTypeRepresentation(parsedParameter.parameterType)
       parsedParameter.copy(parameterType = updatedParameterType)
     }
 
     def transformBodyContent(bodyContent: BodyContent): BodyContent = {
       val updatedFormParameters = bodyContent.formParameters.mapValues(transformParsedParameter)
-      val updatedBodyType       = bodyContent.bodyType.map(transformTypeRepresentation)
+      val updatedBodyType       = bodyContent.bodyType.map(injectCanonicalTypeRepresentation)
       bodyContent.copy(formParameters = updatedFormParameters, bodyType = updatedBodyType)
     }
 

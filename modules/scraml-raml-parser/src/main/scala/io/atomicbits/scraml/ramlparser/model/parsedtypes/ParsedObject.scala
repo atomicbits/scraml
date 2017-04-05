@@ -30,18 +30,16 @@ import scala.util.{ Failure, Success, Try }
   * Created by peter on 25/03/16.
   */
 case class ParsedObject(id: Id,
-                        baseType: List[Id], // ToDo check if we can we remote this field
                         properties: ParsedProperties,
                         required: Option[Boolean]              = None,
                         requiredProperties: List[String]       = List.empty,
                         selection: Option[Selection]           = None,
                         fragments: Fragments                   = Fragments(),
                         parents: Set[ParsedTypeReference]      = Set.empty,
-                        children: List[UniqueId]               = List.empty, // ToDo check if we can we remote this field
                         typeParameters: List[String]           = List.empty,
                         typeDiscriminator: Option[String]      = None,
                         typeDiscriminatorValue: Option[String] = None,
-                        model: TypeModel                       = RamlModel) // ToDo check if we can we remote this field
+                        model: TypeModel                       = RamlModel)
     extends Fragmented
     with AllowedAsObjectField
     with NonPrimitiveType {
@@ -62,14 +60,8 @@ case class ParsedObject(id: Id,
     copy(model = typeModel, properties = updatedProperties, selection = updatedSelection)
   }
 
-  def hasChildren: Boolean = children.nonEmpty
-
-  def hasParent: Boolean = parents.nonEmpty
-
-  def isInTypeHiearchy: Boolean = hasChildren || hasParent
-
   def isEmpty: Boolean = {
-    properties.valueMap.isEmpty && selection.isEmpty && fragments.fragmentMap.isEmpty && parents.isEmpty && children.isEmpty &&
+    properties.valueMap.isEmpty && selection.isEmpty && fragments.fragmentMap.isEmpty &&
     typeParameters.isEmpty && typeDiscriminator.isEmpty && typeDiscriminatorValue.isEmpty
   }
 
@@ -158,19 +150,17 @@ object ParsedObject {
 
     TryUtils.withSuccess(
       Success(id),
-      Success(List.empty[Id]),
       properties,
       Success(required),
       Success(requiredFields.getOrElse(List.empty[String])),
       TryUtils.accumulate(selection),
       fragments,
       Success(Set.empty[ParsedTypeReference]),
-      Success(List.empty[AbsoluteId]),
       Success(typeVariables),
       Success(discriminator),
       Success(discriminatorValue),
       Success(model)
-    )(new ParsedObject(_, _, _, _, _, _, _, _, _, _, _, _, _))
+    )(new ParsedObject(_, _, _, _, _, _, _, _, _, _, _))
   }
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedObject]] = {

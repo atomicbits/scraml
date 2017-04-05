@@ -20,8 +20,8 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ PrimitiveType => _, _ }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ PrimitiveType => ParsedPrimitiveType, _ }
 
 /**
   * Created by peter on 23/12/16.
@@ -47,7 +47,7 @@ object ParsedTypeReferenceTransformer {
 
       val (typeRefAsGenericReferrable, updatedCanonicalLH) =
         canonicalLookupHelper.getParsedTypeWithProperId(parsedTypeReference.refersTo).map {
-          case primitiveType: PrimitiveType =>
+          case primitiveType: ParsedPrimitiveType =>
             val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
             (typeRef, canonicalLH)
           case parsedDate: ParsedDate =>
