@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.JsValue
 
@@ -28,8 +27,7 @@ import scala.util.Try
 /**
   * Created by peter on 10/02/16.
   */
-case class Response(status: StatusCode, headers: ParsedParameters, body: Body)
-
+case class Response(status: StatusCode, headers: Parameters, body: Body)
 
 object Response {
 
@@ -41,7 +39,7 @@ object Response {
 
     val status = StatusCode(statusString)
 
-    val tryHeaders = ParsedParameters((json \ "headers").toOption)
+    val tryHeaders = Parameters((json \ "headers").toOption)
 
     val tryBody = Body(json)
 

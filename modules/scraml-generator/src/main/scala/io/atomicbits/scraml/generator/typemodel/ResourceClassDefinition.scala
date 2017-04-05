@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.ramlparser.model.Resource
 

@@ -93,7 +93,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       }
     }
 
-    def transformParsedParameter(parsedParameter: ParsedParameter): ParsedParameter = {
+    def transformParsedParameter(parsedParameter: Parameter): Parameter = {
       val updatedParameterType = transformTypeRepresentation(parsedParameter.parameterType)
       parsedParameter.copy(parameterType = updatedParameterType)
     }

@@ -156,7 +156,7 @@ object JavaJackson extends Platform with CleanNameTools {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 
-  override def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
+  override def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
     val ownPackage = targetClassReference.packageName
 
     def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {

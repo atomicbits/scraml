@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.restmodel.{ ActionSelection, ContentType, ResponseType }
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
+import io.atomicbits.scraml.ramlparser.model.Parameter
 
 /**
   * Created by peter on 20/01/17.
@@ -48,11 +48,11 @@ trait ActionCode {
 
   def responseClassDefinition(responseType: ResponseType): String
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)]
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
 
   def quoteString(text: String): String = s""""$text""""
 

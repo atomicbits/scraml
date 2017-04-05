@@ -76,7 +76,7 @@ trait Platform {
 
   def fieldDeclaration(field: Field): String
 
-  def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String]
+  def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer] = Set.empty): Set[String]
 
   def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr
 
@@ -181,6 +181,8 @@ object Platform {
 
     def implementingInterfaceReference(implicit platform: Platform): ClassReference =
       platform.implementingInterfaceReference(classPointer.native)
+
+    def importStatements(implicit platform: Platform): Set[String] = platform.importStatements(classPointer)
 
   }
 

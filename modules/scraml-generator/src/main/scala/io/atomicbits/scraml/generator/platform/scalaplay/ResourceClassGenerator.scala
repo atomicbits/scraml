@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ResourceClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -38,7 +38,7 @@ object ResourceClassGenerator extends SourceGenerator {
 
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
-    val ActionFunctionResult(actionImports, actionFunctions, headerPathSourceDefs) =
+    val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
       ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)

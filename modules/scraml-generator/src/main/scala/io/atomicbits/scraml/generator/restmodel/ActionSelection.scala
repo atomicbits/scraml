@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.model.{ Action, MediaType, NoMediaType, StatusCode }
 

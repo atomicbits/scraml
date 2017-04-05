@@ -21,8 +21,7 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ StringType, TypeReference }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
-import io.atomicbits.scraml.ramlparser.model.{ Raml, Resource, TypeRepresentation }
+import io.atomicbits.scraml.ramlparser.model.{ Parameter, Raml, Resource, TypeRepresentation }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
 import org.scalatest.Matchers._
@@ -98,7 +97,7 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
       val (ramlUpdated, canonicalLookup)  = canonicalTypeCollector.collect(raml)
 
-      val userIdUrlParameter: Option[ParsedParameter] =
+      val userIdUrlParameter: Option[Parameter] =
         ramlUpdated.resourceMap("rest").resourceMap("user").resourceMap("userid").urlParameter
 
       userIdUrlParameter.isDefined shouldBe true
