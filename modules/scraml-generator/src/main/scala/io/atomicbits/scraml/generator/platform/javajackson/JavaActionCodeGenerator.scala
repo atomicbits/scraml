@@ -166,10 +166,16 @@ object JavaActionCodeGenerator extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
-    (parameter.parameterType.parsed, parameter.required) match {
-      case (primitive: PrimitiveType, _) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedParameterName));"""
-      case (arrayType: ParsedArray, _)   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedParameterName));"""
-    }
+    val classPointer = parameter.classPointer()
+    val (httpParamType, callParameters): (String, List[String]) =
+      classPointer match {
+        case ListClassPointer(typeParamValue: PrimitiveClassPointer) => ("RepeatedHttpParam", List(sanitizedParameterName))
+        case primitive: PrimitiveClassPointer                        => ("SimpleHttpParam", List(sanitizedParameterName))
+        case complex =>
+          ("ComplexHttpParam", List(sanitizedParameterName, quoteString(classPointer.fullyQualifiedClassDefinition)))
+      }
+
+    s"""params.put("$queryParameterName", new $httpParamType(${callParameters.mkString(", ")}));"""
   }
 
   def generateAction(actionSelection: ActionSelection,

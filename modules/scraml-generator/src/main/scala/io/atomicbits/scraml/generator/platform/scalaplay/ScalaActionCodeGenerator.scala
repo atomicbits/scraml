@@ -155,10 +155,17 @@ object ScalaActionCodeGenerator extends ActionCode {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
+    val httpParamType: String =
+      parameter.classPointer() match {
+        case ListClassPointer(typeParamValue: PrimitiveClassPointer) => "RepeatedHttpParam"
+        case primitive: PrimitiveClassPointer                        => "SimpleHttpParam"
+        case complex                                                 => "ComplexHttpParam"
+      }
+
     if (parameter.required) {
-      s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      s""""$queryParameterName" -> Option($sanitizedParameterName).map($httpParamType.create(_))"""
     } else {
-      s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+      s""""$queryParameterName" -> $sanitizedParameterName.map($httpParamType.create(_))"""
     }
   }
 

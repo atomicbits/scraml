@@ -19,9 +19,24 @@
 
 package io.atomicbits.scraml.jdsl;
 
+import io.atomicbits.scraml.jdsl.json.Json;
+
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 7/04/17.
  */
-public interface HttpParam {
+public class ComplexHttpParam implements SingleHttpParam {
+
+    private String parameter;
+
+    public ComplexHttpParam(Object parameter, String canonicalType) {
+        if (parameter != null) {
+            this.parameter = Json.writeBodyToString(parameter, canonicalType);
+        }
+    }
+
+    @Override
+    public String getParameter() {
+        return parameter;
+    }
 
 }

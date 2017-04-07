@@ -20,23 +20,10 @@
 package io.atomicbits.scraml.jdsl;
 
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 7/04/17.
  */
-public class SingleHttpParam implements HttpParam {
+public interface SingleHttpParam extends HttpParam {
 
-    private String parameter;
-
-    public SingleHttpParam(Object parameter) {
-        if (parameter != null) this.parameter = parameter.toString();
-    }
-
-    public String getParameter() {
-        return parameter;
-    }
-
-    @Override
-    public Boolean isSingle() {
-        return true;
-    }
+    String getParameter();
 
 }

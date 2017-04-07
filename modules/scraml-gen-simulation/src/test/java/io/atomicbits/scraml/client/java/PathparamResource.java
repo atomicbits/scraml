@@ -49,9 +49,9 @@ public class PathparamResource extends ParamSegment<String> {
 
     public TypeMethodSegment<String, Person> get(double queryparX, int queryparY, Integer queryparZ) {
         Map<String, HttpParam> queryParams = new HashMap<String, HttpParam>();
-        queryParams.put("queryparX", new SingleHttpParam(queryparX));
-        queryParams.put("queryparY", new SingleHttpParam(queryparY));
-        queryParams.put("queryparZ", new SingleHttpParam(queryparZ));
+        queryParams.put("queryparX", new SimpleHttpParam(queryparX));
+        queryParams.put("queryparY", new SimpleHttpParam(queryparY));
+        queryParams.put("queryparZ", new SimpleHttpParam(queryparZ));
 
         return new TypeMethodSegment<String, Person>(
                 Method.GET,

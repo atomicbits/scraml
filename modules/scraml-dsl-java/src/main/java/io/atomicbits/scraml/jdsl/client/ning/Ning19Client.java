@@ -19,9 +19,6 @@
 
 package io.atomicbits.scraml.jdsl.client.ning;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.*;
 import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.jdsl.*;
@@ -38,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,17 +197,17 @@ public class Ning19Client implements Client {
         }
 
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
-            if (queryParam.getValue().isSingle()) {
-                SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
-                if (param.getParameter() != null) {
-                    ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
-                }
-            } else {
+            if (queryParam.getValue() instanceof RepeatedHttpParam) {
                 RepeatedHttpParam params = (RepeatedHttpParam) queryParam.getValue();
                 if (params.getParameters() != null) {
                     for (String param : params.getParameters()) {
                         ningRb.addQueryParam(queryParam.getKey(), param);
                     }
+                }
+            } else if (queryParam.getValue() instanceof SingleHttpParam) {
+                SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
+                if (param.getParameter() != null) {
+                    ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
                 }
             }
         }
@@ -241,17 +237,17 @@ public class Ning19Client implements Client {
         }
 
         for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
-            if (formParam.getValue().isSingle()) {
-                SingleHttpParam param = (SingleHttpParam) formParam.getValue();
-                if (param.getParameter() != null) {
-                    ningRb.addFormParam(formParam.getKey(), param.getParameter());
-                }
-            } else {
+            if (formParam.getValue() instanceof RepeatedHttpParam) {
                 RepeatedHttpParam params = (RepeatedHttpParam) formParam.getValue();
                 if (params.getParameters() != null) {
                     for (String param : params.getParameters()) {
                         ningRb.addFormParam(formParam.getKey(), param);
                     }
+                }
+            } else if(formParam.getValue() instanceof SingleHttpParam) {
+                SingleHttpParam param = (SingleHttpParam) formParam.getValue();
+                if (param.getParameter() != null) {
+                    ningRb.addFormParam(formParam.getKey(), param.getParameter());
                 }
             }
         }

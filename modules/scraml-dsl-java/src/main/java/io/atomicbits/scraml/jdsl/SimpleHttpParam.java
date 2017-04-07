@@ -22,6 +22,17 @@ package io.atomicbits.scraml.jdsl;
 /**
  * Created by peter on 19/08/15.
  */
-public interface HttpParam {
+public class SimpleHttpParam implements SingleHttpParam {
+
+    private String parameter;
+
+    public SimpleHttpParam(Object parameter) {
+        if (parameter != null) this.parameter = parameter.toString();
+    }
+
+    @Override
+    public String getParameter() {
+        return parameter;
+    }
 
 }

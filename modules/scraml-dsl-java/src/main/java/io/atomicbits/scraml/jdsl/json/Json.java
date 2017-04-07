@@ -59,7 +59,7 @@ public class Json {
      * @return The JSON representation of the body as a string.
      */
     public static <B> String writeBodyToString(B body, String canonicalRequestType) {
-        if (canonicalRequestType != null) {
+        if (canonicalRequestType != null && ! body.getClass().isEnum() && ! body.getClass().isPrimitive()) {
             JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
             ObjectWriter writer = objectMapper.writerFor(javaType);
             try {

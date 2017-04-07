@@ -43,9 +43,4 @@ public class RepeatedHttpParam implements HttpParam {
         return parameters;
     }
 
-    @Override
-    public Boolean isSingle() {
-        return false;
-    }
-
 }

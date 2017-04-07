@@ -167,7 +167,8 @@ case class Ning19Client(protocol: String,
     requestBuilder.queryParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter) => ningBuilder.addQueryParam(key, parameter)
+          case SimpleHttpParam(parameter)  => ningBuilder.addQueryParam(key, parameter)
+          case ComplexHttpParam(parameter) => ningBuilder.addQueryParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addQueryParam(key, parameter))
         }
@@ -187,7 +188,8 @@ case class Ning19Client(protocol: String,
     requestBuilder.formParameters.foreach {
       case (key, value) =>
         value match {
-          case SingleHttpParam(parameter) => ningBuilder.addFormParam(key, parameter)
+          case SimpleHttpParam(parameter)  => ningBuilder.addFormParam(key, parameter)
+          case ComplexHttpParam(parameter) => ningBuilder.addFormParam(key, parameter)
           case RepeatedHttpParam(parameters) =>
             parameters.foreach(parameter => ningBuilder.addFormParam(key, parameter))
         }
