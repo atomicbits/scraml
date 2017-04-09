@@ -20,34 +20,31 @@ import sbt.Keys._
 import sbt._
 import sbtdoge.CrossPerProjectPlugin
 
-object ApplicationBuild extends Build
-with BuildSettings
-with Dependencies {
-
+object ApplicationBuild extends Build with BuildSettings with Dependencies {
 
   val scramlDslScala = Project(
-    id = "scraml-dsl-scala",
-    base = file("modules/scraml-dsl-scala"),
+    id       = "scraml-dsl-spica-scala",
+    base     = file("modules/scraml-dsl-spica-scala"),
     settings = buildSettings(dependencies = scramlDslDepsScala ++ testDeps)
   )
 
   // builds the dsl but against play25
   val scramlDslPlay25Scala = {
     //if I choose just the module dir, the test sources get build in the main compile too :/
-    val sourceDir = (baseDirectory in ThisBuild)( b => Seq( b / "modules/scraml-dsl-scala" / "src" /  "main" / "scala"))
+    val sourceDir = (baseDirectory in ThisBuild)(b => Seq(b / "modules/scraml-dsl-spica-scala" / "src" / "main" / "scala"))
 
     Project(
-      id = "scraml-dsl-play25-scala",
-      base = file("modules/scraml-dsl-play25-scala"),
+      id       = "scraml-dsl-spica-play25-scala",
+      base     = file("modules/scraml-dsl-spica-play25-scala"),
       settings = buildSettings(dependencies = scramlDslPlay25DepsScala ++ testDeps)
-    ).settings( unmanagedSourceDirectories in Compile <<= sourceDir )
+    ).settings(unmanagedSourceDirectories in Compile <<= sourceDir)
       // play25 is enkel scala 2.11
-     .settings(crossScalaVersions := Seq(scala2_11))
+      .settings(crossScalaVersions := Seq(scala2_11))
   }
 
   val scramlDslJava = Project(
-    id = "scraml-dsl-java",
-    base = file("modules/scraml-dsl-java"),
+    id   = "scraml-dsl-spica-java",
+    base = file("modules/scraml-dsl-spica-java"),
     // This is a pure Java project without scala versioning,
     // see http://stackoverflow.com/questions/8296280/use-sbt-to-build-pure-java-project
     // We also override the crossScalaVersions to avoid publish overwrite problems during release publishing, and because that
@@ -56,43 +53,40 @@ with Dependencies {
       Seq(
         crossPaths := false,
         autoScalaLibrary := false,
-        publishArtifact <<= scalaVersion { sv => sv != ScalaVersion }
+        publishArtifact <<= scalaVersion { sv =>
+          sv != ScalaVersion
+        }
         // , crossScalaVersions := Seq(ScalaVersion)
       )
   )
 
-
   val scramlGenSimulation = Project(
-    id = "scraml-gen-simulation",
-    base = file("modules/scraml-gen-simulation"),
+    id       = "scraml-gen-simulation",
+    base     = file("modules/scraml-gen-simulation"),
     settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-  ) dependsOn(scramlDslScala, scramlDslJava)
-
+  ) dependsOn (scramlDslScala, scramlDslJava)
 
   val scramlRamlParser = Project(
-    id = "scraml-raml-parser",
-    base = file("modules/scraml-raml-parser"),
+    id       = "scraml-raml-parser",
+    base     = file("modules/scraml-raml-parser"),
     settings = buildSettings(dependencies = scramlRamlParserDeps ++ testDeps)
   )
 
-
   val scramlGenerator = Project(
-    id = "scraml-generator",
-    base = file("modules/scraml-generator"),
+    id       = "scraml-generator",
+    base     = file("modules/scraml-generator"),
     settings = buildSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-  ) dependsOn(scramlRamlParser)
-
+  ) dependsOn (scramlRamlParser)
 
   val main = Project(
-    id = "scraml-project",
-    base = file("."),
+    id       = "scraml-project",
+    base     = file("."),
     settings = buildSettings(dependencies = allDeps)
   ).enablePlugins(CrossPerProjectPlugin)
-   .settings(
-    publish :=(),
-    publishLocal :=()
-    ) aggregate(scramlRamlParser,
-    scramlDslScala, scramlDslPlay25Scala, scramlDslJava, scramlGenSimulation, scramlGenerator
-    )
+    .settings(
+      publish := (),
+      publishLocal := ()
+    ) aggregate (scramlRamlParser,
+  scramlDslScala, scramlDslPlay25Scala, scramlDslJava, scramlGenSimulation, scramlGenerator)
 
 }

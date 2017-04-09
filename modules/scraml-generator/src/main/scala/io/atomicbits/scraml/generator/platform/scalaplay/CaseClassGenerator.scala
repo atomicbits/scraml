@@ -28,7 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 /**
   * Created by peter on 14/01/17.
   */
-object CaseClassGenerator extends SourceGenerator {
+object CaseClassGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -131,7 +131,7 @@ object CaseClassGenerator extends SourceGenerator {
         (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet
       )
 
-    val typeHintImport = if (jsonTypeInfo.isDefined) "import io.atomicbits.scraml.dsl.json.TypedJson._" else ""
+    val typeHintImport = if (jsonTypeInfo.isDefined) s"import $dslBasePackageString.json.TypedJson._" else ""
 
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 

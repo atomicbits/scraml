@@ -29,7 +29,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 /**
   * Created by peter on 1/03/17.
   */
-object InterfaceGenerator extends SourceGenerator with PojoGeneratorSupport {
+object InterfaceGenerator extends JavaJacksonSourceGenerator with PojoGeneratorSupport {
 
   implicit val platform: Platform = JavaJackson
 

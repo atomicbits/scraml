@@ -28,7 +28,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 1/03/17.
   */
-object ClientClassGenerator extends SourceGenerator {
+object ClientClassGenerator extends JavaJacksonSourceGenerator {
 
   implicit val platform: Platform = JavaJackson
 
@@ -58,11 +58,11 @@ object ClientClassGenerator extends SourceGenerator {
       s"""
            package ${apiPackage.mkString(".")};
 
-           import io.atomicbits.scraml.jdsl.RequestBuilder;
-           import io.atomicbits.scraml.jdsl.client.ClientConfig;
-           import io.atomicbits.scraml.jdsl.client.ClientFactory;
-           import io.atomicbits.scraml.jdsl.Client;
-           import io.atomicbits.scraml.jdsl.client.ning.Ning19ClientFactory;
+           import $dslBasePackageString.RequestBuilder;
+           import $dslBasePackageString.client.ClientConfig;
+           import $dslBasePackageString.client.ClientFactory;
+           import $dslBasePackageString.Client;
+           import $dslBasePackageString.client.ning.Ning19ClientFactory;
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;

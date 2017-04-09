@@ -28,7 +28,7 @@ import io.atomicbits.scraml.generator.util.CleanNameUtil
 /**
   * Created by peter on 14/01/17.
   */
-object EnumGenerator extends SourceGenerator {
+object EnumGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 

@@ -27,7 +27,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 1/03/17.
   */
-object HeaderSegmentClassGenerator extends SourceGenerator {
+object HeaderSegmentClassGenerator extends JavaJacksonSourceGenerator {
 
   import Platform._
 
@@ -44,7 +44,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
       s"""
          package $packageName;
 
-         import io.atomicbits.scraml.jdsl.*;
+         import $dslBasePackageString.*;
          import java.util.*;
          import java.util.concurrent.CompletableFuture;
          import java.io.*;

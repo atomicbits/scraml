@@ -26,7 +26,7 @@ import io.atomicbits.scraml.generator.typemodel.{ SourceFile, UnionClassDefiniti
 /**
   * Created by peter on 14/01/17.
   */
-object UnionClassGenerator extends SourceGenerator {
+object UnionClassGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 

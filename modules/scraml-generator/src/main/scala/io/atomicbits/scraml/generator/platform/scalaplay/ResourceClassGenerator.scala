@@ -27,7 +27,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 14/01/17.
   */
-object ResourceClassGenerator extends SourceGenerator {
+object ResourceClassGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -50,7 +50,7 @@ object ResourceClassGenerator extends SourceGenerator {
       s"""
            package ${resourceClassReference.packageName}
 
-           import io.atomicbits.scraml.dsl._
+           import $dslBasePackageString._
 
            import play.api.libs.json._
            import java.io._

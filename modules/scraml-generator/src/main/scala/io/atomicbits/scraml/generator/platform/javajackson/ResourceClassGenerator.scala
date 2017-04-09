@@ -28,7 +28,7 @@ import io.atomicbits.scraml.generator.util.CleanNameUtil
 /**
   * Created by peter on 1/03/17.
   */
-object ResourceClassGenerator extends SourceGenerator {
+object ResourceClassGenerator extends JavaJacksonSourceGenerator {
 
   implicit val platform: Platform = JavaJackson
 
@@ -56,7 +56,7 @@ object ResourceClassGenerator extends SourceGenerator {
       s"""
            package ${resourceClassReference.packageName};
 
-           import io.atomicbits.scraml.jdsl.*;
+           import $dslBasePackageString.*;
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
            import java.io.*;

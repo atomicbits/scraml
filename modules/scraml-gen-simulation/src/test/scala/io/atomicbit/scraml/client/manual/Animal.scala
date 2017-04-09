@@ -19,9 +19,9 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl.json.TypedJson._
+import io.atomicbits.scraml.dsl.spica.json.TypedJson._
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{ Format, Json }
 
 sealed trait Animal {
 
@@ -53,7 +53,6 @@ object Cat {
   implicit val jsonFormatter: Format[Cat] = Json.format[Cat]
 
 }
-
 
 case class Dog(gender: String, name: Option[String] = None, canBark: Boolean = true) extends Mammal
 

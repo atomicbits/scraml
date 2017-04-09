@@ -28,7 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 /**
   * Created by peter on 14/01/17.
   */
-object TraitGenerator extends SourceGenerator {
+object TraitGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -106,7 +106,7 @@ object TraitGenerator extends SourceGenerator {
         package ${toInterfaceDefinition.classReference.packageName}
 
         import play.api.libs.json._
-        import io.atomicbits.scraml.dsl.json.TypedJson._
+        import $dslBasePackageString.json.TypedJson._
 
         ${imports.mkString("\n")}
         

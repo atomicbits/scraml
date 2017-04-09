@@ -27,7 +27,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 14/01/17.
   */
-object ClientClassGenerator extends SourceGenerator {
+object ClientClassGenerator extends ScalaPlaySourceGenerator {
 
   implicit val platform: Platform = ScalaPlay
 
@@ -57,9 +57,9 @@ object ClientClassGenerator extends SourceGenerator {
       s"""
          package ${apiPackage.mkString(".")}
 
-         import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
-         import io.atomicbits.scraml.dsl.RequestBuilder
-         import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
+         import $dslBasePackageString.client.{ClientFactory, ClientConfig}
+         import $dslBasePackageString.RequestBuilder
+         import $dslBasePackageString.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
          import java.io._
@@ -69,7 +69,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          class $apiClassName(private val _requestBuilder: RequestBuilder) {
 
-           import io.atomicbits.scraml.dsl._
+           import $dslBasePackageString._
 
            ${dslFields.mkString("\n\n")}
 
@@ -81,7 +81,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          object $apiClassName {
 
-           import io.atomicbits.scraml.dsl.Response
+           import $dslBasePackageString.Response
            import play.api.libs.json._
 
            import scala.concurrent.ExecutionContext.Implicits.global

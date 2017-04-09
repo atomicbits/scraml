@@ -28,7 +28,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 1/03/17.
   */
-object EnumGenerator extends SourceGenerator {
+object EnumGenerator extends JavaJacksonSourceGenerator {
 
   implicit val platform: Platform = JavaJackson
 

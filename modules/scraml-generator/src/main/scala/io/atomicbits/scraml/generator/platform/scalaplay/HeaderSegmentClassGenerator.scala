@@ -26,7 +26,7 @@ import io.atomicbits.scraml.generator.typemodel.{ HeaderSegmentClassDefinition, 
 /**
   * Created by peter on 18/01/17.
   */
-object HeaderSegmentClassGenerator extends SourceGenerator {
+object HeaderSegmentClassGenerator extends ScalaPlaySourceGenerator {
 
   import Platform._
 
@@ -43,7 +43,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
       s"""
          package $packageName
 
-         import io.atomicbits.scraml.dsl._
+         import $dslBasePackageString._
          import play.api.libs.json._
          import java.io._
 

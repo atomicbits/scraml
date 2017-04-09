@@ -26,4 +26,10 @@ trait SourceGenerator {
 
   def platform: Platform
 
+  val dslVersionName = "spica"
+
+  def dslBasePackage: List[String]
+
+  def dslBasePackageString: String = dslBasePackage.mkString(".")
+
 }

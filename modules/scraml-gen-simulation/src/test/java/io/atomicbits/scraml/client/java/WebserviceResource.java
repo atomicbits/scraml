@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.client.java;
 
-import io.atomicbits.scraml.jdsl.PlainSegment;
-import io.atomicbits.scraml.jdsl.RequestBuilder;
+import io.atomicbits.scraml.jdsl.spica.PlainSegment;
+import io.atomicbits.scraml.jdsl.spica.RequestBuilder;
 
 /**
  * Created by peter on 19/08/15.
