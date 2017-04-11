@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -24,6 +27,8 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.*;
 import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.jdsl.spica.*;
+import io.atomicbits.scraml.jdsl.spica.RequestBuilder;
+import io.atomicbits.scraml.jdsl.spica.Response;
 import io.atomicbits.scraml.jdsl.spica.client.ClientConfig;
 import io.atomicbits.scraml.jdsl.spica.StringPart;
 import org.slf4j.Logger;
@@ -179,15 +184,15 @@ public class Ning19Client implements Client {
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<String>> callToStringResponse(io.atomicbits.scraml.jdsl.spica.RequestBuilder requestBuilder,
-                                                                                                        B body,
-                                                                                                        String canonicalContentType) {
+    public <B> CompletableFuture<Response<String>> callToStringResponse(RequestBuilder requestBuilder,
+                                                                        B body,
+                                                                        String canonicalContentType) {
         return callToResponse(requestBuilder, body, canonicalContentType, this::transformToStringBody);
     }
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<BinaryData>> callToBinaryResponse(io.atomicbits.scraml.jdsl.spica.RequestBuilder requestBuilder,
+    public <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder requestBuilder,
                                                                                                             B body,
                                                                                                             String canonicalContentType) {
         return callToResponse(requestBuilder, body, canonicalContentType, this::transformToBinaryBody);
@@ -195,7 +200,7 @@ public class Ning19Client implements Client {
 
 
     @Override
-    public <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<R>> callToTypeResponse(io.atomicbits.scraml.jdsl.spica.RequestBuilder requestBuilder,
+    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder requestBuilder,
                                                                                                     B body,
                                                                                                     String canonicalContentType,
                                                                                                     String canonicalResponseType) {
@@ -203,10 +208,10 @@ public class Ning19Client implements Client {
     }
 
 
-    protected <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<R>> callToResponse(io.atomicbits.scraml.jdsl.spica.RequestBuilder requestBuilder,
+    protected <B, R> CompletableFuture<Response<R>> callToResponse(RequestBuilder requestBuilder,
                                                                                                    B body,
                                                                                                    String canonicalContentType,
-                                                                                                   Function<com.ning.http.client.Response, io.atomicbits.scraml.jdsl.spica.Response<R>> transformer) {
+                                                                                                   Function<com.ning.http.client.Response, Response<R>> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -329,7 +334,7 @@ public class Ning19Client implements Client {
 
         Request ningRequest = ningRb.build();
         // CompletableFuture is present in the JDK since 1.8
-        final CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<R>> future = new CompletableFuture<io.atomicbits.scraml.jdsl.spica.Response<R>>();
+        final CompletableFuture<Response<R>> future = new CompletableFuture<Response<R>>();
 
         LOGGER.debug("Executing request: " + ningRequest + "\nWith 'string' body: " + ningRequest.getStringData());
 
@@ -338,7 +343,7 @@ public class Ning19Client implements Client {
             @Override
             public String onCompleted(com.ning.http.client.Response response) throws Exception {
                 try {
-                    io.atomicbits.scraml.jdsl.spica.Response<R> resp = transformer.apply(response);
+                    Response<R> resp = transformer.apply(response);
                     future.complete(resp);
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -358,13 +363,13 @@ public class Ning19Client implements Client {
     }
 
 
-    private io.atomicbits.scraml.jdsl.spica.Response<String> transformToStringBody(com.ning.http.client.Response response) {
+    private Response<String> transformToStringBody(com.ning.http.client.Response response) {
         try {
             String responseBody =
                     response.getResponseBody(
                             getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
                     );
-            return new io.atomicbits.scraml.jdsl.spica.Response<String>(
+            return new Response<String>(
                     responseBody,
                     responseBody,
                     response.getStatusCode(),
@@ -376,13 +381,13 @@ public class Ning19Client implements Client {
     }
 
 
-    private io.atomicbits.scraml.jdsl.spica.Response<BinaryData> transformToBinaryBody(com.ning.http.client.Response response) {
+    private Response<BinaryData> transformToBinaryBody(com.ning.http.client.Response response) {
         try {
             if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
                 // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
                 // there are many responses in the 200 range with different typed responses.
                 BinaryData binaryData = new Ning19BinaryData(response);
-                return new io.atomicbits.scraml.jdsl.spica.Response<BinaryData>(
+                return new Response<BinaryData>(
                         null,
                         binaryData,
                         response.getStatusCode(),
@@ -393,7 +398,7 @@ public class Ning19Client implements Client {
                         response.getResponseBody(
                                 getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
                         );
-                return new io.atomicbits.scraml.jdsl.spica.Response<BinaryData>(
+                return new Response<BinaryData>(
                         responseBody,
                         null,
                         response.getStatusCode(),
@@ -406,7 +411,7 @@ public class Ning19Client implements Client {
     }
 
 
-    private <R> io.atomicbits.scraml.jdsl.spica.Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
+    private <R> Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
         try {
             String responseBody =
                     response.getResponseBody(
@@ -415,14 +420,14 @@ public class Ning19Client implements Client {
             if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
                 // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
                 // there are many responses in the 200 range with different typed responses.
-                return new io.atomicbits.scraml.jdsl.spica.Response<R>(
+                return new Response<R>(
                         responseBody,
                         parseBodyToObject(responseBody, canonicalResponseType),
                         response.getStatusCode(),
                         response.getHeaders()
                 );
             } else {
-                return new io.atomicbits.scraml.jdsl.spica.Response<R>(
+                return new Response<R>(
                         responseBody,
                         null,
                         response.getStatusCode(),

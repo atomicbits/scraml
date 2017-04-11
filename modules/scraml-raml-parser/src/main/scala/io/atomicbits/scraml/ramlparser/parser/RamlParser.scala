@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -19,18 +22,15 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-
-import io.atomicbits.scraml.ramlparser.model.{Id, JsInclude, Raml, RootId}
+import io.atomicbits.scraml.ramlparser.model.{ Id, JsInclude, Raml, RootId }
 import play.api.libs.json._
 
 import scala.util.Try
-
 
 /**
   * Created by peter on 6/02/16.
   */
 case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
-
 
   def parse: Try[Raml] = {
     val (path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
@@ -72,18 +72,17 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)
           }
-        case jsObj: JsObject   =>
+        case jsObj: JsObject =>
           val mappedFields = jsObj.fields.collect {
             case (key, value) => key -> parseNested(value, currentBasePath)
           }
           JsObject(mappedFields)
-        case jsArr: JsArray    => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
-        case x                 => x
+        case jsArr: JsArray => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
+        case x              => x
       }
     }
 
     parseNested(raml, basePath).asInstanceOf[JsObject]
   }
-
 
 }

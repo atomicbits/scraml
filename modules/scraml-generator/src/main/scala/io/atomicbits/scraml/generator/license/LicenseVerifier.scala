@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -19,7 +22,7 @@
 
 package io.atomicbits.scraml.generator.license
 
-import java.security.{KeyFactory, PublicKey, Signature}
+import java.security.{ KeyFactory, PublicKey, Signature }
 import java.security.spec.X509EncodedKeySpec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -33,7 +36,7 @@ import scala.util.Try
   */
 object LicenseVerifier {
 
-  val charset = "UTF-8"
+  val charset     = "UTF-8"
   val datePattern = "yyyy-MM-dd"
 
   val algorithm = "RSA"
@@ -53,7 +56,6 @@ object LicenseVerifier {
   @volatile
   private var validatedLicenses: Map[String, Option[LicenseData]] = Map.empty
 
-
   def validateLicense(licenseKey: String): Option[LicenseData] = {
     val cleanKey = cleanLicenseKey(licenseKey)
     // Make sure decodeAndRegister is only executed if the key is not yet contained in validatedLicenses!
@@ -64,18 +66,16 @@ object LicenseVerifier {
     }
   }
 
-
   private def decodeVerifyAndRegister(licenseKey: String): Option[LicenseData] = {
     val decoded = decodeLicense(licenseKey).flatMap(checkExpiryDate)
     addValidatedLicense(licenseKey, decoded)
     decoded
   }
 
-
   private def decodeLicense(licenseKey: String): Option[LicenseData] = {
-    val encodedKey = licenseKey.trim
+    val encodedKey     = licenseKey.trim
     val signedKeyBytes = new BASE64Decoder().decodeBuffer(encodedKey)
-    val signedKey = new String(signedKeyBytes, charset)
+    val signedKey      = new String(signedKeyBytes, charset)
     val (unsignedKey, signature) = signedKey.split('!').toList match {
       case uKey :: sig :: _ => (uKey, sig)
       case _                => sys.error(s"Cannot verify key with bad key format: $signedKey")
@@ -85,17 +85,17 @@ object LicenseVerifier {
         case List(licenseType, customerId, licenseId, owner, purchaseDateString, periodString) =>
           val licenseData =
             LicenseData(
-              customerId = customerId,
-              licenseId = licenseId,
-              owner = owner,
+              customerId  = customerId,
+              licenseId   = licenseId,
+              owner       = owner,
               licenseType = licenseType,
-              period = Try(periodString.toLong).getOrElse(0),
+              period      = Try(periodString.toLong).getOrElse(0),
               purchaseDate =
                 Try(LocalDate.parse(purchaseDateString, DateTimeFormatter.ofPattern(datePattern))).getOrElse(LocalDate.ofYearDay(1950, 1))
             )
           println(s"Scraml license $licenseId is licensed to $owner.")
           Some(licenseData)
-        case x                                                                                 =>
+        case x =>
           println(s"Invalid license key. Falling back to default AGPL license.")
           None
       }
@@ -105,10 +105,9 @@ object LicenseVerifier {
     }
   }
 
-
   private def checkExpiryDate(licenseKey: LicenseData): Option[LicenseData] = {
-    val today = LocalDate.now()
-    val expiryDate = licenseKey.purchaseDate.plusDays(licenseKey.period)
+    val today       = LocalDate.now()
+    val expiryDate  = licenseKey.purchaseDate.plusDays(licenseKey.period)
     val warningDate = licenseKey.purchaseDate.plusDays(licenseKey.period - 31)
 
     if (licenseKey.period < 0) {
@@ -139,24 +138,21 @@ object LicenseVerifier {
     }
   }
 
-
   private def verifySignature(text: String, signature: String): Boolean = {
     val textBytes: Array[Byte] = text.getBytes("UTF8")
-    val signer: Signature = Signature.getInstance(signatureAlgorithm)
+    val signer: Signature      = Signature.getInstance(signatureAlgorithm)
     signer.initVerify(publicKey)
     signer.update(textBytes)
     signer.verify(new BASE64Decoder().decodeBuffer(signature))
   }
 
-
   lazy val publicKey: PublicKey = {
-    val b64: BASE64Decoder = new BASE64Decoder
-    val decoded: Array[Byte] = b64.decodeBuffer(publicKeyPEM)
+    val b64: BASE64Decoder       = new BASE64Decoder
+    val decoded: Array[Byte]     = b64.decodeBuffer(publicKeyPEM)
     val spec: X509EncodedKeySpec = new X509EncodedKeySpec(decoded)
-    val kf: KeyFactory = KeyFactory.getInstance(algorithm)
+    val kf: KeyFactory           = KeyFactory.getInstance(algorithm)
     kf.generatePublic(spec)
   }
-
 
   private def addValidatedLicense(licenseKey: String, licenseData: Option[LicenseData]): Unit = {
     LicenseVerifier.synchronized {
@@ -164,10 +160,8 @@ object LicenseVerifier {
     }
   }
 
-
   private def cleanLicenseKey(licenseKey: String): String = {
     licenseKey.split('\n').map(line => line.trim).mkString("\n")
   }
-
 
 }

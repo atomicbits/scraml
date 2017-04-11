@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -19,12 +22,11 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.{ JsString, JsValue }
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
-import scala.util.{Success, Try}
-
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 26/08/16.
@@ -54,7 +56,6 @@ case class ParsedDateOnly(id: Id = ImplicitId, required: Option[Boolean] = None)
 
 }
 
-
 case object ParsedDateOnly {
 
   val value = "date-only"
@@ -66,7 +67,6 @@ case object ParsedDateOnly {
   }
 
 }
-
 
 /**
   * time-only	The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
@@ -83,7 +83,6 @@ case class ParsedTimeOnly(id: Id = ImplicitId, required: Option[Boolean] = None)
 
 }
 
-
 case object ParsedTimeOnly {
 
   val value = "time-only"
@@ -95,7 +94,6 @@ case object ParsedTimeOnly {
   }
 
 }
-
 
 /**
   * datetime-only	Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support
@@ -113,7 +111,6 @@ case class ParsedDateTimeOnly(id: Id = ImplicitId, required: Option[Boolean] = N
 
 }
 
-
 case object ParsedDateTimeOnly {
 
   val value = "datetime-only"
@@ -125,7 +122,6 @@ case object ParsedDateTimeOnly {
   }
 
 }
-
 
 /**
   * datetime	A timestamp in one of the following formats: if the format is omitted or set to rfc3339, uses the "date-time" notation
@@ -145,7 +141,6 @@ object ParsedDateTime {
 
 }
 
-
 case class ParsedDateTimeDefault(id: Id = ImplicitId, required: Option[Boolean] = None) extends ParsedDateTime {
 
   val format = RFC3339DateTime
@@ -155,7 +150,6 @@ case class ParsedDateTimeDefault(id: Id = ImplicitId, required: Option[Boolean] 
   override def updated(updatedId: Id): ParsedDateTimeDefault = copy(id = updatedId)
 
 }
-
 
 case object ParsedDateTimeDefault {
 
@@ -171,7 +165,6 @@ case object ParsedDateTimeDefault {
 
 }
 
-
 case class ParsedDateTimeRFC2616(id: Id = ImplicitId, required: Option[Boolean] = None) extends ParsedDateTime {
 
   val format = RFC2616
@@ -181,7 +174,6 @@ case class ParsedDateTimeRFC2616(id: Id = ImplicitId, required: Option[Boolean] 
   override def updated(updatedId: Id): ParsedDateTimeRFC2616 = copy(id = updatedId)
 
 }
-
 
 case object ParsedDateTimeRFC2616 {
 

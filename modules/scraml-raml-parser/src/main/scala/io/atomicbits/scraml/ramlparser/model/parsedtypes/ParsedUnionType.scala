@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -20,20 +23,19 @@
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.{ParseContext, RamlParseException}
+import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
 import io.atomicbits.scraml.util.TryUtils
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
-import play.api.libs.json.{JsString, JsValue}
+import play.api.libs.json.{ JsString, JsValue }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 1/11/16.
   */
-case class ParsedUnionType(types: Set[ParsedType],
-                           required: Option[Boolean] = None,
-                           model: TypeModel = RamlModel,
-                           id: Id = ImplicitId) extends NonPrimitiveType with AllowedAsObjectField {
+case class ParsedUnionType(types: Set[ParsedType], required: Option[Boolean] = None, model: TypeModel = RamlModel, id: Id = ImplicitId)
+    extends NonPrimitiveType
+    with AllowedAsObjectField {
 
   override def updated(updatedId: Id): ParsedUnionType = copy(id = updatedId)
 
@@ -43,14 +45,11 @@ case class ParsedUnionType(types: Set[ParsedType],
 
 }
 
-
 object ParsedUnionType {
-
 
   def unapply(unionExpression: String)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
     addUnionTypes(ParsedUnionType(Set.empty), unionExpression)
   }
-
 
   def unapply(json: JsValue)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
 
@@ -58,15 +57,15 @@ object ParsedUnionType {
       case (Some(JsString(unionExpression)), _) =>
         val required = json.fieldBooleanValue("required")
         addUnionTypes(ParsedUnionType(Set.empty, required), unionExpression)
-      case (_, JsString(unionExpression))       =>
+      case (_, JsString(unionExpression)) =>
         addUnionTypes(ParsedUnionType(Set.empty), unionExpression)
-      case _                                    => None
+      case _ => None
     }
 
   }
 
-
-  private def addUnionTypes(unionType: ParsedUnionType, unionExpression: String)(implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
+  private def addUnionTypes(unionType: ParsedUnionType, unionExpression: String)(
+      implicit parseContext: ParseContext): Option[Try[ParsedUnionType]] = {
     typeExpressions(unionExpression).map { triedExpressions =>
       val triedTypes =
         triedExpressions.flatMap { stringExpressions =>
@@ -77,7 +76,6 @@ object ParsedUnionType {
       }
     }
   }
-
 
   private def typeExpressions(unionExpression: String)(implicit parseContext: ParseContext): Option[Try[List[String]]] = {
 
@@ -102,6 +100,5 @@ object ParsedUnionType {
       case Failure(exc)                  => Some(typeExpressions)
     }
   }
-
 
 }

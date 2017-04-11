@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -19,10 +22,10 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.{KeyedList, ParseContext, RamlParseException, Sourced}
-import play.api.libs.json.{JsArray, JsObject, JsUndefined, JsValue}
+import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException, Sourced }
+import play.api.libs.json.{ JsArray, JsObject, JsUndefined, JsValue }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import io.atomicbits.scraml.util.TryUtils._
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
@@ -59,7 +62,6 @@ case class Traits(traitsMap: Map[String, JsObject]) {
     deepMerged.flatMap(f)
   }
 
-
   /**
     * Deep merge of the source json object into the target json object according to the
     * rules defined by
@@ -91,13 +93,13 @@ case class Traits(traitsMap: Map[String, JsObject]) {
             case jsOb: JsObject => aggregatedTarget + (field -> deepMerge(jsOb, aggrValue))
             case _              => aggregatedTarget
           }
-        case Some(aggrValue: JsArray)  =>
+        case Some(aggrValue: JsArray) =>
           value match {
             case jsArr: JsArray => aggregatedTarget + (field -> mergeArrays(jsArr, aggrValue))
             case _              => aggregatedTarget
           }
-        case Some(aggrValue)           => aggregatedTarget
-        case None                      => aggregatedTarget + (field -> value)
+        case Some(aggrValue) => aggregatedTarget
+        case None            => aggregatedTarget + (field -> value)
       }
 
     }
@@ -112,18 +114,14 @@ case class Traits(traitsMap: Map[String, JsObject]) {
       }
     }
 
-
     source.value.toMap.foldLeft(target)(mergeFieldInto)
   }
 
 }
 
-
 object Traits {
 
-
   def apply(): Traits = Traits(Map.empty[String, JsObject])
-
 
   def apply(traitsJson: JsValue)(implicit parseContext: ParseContext): Try[Traits] = {
 
@@ -131,13 +129,12 @@ object Traits {
       trsJson match {
         case traitsJsObj: JsObject => Success(Traits(traitsJsObjToTraitMap(traitsJsObj)))
         case traitsJsArr: JsArray  => Success(Traits(traitsJsObjToTraitMap(KeyedList.toJsObject(traitsJsArr))))
-        case x                     =>
+        case x =>
           Failure(
             RamlParseException(s"The traits definition in ${parseContext.head} is malformed.")
           )
       }
     }
-
 
     def traitsJsObjToTraitMap(traitsJsObj: JsObject): Map[String, JsObject] = {
       traitsJsObj.fields.collect {

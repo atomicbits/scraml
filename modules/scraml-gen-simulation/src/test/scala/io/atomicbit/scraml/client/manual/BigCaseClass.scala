@@ -6,11 +6,14 @@
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -51,7 +54,6 @@ case class BigCaseClass(a: Option[String],
                         y: String,
                         z: String)
 
-
 object BigCaseClass {
 
   import play.api.libs.functional.syntax._
@@ -88,14 +90,35 @@ object BigCaseClass {
         (__ \ "y").format[String] ~
         (__ \ "z").format[String]).tupled
 
-    (fields1 and fields2).apply({
-      case ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u), (v, w, x, y, z)) =>
-        BigCaseClass.apply(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
-    }, bcc =>
-      (
-        (bcc.a, bcc.b, bcc.c, bcc.d, bcc.e, bcc.f, bcc.g, bcc.h, bcc.i, bcc.j, bcc.k, bcc.l, bcc.m, bcc.n, bcc.o,
-          bcc.p, bcc.q, bcc.r, bcc.s, bcc.t, bcc.u),
-        (bcc.v, bcc.w, bcc.x, bcc.y, bcc.z)))
+    (fields1 and fields2).apply(
+      {
+        case ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u), (v, w, x, y, z)) =>
+          BigCaseClass.apply(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+      },
+      bcc =>
+        ((bcc.a,
+          bcc.b,
+          bcc.c,
+          bcc.d,
+          bcc.e,
+          bcc.f,
+          bcc.g,
+          bcc.h,
+          bcc.i,
+          bcc.j,
+          bcc.k,
+          bcc.l,
+          bcc.m,
+          bcc.n,
+          bcc.o,
+          bcc.p,
+          bcc.q,
+          bcc.r,
+          bcc.s,
+          bcc.t,
+          bcc.u),
+         (bcc.v, bcc.w, bcc.x, bcc.y, bcc.z))
+    )
   }
 
 }
