@@ -74,6 +74,10 @@ object EnumGenerator extends SourceGenerator {
             throw new IllegalArgumentException("Cannot instantiate a ${enumDefinition.reference.name} enum element from " + value);
           }
 
+          public String toString() {
+            return value();
+          }
+
         }
        """
 

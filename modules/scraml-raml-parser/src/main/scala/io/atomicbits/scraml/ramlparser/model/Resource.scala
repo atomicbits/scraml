@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameter, ParsedParameters, ParsedString }
-import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
-import play.api.libs.json.{ JsArray, JsObject }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedString
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import play.api.libs.json.JsObject
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.Try
 import io.atomicbits.scraml.util.TryUtils._
 import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
@@ -33,12 +33,12 @@ import scala.language.postfixOps
   * Created by peter on 10/02/16.
   */
 case class Resource(urlSegment: String,
-                    urlParameter: Option[ParsedParameter] = None,
-                    displayName: Option[String]           = None,
-                    description: Option[String]           = None,
-                    actions: List[Action]                 = List.empty,
-                    resources: List[Resource]             = List.empty,
-                    parent: Option[Resource]              = None) {
+                    urlParameter: Option[Parameter] = None,
+                    displayName: Option[String]     = None,
+                    description: Option[String]     = None,
+                    actions: List[Action]           = List.empty,
+                    resources: List[Resource]       = List.empty,
+                    parent: Option[Resource]        = None) {
 
   lazy val resourceMap: Map[String, Resource] = resources.map(resource => resource.urlSegment -> resource).toMap
 
@@ -61,7 +61,7 @@ object Resource {
         val description: Try[Option[String]] = Try(jsObj.fieldStringValue("description"))
 
         // URI parameters
-        val uriParameterMap: Try[ParsedParameters] = ParsedParameters((jsObj \ "uriParameters").toOption)
+        val uriParameterMap: Try[Parameters] = Parameters((jsObj \ "uriParameters").toOption)
 
         // Actions
 
@@ -92,7 +92,7 @@ object Resource {
           */
         def createResource(displayN: Option[String],
                            desc: Option[String],
-                           uriParamMap: ParsedParameters,
+                           uriParamMap: Parameters,
                            actionSeq: Seq[Action],
                            childResources: Seq[Resource]): Resource = {
 
@@ -102,7 +102,7 @@ object Resource {
               val pathParameterMeta =
                 uriParamMap
                   .byName(pathParameterName)
-                  .getOrElse(ParsedParameter(pathParameterName, TypeRepresentation(new ParsedString()), required = true))
+                  .getOrElse(Parameter(pathParameterName, TypeRepresentation(new ParsedString()), required = true))
               Resource(
                 urlSegment   = pathParameterName,
                 urlParameter = Some(pathParameterMeta)

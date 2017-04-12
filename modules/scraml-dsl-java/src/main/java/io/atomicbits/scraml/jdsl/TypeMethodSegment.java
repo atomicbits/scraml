@@ -49,8 +49,12 @@ public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
     }
 
 
+    public CompletableFuture<Response<R>> callWithPrimitiveBody() {
+        return getRequestBuilder().callToTypeResponse(getPlainStringBody(), canonicalResponseType);
+    }
+
     public CompletableFuture<Response<R>> call() {
-        return getRequestBuilder().callToTypeResponse(getBody(), canonicalContentType, canonicalResponseType);
+        return getRequestBuilder().callToTypeResponse(getJsonStringBody(canonicalContentType), canonicalResponseType);
     }
 
 }

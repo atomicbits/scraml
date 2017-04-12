@@ -1,0 +1,20 @@
+#%RAML 1.0
+---
+title: inlinequeryparameter-api
+version: 1.0
+mediaType: application/json
+
+/byfood:
+  get:
+    queryParameters:
+      food?:
+        description: The food the animal likes.
+        enum:
+          - rats
+          - birds
+          - beef
+          - veggie
+          - pork
+    responses:
+      200:
+        body:

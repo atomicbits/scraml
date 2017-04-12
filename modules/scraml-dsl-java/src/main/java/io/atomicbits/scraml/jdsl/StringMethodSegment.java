@@ -46,9 +46,12 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
         this.canonicalContentType = canonicalContentType;
     }
 
+    public CompletableFuture<Response<String>> callWithPrimitiveBody() {
+        return getRequestBuilder().callToStringResponse(getPlainStringBody());
+    }
 
     public CompletableFuture<Response<String>> call() {
-        return getRequestBuilder().callToStringResponse(getBody(), canonicalContentType);
+        return getRequestBuilder().callToStringResponse(getJsonStringBody(canonicalContentType));
     }
 
 }

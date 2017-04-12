@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.typemodel
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.ramlparser.model.Resource
 
@@ -47,11 +46,11 @@ case class ResourceClassDefinition(apiPackage: List[String], precedingUrlSegment
 
   lazy val resourcePackage: List[String] = apiPackage ++ precedingUrlSegments :+ nextPackagePart
 
-  def urlParamClassPointer(generationAggr: GenerationAggr): Option[ClassPointer] = {
+  def urlParamClassPointer(): Option[ClassPointer] = {
     resource.urlParameter
       .map(_.parameterType)
       .flatMap(_.canonical)
-      .map(Platform.typeReferenceToClassPointer(_, generationAggr))
+      .map(Platform.typeReferenceToClassPointer)
   }
 
   override def classReference(implicit platform: Platform): ClassReference = {

@@ -20,8 +20,9 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, CanonicalType, NonPrimitiveType }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ Fragmented, ParsedNull, ParsedType, Types }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedNull, ParsedType }
+import org.slf4j.{ Logger, LoggerFactory }
 
 /**
   * Created by peter on 17/12/16.
@@ -45,6 +46,8 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
                                  parsedTypeIndex: Map[UniqueId, ParsedType]                 = Map.empty,
                                  referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType]    = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId] = Map.empty) {
+
+  val logger: Logger = LoggerFactory.getLogger(CanonicalLookupHelper.getClass)
 
   def getParsedTypeWithProperId(id: Id): Option[ParsedType] = {
     val parsedTypeOpt =
@@ -70,18 +73,25 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
     copy(lookupTable = lookupTable + (canonicalName -> canonicalType))
 
   def addParsedTypeIndex(id: Id, parsedType: ParsedType, lookupOnly: Boolean = false): CanonicalLookupHelper = {
+
+    def warnDuplicate(uniqueId: UniqueId): Unit = {
+      if (parsedTypeIndex.get(uniqueId).isDefined) logger.warn(s"Duplicate type definition found for id $uniqueId")
+      else ()
+    }
+
     id match {
       case uniqueId: UniqueId =>
         if (lookupOnly) {
           copy(referenceOnlyParsedTypeIndex = referenceOnlyParsedTypeIndex + (uniqueId -> parsedType))
         } else {
+          warnDuplicate(uniqueId)
           copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
         }
       case _ => this
     }
   }
 
-  def addJsonSchemaNativeToAbsoluteIdTranslation(jsonSchemaNativeId: NativeId, jsonSchemaAbsoluteId: AbsoluteId) =
+  def addJsonSchemaNativeToAbsoluteIdTranslation(jsonSchemaNativeId: NativeId, jsonSchemaAbsoluteId: AbsoluteId): CanonicalLookupHelper =
     copy(jsonSchemaNativeToAbsoluteIdMap = jsonSchemaNativeToAbsoluteIdMap + (jsonSchemaNativeId -> jsonSchemaAbsoluteId))
 
 }

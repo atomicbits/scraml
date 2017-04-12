@@ -19,11 +19,13 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.ActionCode
+import io.atomicbits.scraml.generator.codegen.{ ActionCode, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.Parameter
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import TypedRestOps._
 
 /**
   * Created by peter on 20/01/17.
@@ -115,7 +117,7 @@ object ScalaActionCodeGenerator extends ActionCode {
     }
   }
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)] = {
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = {
     fieldParams.sortBy { t =>
       val (field, param) = t
       (!param.required, field)
@@ -132,45 +134,38 @@ object ScalaActionCodeGenerator extends ActionCode {
     }
   }
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String = {
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment = {
     val (queryParameterName, parameter) = qParam
+    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val classPointer                    = parameter.classPointer()
+    val classDefinition                 = classPointer.classDefinition
 
-    val sanitizedParameterName = CleanNameTools.cleanFieldName(queryParameterName)
+    val methodParameter =
+      if (parameter.required) {
+        s"$sanitizedParameterName: $classDefinition"
+      } else {
+        val defaultValue = if (noDefault) "" else s"= None"
+        s"$sanitizedParameterName: Option[$classDefinition] $defaultValue"
+      }
 
-    parameter.parameterType.parsed match {
-      case primitiveType: PrimitiveType =>
-        val primitive = primitiveTypeToScalaType(primitiveType)
-        if (parameter.required) {
-          s"$sanitizedParameterName: $primitive"
-        } else {
-          val defaultValue = if (noDefault) "" else s"= None"
-          s"$sanitizedParameterName: Option[$primitive] $defaultValue"
-        }
-      case arrayType: ParsedArray =>
-        arrayType.items match {
-          case primitiveType: PrimitiveType =>
-            val primitive = primitiveTypeToScalaType(primitiveType)
-            if (parameter.required) {
-              // Required query parameters should NOT have a default value! It may be confusing for the API user.
-              s"$sanitizedParameterName: List[$primitive] "
-            } else {
-              val defaultValue = if (noDefault) "" else s"= None"
-              s"$sanitizedParameterName: Option[List[$primitive]] $defaultValue"
-            }
-          case other =>
-            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: ${other}")
-        }
-    }
+    SourceCodeFragment(imports = Set(classPointer), sourceDefinition = List(methodParameter))
   }
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String = {
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
+    val httpParamType: String =
+      parameter.classPointer() match {
+        case ListClassPointer(typeParamValue: PrimitiveClassPointer) => "RepeatedHttpParam"
+        case primitive: PrimitiveClassPointer                        => "SimpleHttpParam"
+        case complex                                                 => "ComplexHttpParam"
+      }
+
     if (parameter.required) {
-      s""""$queryParameterName" -> Option($sanitizedParameterName).map(HttpParam(_))"""
+      s""""$queryParameterName" -> Option($sanitizedParameterName).map($httpParamType.create(_))"""
     } else {
-      s""""$queryParameterName" -> $sanitizedParameterName.map(HttpParam(_))"""
+      s""""$queryParameterName" -> $sanitizedParameterName.map($httpParamType.create(_))"""
     }
   }
 
@@ -204,6 +199,8 @@ object ScalaActionCodeGenerator extends ActionCode {
     val multipartParamsValue = if (isMultipartParams) "parts" else "List.empty"
     val binaryParamValue     = if (isBinaryParam) "Some(BinaryRequest(body))" else "None"
 
+    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
          new $segmentType(
@@ -220,7 +217,7 @@ object ScalaActionCodeGenerator extends ActionCode {
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = _requestBuilder
-         ).call()
+         ).$callMethod()
      """
   }
 

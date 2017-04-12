@@ -19,9 +19,6 @@
 
 package io.atomicbits.scraml.jdsl.client.ning;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.ning.http.client.*;
 import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.jdsl.*;
@@ -29,6 +26,7 @@ import io.atomicbits.scraml.jdsl.client.ClientConfig;
 import io.atomicbits.scraml.jdsl.ByteArrayPart;
 import io.atomicbits.scraml.jdsl.FilePart;
 import io.atomicbits.scraml.jdsl.StringPart;
+import io.atomicbits.scraml.jdsl.json.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,14 +53,6 @@ public class Ning19Client implements Client {
     private AsyncHttpClient ningClient;
 
     private Logger LOGGER = LoggerFactory.getLogger(Ning19Client.class);
-
-    /**
-     * Reuse of ObjectMapper and JsonFactory is very easy: they are thread-safe provided that configuration is done before any use
-     * (and from a single thread). After initial configuration use is fully thread-safe and does not need to be explicitly synchronized.
-     * Source: http://wiki.fasterxml.com/JacksonBestPracticesPerformance
-     */
-    private ObjectMapper objectMapper = new ObjectMapper();
-
 
     public Ning19Client(String host,
                         Integer port,
@@ -96,8 +86,6 @@ public class Ning19Client implements Client {
         } else {
             this.defaultHeaders = new HashMap<>();
         }
-
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
         this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());
@@ -168,34 +156,30 @@ public class Ning19Client implements Client {
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.Response<String>> callToStringResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                                  B body,
-                                                                                                  String canonicalContentType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToStringBody);
+    public CompletableFuture<io.atomicbits.scraml.jdsl.Response<String>> callToStringResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                              String body) {
+        return callToResponse(requestBuilder, body, this::transformToStringBody);
     }
 
 
     @Override
-    public <B> CompletableFuture<io.atomicbits.scraml.jdsl.Response<BinaryData>> callToBinaryResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                                      B body,
-                                                                                                      String canonicalContentType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, this::transformToBinaryBody);
+    public CompletableFuture<io.atomicbits.scraml.jdsl.Response<BinaryData>> callToBinaryResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                                  String body) {
+        return callToResponse(requestBuilder, body, this::transformToBinaryBody);
     }
 
 
     @Override
-    public <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToTypeResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                              B body,
-                                                                                              String canonicalContentType,
-                                                                                              String canonicalResponseType) {
-        return callToResponse(requestBuilder, body, canonicalContentType, (result) -> transformToTypedBody(result, canonicalResponseType));
+    public <R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToTypeResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                           String body,
+                                                                                           String canonicalResponseType) {
+        return callToResponse(requestBuilder, body, (result) -> transformToTypedBody(result, canonicalResponseType));
     }
 
 
-    protected <B, R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
-                                                                                             B body,
-                                                                                             String canonicalContentType,
-                                                                                             Function<com.ning.http.client.Response, io.atomicbits.scraml.jdsl.Response<R>> transformer) {
+    private <R> CompletableFuture<io.atomicbits.scraml.jdsl.Response<R>> callToResponse(io.atomicbits.scraml.jdsl.RequestBuilder requestBuilder,
+                                                                                        String body,
+                                                                                        Function<com.ning.http.client.Response, io.atomicbits.scraml.jdsl.Response<R>> transformer) {
         // Create builder
         com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
@@ -213,23 +197,23 @@ public class Ning19Client implements Client {
         }
 
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
-            if (queryParam.getValue().isSingle()) {
-                SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
-                if (param.getParameter() != null) {
-                    ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
-                }
-            } else {
+            if (queryParam.getValue() instanceof RepeatedHttpParam) {
                 RepeatedHttpParam params = (RepeatedHttpParam) queryParam.getValue();
                 if (params.getParameters() != null) {
                     for (String param : params.getParameters()) {
                         ningRb.addQueryParam(queryParam.getKey(), param);
                     }
                 }
+            } else if (queryParam.getValue() instanceof SingleHttpParam) {
+                SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
+                if (param.getParameter() != null) {
+                    ningRb.addQueryParam(queryParam.getKey(), param.getParameter());
+                }
             }
         }
 
         if (body != null) {
-            ningRb.setBody(writeBodyToString(canonicalContentType, body));
+            ningRb.setBody(body);
         }
 
         if (requestBuilder.getBinaryRequest() != null) {
@@ -253,17 +237,17 @@ public class Ning19Client implements Client {
         }
 
         for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
-            if (formParam.getValue().isSingle()) {
-                SingleHttpParam param = (SingleHttpParam) formParam.getValue();
-                if (param.getParameter() != null) {
-                    ningRb.addFormParam(formParam.getKey(), param.getParameter());
-                }
-            } else {
+            if (formParam.getValue() instanceof RepeatedHttpParam) {
                 RepeatedHttpParam params = (RepeatedHttpParam) formParam.getValue();
                 if (params.getParameters() != null) {
                     for (String param : params.getParameters()) {
                         ningRb.addFormParam(formParam.getKey(), param);
                     }
+                }
+            } else if(formParam.getValue() instanceof SingleHttpParam) {
+                SingleHttpParam param = (SingleHttpParam) formParam.getValue();
+                if (param.getParameter() != null) {
+                    ningRb.addFormParam(formParam.getKey(), param.getParameter());
                 }
             }
         }
@@ -406,7 +390,7 @@ public class Ning19Client implements Client {
                 // there are many responses in the 200 range with different typed responses.
                 return new io.atomicbits.scraml.jdsl.Response<R>(
                         responseBody,
-                        parseBodyToObject(responseBody, canonicalResponseType),
+                        Json.parseBodyToObject(responseBody, canonicalResponseType),
                         response.getStatusCode(),
                         response.getHeaders()
                 );
@@ -430,51 +414,6 @@ public class Ning19Client implements Client {
             ningClient.close();
         }
     }
-
-
-    /**
-     * Write the body to a JSON string.
-     * <p>
-     * The main reason why we need the canonical form of the request type to serialize the body is in cases where
-     * Java type erasure hides access to the Json annotations of our transfer objects.
-     * <p>
-     * Examples of such type erasure are cases where types in a hierarchy are put inside a java.util.List<B>. Then, the type of
-     * <B> is hidden in java.util.List<?>, which hides the @JsonTypeInfo annotations for the objectmapper so that all type info
-     * disappears form the resulting JSON objects.
-     *
-     * @param canonicalRequestType The canonical form of the request body.
-     * @param body                 The actual body.
-     * @param <B>                  The type of the body.
-     * @return The JSON representation of the body as a string.
-     */
-    private <B> String writeBodyToString(String canonicalRequestType, B body) {
-        if (canonicalRequestType != null) {
-            JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
-            ObjectWriter writer = this.objectMapper.writerFor(javaType);
-            try {
-                return writer.writeValueAsString(body);
-            } catch (IOException e) {
-                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-            }
-        } else {
-            try {
-                return this.objectMapper.writeValueAsString(body);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-            }
-        }
-    }
-
-
-    private <R> R parseBodyToObject(String body, String canonicalResponseType) {
-        JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalResponseType);
-        try {
-            return this.objectMapper.readValue(body, javaType);
-        } catch (IOException e) {
-            throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
-        }
-    }
-
 
     String getResponseCharsetFromHeaders(Map<String, List<String>> headers, String defaultCharset) {
         for (Map.Entry<String, List<String>> entry : headers.entrySet()) {

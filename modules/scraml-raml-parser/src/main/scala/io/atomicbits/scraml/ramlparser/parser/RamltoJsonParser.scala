@@ -137,6 +137,12 @@ object RamlToJsonParser {
     json match {
       case JsString(stringVal) =>
         Try(Json.parse(stringVal)) match {
+          case Success(jsObject: JsObject) =>
+            if (jsObject.\("$schema").toOption.isEmpty) {
+              jsObject + ("$schema" -> JsString("http://json-schema.org/draft-03/schema"))
+            } else {
+              jsObject
+            }
           case Success(nonStringJsValue) => nonStringJsValue
           case _                         => json
         }

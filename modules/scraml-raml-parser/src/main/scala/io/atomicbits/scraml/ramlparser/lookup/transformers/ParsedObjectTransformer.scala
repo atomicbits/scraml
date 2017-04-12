@@ -180,7 +180,6 @@ object ParsedObjectTransformer {
 
     ParsedObject(
       id                     = parsedMultipleInheritance.id,
-      baseType               = List.empty,
       properties             = parsedMultipleInheritance.properties,
       required               = parsedMultipleInheritance.required,
       requiredProperties     = parsedMultipleInheritance.requiredProperties,

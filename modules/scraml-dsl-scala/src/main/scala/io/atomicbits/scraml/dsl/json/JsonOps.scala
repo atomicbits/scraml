@@ -17,11 +17,20 @@
  *
  */
 
-package io.atomicbits.scraml.jdsl;
+package io.atomicbits.scraml.dsl.json
+
+import play.api.libs.json.{ JsString, JsValue }
 
 /**
- * Created by peter on 19/08/15.
- */
-public interface HttpParam {
+  * Created by peter on 7/04/17.
+  */
+object JsonOps {
+
+  def toString(json: JsValue): String = {
+    json match {
+      case JsString(jsString) => jsString // JsString(jsString).toString would have put quotes around the jsString.
+      case other              => other.toString()
+    }
+  }
 
 }

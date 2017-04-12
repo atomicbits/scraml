@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -40,13 +40,13 @@ object ClientClassGenerator extends SourceGenerator {
     val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
       clientClassDefinition.topLevelResourceDefinitions match {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
-          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField(_, generationAggr))
-          val ActionFunctionResult(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot, generationAggr)
+          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
+          val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
+            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
-          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField(_, generationAggr))
+          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField)
           val actionFunctions = List.empty[String]
           (importClasses, dslFields, actionFunctions, List.empty)
       }

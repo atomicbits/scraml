@@ -17,15 +17,22 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.parsedtypes
-
-import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
+package io.atomicbits.scraml.jdsl;
 
 /**
-  * Created by peter on 10/02/16.
-  */
-case class ParsedParameter(name: String, parameterType: TypeRepresentation, required: Boolean = true) {
+ * Created by peter on 19/08/15.
+ */
+public class SimpleHttpParam implements SingleHttpParam {
 
-  def asRequired: ParsedParameter = this.copy(required = true)
+    private String parameter;
+
+    public SimpleHttpParam(Object parameter) {
+        if (parameter != null) this.parameter = parameter.toString();
+    }
+
+    @Override
+    public String getParameter() {
+        return parameter;
+    }
 
 }

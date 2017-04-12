@@ -20,8 +20,8 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, ParsedToCanonicalTypeTransformer }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ PrimitiveType => _, _ }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ PrimitiveType => ParsedPrimitiveType, _ }
 
 /**
   * Created by peter on 23/12/16.
@@ -47,7 +47,7 @@ object ParsedTypeReferenceTransformer {
 
       val (typeRefAsGenericReferrable, updatedCanonicalLH) =
         canonicalLookupHelper.getParsedTypeWithProperId(parsedTypeReference.refersTo).map {
-          case primitiveType: PrimitiveType =>
+          case primitiveType: ParsedPrimitiveType =>
             val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
             (typeRef, canonicalLH)
           case parsedDate: ParsedDate =>
@@ -70,26 +70,25 @@ object ParsedTypeReferenceTransformer {
             val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
             val typeReference =
               NonPrimitiveTypeReference(
-                refers       = canonicalName,
-                genericTypes = genericTypes
+                refers                = canonicalName,
+                genericTypes          = genericTypes,
+                genericTypeParameters = parsedObject.typeParameters.map(TypeParameter)
               )
             (typeReference, canonicalLH)
           case parsedUnionType: ParsedUnionType =>
             val canonicalName                     = canonicalNameGenerator.generate(parsedUnionType.id)
             val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
             val typeReference =
-              NonPrimitiveTypeReference(
-                refers       = canonicalName,
-                genericTypes = genericTypes
-              )
+              NonPrimitiveTypeReference(refers = canonicalName)
             (typeReference, canonicalLH)
           case parsedMultipleInheritance: ParsedMultipleInheritance =>
             val canonicalName                     = canonicalNameGenerator.generate(parsedMultipleInheritance.id)
             val (genericTypes, unusedCanonicalLH) = transformGenericTypes(parsedTypeReference.genericTypes, canonicalLH)
             val typeReference =
               NonPrimitiveTypeReference(
-                refers       = canonicalName,
-                genericTypes = genericTypes
+                refers                = canonicalName,
+                genericTypes          = genericTypes, // Can we have generic types here?
+                genericTypeParameters = parsedMultipleInheritance.typeParameters.map(TypeParameter)
               )
             (typeReference, canonicalLH)
           case parsedTRef: ParsedTypeReference =>

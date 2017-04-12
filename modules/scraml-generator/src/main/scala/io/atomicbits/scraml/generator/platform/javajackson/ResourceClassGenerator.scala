@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ResourceClassDefinition, SourceFile }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -34,20 +34,20 @@ object ResourceClassGenerator extends SourceGenerator {
 
   def generate(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = {
 
-    val classDefinition        = generateClassDefinition(resourceClassDefinition, generationAggr)
+    val classDefinition        = generateClassDefinition(resourceClassDefinition)
     val resourceClassReference = resourceClassDefinition.classReference
 
-    val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField(_, generationAggr))
+    val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
-    val ActionFunctionResult(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(JavaActionCodeGenerator).generateActionFunctions(resourceClassDefinition, generationAggr)
+    val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
+      ActionGenerator(JavaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 
-    val resourceConstructors = generateResourceConstructors(resourceClassDefinition, generationAggr)
+    val resourceConstructors = generateResourceConstructors(resourceClassDefinition)
 
-    val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resourceClassDefinition, generationAggr)
-    val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resourceClassDefinition, generationAggr)
+    val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resourceClassDefinition)
+    val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resourceClassDefinition)
 
     val className      = resourceClassReference.name
     val classNameCamel = CleanNameUtil.camelCased(className)
@@ -94,12 +94,12 @@ object ResourceClassGenerator extends SourceGenerator {
       .addSourceFile(SourceFile(filePath = resourceClassReference.toFilePath, content = sourcecode))
   }
 
-  def generateResourceConstructors(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr): List[String] = {
+  def generateResourceConstructors(resourceClassDefinition: ResourceClassDefinition): List[String] = {
 
     val resourceClassReference = resourceClassDefinition.classReference
     val resource               = resourceClassDefinition.resource
 
-    resourceClassDefinition.urlParamClassPointer(generationAggr).map(_.native) match {
+    resourceClassDefinition.urlParamClassPointer().map(_.native) match {
       case Some(paramClassReference) =>
         List(
           s"""
@@ -129,12 +129,12 @@ object ResourceClassGenerator extends SourceGenerator {
     }
   }
 
-  def generateClassDefinition(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr): String = {
+  def generateClassDefinition(resourceClassDefinition: ResourceClassDefinition): String = {
 
     val resource         = resourceClassDefinition.resource
     val resourceClassRef = resourceClassDefinition.classReference
 
-    resourceClassDefinition.urlParamClassPointer(generationAggr).map(_.native) match {
+    resourceClassDefinition.urlParamClassPointer().map(_.native) match {
       case Some(urlParamClassReference) =>
         val urlParamClassName = urlParamClassReference.name
         s"""public class ${resourceClassRef.name} extends ParamSegment<$urlParamClassName> { """
@@ -143,13 +143,13 @@ object ResourceClassGenerator extends SourceGenerator {
     }
   }
 
-  def generateResourceDslField(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr): String = {
+  def generateResourceDslField(resourceClassDefinition: ResourceClassDefinition): String = {
 
     val resource         = resourceClassDefinition.resource
     val cleanUrlSegment  = JavaJackson.escapeJavaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
     val resourceClassRef = resourceClassDefinition.classReference
 
-    resourceClassDefinition.urlParamClassPointer(generationAggr).map(_.native) match {
+    resourceClassDefinition.urlParamClassPointer().map(_.native) match {
       case Some(urlParamClassReference) =>
         val urlParamClassName = urlParamClassReference.name
         s"""
@@ -166,14 +166,14 @@ object ResourceClassGenerator extends SourceGenerator {
     }
   }
 
-  def generateAddHeaderConstructorArguments(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr): String =
-    resourceClassDefinition.urlParamClassPointer(generationAggr) match {
+  def generateAddHeaderConstructorArguments(resourceClassDefinition: ResourceClassDefinition): String =
+    resourceClassDefinition.urlParamClassPointer() match {
       case Some(parameter) => "(_value, _requestBuilder.withAddedHeaders(newHeaders: _*))"
       case None            => "(_requestBuilder.withAddedHeaders(newHeaders: _*))"
     }
 
-  def generateSetHeaderConstructorArguments(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr): String =
-    resourceClassDefinition.urlParamClassPointer(generationAggr) match {
+  def generateSetHeaderConstructorArguments(resourceClassDefinition: ResourceClassDefinition): String =
+    resourceClassDefinition.urlParamClassPointer() match {
       case Some(parameter) => "(_value, _requestBuilder.withSetHeaders(newHeaders: _*))"
       case None            => "(_requestBuilder.withSetHeaders(newHeaders: _*))"
     }

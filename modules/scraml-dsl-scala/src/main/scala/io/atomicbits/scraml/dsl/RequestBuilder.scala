@@ -19,22 +19,21 @@
 
 package io.atomicbits.scraml.dsl
 
-import play.api.libs.json.{Format, JsValue}
+import play.api.libs.json.{ Format, JsValue }
 
 import scala.concurrent.Future
 
-
 /**
- * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io). 
- */
+  * Created by peter on 21/05/15, Atomic BITS (http://atomicbits.io).
+  */
 case class RequestBuilder(client: Client,
-                          reversePath: List[String] = Nil,
-                          method: Method = Get,
+                          reversePath: List[String]               = Nil,
+                          method: Method                          = Get,
                           queryParameters: Map[String, HttpParam] = Map.empty,
-                          formParameters: Map[String, HttpParam] = Map.empty,
-                          multipartParams: List[BodyPart] = List.empty,
-                          binaryBody: Option[BinaryRequest] = None,
-                          headers: HeaderMap = HeaderMap()) {
+                          formParameters: Map[String, HttpParam]  = Map.empty,
+                          multipartParams: List[BodyPart]         = List.empty,
+                          binaryBody: Option[BinaryRequest]       = None,
+                          headers: HeaderMap                      = HeaderMap()) {
 
   def relativePath = reversePath.reverse.mkString("/", "/", "")
 
@@ -46,17 +45,14 @@ case class RequestBuilder(client: Client,
 
   def isMultipartFormUpload: Boolean = allHeaders.get("Content-Type").exists(_.contains("multipart/form-data"))
 
-  def callToStringResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[String]] =
-    client.callToStringResponse(this, body)
+  def callToStringResponse(body: Option[String]): Future[Response[String]] = client.callToStringResponse(this, body)
 
-  def callToJsonResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[JsValue]] =
-    client.callToJsonResponse(this, body)
+  def callToJsonResponse(body: Option[String]): Future[Response[JsValue]] = client.callToJsonResponse(this, body)
 
-  def callToTypeResponse[B, R](body: Option[B])(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] =
+  def callToTypeResponse[R](body: Option[String])(implicit responseFormat: Format[R]): Future[Response[R]] =
     client.callToTypeResponse(this, body)
 
-  def callToBinaryResponse[B](body: Option[B])(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] =
-    client.callToBinaryResponse(this, body)
+  def callToBinaryResponse(body: Option[String]): Future[Response[BinaryData]] = client.callToBinaryResponse(this, body)
 
   def summary: String = s"$method request to ${reversePath.reverse.mkString("/")}"
 

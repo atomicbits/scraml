@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.jdsl;
 
+import io.atomicbits.scraml.jdsl.json.Json;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,16 +73,40 @@ public abstract class MethodSegment<B, R> extends Segment {
     }
 
 
-    protected Future<Response<String>> callToStringResponse(String canonicalRequestType) {
-        return requestBuilder.callToStringResponse(getBody(), canonicalRequestType);
+    protected Future<Response<String>> callToStringResponse(String canonicalContentType) {
+        String stringBody = null;
+        if (this.getBody() != null) {
+            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
+        }
+        return requestBuilder.callToStringResponse(stringBody);
     }
 
-    protected Future<Response<R>> callToTypeResponse(String canonicalRequestType, String canonicalResponseType) {
-        return requestBuilder.callToTypeResponse(getBody(), canonicalRequestType, canonicalResponseType);
+    protected Future<Response<R>> callToTypeResponse(String canonicalContentType, String canonicalResponseType) {
+        String stringBody = null;
+        if (this.getBody() != null) {
+            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
+        }
+        return requestBuilder.callToTypeResponse(stringBody, canonicalResponseType);
     }
 
     protected B getBody() {
         return body;
+    }
+
+    protected String getPlainStringBody() {
+        String stringBody = null;
+        if (this.getBody() != null) {
+            stringBody = this.getBody().toString();
+        }
+        return stringBody;
+    }
+
+    protected String getJsonStringBody(String canonicalContentType) {
+        String stringBody = null;
+        if (this.getBody() != null) {
+            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
+        }
+        return stringBody;
     }
 
     protected RequestBuilder getRequestBuilder() {

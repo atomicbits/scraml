@@ -17,11 +17,13 @@
  *
  */
 
-package io.atomicbits.scraml.jdsl;
+package io.atomicbits.scraml.ramlparser.model
 
 /**
- * Created by peter on 19/08/15.
- */
-public interface HttpParam {
+  * Created by peter on 10/02/16.
+  */
+case class Parameter(name: String, parameterType: TypeRepresentation, required: Boolean = true) {
+
+  def asRequired: Parameter = this.copy(required = true)
 
 }

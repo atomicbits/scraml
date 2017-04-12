@@ -201,16 +201,16 @@ public class RequestBuilder {
         this.path.add(pathElement);
     }
 
-    public <B> CompletableFuture<Response<String>> callToStringResponse(B body, String canonicalContentType) {
-        return client.callToStringResponse(this, body, canonicalContentType);
+    public CompletableFuture<Response<String>> callToStringResponse(String body) {
+        return client.callToStringResponse(this, body);
     }
 
-    public <B> CompletableFuture<Response<BinaryData>> callToBinaryResponse(B body, String canonicalContentType) {
-        return client.callToBinaryResponse(this, body, canonicalContentType);
+    public CompletableFuture<Response<BinaryData>> callToBinaryResponse(String body) {
+        return client.callToBinaryResponse(this, body);
     }
 
-    public <B, R> CompletableFuture<Response<R>> callToTypeResponse(B body, String canonicalContentType, String canonicalResponseType) {
-        return client.callToTypeResponse(this, body, canonicalContentType, canonicalResponseType);
+    public <R> CompletableFuture<Response<R>> callToTypeResponse(String body, String canonicalResponseType) {
+        return client.callToTypeResponse(this, body, canonicalResponseType);
     }
 
     @Override

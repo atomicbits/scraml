@@ -19,22 +19,35 @@
 
 package io.atomicbits.scraml.dsl
 
+import io.atomicbits.scraml.dsl.json.JsonOps
+import play.api.libs.json.Format
+
 /**
- * Created by peter on 27/07/15. 
- */
+  * Created by peter on 27/07/15.
+  */
 sealed trait HttpParam
 
-case class SingleHttpParam(parameter: String) extends HttpParam
+case class SimpleHttpParam(parameter: String) extends HttpParam
+
+object SimpleHttpParam {
+
+  def create(value: Any): SimpleHttpParam = SimpleHttpParam(value.toString)
+
+}
+
+case class ComplexHttpParam(json: String) extends HttpParam
+
+object ComplexHttpParam {
+
+  def create[P](value: P)(implicit formatter: Format[P]): ComplexHttpParam =
+    ComplexHttpParam(JsonOps.toString(formatter.writes(value)))
+
+}
 
 case class RepeatedHttpParam(parameters: List[String]) extends HttpParam
 
-object HttpParam {
+object RepeatedHttpParam {
 
-  def apply(parameter: Any): HttpParam = {
-    parameter match {
-      case list: List[_] => RepeatedHttpParam(list.map(_.toString))
-      case any           => SingleHttpParam(any.toString)
-    }
-  }
+  def create(values: List[Any]): RepeatedHttpParam = RepeatedHttpParam(values.map(_.toString))
 
 }

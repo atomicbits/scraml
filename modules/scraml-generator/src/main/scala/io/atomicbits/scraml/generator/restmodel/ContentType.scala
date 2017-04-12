@@ -19,13 +19,9 @@
 
 package io.atomicbits.scraml.generator.restmodel
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel.ClassPointer
-import io.atomicbits.scraml.ramlparser.model.{ Body, MediaType }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
-
-import Platform._
+import io.atomicbits.scraml.ramlparser.model.{ Body, MediaType, Parameters }
 
 /**
   * Created by peter on 26/08/15.
@@ -44,7 +40,7 @@ case class JsonContentType(contentTypeHeader: MediaType) extends ContentType
 
 case class TypedContentType(contentTypeHeader: MediaType, classPointer: ClassPointer) extends ContentType
 
-case class FormPostContentType(contentTypeHeader: MediaType, formParameters: ParsedParameters) extends ContentType
+case class FormPostContentType(contentTypeHeader: MediaType, formParameters: Parameters) extends ContentType
 
 case class MultipartFormContentType(contentTypeHeader: MediaType) extends ContentType
 
@@ -62,16 +58,15 @@ case object NoContentType extends ContentType {
 
 object ContentType {
 
-  def apply(body: Body, generationAggr: GenerationAggr)(implicit platform: Platform): Set[ContentType] =
+  def apply(body: Body)(implicit platform: Platform): Set[ContentType] =
     body.contentMap.map {
       case (mediaType, bodyContent) =>
-        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer(_, generationAggr))
+        val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer)
         val formParams      = bodyContent.formParameters
         ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
     } toSet
 
-  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: ParsedParameters)(
-      implicit platform: Platform): ContentType = {
+  def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: Parameters)(implicit platform: Platform): ContentType = {
 
     val mediaTypeValue = mediaType.value.toLowerCase
 

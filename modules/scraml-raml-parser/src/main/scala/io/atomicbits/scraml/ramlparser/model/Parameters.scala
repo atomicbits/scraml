@@ -17,9 +17,9 @@
  *
  */
 
-package io.atomicbits.scraml.ramlparser.model.parsedtypes
+package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.TypeRepresentation
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import io.atomicbits.scraml.util.TryUtils._
 import play.api.libs.json.{ JsObject, JsValue }
@@ -27,26 +27,26 @@ import play.api.libs.json.{ JsObject, JsValue }
 import scala.language.postfixOps
 import scala.util.{ Success, Try }
 
-case class ParsedParameters(valueMap: Map[String, ParsedParameter] = Map.empty) {
+case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
   def nonEmpty: Boolean = valueMap.nonEmpty
 
-  def byName(name: String): Option[ParsedParameter] = valueMap.get(name)
+  def byName(name: String): Option[Parameter] = valueMap.get(name)
 
-  val values: List[ParsedParameter] = valueMap.values.toList
+  val values: List[Parameter] = valueMap.values.toList
 
   val isEmpty = valueMap.isEmpty
 
-  def mapValues(fn: ParsedParameter => ParsedParameter): ParsedParameters = copy(valueMap = valueMap.mapValues(fn))
+  def mapValues(fn: Parameter => Parameter): Parameters = copy(valueMap = valueMap.mapValues(fn))
 
 }
 
 /**
   * Created by peter on 26/08/16.
   */
-object ParsedParameters {
+object Parameters {
 
-  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[ParsedParameters] = {
+  def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
 
     /**
       * @param name The name of the parameter
@@ -58,14 +58,14 @@ object ParsedParameters {
       else (name, None)
     }
 
-    def jsObjectToParameters(jsObject: JsObject): Try[ParsedParameters] = {
+    def jsObjectToParameters(jsObject: JsObject): Try[Parameters] = {
 
-      val valueMap: Map[String, Try[ParsedParameter]] =
+      val valueMap: Map[String, Try[Parameter]] =
         jsObject.value.collect {
           case (name, ParsedType(tryType)) =>
             val (actualName, requiredProp) = detectRequiredParameterName(name)
             actualName -> tryType.map { paramType =>
-              ParsedParameter(
+              Parameter(
                 name          = actualName,
                 parameterType = TypeRepresentation(paramType),
                 required      = requiredProp.getOrElse(paramType.required.getOrElse(true)) // paramType.defaultRequiredValue
@@ -73,12 +73,12 @@ object ParsedParameters {
             }
         } toMap
 
-      accumulate(valueMap).map(vm => ParsedParameters(vm))
+      accumulate(valueMap).map(vm => Parameters(vm))
     }
 
     jsValueOpt.collect {
       case jsObj: JsObject => jsObjectToParameters(jsObj)
-    } getOrElse Success(ParsedParameters())
+    } getOrElse Success(Parameters())
   }
 
 }

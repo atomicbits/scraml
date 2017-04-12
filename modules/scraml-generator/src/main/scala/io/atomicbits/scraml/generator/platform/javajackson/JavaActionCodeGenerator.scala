@@ -21,12 +21,13 @@ package io.atomicbits.scraml.generator.platform.javajackson
 
 import java.util.Locale
 
-import io.atomicbits.scraml.generator.codegen.ActionCode
+import io.atomicbits.scraml.generator.codegen.{ ActionCode, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.generator.util.CleanNameUtil
+import io.atomicbits.scraml.ramlparser.model.Parameter
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import TypedRestOps._
 
 /**
   * Created by peter on 1/03/17.
@@ -134,7 +135,7 @@ object JavaActionCodeGenerator extends ActionCode {
     }
   }
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)] = fieldParams.sortBy(_._1)
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
   def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
     primitiveType match {
@@ -150,34 +151,31 @@ object JavaActionCodeGenerator extends ActionCode {
     }
   }
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String = {
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment = {
     val (queryParameterName, parameter) = qParam
+    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val classPointer                    = parameter.classPointer()
+    val classDefinition                 = classPointer.classDefinition
 
-    val sanitizedParameterName = CleanNameUtil.cleanFieldName(queryParameterName)
+    val methodParameter = s"$classDefinition $sanitizedParameterName"
 
-    parameter.parameterType.parsed match {
-      case primitiveType: PrimitiveType =>
-        val primitive = primitiveTypeToJavaType(primitiveType, parameter.required)
-        s"$primitive $sanitizedParameterName"
-      case arrayType: ParsedArray =>
-        arrayType.items match {
-          case primitiveType: PrimitiveType =>
-            val primitive = primitiveTypeToJavaType(primitiveType, parameter.required)
-            s"List<$primitive> $sanitizedParameterName"
-          case other =>
-            sys.error(s"Cannot transform an array of an non-promitive type to a query or form parameter: $other")
-        }
-    }
+    SourceCodeFragment(imports = Set(classPointer), sourceDefinition = List(methodParameter))
   }
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String = {
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
-    (parameter.parameterType.parsed, parameter.required) match {
-      case (primitive: PrimitiveType, _) => s"""params.put("$queryParameterName", new SingleHttpParam($sanitizedParameterName));"""
-      case (arrayType: ParsedArray, _)   => s"""params.put("$queryParameterName", new RepeatedHttpParam($sanitizedParameterName));"""
-    }
+    val classPointer = parameter.classPointer()
+    val (httpParamType, callParameters): (String, List[String]) =
+      classPointer match {
+        case ListClassPointer(typeParamValue: PrimitiveClassPointer) => ("RepeatedHttpParam", List(sanitizedParameterName))
+        case primitive: PrimitiveClassPointer                        => ("SimpleHttpParam", List(sanitizedParameterName))
+        case complex =>
+          ("ComplexHttpParam", List(sanitizedParameterName, quoteString(classPointer.fullyQualifiedClassDefinition)))
+      }
+
+    s"""params.put("$queryParameterName", new $httpParamType(${callParameters.mkString(", ")}));"""
   }
 
   def generateAction(actionSelection: ActionSelection,
@@ -244,6 +242,8 @@ object JavaActionCodeGenerator extends ActionCode {
 
     val callResponseType = responseClassDefinition(responseType)
 
+    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+
     s"""
        public $callResponseType $actionTypeMethod(${actionParameters.mkString(", ")}) {
 
@@ -263,7 +263,7 @@ object JavaActionCodeGenerator extends ActionCode {
            this.getRequestBuilder(),
            $canonicalContentT,
            $canonicalResponseT
-         ).call();
+         ).$callMethod();
        }
      """
 
