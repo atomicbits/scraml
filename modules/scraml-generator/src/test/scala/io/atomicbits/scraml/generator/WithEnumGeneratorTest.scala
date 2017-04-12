@@ -23,9 +23,9 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits",
-            apiClassName   = "EnumApi",
+            ramlApiPath     = apiResourceUrl.toString,
+            packageBasePath = List("io", "atomicbits"),
+            apiClassName    = "EnumApi",
             ScalaPlay
           )
           .generate

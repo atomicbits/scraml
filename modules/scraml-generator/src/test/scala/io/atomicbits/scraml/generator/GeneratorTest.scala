@@ -48,9 +48,9 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestObjectHierarchyApi",
+            ramlApiPath     = apiResourceUrl.toString,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestObjectHierarchyApi",
             ScalaPlay
           )
           .generate
@@ -87,9 +87,9 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath     = apiResourceUrl.toString,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestApi",
             platform
           )
           .generate
@@ -160,9 +160,9 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath     = apiResourceUrl.toString,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestApi",
             platform
           )
           .generate
