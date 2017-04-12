@@ -1,12 +1,6 @@
 import BuildSettings._
 import Dependencies._
 
-//val shaderSourcePath = "src" / "main" / "glsl"
-// use shaderSourcePath as root path, so directory structure is
-// correctly preserved (relative to the source path)
-//def shaderSources = (shaderSourcePath ##) ** "*.glsl"
-//override def mainResources = super.mainResources +++ shaderSources
-
 lazy val scramlDslScala = Project(
   id   = "scraml-dsl-scala",
   base = file("modules/scraml-dsl-scala"),
