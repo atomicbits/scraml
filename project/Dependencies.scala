@@ -18,7 +18,7 @@
 
 import sbt._
 
-trait Dependencies { this: Build =>
+object Dependencies {
 
   // main dependencies
   val logback = "ch.qos.logback" % "logback-classic" % "1.1.1"

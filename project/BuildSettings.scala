@@ -19,7 +19,7 @@
 import sbt._
 import sbt.Keys._
 
-trait BuildSettings { this: Build =>
+object BuildSettings {
 
   val Organization = "io.atomicbits"
 
@@ -70,7 +70,7 @@ trait BuildSettings { this: Build =>
     credentials ++= publishingCredentials
   )
 
-  def buildSettings(dependencies: Seq[ModuleID]) = {
+  def projSettings(dependencies: Seq[ModuleID]) = {
     projectSettings(dependencies) ++ publishSettings
   }
 
