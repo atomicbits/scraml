@@ -1,10 +1,20 @@
 import BuildSettings._
 import Dependencies._
 
+//val shaderSourcePath = "src" / "main" / "glsl"
+// use shaderSourcePath as root path, so directory structure is
+// correctly preserved (relative to the source path)
+//def shaderSources = (shaderSourcePath ##) ** "*.glsl"
+//override def mainResources = super.mainResources +++ shaderSources
+
 lazy val scramlDslScala = Project(
-  id       = "scraml-dsl-scala",
-  base     = file("modules/scraml-dsl-scala"),
-  settings = projSettings(dependencies = scramlDslDepsScala ++ testDeps)
+  id   = "scraml-dsl-scala",
+  base = file("modules/scraml-dsl-scala"),
+  settings = projSettings(dependencies = scramlDslDepsScala ++ testDeps) ++
+    Seq(
+      // Copy all source files into the artifact.
+      (unmanagedResourceDirectories in Compile) += (sourceDirectory in Compile).value / "scala"
+    )
 )
 
 // builds the dsl but against play25
@@ -34,8 +44,9 @@ lazy val scramlDslJava = Project(
       autoScalaLibrary := false,
       publishArtifact <<= scalaVersion { sv =>
         sv != BuildSettings.ScalaVersion
-      }
-      // , crossScalaVersions := Seq(ScalaVersion)
+      }, // , crossScalaVersions := Seq(ScalaVersion)
+      // Copy all source files into the artifact.
+      (unmanagedResourceDirectories in Compile) += (sourceDirectory in Compile).value / "java"
     )
 )
 
@@ -55,7 +66,7 @@ lazy val scramlGenerator = Project(
   id       = "scraml-generator",
   base     = file("modules/scraml-generator"),
   settings = projSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-) dependsOn (scramlRamlParser)
+) dependsOn (scramlRamlParser, scramlDslScala, scramlDslJava)
 
 lazy val main = Project(
   id       = "scraml-project",
