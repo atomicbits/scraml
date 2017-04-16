@@ -31,7 +31,7 @@ import java.util.{ Map => JMap }
 import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
-import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser }
+import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser, SourceFile }
 
 import scala.util.{ Failure, Success, Try }
 import scalariform.formatter.ScalaFormatter
@@ -39,7 +39,6 @@ import scalariform.formatter.preferences._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
-import io.atomicbits.scraml.generator.typemodel.SourceFile
 import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, GenerationAggr }
 
 /**
@@ -89,9 +88,9 @@ object ScramlGenerator {
     val packageBasePath      = apiPackageName.split('.').toList.filter(!_.isEmpty)
     val generationAggregator = buildGenerationAggr(ramlApiPath, packageBasePath, apiClassName, platform)
 
-    val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
+    val sources: Seq[SourceFile[String]] = generationAggregator.generate.sourceFilesGenerated
 
-    val dslSources: Seq[SourceFile] = DslSourceExtractor.extract(packageBasePath)
+    val dslSources: Seq[SourceFile[String]] = DslSourceExtractor.extract(packageBasePath)
 
     val tupleList =
       (sources ++ dslSources)
@@ -153,7 +152,7 @@ object ScramlGenerator {
       .setPreference(DoubleIndentClassDeclaration, true)
       .setPreference(IndentSpaces, 2)
 
-  private def addLicenseAndFormat(sourceFile: SourceFile, platform: Platform, licenseHeader: String): SourceFile = {
+  private def addLicenseAndFormat(sourceFile: SourceFile[String], platform: Platform, licenseHeader: String): SourceFile[String] = {
     val content = s"$licenseHeader\n${sourceFile.content}"
     val formattedContent = platform match {
       case ScalaPlay   => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)

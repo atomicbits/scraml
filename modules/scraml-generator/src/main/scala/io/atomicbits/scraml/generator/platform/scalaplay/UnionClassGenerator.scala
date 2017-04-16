@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ SourceFile, UnionClassDefinition }
+import io.atomicbits.scraml.generator.typemodel.UnionClassDefinition
 
 /**
   * Created by peter on 14/01/17.

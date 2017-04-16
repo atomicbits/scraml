@@ -19,8 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import java.net.{ URI, URL }
-import java.nio.file.{ Files, Paths }
+import java.net.URI
 
 import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
@@ -34,22 +33,22 @@ import scala.util.{ Failure, Success, Try }
   */
 object RamlToJsonParser {
 
-  def parseToJson(source: String): (FilePath, JsValue) = {
+  def parseToJson(source: String): SourceFile[JsValue] = {
     parseToJson(source, "UTF-8")
   }
 
-  def parseToJson(source: String, charsetName: String): (FilePath, JsValue) = {
+  def parseToJson(source: String, charsetName: String): SourceFile[JsValue] = {
     Try {
-      val (path, ramlContent) = SourceReader.read(source, charsetName)
-      val ramlContentNoTabs   = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
-      val yaml                = new Yaml(SimpleRamlConstructor())
+      val SourceFile(path, ramlContent) = SourceReader.read(source, charsetName)
+      val ramlContentNoTabs             = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
+      val yaml                          = new Yaml(SimpleRamlConstructor())
       val ramlMap: Any = {
         val yamled = yaml.load(ramlContentNoTabs)
         Try(yamled.asInstanceOf[java.util.Map[Any, Any]]).getOrElse(yamled.asInstanceOf[String])
       }
       (path, anyToJson(ramlMap))
     } match {
-      case Success((path, jsvalue)) => (path, jsvalue)
+      case Success((path, jsvalue)) => SourceFile(path, jsvalue)
       case Failure(ex)              => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
@@ -103,5 +102,3 @@ object RamlToJsonParser {
   }
 
 }
-
-case class FilePath(path: String)

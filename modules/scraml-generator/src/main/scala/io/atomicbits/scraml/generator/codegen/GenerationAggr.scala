@@ -23,6 +23,7 @@ import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 18/01/17.
@@ -47,7 +48,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
 case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
                           canonicalToMap: Map[CanonicalName, NonPrimitiveType],
                           sourceDefinitionsProcessed: Seq[SourceDefinition]                     = Seq.empty,
-                          sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty,
+                          sourceFilesGenerated: Seq[SourceFile[String]]                         = Seq.empty,
                           toMap: Map[CanonicalName, TransferObjectClassDefinition]              = Map.empty,
                           toInterfaceMap: Map[CanonicalName, TransferObjectInterfaceDefinition] = Map.empty,
                           toChildParentsMap: Map[CanonicalName, Set[CanonicalName]]             = Map.empty,
@@ -59,10 +60,10 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
   def addSourceDefinitions(sourceDefinitionsToAdd: Seq[SourceDefinition]): GenerationAggr =
     copy(sourceDefinitionsToProcess = sourceDefinitionsToProcess ++ sourceDefinitionsToAdd)
 
-  def addSourceFile(sourceFile: SourceFile): GenerationAggr =
+  def addSourceFile(sourceFile: SourceFile[String]): GenerationAggr =
     copy(sourceFilesGenerated = sourceFile +: sourceFilesGenerated)
 
-  def addSourceFiles(sourceFiles: Seq[SourceFile]): GenerationAggr =
+  def addSourceFiles(sourceFiles: Seq[SourceFile[String]]): GenerationAggr =
     copy(sourceFilesGenerated = sourceFiles ++ sourceFilesGenerated)
 
   def addInterfaceSourceDefinition(interfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {

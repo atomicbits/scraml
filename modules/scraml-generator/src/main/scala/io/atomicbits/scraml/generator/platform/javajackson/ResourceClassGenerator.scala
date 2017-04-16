@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ ResourceClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.ResourceClassDefinition
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.

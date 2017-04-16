@@ -23,8 +23,7 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.generator.typemodel.SourceFile
-import io.atomicbits.scraml.ramlparser.parser.SourceReader
+import io.atomicbits.scraml.ramlparser.parser.{ SourceFile, SourceReader }
 
 import scala.util.Try
 
@@ -33,7 +32,7 @@ import scala.util.Try
   */
 object DslSourceExtractor {
 
-  def extract(packageBasePath: List[String])(implicit platform: Platform): Seq[SourceFile] = {
+  def extract(packageBasePath: List[String])(implicit platform: Platform): Seq[SourceFile[String]] = {
 
     val bindataSource = Try(SourceReader.read(source = "/io/atomicbits/scraml/jdsl/BinaryData.java"))
 
@@ -43,6 +42,17 @@ object DslSourceExtractor {
 
     bindataSource.map(println).recover {
       case exc => println("Did not find resource!")
+    }
+
+    val bindataSources = Try(SourceReader.readResources("/io/atomicbits/scraml/jdsl", ".java"))
+
+    bindataSources.map { sources =>
+      for {
+        sourceFile <- sources
+      } yield println(sourceFile.filePath)
+      println(sources.tail.head.content)
+    } recover {
+      case exc => println("Did not find resource folder!")
     }
 
     Seq.empty

@@ -25,6 +25,7 @@ import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.PojoGenerator.{ compileChildrenToSerialize, generateJsonTypeAnnotations }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.

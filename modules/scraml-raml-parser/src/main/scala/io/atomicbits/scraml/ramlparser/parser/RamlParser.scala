@@ -30,7 +30,7 @@ import scala.util.Try
 case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
 
   def parse: Try[Raml] = {
-    val (FilePath(path), ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
+    val SourceFile(path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
     val parsed: JsObject =
       ramlJson match {
         case ramlJsObj: JsObject => parseRamlJsonDocument(path, ramlJsObj)
@@ -64,7 +64,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
           val nextPath =
             if (currentBasePath.isEmpty) source
             else s"$currentBasePath/$source"
-          val (FilePath(newBasePath), included) = RamlToJsonParser.parseToJson(nextPath)
+          val SourceFile(newBasePath, included) = RamlToJsonParser.parseToJson(nextPath)
           included match {
             case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
             case x              => parseNested(x, newBasePath)

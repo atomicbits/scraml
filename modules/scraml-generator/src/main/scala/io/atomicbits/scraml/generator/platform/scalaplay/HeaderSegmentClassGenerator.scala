@@ -21,7 +21,8 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ HeaderSegmentClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.HeaderSegmentClassDefinition
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 18/01/17.

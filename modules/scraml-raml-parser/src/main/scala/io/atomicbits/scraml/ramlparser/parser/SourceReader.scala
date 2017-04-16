@@ -24,38 +24,26 @@ package io.atomicbits.scraml.ramlparser.parser
 
 import java.io._
 import java.net.{ URI, URL }
-import java.nio.file.{ Files, Paths }
+import java.nio.file.{ FileSystems, Files, Path, Paths }
+import java.util.Collections
 
 import scala.util.Try
+
+import scala.collection.JavaConversions._
 
 /**
   * Created by peter on 12/04/17.
   */
 object SourceReader {
 
-  def read(source: String, charsetName: String = "UTF-8"): (FilePath, String) = {
-
-    /**
-      * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
-      * uri.normalize().getPath then gives /C:/Users/someone instead of C:/Users/someone
-      * also Paths.get(uri) then assumes /C:/Users/someone
-      * One would think the java.nio.file implementation does it right, but it doesn't.
-      *
-      * This hack fixes this.
-      *
-      * see: http://stackoverflow.com/questions/18520972/converting-java-file-url-to-file-path-platform-independent-including-u
-      *
-      * http://stackoverflow.com/questions/9834776/java-nio-file-path-issue
-      *
-      */
-    def cleanWindowsTripleSlashIssue(path: String): String = {
-      val hasWindowsPrefix =
-        path.split('/').filter(_.nonEmpty).headOption.collect {
-          case first if first.endsWith(":") => true
-        } getOrElse false
-      if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
-      else path
-    }
+  /**
+    * Read the content of a given source.
+    *
+    * @param source The source to read.
+    * @param charsetName The charset the file content is encoded in.
+    * @return A pair consisting of a file path and the file content. Todo: refactor and make it return a SourceFile (aka io.atomicbits.scraml.generator.typemodel, but put it in the parser code)
+    */
+  def read(source: String, charsetName: String = "UTF-8"): SourceFile[String] = {
 
     // Resource loading
     // See: http://stackoverflow.com/questions/6608795/what-is-the-difference-between-class-getresource-and-classloader-getresource
@@ -74,8 +62,7 @@ object SourceReader {
     // printReadStatus("url resource", url)
 
     val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
-
-    val uri: URI = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
+    val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
 
     val (path, encoded) =
       uri.getScheme match {
@@ -91,10 +78,82 @@ object SourceReader {
           (pth, enc)
       }
 
-    (FilePath(cleanWindowsTripleSlashIssue(path)), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+    SourceFile(cleanWindowsTripleSlashIssue(path), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+  }
+
+  /**
+    * Read all files with a given extension in a given path, recursively through all subdirectories.
+    *
+    * http://www.uofr.net/~greg/java/get-resource-listing.html
+    * http://alvinalexander.com/source-code/scala/create-list-all-files-beneath-directory-scala
+    * http://stackoverflow.com/questions/31406471/get-resource-file-from-dependency-in-sbt
+    * http://alvinalexander.com/blog/post/java/read-text-file-from-jar-file
+    *
+    *
+    * @param path The path that we want to read all files from.
+    * @param extension The extension of the files that we want to read.
+    * @param charsetName The charset the file contents are encoded in.
+    * @return
+    */
+  def readResources(path: String, extension: String, charsetName: String = "UTF-8"): Set[SourceFile[String]] = {
+
+    val resource            = Try(this.getClass.getResource(path).toURI).toOption
+    val classLoaderResource = Try(this.getClass.getClassLoader.getResource(path).toURI).toOption
+
+    println(s"resource is: $resource")
+    println(s"classLoaderResource is: $classLoaderResource")
+
+    val uris: List[Option[URI]] = List(resource, classLoaderResource)
+    val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $path"))
+
+    println(s"uri is: $uri")
+
+    val thePath =
+      uri.getScheme match {
+        case "jar" =>
+          val fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any])
+          fileSystem.getPath(path)
+        case _ => Paths.get(uri)
+      }
+
+    println(s"thePath is: $thePath")
+
+    val walk             = Files.walk(thePath)
+    val paths: Set[Path] = walk.iterator.toSet
+
+    def isFileWithExtension(somePath: Path): Boolean =
+      Files.isRegularFile(somePath) && somePath.getFileName.toString.toLowerCase.endsWith(extension.toLowerCase)
+
+    paths.collect {
+      case currentPath if isFileWithExtension(currentPath) =>
+        val enc: Array[Byte] = Files.readAllBytes(currentPath)
+        SourceFile(cleanWindowsTripleSlashIssue(currentPath.getParent.toString), new String(enc, charsetName))
+    }
   }
 
   def getInputStreamContent(inputStream: InputStream): Array[Byte] =
     Stream.continually(inputStream.read).takeWhile(_ != -1).map(_.toByte).toArray
+
+  /**
+    * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
+    * uri.normalize().getPath then gives /C:/Users/someone instead of C:/Users/someone
+    * also Paths.get(uri) then assumes /C:/Users/someone
+    * One would think the java.nio.file implementation does it right, but it doesn't.
+    *
+    * This hack fixes this.
+    *
+    * see: http://stackoverflow.com/questions/18520972/converting-java-file-url-to-file-path-platform-independent-including-u
+    *
+    * http://stackoverflow.com/questions/9834776/java-nio-file-path-issue
+    *
+    */
+  private def cleanWindowsTripleSlashIssue(path: String): String = {
+    val hasWindowsPrefix =
+      path.split('/').filter(_.nonEmpty).headOption.collect {
+        case first if first.endsWith(":") => true
+      } getOrElse false
+    if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
+    else path
+  }
 
 }
