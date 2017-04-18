@@ -96,7 +96,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.scala",
@@ -169,7 +172,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.java",

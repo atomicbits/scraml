@@ -24,7 +24,7 @@ package io.atomicbits.scraml.ramlparser.parser
 
 import java.io._
 import java.net.{ URI, URL }
-import java.nio.file.{ FileSystems, Files, Path, Paths }
+import java.nio.file.{ FileSystems, Files, Path, Paths, FileSystem }
 import java.util.Collections
 
 import scala.util.Try
@@ -43,7 +43,7 @@ object SourceReader {
     * @param charsetName The charset the file content is encoded in.
     * @return A pair consisting of a file path and the file content. Todo: refactor and make it return a SourceFile (aka io.atomicbits.scraml.generator.typemodel, but put it in the parser code)
     */
-  def read(source: String, charsetName: String = "UTF-8"): SourceFile[String] = {
+  def read(source: String, charsetName: String = "UTF-8"): SourceFile = {
 
     // Resource loading
     // See: http://stackoverflow.com/questions/6608795/what-is-the-difference-between-class-getresource-and-classloader-getresource
@@ -64,21 +64,18 @@ object SourceReader {
     val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
     val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
 
-    val (path, encoded) =
+    val (thePath, fs): (Path, Option[FileSystem]) =
       uri.getScheme match {
         case "jar" =>
-          val filePath         = uri.normalize().toString.split('!').drop(1).head
-          val pth              = filePath.split("/").dropRight(1).mkString("/")
-          val inputStream      = this.getClass.getResourceAsStream(source) // Files.readAllBytes(Paths.get(uri)) doesn't work here.
-          val enc: Array[Byte] = getInputStreamContent(inputStream)
-          (pth, enc)
-        case _ =>
-          val pth              = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
-          val enc: Array[Byte] = Files.readAllBytes(Paths.get(uri))
-          (pth, enc)
+          val fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any])
+          (fileSystem.getPath(source), Some(fileSystem))
+        case _ => (Paths.get(uri), None)
       }
+    thePath.toString
+    val encoded: Array[Byte] = Files.readAllBytes(thePath)
+    fs.foreach(_.close())
 
-    SourceFile(cleanWindowsTripleSlashIssue(path), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+    SourceFile(thePath, new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
   }
 
   /**
@@ -95,28 +92,22 @@ object SourceReader {
     * @param charsetName The charset the file contents are encoded in.
     * @return
     */
-  def readResources(path: String, extension: String, charsetName: String = "UTF-8"): Set[SourceFile[String]] = {
+  def readResources(path: String, extension: String, charsetName: String = "UTF-8"): Set[SourceFile] = {
 
     val resource            = Try(this.getClass.getResource(path).toURI).toOption
     val classLoaderResource = Try(this.getClass.getClassLoader.getResource(path).toURI).toOption
 
-    println(s"resource is: $resource")
-    println(s"classLoaderResource is: $classLoaderResource")
-
     val uris: List[Option[URI]] = List(resource, classLoaderResource)
     val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $path"))
 
-    println(s"uri is: $uri")
-
-    val thePath =
+    val (thePath, fs): (Path, Option[FileSystem]) =
       uri.getScheme match {
         case "jar" =>
           val fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any])
-          fileSystem.getPath(path)
-        case _ => Paths.get(uri)
+          (fileSystem.getPath(path), Some(fileSystem))
+        case _ =>
+          (Paths.get(uri), None)
       }
-
-    println(s"thePath is: $thePath")
 
     val walk             = Files.walk(thePath)
     val paths: Set[Path] = walk.iterator.toSet
@@ -124,11 +115,14 @@ object SourceReader {
     def isFileWithExtension(somePath: Path): Boolean =
       Files.isRegularFile(somePath) && somePath.getFileName.toString.toLowerCase.endsWith(extension.toLowerCase)
 
-    paths.collect {
-      case currentPath if isFileWithExtension(currentPath) =>
-        val enc: Array[Byte] = Files.readAllBytes(currentPath)
-        SourceFile(cleanWindowsTripleSlashIssue(currentPath.getParent.toString), new String(enc, charsetName))
-    }
+    val sourceFiles =
+      paths.collect {
+        case currentPath if isFileWithExtension(currentPath) =>
+          val enc: Array[Byte] = Files.readAllBytes(currentPath)
+          SourceFile(currentPath, new String(enc, charsetName))
+      }
+    fs.foreach(_.close())
+    sourceFiles
   }
 
   def getInputStreamContent(inputStream: InputStream): Array[Byte] =

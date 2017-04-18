@@ -32,30 +32,13 @@ import scala.util.Try
   */
 object DslSourceExtractor {
 
-  def extract(packageBasePath: List[String])(implicit platform: Platform): Seq[SourceFile[String]] = {
-
-    val bindataSource = Try(SourceReader.read(source = "/io/atomicbits/scraml/jdsl/BinaryData.java"))
-
-    // clazz = classOf[BinaryData]
-    // URI is: jar:file:/Users/peter/.ivy2/local/io.atomicbits/scraml-dsl-java/0.7.0-SNAPSHOT/jars/scraml-dsl-java.jar!/io/atomicbits/scraml/jdsl/BinaryData.java
-    // URI is: jar:file:/Users/peter/.ivy2/local/io.atomicbits/scraml-dsl-java/0.7.0-SNAPSHOT/jars/scraml-dsl-java.jar!/io/atomicbits/scraml/jdsl/BinaryData.java
-
-    bindataSource.map(println).recover {
-      case exc => println("Did not find resource!")
-    }
-
-    val bindataSources = Try(SourceReader.readResources("/io/atomicbits/scraml/jdsl", ".java"))
-
-    bindataSources.map { sources =>
-      for {
-        sourceFile <- sources
-      } yield println(sourceFile.filePath)
-      println(sources.tail.head.content)
-    } recover {
-      case exc => println("Did not find resource folder!")
-    }
-
-    Seq.empty
-  }
+  /**
+    * Extract all source files from the DSL jar dependency.
+    *
+    * @param platform The platform.
+    * @return A set of source files wrapped in a Try monad. On read exceptions, the Try will be a Failure.
+    */
+  def extract()(implicit platform: Platform): Try[Set[SourceFile]] =
+    Try(SourceReader.readResources(platform.dslBaseDir, s".${platform.classFileExtension}"))
 
 }

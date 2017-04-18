@@ -7,7 +7,7 @@ lazy val scramlDslScala = Project(
   settings = projSettings(dependencies = scramlDslDepsScala ++ testDeps) ++
     Seq(
       // Copy all source files into the artifact.
-      (unmanagedResourceDirectories in Compile) += (sourceDirectory in Compile).value / "scala"
+      (unmanagedResourceDirectories in Compile) += (scalaSource in Compile).value
     )
 )
 
@@ -40,7 +40,7 @@ lazy val scramlDslJava = Project(
         sv != BuildSettings.ScalaVersion
       }, // , crossScalaVersions := Seq(ScalaVersion)
       // Copy all source files into the artifact.
-      (unmanagedResourceDirectories in Compile) += (sourceDirectory in Compile).value / "java"
+      (unmanagedResourceDirectories in Compile) += (javaSource in Compile).value
     )
 )
 

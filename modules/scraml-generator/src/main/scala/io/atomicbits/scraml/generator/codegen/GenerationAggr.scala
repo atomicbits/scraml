@@ -33,6 +33,7 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
   * a recursive operation on the GenerationAggr, which can be expanded during code generation. In other words, new source
   * definitions may be added during code generation, especially the interface definitions are expected to be added then.
   *
+  * @param basePackage The base package for the generated codebase.
   * @param sourceDefinitionsToProcess The collected source definitions up to 'now'.
   * @param sourceFilesGenerated The generated source files so far.
   * @param canonicalToMap The canonical TO map.
@@ -45,10 +46,11 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
   * @param toParentChildrenMap The direct parent children relations are needed to navigate through the class hierarchy of the transfer
   *                            objects. The toParentChildrenMap is build up when the TOs are added to the toMap.
   */
-case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
+case class GenerationAggr(basePackage: List[String],
+                          sourceDefinitionsToProcess: Seq[SourceDefinition],
                           canonicalToMap: Map[CanonicalName, NonPrimitiveType],
                           sourceDefinitionsProcessed: Seq[SourceDefinition]                     = Seq.empty,
-                          sourceFilesGenerated: Seq[SourceFile[String]]                         = Seq.empty,
+                          sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty,
                           toMap: Map[CanonicalName, TransferObjectClassDefinition]              = Map.empty,
                           toInterfaceMap: Map[CanonicalName, TransferObjectInterfaceDefinition] = Map.empty,
                           toChildParentsMap: Map[CanonicalName, Set[CanonicalName]]             = Map.empty,
@@ -60,10 +62,10 @@ case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
   def addSourceDefinitions(sourceDefinitionsToAdd: Seq[SourceDefinition]): GenerationAggr =
     copy(sourceDefinitionsToProcess = sourceDefinitionsToProcess ++ sourceDefinitionsToAdd)
 
-  def addSourceFile(sourceFile: SourceFile[String]): GenerationAggr =
+  def addSourceFile(sourceFile: SourceFile): GenerationAggr =
     copy(sourceFilesGenerated = sourceFile +: sourceFilesGenerated)
 
-  def addSourceFiles(sourceFiles: Seq[SourceFile[String]]): GenerationAggr =
+  def addSourceFiles(sourceFiles: Seq[SourceFile]): GenerationAggr =
     copy(sourceFilesGenerated = sourceFiles ++ sourceFilesGenerated)
 
   def addInterfaceSourceDefinition(interfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
@@ -268,7 +270,7 @@ object GenerationAggr {
     val sourceDefinitions: Seq[SourceDefinition] = clientClassDefinition +: collectedResourceDefinitions
 
     val generationAggrBeforeCanonicalDefinitions =
-      GenerationAggr(sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)
+      GenerationAggr(basePackage = apiBasePackage, sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)
 
     val finalGenerationAggregate: GenerationAggr =
       CanonicalToSourceDefinitionGenerator.transferObjectsToClassDefinitions(generationAggrBeforeCanonicalDefinitions)

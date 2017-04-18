@@ -33,11 +33,11 @@ import scala.util.{ Failure, Success, Try }
   */
 object RamlToJsonParser {
 
-  def parseToJson(source: String): SourceFile[JsValue] = {
+  def parseToJson(source: String): JsonFile = {
     parseToJson(source, "UTF-8")
   }
 
-  def parseToJson(source: String, charsetName: String): SourceFile[JsValue] = {
+  def parseToJson(source: String, charsetName: String): JsonFile = {
     Try {
       val SourceFile(path, ramlContent) = SourceReader.read(source, charsetName)
       val ramlContentNoTabs             = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
@@ -48,7 +48,7 @@ object RamlToJsonParser {
       }
       (path, anyToJson(ramlMap))
     } match {
-      case Success((path, jsvalue)) => SourceFile(path, jsvalue)
+      case Success((path, jsvalue)) => JsonFile(path, jsvalue)
       case Failure(ex)              => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }

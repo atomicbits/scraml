@@ -19,6 +19,8 @@
 
 package io.atomicbits.scraml.generator.platform
 
+import java.nio.file.Path
+
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ TypeParameter => ParserTypeParameter }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
@@ -44,6 +46,10 @@ import io.atomicbits.scraml.generator.typemodel._
   * Created by peter on 10/01/17.
   */
 trait Platform {
+
+  def dslBasePackageParts: List[String]
+  def dslBasePackage: String = dslBasePackageParts.mkString(".")
+  def dslBaseDir: String     = dslBasePackageParts.mkString("/", "/", "")
 
   def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference
 
@@ -100,7 +106,7 @@ trait Platform {
     * @param classPointer The class reference for which a file path is generated.
     * @return The relative file name for the given class.
     */
-  def toFilePath(classPointer: ClassPointer): String
+  def toFilePath(classPointer: ClassPointer): Path
 
 }
 
@@ -177,7 +183,7 @@ object Platform {
 
     def native(implicit platform: Platform): ClassReference = platform.classPointerToNativeClassReference(classPointer)
 
-    def toFilePath(implicit platform: Platform): String = platform.toFilePath(classPointer)
+    def toFilePath(implicit platform: Platform): Path = platform.toFilePath(classPointer)
 
     def implementingInterfaceReference(implicit platform: Platform): ClassReference =
       platform.implementingInterfaceReference(classPointer.native)

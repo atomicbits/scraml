@@ -30,7 +30,7 @@ import java.util.{ Map => JMap }
 
 import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
+import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser, SourceFile }
 
 import scala.util.{ Failure, Success, Try }
@@ -39,7 +39,7 @@ import scalariform.formatter.preferences._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
-import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRewriter, GenerationAggr }
 
 /**
   * The main Scraml generator class.
@@ -88,14 +88,18 @@ object ScramlGenerator {
     val packageBasePath      = apiPackageName.split('.').toList.filter(!_.isEmpty)
     val generationAggregator = buildGenerationAggr(ramlApiPath, packageBasePath, apiClassName, platform)
 
-    val sources: Seq[SourceFile[String]] = generationAggregator.generate.sourceFilesGenerated
+    val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
 
-    val dslSources: Seq[SourceFile[String]] = DslSourceExtractor.extract(packageBasePath)
+    val dslSources: Set[SourceFile] =
+      DslSourceExtractor
+        .extract()
+        .getOrElse(sys.error(s"Could not read the DSL source files!"))
+        .map(DslSourceRewriter.rewrite(_, packageBasePath))
 
     val tupleList =
       (sources ++ dslSources)
         .map(addLicenseAndFormat(_, platform, licenseHeader))
-        .map(sourceFile => (sourceFile.filePath, sourceFile.content))
+        .map(sourceFile => (sourceFile.filePath.toString, sourceFile.content))
 
     mapAsJavaMap[String, String](tupleList.toMap)
   }
@@ -152,7 +156,7 @@ object ScramlGenerator {
       .setPreference(DoubleIndentClassDeclaration, true)
       .setPreference(IndentSpaces, 2)
 
-  private def addLicenseAndFormat(sourceFile: SourceFile[String], platform: Platform, licenseHeader: String): SourceFile[String] = {
+  private def addLicenseAndFormat(sourceFile: SourceFile, platform: Platform, licenseHeader: String): SourceFile = {
     val content = s"$licenseHeader\n${sourceFile.content}"
     val formattedContent = platform match {
       case ScalaPlay   => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)

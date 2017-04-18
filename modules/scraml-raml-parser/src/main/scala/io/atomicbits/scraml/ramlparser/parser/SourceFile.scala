@@ -22,7 +22,21 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
+import java.nio.file.Path
+
+import play.api.libs.json.JsValue
+
 /**
   * Created by peter on 14/01/17.
   */
-case class SourceFile[T](filePath: String, content: T)
+trait FileContent[T] {
+
+  def filePath: Path
+
+  def content: T
+
+}
+
+case class SourceFile(filePath: Path, content: String) extends FileContent[String]
+
+case class JsonFile(filePath: Path, content: JsValue) extends FileContent[JsValue]
