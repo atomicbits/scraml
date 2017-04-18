@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, GenerationAggr, SourceCodeFragment }
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, DslSourceRewriter, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -33,6 +33,8 @@ object ClientClassGenerator extends SourceGenerator {
   implicit val platform: Platform = ScalaPlay
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
+
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
 
     val apiPackage        = clientClassDefinition.classReference.safePackageParts
     val apiClassName      = clientClassDefinition.classReference.name
@@ -58,9 +60,9 @@ object ClientClassGenerator extends SourceGenerator {
       s"""
          package ${apiPackage.mkString(".")}
 
-         import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
-         import io.atomicbits.scraml.dsl.RequestBuilder
-         import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
+         import $dslBasePackage.client.{ClientFactory, ClientConfig}
+         import $dslBasePackage.RequestBuilder
+         import $dslBasePackage.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
          import java.io._
@@ -70,7 +72,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          class $apiClassName(private val _requestBuilder: RequestBuilder) {
 
-           import io.atomicbits.scraml.dsl._
+           import $dslBasePackage._
 
            ${dslFields.mkString("\n\n")}
 
@@ -82,7 +84,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          object $apiClassName {
 
-           import io.atomicbits.scraml.dsl.Response
+           import $dslBasePackage.Response
            import play.api.libs.json._
 
            import scala.concurrent.ExecutionContext.Implicits.global

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.codegen.{ DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.HeaderSegmentClassDefinition
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -41,11 +41,13 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
     val imports     = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)
     val methods     = headerSegmentClassDefinition.methods
 
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+
     val source =
       s"""
          package $packageName;
 
-         import io.atomicbits.scraml.jdsl.*;
+         import $dslBasePackage.*;
          import java.util.*;
          import java.util.concurrent.CompletableFuture;
          import java.io.*;

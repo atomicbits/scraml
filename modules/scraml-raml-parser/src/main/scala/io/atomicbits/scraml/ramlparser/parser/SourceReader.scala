@@ -119,10 +119,20 @@ object SourceReader {
       paths.collect {
         case currentPath if isFileWithExtension(currentPath) =>
           val enc: Array[Byte] = Files.readAllBytes(currentPath)
-          SourceFile(currentPath, new String(enc, charsetName))
+          SourceFile(toDefaultFileSystem(currentPath), new String(enc, charsetName))
       }
     fs.foreach(_.close())
     sourceFiles
+  }
+
+  def toDefaultFileSystem(path: Path): Path = {
+    val rootPath =
+      if (path.isAbsolute) Paths.get(FileSystems.getDefault.getSeparator)
+      else Paths.get("")
+
+    path.foldLeft(rootPath) {
+      case (aggr, component) => aggr.resolve(component.getFileName.toString)
+    }
   }
 
   def getInputStreamContent(inputStream: InputStream): Array[Byte] =

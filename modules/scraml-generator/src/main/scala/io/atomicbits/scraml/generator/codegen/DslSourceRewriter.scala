@@ -22,7 +22,7 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import java.nio.file.{ Path, Paths }
+import java.nio.file.{ FileSystem, FileSystems, Path, Paths }
 import java.util.regex.Pattern
 
 import io.atomicbits.scraml.generator.platform.Platform
@@ -47,14 +47,14 @@ object DslSourceRewriter {
     * @return
     */
   def rewrite(dslSource: SourceFile, apiBasePackage: List[String])(implicit platform: Platform): SourceFile = {
-    val fromPackage            = platform.dslBasePackage
-    val toPackageParts         = rewrittenDslBasePackage(apiBasePackage)
-    val toPackage              = toPackageParts.mkString(".")
-    val rewritten              = dslSource.content.replaceAll(Pattern.quote(fromPackage), Pattern.quote(toPackage))
-    val dslBasePath: Path      = Paths.get(platform.dslBasePackageParts.head, platform.dslBasePackageParts.tail: _*)
-    val relativeFilePath: Path = dslBasePath.relativize(dslSource.filePath)
-    val toPath: Path           = Paths.get(toPackageParts.head, toPackageParts.tail: _*)
-    val newFilePath: Path      = toPath.resolve(relativeFilePath)
+    val fromPackage: String          = platform.dslBasePackage
+    val toPackageParts: List[String] = rewrittenDslBasePackage(apiBasePackage)
+    val toPackage: String            = toPackageParts.mkString(".")
+    val rewritten: String            = dslSource.content.replaceAll(Pattern.quote(fromPackage), toPackage)
+    val dslBasePath: Path            = Paths.get(FileSystems.getDefault.getSeparator, platform.dslBasePackageParts: _*) // absolute path
+    val relativeFilePath: Path       = dslBasePath.relativize(dslSource.filePath) // dslSource.filePath is an absolute path
+    val toPath: Path                 = Paths.get(toPackageParts.head, toPackageParts.tail: _*)
+    val newFilePath: Path            = toPath.resolve(relativeFilePath)
     dslSource.copy(filePath = newFilePath, content = rewritten)
   }
 
