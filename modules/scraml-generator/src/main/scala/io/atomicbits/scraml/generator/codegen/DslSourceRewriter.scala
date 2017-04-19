@@ -51,7 +51,7 @@ object DslSourceRewriter {
     val toPackageParts: List[String] = rewrittenDslBasePackage(apiBasePackage)
     val toPackage: String            = toPackageParts.mkString(".")
     val rewritten: String            = dslSource.content.replaceAll(Pattern.quote(fromPackage), toPackage)
-    val dslBasePath: Path            = Paths.get(FileSystems.getDefault.getSeparator, platform.dslBasePackageParts: _*) // absolute path
+    val dslBasePath: Path            = makeAbsolute(Paths.get("", platform.dslBasePackageParts: _*)) // absolute path
 
     println(s"dslBasePath is: $dslBasePath")
     println(s"dslSource.filePath is: ${dslSource.filePath}")
