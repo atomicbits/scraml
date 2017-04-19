@@ -51,21 +51,36 @@ object DslSourceRewriter {
     val toPackageParts: List[String] = rewrittenDslBasePackage(apiBasePackage)
     val toPackage: String            = toPackageParts.mkString(".")
     val rewritten: String            = dslSource.content.replaceAll(Pattern.quote(fromPackage), toPackage)
-    val dslBasePath: Path            = makeAbsolute(Paths.get("", platform.dslBasePackageParts: _*)) // absolute path
 
-    println(s"dslBasePath is: $dslBasePath")
-    println(s"dslSource.filePath is: ${dslSource.filePath}")
-    println(s"makeAbsolute(dslSource.filePath) is: ${makeAbsolute(dslSource.filePath)}")
+    /**
+      * Paths.get("", ...) makes a relative path under Linux/Mac (starts without slash) and Windows (starts with a single backslash '\')
+      *
+      * makeAbsolute(paths.get("", ...)) makes the path absolute under Linux/Mac (starts with a slash) and on Windows it remains with a
+      *   single slash
+      *
+      * Paths.get(FileSystems.getDefault.getSeparator, ...) makes an absolute path under Linux/Mac (start with a slash), and makes an
+      *   UNC path under Windows (start with two backslashes '\\'). Mind that a Windows path that starts with a single backslash is not
+      *   compatible with a path that starts with double backslashes. The function 'relativize' cannot be applied to incompatible
+      *   path types.
+      *
+      * ! ALWAYS TEST SCRAML THOUROUGHLY ON LINUX/MAC/WINDOWS WHEN CHANGING FILESYSTEM RELATED CODE LIKE THIS !
+      */
+    val dslBasePath: Path = makeAbsoluteOnLinuxMacKeepRelativeOnWindows(Paths.get("", platform.dslBasePackageParts: _*))
 
-    val relativeFilePath: Path = dslBasePath.relativize(makeAbsolute(dslSource.filePath)) // dslSource.filePath is an absolute path
+    // dslSource.filePath is an absolute path on Linux/Mac, a directory relative path on Windows
+    val relativeFilePath: Path = dslBasePath.relativize(dslSource.filePath)
     val toPath: Path           = Paths.get(toPackageParts.head, toPackageParts.tail: _*)
     val newFilePath: Path      = toPath.resolve(relativeFilePath)
     dslSource.copy(filePath = newFilePath, content = rewritten)
   }
 
-  def makeAbsolute(path: Path): Path = {
+  def makeAbsoluteOnLinuxMacKeepRelativeOnWindows(path: Path): Path = {
     if (path.isAbsolute) path
-    else Paths.get(FileSystems.getDefault.getSeparator).resolve(path)
+    else {
+      // Beware! The code below will make an absolute path from a relative path on Linux/Mac. It will keep a directory relative path
+      // on windows as a directory relative path (that starts with a single backslash '\'). It may be confusing
+      Paths.get(FileSystems.getDefault.getSeparator).resolve(path)
+    }
   }
 
   def rewrittenDslBasePackage(apiBasePackage: List[String])(implicit platform: Platform): List[String] = {

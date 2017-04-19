@@ -200,7 +200,7 @@ object ScalaPlay extends Platform with CleanNameTools {
     classPointer match {
       case classReference: ClassReference =>
         val parts = classReference.safePackageParts :+ s"${classReference.name}.$classFileExtension"
-        Paths.get("", parts: _*)
+        Paths.get("", parts: _*) // This results in a relative path both on Windows as on Linux/Mac
       case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
     }
   }

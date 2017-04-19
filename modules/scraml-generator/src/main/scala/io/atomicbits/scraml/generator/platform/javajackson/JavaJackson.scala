@@ -213,9 +213,8 @@ object JavaJackson extends Platform with CleanNameTools {
   override def toFilePath(classPointer: ClassPointer): Path = {
     classPointer match {
       case classReference: ClassReference =>
-        Paths.get(
-          s"${classReference.safePackageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
-        )
+        val parts = classReference.safePackageParts :+ s"${classReference.name}.$classFileExtension"
+        Paths.get("", parts: _*) // This results in a relative path both on Windows as on Linux/Mac
       case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
     }
   }
