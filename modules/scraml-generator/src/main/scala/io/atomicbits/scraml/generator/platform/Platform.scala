@@ -47,9 +47,15 @@ import io.atomicbits.scraml.generator.typemodel._
   */
 trait Platform {
 
+  def apiBasePackageParts: List[String]
+  def apiBasePackage: String = apiBasePackageParts.mkString(".")
+  def apiBaseDir: String     = apiBasePackageParts.mkString("/", "/", "")
+
   def dslBasePackageParts: List[String]
   def dslBasePackage: String = dslBasePackageParts.mkString(".")
   def dslBaseDir: String     = dslBasePackageParts.mkString("/", "/", "")
+
+  def rewrittenDslBasePackage: List[String]
 
   def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference
 

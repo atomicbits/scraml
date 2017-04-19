@@ -22,12 +22,10 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import java.nio.file.{ FileSystem, FileSystems, Path, Paths }
+import java.nio.file.{ FileSystems, Path, Paths }
 import java.util.regex.Pattern
 
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
-import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
@@ -42,13 +40,12 @@ object DslSourceRewriter {
     * basepackage.dsl.scalaplay.*
     *
     * @param dslSource
-    * @param apiBasePackage
     * @param platform
     * @return
     */
-  def rewrite(dslSource: SourceFile, apiBasePackage: List[String])(implicit platform: Platform): SourceFile = {
+  def rewrite(dslSource: SourceFile)(implicit platform: Platform): SourceFile = {
     val fromPackage: String          = platform.dslBasePackage
-    val toPackageParts: List[String] = rewrittenDslBasePackage(apiBasePackage)
+    val toPackageParts: List[String] = platform.rewrittenDslBasePackage
     val toPackage: String            = toPackageParts.mkString(".")
     val rewritten: String            = dslSource.content.replaceAll(Pattern.quote(fromPackage), toPackage)
 
@@ -80,13 +77,6 @@ object DslSourceRewriter {
       // Beware! The code below will make an absolute path from a relative path on Linux/Mac. It will keep a directory relative path
       // on windows as a directory relative path (that starts with a single backslash '\'). It may be confusing
       Paths.get(FileSystems.getDefault.getSeparator).resolve(path)
-    }
-  }
-
-  def rewrittenDslBasePackage(apiBasePackage: List[String])(implicit platform: Platform): List[String] = {
-    platform match {
-      case JavaJackson => apiBasePackage ++ List("dsl", "javajackson")
-      case ScalaPlay   => apiBasePackage ++ List("dsl", "scalaplay")
     }
   }
 

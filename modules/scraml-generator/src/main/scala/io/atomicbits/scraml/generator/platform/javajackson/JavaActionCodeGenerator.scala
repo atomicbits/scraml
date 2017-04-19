@@ -32,17 +32,18 @@ import TypedRestOps._
 /**
   * Created by peter on 1/03/17.
   */
-object JavaActionCodeGenerator extends ActionCode {
+case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode {
 
   import Platform._
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: Platform = javaJackson
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String = {
     s"""public ${headerSegment.fullyQualifiedName} $contentHeaderMethodName =
           new ${headerSegment.fullyQualifiedName}(this.getRequestBuilder());"""
   }
 
+  // ToDo: generate the imports!
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
     parameters map { parameterDef =>
       val (field, classPtr) = parameterDef

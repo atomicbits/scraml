@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.client.java;
 
-import io.atomicbits.scraml.jdsl.*;
+import io.atomicbits.scraml.dsl.javajackson.*;
 
 import java.util.HashMap;
 import java.util.Map;

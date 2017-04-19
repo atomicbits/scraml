@@ -27,15 +27,15 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 18/01/17.
   */
-object HeaderSegmentClassGenerator extends SourceGenerator {
+case class HeaderSegmentClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
   import Platform._
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr = {
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
     val className      = headerSegmentClassDefinition.reference.name
     val packageName    = headerSegmentClassDefinition.reference.packageName
     val imports        = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)

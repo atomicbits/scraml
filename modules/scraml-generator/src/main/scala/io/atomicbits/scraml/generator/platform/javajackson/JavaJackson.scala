@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import java.io.File
 import java.nio.file.{ Path, Paths }
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
@@ -30,11 +29,13 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 /**
   * Created by peter on 10/01/17.
   */
-object JavaJackson extends Platform with CleanNameTools {
+case class JavaJackson(apiBasePackageParts: List[String]) extends Platform with CleanNameTools {
 
-  implicit val platform = JavaJackson
+  implicit val platform: Platform = this
 
-  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "jdsl")
+  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "javajackson")
+
+  val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "javajackson")
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
 
@@ -47,7 +48,7 @@ object JavaJackson extends Platform with CleanNameTools {
       case ByteClassPointer =>
         ClassReference(name = "byte", packageParts = List.empty, predef = true)
       case BinaryDataClassPointer =>
-        ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+        ClassReference(name = "BinaryData", packageParts = rewrittenDslBasePackage, library = true)
       case FileClassPointer =>
         ClassReference(name = "File", packageParts = List("java", "io"), library = true)
       case InputStreamClassPointer =>
@@ -57,7 +58,7 @@ object JavaJackson extends Platform with CleanNameTools {
       case JsValueClassPointer =>
         ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
       case BodyPartClassPointer =>
-        ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+        ClassReference(name = "BodyPart", packageParts = rewrittenDslBasePackage, library = true)
       case LongClassPointer(primitive) =>
         if (primitive) {
           ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
@@ -188,25 +189,25 @@ object JavaJackson extends Platform with CleanNameTools {
   }
 
   override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr =
-    PojoGenerator.generate(generationAggr, toClassDefinition)
+    PojoGenerator(this).generate(generationAggr, toClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
-    InterfaceGenerator.generate(generationAggr, toInterfaceDefinition)
+    InterfaceGenerator(this).generate(generationAggr, toInterfaceDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr =
-    EnumGenerator.generate(generationAggr, enumDefinition)
+    EnumGenerator(this).generate(generationAggr, enumDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr =
-    ClientClassGenerator.generate(generationAggr, clientClassDefinition)
+    ClientClassGenerator(this).generate(generationAggr, clientClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr =
-    ResourceClassGenerator.generate(generationAggr, resourceClassDefinition)
+    ResourceClassGenerator(this).generate(generationAggr, resourceClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
-    HeaderSegmentClassGenerator.generate(generationAggr, headerSegmentClassDefinition)
+    HeaderSegmentClassGenerator(this).generate(generationAggr, headerSegmentClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
-    UnionClassGenerator.generate(generationAggr, unionClassDefinition)
+    UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = "java"
 

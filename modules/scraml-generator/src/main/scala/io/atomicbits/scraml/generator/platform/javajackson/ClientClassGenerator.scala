@@ -19,8 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, DslSourceRewriter, GenerationAggr, SourceCodeFragment }
-import io.atomicbits.scraml.generator.platform.scalaplay.ScalaActionCodeGenerator
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
@@ -29,9 +28,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-object ClientClassGenerator extends SourceGenerator {
+case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: JavaJackson = javaJackson
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
@@ -42,20 +41,20 @@ object ClientClassGenerator extends SourceGenerator {
     val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
       clientClassDefinition.topLevelResourceDefinitions match {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
-          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
+          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator(platform).generateResourceDslField)
           val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
+            ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
-          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField)
+          val dslFields       = manyRoots.map(ResourceClassGenerator(platform).generateResourceDslField)
           val actionFunctions = List.empty[String]
           (importClasses, dslFields, actionFunctions, List.empty)
       }
 
     val importStatements: Set[String] = platform.importStatements(apiClassReference, importClasses)
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val sourcecode =
       s"""

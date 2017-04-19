@@ -30,16 +30,17 @@ import TypedRestOps._
 /**
   * Created by peter on 20/01/17.
   */
-object ScalaActionCodeGenerator extends ActionCode {
+case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
 
   import Platform._
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: Platform = scalaPlay
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String = {
     s"""def $contentHeaderMethodName = new ${headerSegment.fullyQualifiedName}(_requestBuilder)"""
   }
 
+  // ToDo: generate the imports!
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
     parameters map { parameterDef =>
       val (field, classPtr) = parameterDef

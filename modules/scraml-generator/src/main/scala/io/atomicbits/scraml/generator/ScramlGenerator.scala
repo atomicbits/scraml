@@ -52,18 +52,17 @@ object ScramlGenerator {
                         apiClassName: String,
                         licenseKey: String,
                         thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(ScalaPlay, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
+    generateFor(ScalaPlay(packageNameToPackagParts(apiPackageName)), ramlApiPath, apiClassName, licenseKey, thirdPartyClassHeader)
 
   def generateJavaCode(ramlApiPath: String,
                        apiPackageName: String,
                        apiClassName: String,
                        licenseKey: String,
                        thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(JavaJackson, ramlApiPath, apiPackageName, apiClassName, licenseKey, thirdPartyClassHeader)
+    generateFor(JavaJackson(packageNameToPackagParts(apiPackageName)), ramlApiPath, apiClassName, licenseKey, thirdPartyClassHeader)
 
   private[generator] def generateFor(platform: Platform,
                                      ramlApiPath: String,
-                                     apiPackageName: String,
                                      apiClassName: String,
                                      scramlLicenseKey: String,
                                      thirdPartyClassHeader: String): JMap[String, String] = {
@@ -85,8 +84,7 @@ object ScramlGenerator {
 
     val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
 
-    val packageBasePath      = apiPackageName.split('.').toList.filter(!_.isEmpty)
-    val generationAggregator = buildGenerationAggr(ramlApiPath, packageBasePath, apiClassName, platform)
+    val generationAggregator = buildGenerationAggr(ramlApiPath, apiClassName, platform)
 
     val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
 
@@ -94,7 +92,7 @@ object ScramlGenerator {
       DslSourceExtractor
         .extract()
         .getOrElse(sys.error(s"Could not read the DSL source files!"))
-        .map(DslSourceRewriter.rewrite(_, packageBasePath))
+        .map(DslSourceRewriter.rewrite)
 
     val tupleList =
       (sources ++ dslSources)
@@ -104,16 +102,15 @@ object ScramlGenerator {
     mapAsJavaMap[String, String](tupleList.toMap)
   }
 
-  private[generator] def buildGenerationAggr(ramlApiPath: String,
-                                             packageBasePath: List[String],
-                                             apiClassName: String,
-                                             thePlatform: Platform): GenerationAggr = {
+  def packageNameToPackagParts(packageName: String): List[String] = packageName.split('.').toList.filter(!_.isEmpty)
+
+  private[generator] def buildGenerationAggr(ramlApiPath: String, apiClassName: String, thePlatform: Platform): GenerationAggr = {
 
     val charsetName = "UTF-8" // ToDo: Get the charset as input parameter.
 
     // Generate the RAML model
     println("Running RAML model generation")
-    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName, packageBasePath).parse
+    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName, thePlatform.apiBasePackageParts).parse
     val raml = tryRaml match {
       case Success(rml) => rml
       case Failure(rpe: RamlParseException) =>
@@ -135,15 +132,18 @@ object ScramlGenerator {
     implicit val lang     = language
     implicit val platform = thePlatform
 
-    val host    = packageBasePath.take(2).reverse.mkString(".")
-    val urlPath = packageBasePath.drop(2).mkString("/")
+    val host    = thePlatform.apiBasePackageParts.take(2).reverse.mkString(".")
+    val urlPath = thePlatform.apiBasePackageParts.drop(2).mkString("/")
 
-    val defaultBasePath: List[String] = packageBasePath
+    val defaultBasePath: List[String] = thePlatform.apiBasePackageParts
 
     val (ramlExp, canonicalLookup) = raml.collectCanonicals(defaultBasePath) // new version
 
     val generationAggregator: GenerationAggr =
-      GenerationAggr(apiName = apiClassName, apiBasePackage = packageBasePath, raml = ramlExp, canonicalToMap = canonicalLookup.map)
+      GenerationAggr(apiName        = apiClassName,
+                     apiBasePackage = thePlatform.apiBasePackageParts,
+                     raml           = ramlExp,
+                     canonicalToMap = canonicalLookup.map)
 
     generationAggregator
   }
@@ -159,8 +159,8 @@ object ScramlGenerator {
   private def addLicenseAndFormat(sourceFile: SourceFile, platform: Platform, licenseHeader: String): SourceFile = {
     val content = s"$licenseHeader\n${sourceFile.content}"
     val formattedContent = platform match {
-      case ScalaPlay   => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
-      case JavaJackson => Try(JavaFormatter.format(content)).getOrElse(content)
+      case ScalaPlay(_)   => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
+      case JavaJackson(_) => Try(JavaFormatter.format(content)).getOrElse(content)
     }
     sourceFile.copy(content = formattedContent)
   }

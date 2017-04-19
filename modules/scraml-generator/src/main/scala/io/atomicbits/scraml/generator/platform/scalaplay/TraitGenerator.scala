@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 14/01/17.
   */
-object TraitGenerator extends SourceGenerator {
+case class TraitGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
 
@@ -102,7 +102,7 @@ object TraitGenerator extends SourceGenerator {
       if (extendedTraitDefs.nonEmpty) extendedTraitDefs.mkString("extends ", " with ", "")
       else ""
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val source =
       s"""

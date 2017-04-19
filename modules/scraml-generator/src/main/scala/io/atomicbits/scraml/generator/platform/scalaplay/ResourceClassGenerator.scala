@@ -28,9 +28,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 14/01/17.
   */
-object ResourceClassGenerator extends SourceGenerator {
+case class ResourceClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = {
 
@@ -40,14 +40,14 @@ object ResourceClassGenerator extends SourceGenerator {
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
     val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
+      ActionGenerator(ScalaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 
     val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resourceClassDefinition)
     val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resourceClassDefinition)
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val sourcecode =
       s"""
@@ -104,7 +104,7 @@ object ResourceClassGenerator extends SourceGenerator {
   def generateResourceDslField(resourceClassDefinition: ResourceClassDefinition): String = {
 
     val resource         = resourceClassDefinition.resource
-    val cleanUrlSegment  = ScalaPlay.escapeScalaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
+    val cleanUrlSegment  = platform.escapeScalaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
     val resourceClassRef = resourceClassDefinition.classReference
 
     resourceClassDefinition.urlParamClassPointer().map(_.native) match {

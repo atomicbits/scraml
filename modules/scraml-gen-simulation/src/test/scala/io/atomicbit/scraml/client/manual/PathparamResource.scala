@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl._
+import io.atomicbits.scraml.dsl.scalaplay._
 import play.api.libs.json.JsValue
 
 /**

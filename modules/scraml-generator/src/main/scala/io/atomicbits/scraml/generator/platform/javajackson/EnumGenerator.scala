@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-object EnumGenerator extends SourceGenerator {
+case class EnumGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: Platform = javaJackson
 
   def generate(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = {
 

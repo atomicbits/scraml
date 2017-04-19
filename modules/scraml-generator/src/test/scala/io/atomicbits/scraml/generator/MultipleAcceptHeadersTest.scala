@@ -23,10 +23,6 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest._
-import org.scalatest.Matchers._
-import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 
@@ -45,7 +41,7 @@ class MultipleAcceptHeadersTest extends FeatureSpec with GivenWhenThen with Befo
       val packageBasePath = List("io", "atomicbits")
 
       When("we generate the RAMl specification into a resource DSL")
-      implicit val platform = ScalaPlay
+      implicit val platform = ScalaPlay(packageBasePath)
 
       val raml: Raml = RamlParser("multipleacceptheaders/TestMultipleAcceptHeaders.raml", "UTF-8", packageBasePath).parse.get
 

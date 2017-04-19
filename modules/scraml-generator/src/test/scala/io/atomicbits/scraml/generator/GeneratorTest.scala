@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.typemodel._
@@ -43,15 +44,14 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiLocation = "objecthierarchy/TestObjectHierarchyApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = ScalaPlay
+      implicit val platform = ScalaPlay(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath     = apiLocation,
-            packageBasePath = List("io", "atomicbits", "scraml"),
-            apiClassName    = "TestObjectHierarchyApi",
-            ScalaPlay
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestObjectHierarchyApi",
+            platform
           )
           .generate
 
@@ -82,14 +82,13 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = ScalaPlay
+      implicit val platform: Platform = ScalaPlay(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath     = apiLocation,
-            packageBasePath = List("io", "atomicbits", "scraml"),
-            apiClassName    = "TestApi",
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestApi",
             platform
           )
           .generate
@@ -158,14 +157,13 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = JavaJackson
+      implicit val platform = JavaJackson(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath     = apiLocation,
-            packageBasePath = List("io", "atomicbits", "scraml"),
-            apiClassName    = "TestApi",
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestApi",
             platform
           )
           .generate

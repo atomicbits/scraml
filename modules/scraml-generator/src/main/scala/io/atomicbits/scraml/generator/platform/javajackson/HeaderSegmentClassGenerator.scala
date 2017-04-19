@@ -28,11 +28,11 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-object HeaderSegmentClassGenerator extends SourceGenerator {
+case class HeaderSegmentClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
   import Platform._
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: Platform = javaJackson
 
   def generate(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr = {
 
@@ -41,7 +41,7 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
     val imports     = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)
     val methods     = headerSegmentClassDefinition.methods
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val source =
       s"""

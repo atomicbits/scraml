@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import java.io.File
 import java.nio.file.{ Path, Paths }
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
@@ -30,11 +29,13 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 /**
   * Created by peter on 10/01/17.
   */
-object ScalaPlay extends Platform with CleanNameTools {
+case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with CleanNameTools {
 
-  implicit val platform = ScalaPlay
+  implicit val platform: ScalaPlay = this
 
-  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl")
+  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "scalaplay")
+
+  val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "scalaplay")
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
     classPointer match {
@@ -47,7 +48,7 @@ object ScalaPlay extends Platform with CleanNameTools {
       case ByteClassPointer =>
         ClassReference(name = "Byte", packageParts = List("scala"), predef = true)
       case BinaryDataClassPointer =>
-        ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
+        ClassReference(name = "BinaryData", packageParts = rewrittenDslBasePackage, library = true)
       case FileClassPointer =>
         ClassReference(name = "File", packageParts = List("java", "io"), library = true)
       case InputStreamClassPointer =>
@@ -57,7 +58,7 @@ object ScalaPlay extends Platform with CleanNameTools {
       case JsValueClassPointer =>
         ClassReference(name = "JsValue", packageParts = List("play", "api", "libs", "json"), library = true)
       case BodyPartClassPointer =>
-        ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "dsl"), library = true)
+        ClassReference(name = "BodyPart", packageParts = rewrittenDslBasePackage, library = true)
       case LongClassPointer(primitive) =>
         ClassReference(name = "Long", packageParts = List("java", "lang"), predef = true)
       case DoubleClassPointer(primitive) =>
@@ -174,25 +175,25 @@ object ScalaPlay extends Platform with CleanNameTools {
   }
 
   override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr =
-    CaseClassGenerator.generate(generationAggr, toClassDefinition)
+    CaseClassGenerator(this).generate(generationAggr, toClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
-    TraitGenerator.generate(generationAggr, toInterfaceDefinition)
+    TraitGenerator(this).generate(generationAggr, toInterfaceDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr =
-    EnumGenerator.generate(generationAggr, enumDefinition)
+    EnumGenerator(this).generate(generationAggr, enumDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr =
-    ClientClassGenerator.generate(generationAggr, clientClassDefinition)
+    ClientClassGenerator(this).generate(generationAggr, clientClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr =
-    ResourceClassGenerator.generate(generationAggr, resourceClassDefinition)
+    ResourceClassGenerator(this).generate(generationAggr, resourceClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
-    HeaderSegmentClassGenerator.generate(generationAggr, headerSegmentClassDefinition)
+    HeaderSegmentClassGenerator(this).generate(generationAggr, headerSegmentClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
-    UnionClassGenerator.generate(generationAggr, unionClassDefinition)
+    UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = "scala"
 

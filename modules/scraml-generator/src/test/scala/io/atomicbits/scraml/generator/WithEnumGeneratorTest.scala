@@ -1,6 +1,7 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
@@ -20,13 +21,14 @@ class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAn
       val apiResourceUrl = this.getClass.getClassLoader.getResource("withenum/EnumApi.raml")
 
       When("we generate the RAMl specification into class representations")
+      implicit val platform: Platform = ScalaPlay(List("io", "atomicbits"))
+
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath     = apiResourceUrl.toString,
-            packageBasePath = List("io", "atomicbits"),
-            apiClassName    = "EnumApi",
-            ScalaPlay
+            ramlApiPath  = apiResourceUrl.toString,
+            apiClassName = "EnumApi",
+            platform
           )
           .generate
 

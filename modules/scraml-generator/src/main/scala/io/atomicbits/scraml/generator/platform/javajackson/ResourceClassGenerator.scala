@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-object ResourceClassGenerator extends SourceGenerator {
+case class ResourceClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: JavaJackson = javaJackson
 
   def generate(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = {
 
@@ -41,7 +41,7 @@ object ResourceClassGenerator extends SourceGenerator {
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
     val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(JavaActionCodeGenerator).generateActionFunctions(resourceClassDefinition)
+      ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 
@@ -53,7 +53,7 @@ object ResourceClassGenerator extends SourceGenerator {
     val className      = resourceClassReference.name
     val classNameCamel = CleanNameUtil.camelCased(className)
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val sourcecode =
       s"""
@@ -149,7 +149,7 @@ object ResourceClassGenerator extends SourceGenerator {
   def generateResourceDslField(resourceClassDefinition: ResourceClassDefinition): String = {
 
     val resource         = resourceClassDefinition.resource
-    val cleanUrlSegment  = JavaJackson.escapeJavaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
+    val cleanUrlSegment  = platform.escapeJavaKeyword(CleanNameTools.cleanMethodName(resource.urlSegment))
     val resourceClassRef = resourceClassDefinition.classReference
 
     resourceClassDefinition.urlParamClassPointer().map(_.native) match {

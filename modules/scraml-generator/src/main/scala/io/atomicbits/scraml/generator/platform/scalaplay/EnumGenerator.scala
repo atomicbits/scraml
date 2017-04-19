@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 14/01/17.
   */
-object EnumGenerator extends SourceGenerator {
+case class EnumGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = {
 

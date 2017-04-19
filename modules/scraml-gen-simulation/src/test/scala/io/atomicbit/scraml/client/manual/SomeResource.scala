@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
+import io.atomicbits.scraml.dsl.scalaplay.{ PlainSegment, RequestBuilder }
 
 /**
- * Created by peter on 17/08/15. 
- */
+  * Created by peter on 17/08/15.
+  */
 class SomeResource(req: RequestBuilder) extends PlainSegment("some", req) {
 
   def webservice = new WebserviceResource(_requestBuilder.withAddedPathSegment("webservice"))

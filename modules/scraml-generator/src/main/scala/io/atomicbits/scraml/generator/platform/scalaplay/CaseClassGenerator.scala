@@ -29,11 +29,11 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 14/01/17.
   */
-object CaseClassGenerator extends SourceGenerator {
-
-  implicit val platform: Platform = ScalaPlay
+case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
   val defaultDiscriminator = "type"
+
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr = {
 
@@ -134,7 +134,7 @@ object CaseClassGenerator extends SourceGenerator {
 
     val typeHintImport =
       if (jsonTypeInfo.isDefined) {
-        val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+        val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
         s"import $dslBasePackage.json.TypedJson._"
       } else {
         ""
@@ -198,7 +198,7 @@ object CaseClassGenerator extends SourceGenerator {
                                       toClassReference: ClassReference,
                                       jsonTypeInfo: Option[JsonTypeInfo]): String = {
 
-    val formatUnLiftFields = sortedFields.map(field => ScalaPlay.fieldFormatUnlift(field))
+    val formatUnLiftFields = sortedFields.map(field => platform.fieldFormatUnlift(field))
 
     def complexFormatterDefinition: (String, String) =
       ("import play.api.libs.functional.syntax._", s"def jsonFormatter: Format[${toClassReference.classDefinition}] = ")
@@ -228,7 +228,7 @@ object CaseClassGenerator extends SourceGenerator {
       val (fieldGroupDefinitions, fieldGroupNames): (List[String], List[String]) =
         groupedFields.zipWithIndex.map {
           case (group, index) =>
-            val formatFields   = group.map(field => ScalaPlay.fieldFormatUnlift(field))
+            val formatFields   = group.map(field => platform.fieldFormatUnlift(field))
             val fieldGroupName = s"fieldGroup$index"
             val fieldGroupDefinition =
               s"""

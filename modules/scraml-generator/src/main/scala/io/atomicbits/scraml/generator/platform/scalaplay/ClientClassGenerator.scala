@@ -28,13 +28,13 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 14/01/17.
   */
-object ClientClassGenerator extends SourceGenerator {
+case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
-    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val apiPackage        = clientClassDefinition.classReference.safePackageParts
     val apiClassName      = clientClassDefinition.classReference.name
@@ -43,13 +43,13 @@ object ClientClassGenerator extends SourceGenerator {
     val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
       clientClassDefinition.topLevelResourceDefinitions match {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
-          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField)
+          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator(platform).generateResourceDslField)
           val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot)
+            ActionGenerator(ScalaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
-          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField)
+          val dslFields       = manyRoots.map(ResourceClassGenerator(platform).generateResourceDslField)
           val actionFunctions = List.empty[String]
           (importClasses, dslFields, actionFunctions, List.empty)
       }
