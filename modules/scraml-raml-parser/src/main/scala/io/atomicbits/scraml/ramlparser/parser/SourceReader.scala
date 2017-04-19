@@ -71,11 +71,12 @@ object SourceReader {
           (fileSystem.getPath(source), Some(fileSystem))
         case _ => (Paths.get(uri), None)
       }
-    thePath.toString
+
     val encoded: Array[Byte] = Files.readAllBytes(thePath)
+
     fs.foreach(_.close())
 
-    SourceFile(thePath, new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
+    SourceFile(toDefaultFileSystem(thePath), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
   }
 
   /**
@@ -87,7 +88,7 @@ object SourceReader {
     * http://alvinalexander.com/blog/post/java/read-text-file-from-jar-file
     *
     *
-    * @param path The path that we want to read all files from.
+    * @param path The path that we want to read all files from recursively.
     * @param extension The extension of the files that we want to read.
     * @param charsetName The charset the file contents are encoded in.
     * @return
@@ -125,6 +126,15 @@ object SourceReader {
     sourceFiles
   }
 
+  /**
+    * Later on, we want to combine Path objects, but that only works when their filesystems are compatible,
+    * so we convert paths that come out of a jar archive to the default filesystem.
+    *
+    * See: http://stackoverflow.com/questions/22611919/why-do-i-get-providermismatchexception-when-i-try-to-relativize-a-path-agains
+    *
+    * @param path The path to convert to the default filesystem.
+    * @return The converted path.
+    */
   def toDefaultFileSystem(path: Path): Path = {
     val rootPath =
       if (path.isAbsolute) Paths.get(FileSystems.getDefault.getSeparator)
