@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator.platform.scalaplay
 
 import java.io.File
+import java.nio.file.{ Path, Paths }
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
@@ -32,6 +33,8 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 object ScalaPlay extends Platform with CleanNameTools {
 
   implicit val platform = ScalaPlay
+
+  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl")
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
     classPointer match {
@@ -193,10 +196,11 @@ object ScalaPlay extends Platform with CleanNameTools {
 
   override def classFileExtension: String = "scala"
 
-  override def toFilePath(classPointer: ClassPointer): String = {
+  override def toFilePath(classPointer: ClassPointer): Path = {
     classPointer match {
       case classReference: ClassReference =>
-        s"${classReference.safePackageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
+        val parts = classReference.safePackageParts :+ s"${classReference.name}.$classFileExtension"
+        Paths.get("", parts: _*) // This results in a relative path both on Windows as on Linux/Mac
       case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
     }
   }

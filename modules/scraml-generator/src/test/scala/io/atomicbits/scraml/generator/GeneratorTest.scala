@@ -40,7 +40,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test the generation of an object hierarchy") {
 
       Given("a json-schema containing an object hierarcy")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("objecthierarchy/TestObjectHierarchyApi.raml")
+      val apiLocation = "objecthierarchy/TestObjectHierarchyApi.raml"
 
       When("we generate the RAMl specification into class representations")
       implicit val platform = ScalaPlay
@@ -48,9 +48,9 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestObjectHierarchyApi",
+            ramlApiPath     = apiLocation,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestObjectHierarchyApi",
             ScalaPlay
           )
           .generate
@@ -79,7 +79,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test generated Scala DSL") {
 
       Given("a RAML specification")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+      val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
       implicit val platform = ScalaPlay
@@ -87,16 +87,19 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath     = apiLocation,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestApi",
             platform
           )
           .generate
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.scala",
@@ -152,7 +155,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test generated Java DSL") {
 
       Given("a RAML specification")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+      val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
       implicit val platform = JavaJackson
@@ -160,16 +163,19 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath     = apiLocation,
+            packageBasePath = List("io", "atomicbits", "scraml"),
+            apiClassName    = "TestApi",
             platform
           )
           .generate
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.java",

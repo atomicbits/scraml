@@ -19,9 +19,10 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.codegen.{ DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ HeaderSegmentClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.HeaderSegmentClassDefinition
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 18/01/17.
@@ -34,16 +35,17 @@ object HeaderSegmentClassGenerator extends SourceGenerator {
 
   def generate(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr = {
 
-    val className   = headerSegmentClassDefinition.reference.name
-    val packageName = headerSegmentClassDefinition.reference.packageName
-    val imports     = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)
-    val methods     = headerSegmentClassDefinition.methods
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+    val className      = headerSegmentClassDefinition.reference.name
+    val packageName    = headerSegmentClassDefinition.reference.packageName
+    val imports        = platform.importStatements(headerSegmentClassDefinition.reference, headerSegmentClassDefinition.imports)
+    val methods        = headerSegmentClassDefinition.methods
 
     val source =
       s"""
          package $packageName
 
-         import io.atomicbits.scraml.dsl._
+         import $dslBasePackage._
          import play.api.libs.json._
          import java.io._
 

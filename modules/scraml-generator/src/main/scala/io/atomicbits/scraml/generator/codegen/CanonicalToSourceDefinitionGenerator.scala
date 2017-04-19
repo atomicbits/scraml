@@ -85,7 +85,7 @@ object CanonicalToSourceDefinitionGenerator {
         TransferObjectClassDefinition(
           reference              = toClassReference,
           fields                 = objectType.properties.map(propertyToField).toList,
-          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference(_)),
+          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
           typeDiscriminator      = objectType.typeDiscriminator,
           typeDiscriminatorValue = objectType.typeDiscriminatorValue
         )

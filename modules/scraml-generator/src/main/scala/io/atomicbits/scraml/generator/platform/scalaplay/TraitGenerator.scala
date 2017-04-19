@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.codegen.{ DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 14/01/17.
@@ -101,12 +102,14 @@ object TraitGenerator extends SourceGenerator {
       if (extendedTraitDefs.nonEmpty) extendedTraitDefs.mkString("extends ", " with ", "")
       else ""
 
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+
     val source =
       s"""
         package ${toInterfaceDefinition.classReference.packageName}
 
         import play.api.libs.json._
-        import io.atomicbits.scraml.dsl.json.TypedJson._
+        import $dslBasePackage.json.TypedJson._
 
         ${imports.mkString("\n")}
         

@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.codegen.{ DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 14/01/17.
@@ -131,7 +132,13 @@ object CaseClassGenerator extends SourceGenerator {
         (fields.map(_.classPointer) ++ traits.map(_.classReference)).toSet
       )
 
-    val typeHintImport = if (jsonTypeInfo.isDefined) "import io.atomicbits.scraml.dsl.json.TypedJson._" else ""
+    val typeHintImport =
+      if (jsonTypeInfo.isDefined) {
+        val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+        s"import $dslBasePackage.json.TypedJson._"
+      } else {
+        ""
+      }
 
     val sortedFields = selectAndSortFields(fields, skipFieldName)
 

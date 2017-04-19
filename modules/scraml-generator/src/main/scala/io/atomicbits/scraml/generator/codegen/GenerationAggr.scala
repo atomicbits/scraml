@@ -23,6 +23,7 @@ import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 18/01/17.
@@ -32,6 +33,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * a recursive operation on the GenerationAggr, which can be expanded during code generation. In other words, new source
   * definitions may be added during code generation, especially the interface definitions are expected to be added then.
   *
+  * @param basePackage The base package for the generated codebase.
   * @param sourceDefinitionsToProcess The collected source definitions up to 'now'.
   * @param sourceFilesGenerated The generated source files so far.
   * @param canonicalToMap The canonical TO map.
@@ -44,7 +46,8 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, Non
   * @param toParentChildrenMap The direct parent children relations are needed to navigate through the class hierarchy of the transfer
   *                            objects. The toParentChildrenMap is build up when the TOs are added to the toMap.
   */
-case class GenerationAggr(sourceDefinitionsToProcess: Seq[SourceDefinition],
+case class GenerationAggr(basePackage: List[String],
+                          sourceDefinitionsToProcess: Seq[SourceDefinition],
                           canonicalToMap: Map[CanonicalName, NonPrimitiveType],
                           sourceDefinitionsProcessed: Seq[SourceDefinition]                     = Seq.empty,
                           sourceFilesGenerated: Seq[SourceFile]                                 = Seq.empty,
@@ -267,7 +270,7 @@ object GenerationAggr {
     val sourceDefinitions: Seq[SourceDefinition] = clientClassDefinition +: collectedResourceDefinitions
 
     val generationAggrBeforeCanonicalDefinitions =
-      GenerationAggr(sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)
+      GenerationAggr(basePackage = apiBasePackage, sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)
 
     val finalGenerationAggregate: GenerationAggr =
       CanonicalToSourceDefinitionGenerator.transferObjectsToClassDefinitions(generationAggrBeforeCanonicalDefinitions)

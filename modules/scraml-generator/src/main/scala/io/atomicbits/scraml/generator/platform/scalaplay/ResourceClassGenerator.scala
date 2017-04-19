@@ -19,10 +19,11 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, DslSourceRewriter, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ ResourceClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.ResourceClassDefinition
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 14/01/17.
@@ -46,11 +47,13 @@ object ResourceClassGenerator extends SourceGenerator {
     val addHeaderConstructorArgs = generateAddHeaderConstructorArguments(resourceClassDefinition)
     val setHeaderConstructorArgs = generateSetHeaderConstructorArguments(resourceClassDefinition)
 
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+
     val sourcecode =
       s"""
            package ${resourceClassReference.packageName}
 
-           import io.atomicbits.scraml.dsl._
+           import $dslBasePackage._
 
            import play.api.libs.json._
            import java.io._

@@ -19,11 +19,12 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import io.atomicbits.scraml.generator.codegen.{ SourceCodeFragment, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, DslSourceRewriter, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaActionCodeGenerator
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.
@@ -54,15 +55,17 @@ object ClientClassGenerator extends SourceGenerator {
 
     val importStatements: Set[String] = platform.importStatements(apiClassReference, importClasses)
 
+    val dslBasePackage = DslSourceRewriter.rewrittenDslBasePackage(generationAggr.basePackage).mkString(".")
+
     val sourcecode =
       s"""
            package ${apiPackage.mkString(".")};
 
-           import io.atomicbits.scraml.jdsl.RequestBuilder;
-           import io.atomicbits.scraml.jdsl.client.ClientConfig;
-           import io.atomicbits.scraml.jdsl.client.ClientFactory;
-           import io.atomicbits.scraml.jdsl.Client;
-           import io.atomicbits.scraml.jdsl.client.ning.Ning19ClientFactory;
+           import $dslBasePackage.RequestBuilder;
+           import $dslBasePackage.client.ClientConfig;
+           import $dslBasePackage.client.ClientFactory;
+           import $dslBasePackage.Client;
+           import $dslBasePackage.client.ning.Ning19ClientFactory;
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;

@@ -30,8 +30,8 @@ import java.util.{ Map => JMap }
 
 import io.atomicbits.scraml.generator.license.{ LicenseData, LicenseVerifier }
 import io.atomicbits.scraml.generator.platform.Platform
-import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml, RootId }
-import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser }
+import io.atomicbits.scraml.ramlparser.model.Raml
+import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser, SourceFile }
 
 import scala.util.{ Failure, Success, Try }
 import scalariform.formatter.ScalaFormatter
@@ -39,8 +39,7 @@ import scalariform.formatter.preferences._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
-import io.atomicbits.scraml.generator.typemodel.SourceFile
-import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRewriter, GenerationAggr }
 
 /**
   * The main Scraml generator class.
@@ -69,7 +68,7 @@ object ScramlGenerator {
                                      scramlLicenseKey: String,
                                      thirdPartyClassHeader: String): JMap[String, String] = {
 
-    println(s"Generating $language client.")
+    println(s"Generating $platform client.")
 
     implicit val thePlatform = platform
 
@@ -86,25 +85,31 @@ object ScramlGenerator {
 
     val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
 
-    val generationAggregator = buildGenerationAggr(ramlApiPath, apiPackageName, apiClassName, platform)
+    val packageBasePath      = apiPackageName.split('.').toList.filter(!_.isEmpty)
+    val generationAggregator = buildGenerationAggr(ramlApiPath, packageBasePath, apiClassName, platform)
 
     val sources: Seq[SourceFile] = generationAggregator.generate.sourceFilesGenerated
 
+    val dslSources: Set[SourceFile] =
+      DslSourceExtractor
+        .extract()
+        .getOrElse(sys.error(s"Could not read the DSL source files!"))
+        .map(DslSourceRewriter.rewrite(_, packageBasePath))
+
     val tupleList =
-      sources
+      (sources ++ dslSources)
         .map(addLicenseAndFormat(_, platform, licenseHeader))
-        .map(sourceFile => (sourceFile.filePath, sourceFile.content))
+        .map(sourceFile => (sourceFile.filePath.toString, sourceFile.content))
 
     mapAsJavaMap[String, String](tupleList.toMap)
   }
 
   private[generator] def buildGenerationAggr(ramlApiPath: String,
-                                             apiPackageName: String,
+                                             packageBasePath: List[String],
                                              apiClassName: String,
                                              thePlatform: Platform): GenerationAggr = {
 
-    val packageBasePath = apiPackageName.split('.').toList.filter(!_.isEmpty)
-    val charsetName     = "UTF-8" // ToDo: Get the charset as input parameter.
+    val charsetName = "UTF-8" // ToDo: Get the charset as input parameter.
 
     // Generate the RAML model
     println("Running RAML model generation")
@@ -170,25 +175,6 @@ object ScramlGenerator {
         |but WITHOUT ANY WARRANTY; without even the implied warranty of
         |MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
         |Affero General Public License for more details. """.stripMargin
-
-//  private def classRepToFilePathAndContent(sourceFile: SourceFile): (String, String) = {
-
-//    val classReference = sourceFile.classRef
-//    val pathParts      = classReference.safePackageParts
-  // It is important to start the foldLeft aggregate with new File(pathParts.head). If you start with new File("") and
-  // start iterating from pathParts instead of pathParts.tail, then you'll get the wrong file path on Windows machines.
-  //    val dir = pathParts.tail.foldLeft(new File(pathParts.head))((file, pathPart) => new File(file, pathPart))
-  //    val file = new File(dir, s"${classRep.name}.scala")
-
-//    val extension = language match {
-//      case Scala => "scala"
-//      case Java  => "java"
-//    }
-
-  // s"${pathParts.mkString(File.separator)}${File.separator}${classReference.name}.$extension"
-
-//    (sourceFile.filePath, sourceFile.content)
-//  }
 
   private def deferLicenseHeader(licenseKey: Option[LicenseData], thirdPartyLicenseHeader: Option[String]): String = {
 
