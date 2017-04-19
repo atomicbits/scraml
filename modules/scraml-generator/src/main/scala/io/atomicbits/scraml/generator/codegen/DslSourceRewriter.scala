@@ -52,9 +52,14 @@ object DslSourceRewriter {
     val toPackage: String            = toPackageParts.mkString(".")
     val rewritten: String            = dslSource.content.replaceAll(Pattern.quote(fromPackage), toPackage)
     val dslBasePath: Path            = Paths.get(FileSystems.getDefault.getSeparator, platform.dslBasePackageParts: _*) // absolute path
-    val relativeFilePath: Path       = dslBasePath.relativize(makeAbsolute(dslSource.filePath)) // dslSource.filePath is an absolute path
-    val toPath: Path                 = Paths.get(toPackageParts.head, toPackageParts.tail: _*)
-    val newFilePath: Path            = toPath.resolve(relativeFilePath)
+
+    println(s"dslBasePath is: $dslBasePath")
+    println(s"dslSource.filePath is: ${dslSource.filePath}")
+    println(s"makeAbsolute(dslSource.filePath) is: ${makeAbsolute(dslSource.filePath)}")
+
+    val relativeFilePath: Path = dslBasePath.relativize(makeAbsolute(dslSource.filePath)) // dslSource.filePath is an absolute path
+    val toPath: Path           = Paths.get(toPackageParts.head, toPackageParts.tail: _*)
+    val newFilePath: Path      = toPath.resolve(relativeFilePath)
     dslSource.copy(filePath = newFilePath, content = rewritten)
   }
 
