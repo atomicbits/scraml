@@ -56,7 +56,7 @@ object ParsedObjectTransformer {
       } getOrElse (None, props)
     }
 
-    def registerParsedObject(parsedObject: ParsedObject): (TypeReference, CanonicalLookupHelper) = {
+    def registerParsedObject(parsedObject: ParsedObject, canonicalName: CanonicalName): (TypeReference, CanonicalLookupHelper) = {
 
       val ownTypeDiscriminatorOpt: Option[String] = parsedObject.typeDiscriminator
       val typeDescriminatorOpt                    = List(ownTypeDiscriminatorOpt, imposedTypeDiscriminatorOpt).flatten.headOption
@@ -79,9 +79,6 @@ object ParsedObjectTransformer {
       // Transform and register all properties of this object
       val (properties, propertyUpdatedCanonicalLH) =
         propertiesWithoutTypeDiscriminator.valueMap.foldLeft(aggregator)(propertyTransformer(parsedObject.requiredProperties))
-
-      // Generate the canonical name for this object
-      val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
 
       // Extract all json-schema children from this parsed object and register them in de canonical lookup helper
       val jsonSchemaChildrenUpdatedCanonicalLH =
@@ -117,11 +114,16 @@ object ParsedObjectTransformer {
       (typeReference, jsonSchemaChildrenUpdatedCanonicalLH.addCanonicalType(canonicalName, objectType))
     }
 
-    parsed match {
-      case parsedObject: ParsedObject if parsedObject.isEmpty => Some((JsonType, canonicalLookupHelper))
-      case parsedObject: ParsedObject                         => Some(registerParsedObject(parsedObject))
-      case parsedMultipleInheritance: ParsedMultipleInheritance =>
-        Some(registerParsedObject(parsedMultipleInheritanceToParsedObject(parsedMultipleInheritance)))
+    // Generate the canonical name for this object
+    val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
+
+    (parsed, canonicalName) match {
+      case (parsedObject: ParsedObject, NoName(_))                           => Some((JsonType, canonicalLookupHelper))
+      case (parsedMultipleInheritance: ParsedMultipleInheritance, NoName(_)) => Some((JsonType, canonicalLookupHelper))
+      case (parsedObject: ParsedObject, _) if parsedObject.isEmpty           => Some((JsonType, canonicalLookupHelper))
+      case (parsedObject: ParsedObject, _)                                   => Some(registerParsedObject(parsedObject, canonicalName))
+      case (parsedMultipleInheritance: ParsedMultipleInheritance, _) =>
+        Some(registerParsedObject(parsedMultipleInheritanceToParsedObject(parsedMultipleInheritance), canonicalName))
       case _ => None
     }
   }

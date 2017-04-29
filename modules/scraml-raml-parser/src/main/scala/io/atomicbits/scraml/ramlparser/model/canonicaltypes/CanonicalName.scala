@@ -19,21 +19,35 @@
 
 package io.atomicbits.scraml.ramlparser.model.canonicaltypes
 
-import io.atomicbits.scraml.ramlparser.model.AbsoluteId
-
 /**
   * Created by peter on 9/12/16.
   */
-case class CanonicalName private (name: String, packagePath: List[String] = List.empty) {
+trait CanonicalName {
+
+  def name: String
+
+  def packagePath: List[String]
+
+}
+
+case class RealCanonicalName private[canonicaltypes] (name: String, packagePath: List[String] = List.empty) extends CanonicalName {
 
   val value: String = s"${packagePath.mkString(".")}.$name"
+
+}
+
+case class NoName private[canonicaltypes] (packagePath: List[String] = List.empty) extends CanonicalName {
+
+  override def name: String = "NoName"
 
 }
 
 object CanonicalName {
 
   def create(name: String, packagePath: List[String] = List.empty): CanonicalName =
-    new CanonicalName(cleanClassName(name), cleanPackage(packagePath))
+    new RealCanonicalName(cleanClassName(name), cleanPackage(packagePath))
+
+  def noName(packagePath: List[String]): CanonicalName = NoName(cleanPackage(packagePath))
 
   def cleanClassName(dirtyName: String): String = {
     // capitalize after special characters and drop those characters along the way

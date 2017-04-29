@@ -211,7 +211,7 @@ case object NoId extends AbsoluteId {
 
   override def rootPart: RootId = RootId(id)
 
-  override def rootPath: List[String] = List.empty
+  override def rootPath: List[String] = rootPart.rootPath
 
   override def hostPath: List[String] = List("no", "where")
 
