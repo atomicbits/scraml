@@ -192,13 +192,11 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io/atomicbits/schema/UserDefinitionsAddress.java",
         "io/atomicbits/schema/Link.java",
         "io/atomicbits/schema/PagedList.java",
-        // "io/atomicbits/schema/AnimalImpl.java", // Java Pojo can extend one another, the interfaces are introduced only when multiple-inheritance is involved!
         "io/atomicbits/schema/Animal.java",
         "io/atomicbits/schema/Dog.java",
         "io/atomicbits/schema/Cat.java",
         "io/atomicbits/schema/Fish.java",
         "io/atomicbits/schema/Method.java",
-        // "io/atomicbits/schema/GeometryImpl.java",
         "io/atomicbits/schema/Geometry.java",
         "io/atomicbits/schema/Point.java",
         "io/atomicbits/schema/LineString.java",
