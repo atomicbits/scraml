@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.ramlparser.lookup.transformers
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, EnumType, NonPrimitiveTypeReference, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedEnum, ParsedType }
 
 /**
@@ -37,10 +37,7 @@ object ParsedEnumTransformer {
     val canonicalNameOpt: Option[CanonicalName]      = parsedTypeContext.canonicalNameOpt
     val parentNameOpt: Option[CanonicalName]         = parsedTypeContext.parentNameOpt // This is the optional json-schema parent
 
-    def registerParsedEnum(parsedEnum: ParsedEnum): (TypeReference, CanonicalLookupHelper) = {
-
-      // Generate the canonical name for this object
-      val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
+    def registerParsedEnum(parsedEnum: ParsedEnum, canonicalName: CanonicalName): (TypeReference, CanonicalLookupHelper) = {
 
       val enumType =
         EnumType(
@@ -53,9 +50,13 @@ object ParsedEnumTransformer {
       (typeReference, canonicalLookupHelper.addCanonicalType(canonicalName, enumType))
     }
 
-    parsed match {
-      case parsedEnum: ParsedEnum => Some(registerParsedEnum(parsedEnum))
-      case _                      => None
+    // Generate the canonical name for this object
+    val canonicalName = canonicalNameOpt.getOrElse(canonicalNameGenerator.generate(parsed.id))
+
+    (parsed, canonicalName) match {
+      case (parsedEnum: ParsedEnum, NoName(_)) => Some((JsonType, canonicalLookupHelper))
+      case (parsedEnum: ParsedEnum, _)         => Some(registerParsedEnum(parsedEnum, canonicalName))
+      case _                                   => None
     }
 
   }

@@ -57,10 +57,10 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
       Then("we should get valid a class hierarchy")
 
-      val animalToClassName = CanonicalName("Animal", List("io", "atomicbits", "schema"))
-      val catToClassName    = CanonicalName("Cat", List("io", "atomicbits", "schema"))
-      val dogToClassName    = CanonicalName("Dog", List("io", "atomicbits", "schema"))
-      val fishToClassName   = CanonicalName("Fish", List("io", "atomicbits", "schema"))
+      val animalToClassName = CanonicalName.create("Animal", List("io", "atomicbits", "schema"))
+      val catToClassName    = CanonicalName.create("Cat", List("io", "atomicbits", "schema"))
+      val dogToClassName    = CanonicalName.create("Dog", List("io", "atomicbits", "schema"))
+      val fishToClassName   = CanonicalName.create("Fish", List("io", "atomicbits", "schema"))
 
       val animalToDef: TransferObjectClassDefinition = generationAggr.toMap(animalToClassName)
 
@@ -144,7 +144,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       generatedFilePaths -- expectedFilePaths shouldBe Set.empty
       expectedFilePaths -- generatedFilePaths shouldBe Set.empty
 
-      val geometryToClassName = CanonicalName("Geometry", List("io", "atomicbits", "schema"))
+      val geometryToClassName = CanonicalName.create("Geometry", List("io", "atomicbits", "schema"))
 
       val bboxFieldClassPointer = generationAggr.toMap(geometryToClassName).fields.filter(_.fieldName == "bbox").head.classPointer
 

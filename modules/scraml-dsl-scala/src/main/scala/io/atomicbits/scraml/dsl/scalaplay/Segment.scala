@@ -22,6 +22,9 @@
 
 package io.atomicbits.scraml.dsl.scalaplay
 
+import java.nio.charset.Charset
+
+import io.atomicbits.scraml.dsl.scalaplay.json.JsonOps
 import play.api.libs.json.{ Format, JsValue }
 
 import scala.concurrent.Future
@@ -67,11 +70,11 @@ abstract class MethodSegment[B, R](method: Method,
 
   val body = theBody
 
-  protected val queryParameterMap = queryParams.collect { case (key, Some(value)) => (key, value) }
+  protected val queryParameterMap: Map[String, HttpParam] = queryParams.collect { case (key, Some(value)) => (key, value) }
 
-  protected val formParameterMap = formParams.collect { case (key, Some(value)) => (key, value) }
+  protected val formParameterMap: Map[String, HttpParam] = formParams.collect { case (key, Some(value)) => (key, value) }
 
-  protected val _requestBuilder = {
+  protected val _requestBuilder: RequestBuilder = {
     val reqUpdated =
       req.copy(
         method          = method,
@@ -117,6 +120,24 @@ abstract class MethodSegment[B, R](method: Method,
     reqWithRequestCharset
   }
 
+  def isFormUrlEncoded: Boolean =
+    _requestBuilder.allHeaders
+      .get("Content-Type")
+      .exists { values =>
+        values.exists(value => value.contains("application/x-www-form-urlencoded"))
+      }
+
+  def jsonBodyToString()(implicit bodyFormat: Format[B]): (RequestBuilder, Option[String]) = {
+    if (formParams.isEmpty && body.isDefined && isFormUrlEncoded) {
+      val formPs: Map[String, HttpParam] = JsonOps.toFormUrlEncoded(bodyFormat.writes(body.get))
+      val reqBuilder                     = _requestBuilder.copy(formParameters = formPs)
+      (reqBuilder, None)
+    } else {
+      val bodyToSend = body.map(bodyFormat.writes(_).toString())
+      (_requestBuilder, bodyToSend)
+    }
+  }
+
 }
 
 class StringMethodSegment[B](method: Method,
@@ -144,8 +165,8 @@ class StringMethodSegment[B](method: Method,
   }
 
   def call()(implicit bodyFormat: Format[B]): Future[Response[String]] = {
-    val bodyToSend = body.map(bodyFormat.writes(_).toString())
-    _requestBuilder.callToStringResponse(bodyToSend)
+    val (reqBuilder, preparedBody) = jsonBodyToString()
+    reqBuilder.callToStringResponse(preparedBody)
   }
 
 }
@@ -175,8 +196,8 @@ class JsonMethodSegment[B](method: Method,
   }
 
   def call()(implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
-    val bodyToSend = body.map(bodyFormat.writes(_).toString())
-    _requestBuilder.callToJsonResponse(bodyToSend)
+    val (reqBuilder, preparedBody) = jsonBodyToString()
+    reqBuilder.callToJsonResponse(preparedBody)
   }
 
 }
@@ -206,8 +227,8 @@ class TypeMethodSegment[B, R](method: Method,
   }
 
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = {
-    val bodyToSend = body.map(bodyFormat.writes(_).toString())
-    _requestBuilder.callToTypeResponse[R](bodyToSend)
+    val (reqBuilder, preparedBody) = jsonBodyToString()
+    reqBuilder.callToTypeResponse(preparedBody)
   }
 
 }
@@ -237,8 +258,8 @@ class BinaryMethodSegment[B](method: Method,
   }
 
   def call()(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
-    val bodyToSend = body.map(bodyFormat.writes(_).toString())
-    _requestBuilder.callToBinaryResponse(bodyToSend)
+    val (reqBuilder, preparedBody) = jsonBodyToString()
+    reqBuilder.callToBinaryResponse(preparedBody)
   }
 
 }

@@ -38,11 +38,11 @@ case class RequestBuilder(client: Client,
                           binaryBody: Option[BinaryRequest]       = None,
                           headers: HeaderMap                      = HeaderMap()) {
 
-  def relativePath = reversePath.reverse.mkString("/", "/", "")
+  def relativePath: String = reversePath.reverse.mkString("/", "/", "")
 
-  def defaultHeaders = client.defaultHeaders
+  def defaultHeaders: Map[String, String] = client.defaultHeaders
 
-  def allHeaders = HeaderMap() ++ (defaultHeaders.toList: _*) ++ headers // headers last to overwrite defaults!
+  lazy val allHeaders: HeaderMap = HeaderMap() ++ (defaultHeaders.toList: _*) ++ headers // headers last to overwrite defaults!
 
   def isFormPost: Boolean = method == Post && formParameters.nonEmpty
 

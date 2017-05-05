@@ -57,7 +57,7 @@ public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
     }
 
     public CompletableFuture<Response<R>> call() {
-        return getRequestBuilder().callToTypeResponse(getJsonStringBody(canonicalContentType), canonicalResponseType);
+        return getRequestBuilder().callToTypeResponse(jsonBodyToString(canonicalContentType), canonicalResponseType);
     }
 
 }
