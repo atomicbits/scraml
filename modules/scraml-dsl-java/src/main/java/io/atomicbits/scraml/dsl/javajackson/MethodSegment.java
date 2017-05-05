@@ -23,6 +23,7 @@
 package io.atomicbits.scraml.dsl.javajackson;
 
 import io.atomicbits.scraml.dsl.javajackson.json.Json;
+import io.atomicbits.scraml.dsl.javajackson.util.Pair;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -109,6 +110,25 @@ public abstract class MethodSegment<B, R> extends Segment {
             stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
         }
         return stringBody;
+    }
+
+    protected Boolean isFormUrlEncoded() {
+        List<String> contentValues = requestBuilder.getHeaderMap().getValues("Content-Type");
+        Boolean isFormUrlEncoded = false;
+        for(String contentValue : contentValues) {
+            if(contentValue.contains("application/x-www-form-urlencoded")) isFormUrlEncoded = true;
+        }
+        return isFormUrlEncoded;
+    }
+
+    protected String jsonBodyToString(String canonicalContentType) {
+        if(getRequestBuilder().getFormParameters().isEmpty() && getBody() != null && isFormUrlEncoded()) {
+            Map<String, HttpParam> formPs = Json.toFormUrlEncoded(getBody());
+            getRequestBuilder().setFormParameters(formPs);
+            return null;
+        } else {
+            return getJsonStringBody(canonicalContentType);
+        }
     }
 
     protected RequestBuilder getRequestBuilder() {

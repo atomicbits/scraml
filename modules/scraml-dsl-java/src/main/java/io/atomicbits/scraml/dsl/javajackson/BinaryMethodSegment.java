@@ -55,7 +55,7 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
     }
 
     public CompletableFuture<Response<BinaryData>> call() {
-        return getRequestBuilder().callToBinaryResponse(getJsonStringBody(canonicalContentType));
+        return getRequestBuilder().callToBinaryResponse(jsonBodyToString(canonicalContentType));
     }
 
 }

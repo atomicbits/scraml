@@ -157,7 +157,7 @@ case class Ning19Client(protocol: String,
       ningRb
     }
 
-    (HeaderMap() set (defaultHeaders.toSeq: _*) set requestBuilder.headers).foreach {
+    requestBuilder.allHeaders.foreach {
       case (key, values) =>
         values.foreach { value =>
           ningBuilder.addHeader(key, value)

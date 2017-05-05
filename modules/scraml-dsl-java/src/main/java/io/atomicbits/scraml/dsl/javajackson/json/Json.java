@@ -22,13 +22,13 @@
 
 package io.atomicbits.scraml.dsl.javajackson.json;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import io.atomicbits.scraml.dsl.javajackson.HttpParam;
+import io.atomicbits.scraml.dsl.javajackson.SimpleHttpParam;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Created by peter on 28/03/17.
@@ -62,7 +62,7 @@ public class Json {
      * @return The JSON representation of the body as a string.
      */
     public static <B> String writeBodyToString(B body, String canonicalRequestType) {
-        if (canonicalRequestType != null && ! body.getClass().isEnum() && ! body.getClass().isPrimitive()) {
+        if (canonicalRequestType != null && !body.getClass().isEnum() && !body.getClass().isPrimitive()) {
             JavaType javaType = TypeFactory.defaultInstance().constructFromCanonical(canonicalRequestType);
             ObjectWriter writer = objectMapper.writerFor(javaType);
             try {
@@ -72,6 +72,20 @@ public class Json {
             }
         } else {
             return body.toString();
+        }
+    }
+
+    public static <B> Map<String, HttpParam> toFormUrlEncoded(B body) {
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(body);
+            Map<String, HttpParam> entries = new HashMap<>();
+            for (Iterator<Map.Entry<String, JsonNode>> it = jsonNode.fields(); it.hasNext(); ) {
+                Map.Entry<String, JsonNode> entry = it.next();
+                if (entry.getValue() != null) entries.put(entry.getKey(), new SimpleHttpParam(entry.getValue().asText())); // .asText() is essential here to avoid quoted strings
+            }
+            return entries;
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("JSON parse error: " + e.getMessage(), e);
         }
     }
 

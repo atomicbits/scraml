@@ -19,7 +19,10 @@
 
 package io.atomicbits.scraml.dsl.scalaplay.json
 
-import play.api.libs.json.{ JsString, JsValue }
+import io.atomicbits.scraml.dsl.scalaplay.{ HttpParam, SimpleHttpParam }
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 /**
   * Created by peter on 7/04/17.
@@ -30,6 +33,24 @@ object JsonOps {
     json match {
       case JsString(jsString) => jsString // JsString(jsString).toString would have put quotes around the jsString.
       case other              => other.toString()
+    }
+  }
+
+  def toFormUrlEncoded(json: JsValue): Map[String, HttpParam] = {
+
+    def flatten(jsObj: JsObject): Map[String, HttpParam] = {
+      jsObj.value.collect {
+        case (field, JsString(value))  => field -> SimpleHttpParam.create(value)
+        case (field, JsNumber(value))  => field -> SimpleHttpParam.create(value)
+        case (field, JsBoolean(value)) => field -> SimpleHttpParam.create(value)
+        case (field, jsObj: JsObject)  => field -> SimpleHttpParam.create(jsObj)
+      } toMap
+    }
+
+    json match {
+      case JsString(jsString) => Map.empty
+      case jsObject: JsObject => flatten(jsObject)
+      case other              => Map.empty
     }
   }
 
