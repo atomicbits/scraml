@@ -94,7 +94,13 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
 
       // Register headers and query parameters
       val canonicalLHWithHeaders = indexParameters(canonicalLHWithResponses, action.headers)
-      indexParameters(canonicalLHWithHeaders, action.queryParameters)
+
+      val canonicalLHWithQueryString =
+        action.queryString
+          .map(qs => indexParsedTypesInt(canonicalLHWithHeaders, (NoId, qs.queryStringType.parsed)))
+          .getOrElse(canonicalLHWithHeaders)
+
+      indexParameters(canonicalLHWithQueryString, action.queryParameters)
     }
 
     val canonicalLookupHelperWithActionTypes = resource.actions.foldLeft(canonicalLookupHelper)(indexActionParsedTypes)

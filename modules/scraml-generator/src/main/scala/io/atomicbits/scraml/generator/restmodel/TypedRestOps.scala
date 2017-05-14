@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.restmodel
 
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel.ClassPointer
-import io.atomicbits.scraml.ramlparser.model.{ BodyContent, Parameter }
+import io.atomicbits.scraml.ramlparser.model.{ BodyContent, Parameter, QueryString }
 
 /**
   * Created by peter on 3/04/17.
@@ -47,6 +47,16 @@ object TypedRestOps {
       } yield {
         Platform.typeReferenceToClassPointer(canonicalBdType)
       }
+    }
+
+  }
+
+  implicit class QueryStringExtension(val queryString: QueryString) {
+
+    def classPointer(): ClassPointer = {
+      queryString.queryStringType.canonical.collect {
+        case typeReference => Platform.typeReferenceToClassPointer(typeReference)
+      } getOrElse sys.error(s"Could not retrieve the canonical type reference from queryString $queryString.")
     }
 
   }

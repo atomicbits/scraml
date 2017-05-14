@@ -22,9 +22,6 @@
 
 package io.atomicbits.scraml.dsl.scalaplay
 
-import java.nio.charset.Charset
-
-import io.atomicbits.scraml.dsl.scalaplay.json.JsonOps
 import play.api.libs.json.{ Format, JsValue }
 
 import scala.concurrent.Future
@@ -60,6 +57,7 @@ class HeaderSegment(_req: RequestBuilder) extends Segment {
 abstract class MethodSegment[B, R](method: Method,
                                    theBody: Option[B],
                                    queryParams: Map[String, Option[HttpParam]],
+                                   queryString: Option[TypedQueryParams],
                                    formParams: Map[String, Option[HttpParam]],
                                    multipartParams: List[BodyPart],
                                    binaryBody: Option[BinaryRequest] = None,
@@ -70,7 +68,12 @@ abstract class MethodSegment[B, R](method: Method,
 
   val body = theBody
 
-  protected val queryParameterMap: Map[String, HttpParam] = queryParams.collect { case (key, Some(value)) => (key, value) }
+  protected val queryParameterMap: Map[String, HttpParam] =
+    queryString
+      .map(_.params)
+      .getOrElse {
+        queryParams.collect { case (key, Some(value)) => (key, value) }
+      }
 
   protected val formParameterMap: Map[String, HttpParam] = formParams.collect { case (key, Some(value)) => (key, value) }
 
@@ -129,7 +132,7 @@ abstract class MethodSegment[B, R](method: Method,
 
   def jsonBodyToString()(implicit bodyFormat: Format[B]): (RequestBuilder, Option[String]) = {
     if (formParams.isEmpty && body.isDefined && isFormUrlEncoded) {
-      val formPs: Map[String, HttpParam] = JsonOps.toFormUrlEncoded(bodyFormat.writes(body.get))
+      val formPs: Map[String, HttpParam] = HttpParam.toFormUrlEncoded(bodyFormat.writes(body.get))
       val reqBuilder                     = _requestBuilder.copy(formParameters = formPs)
       (reqBuilder, None)
     } else {
@@ -143,6 +146,7 @@ abstract class MethodSegment[B, R](method: Method,
 class StringMethodSegment[B](method: Method,
                              theBody: Option[B] = None,
                              queryParams: Map[String, Option[HttpParam]],
+                             queryString: Option[TypedQueryParams]      = None,
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
                              multipartParams: List[BodyPart]            = List.empty,
                              binaryParam: Option[BinaryRequest]         = None,
@@ -152,6 +156,7 @@ class StringMethodSegment[B](method: Method,
     extends MethodSegment[B, String](method,
                                      theBody,
                                      queryParams,
+                                     queryString,
                                      formParams,
                                      multipartParams,
                                      binaryParam,
@@ -174,6 +179,7 @@ class StringMethodSegment[B](method: Method,
 class JsonMethodSegment[B](method: Method,
                            theBody: Option[B] = None,
                            queryParams: Map[String, Option[HttpParam]],
+                           queryString: Option[TypedQueryParams]      = None,
                            formParams: Map[String, Option[HttpParam]] = Map.empty,
                            multipartParams: List[BodyPart]            = List.empty,
                            binaryParam: Option[BinaryRequest]         = None,
@@ -183,6 +189,7 @@ class JsonMethodSegment[B](method: Method,
     extends MethodSegment[B, JsValue](method,
                                       theBody,
                                       queryParams,
+                                      queryString,
                                       formParams,
                                       multipartParams,
                                       binaryParam,
@@ -205,6 +212,7 @@ class JsonMethodSegment[B](method: Method,
 class TypeMethodSegment[B, R](method: Method,
                               theBody: Option[B]                          = None,
                               queryParams: Map[String, Option[HttpParam]] = Map.empty,
+                              queryString: Option[TypedQueryParams]       = None,
                               formParams: Map[String, Option[HttpParam]]  = Map.empty,
                               multipartParams: List[BodyPart]             = List.empty,
                               binaryParam: Option[BinaryRequest]          = None,
@@ -214,6 +222,7 @@ class TypeMethodSegment[B, R](method: Method,
     extends MethodSegment[B, R](method,
                                 theBody,
                                 queryParams,
+                                queryString,
                                 formParams,
                                 multipartParams,
                                 binaryParam,
@@ -236,6 +245,7 @@ class TypeMethodSegment[B, R](method: Method,
 class BinaryMethodSegment[B](method: Method,
                              theBody: Option[B] = None,
                              queryParams: Map[String, Option[HttpParam]],
+                             queryString: Option[TypedQueryParams]      = None,
                              formParams: Map[String, Option[HttpParam]] = Map.empty,
                              multipartParams: List[BodyPart]            = List.empty,
                              binaryParam: Option[BinaryRequest]         = None,
@@ -245,6 +255,7 @@ class BinaryMethodSegment[B](method: Method,
     extends MethodSegment[B, BinaryData](method,
                                          theBody,
                                          queryParams,
+                                         queryString,
                                          formParams,
                                          multipartParams,
                                          binaryParam,

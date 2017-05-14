@@ -96,6 +96,11 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       }
     }
 
+    def transformQueryString(queryString: QueryString): QueryString = {
+      val updatedQueryStringType = injectCanonicalTypeRepresentation(queryString.queryStringType)
+      queryString.copy(queryStringType = updatedQueryStringType)
+    }
+
     def transformParsedParameter(parsedParameter: Parameter): Parameter = {
       val canonicalNameSuggestion = canonicalNameGenerator.generate(NativeId(parsedParameter.name))
       val updatedParameterType    = injectCanonicalTypeRepresentation(parsedParameter.parameterType, Some(canonicalNameSuggestion))
@@ -119,6 +124,8 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
       val updatedQueryParameters = action.queryParameters.mapValues(transformParsedParameter)
 
+      val updatedQueryString = action.queryString.map(transformQueryString)
+
       val updatedBody = transformBody(action.body)
 
       val updatedResponseMap = action.responses.responseMap.mapValues { response =>
@@ -127,7 +134,11 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       }
       val updatedResponses = action.responses.copy(responseMap = updatedResponseMap)
 
-      action.copy(headers = updatedHeaders, queryParameters = updatedQueryParameters, body = updatedBody, responses = updatedResponses)
+      action.copy(headers         = updatedHeaders,
+                  queryParameters = updatedQueryParameters,
+                  queryString     = updatedQueryString,
+                  body            = updatedBody,
+                  responses       = updatedResponses)
     }
 
     def transformResource(resource: Resource): Resource = {

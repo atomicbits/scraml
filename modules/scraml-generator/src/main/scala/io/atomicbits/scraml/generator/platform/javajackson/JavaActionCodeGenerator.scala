@@ -25,7 +25,7 @@ import io.atomicbits.scraml.generator.codegen.{ ActionCode, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import TypedRestOps._
 
@@ -49,6 +49,10 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
       val (field, classPtr) = parameterDef
       s"${classPtr.classDefinition} $field"
     }
+  }
+
+  def queryStringType(actionSelection: ActionSelection): Option[ClassPointer] = {
+    actionSelection.action.queryString.map(_ classPointer ())
   }
 
   def bodyTypes(actionSelection: ActionSelection): List[Option[ClassPointer]] =
@@ -152,6 +156,17 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
     }
   }
 
+  def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment = {
+
+    val sanitizedParameterName = CleanNameTools.cleanFieldName("queryString")
+    val classPointer           = queryString.classPointer()
+    val classDefinition        = classPointer.classDefinition
+
+    val methodParameter = s"$classDefinition $sanitizedParameterName"
+
+    SourceCodeFragment(imports = Set(classPointer), sourceDefinition = List(methodParameter))
+  }
+
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment = {
     val (queryParameterName, parameter) = qParam
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
@@ -181,6 +196,7 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
 
   def generateAction(actionSelection: ActionSelection,
                      bodyType: Option[ClassPointer],
+                     queryStringType: Option[ClassPointer],
                      isBinary: Boolean,
                      actionParameters: List[String]        = List.empty,
                      formParameterMapEntries: List[String] = List.empty,

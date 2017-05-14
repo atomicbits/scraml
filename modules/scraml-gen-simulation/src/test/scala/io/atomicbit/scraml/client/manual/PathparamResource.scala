@@ -37,6 +37,7 @@ class PathparamResource(_value: String, private val _req: RequestBuilder) extend
       "queryparY" -> Option(queryparY).map(SimpleHttpParam.create(_)),
       "queryParZ" -> queryParZ.map(SimpleHttpParam.create(_))
     ),
+    queryString          = None,
     expectedAcceptHeader = Some("application/json"),
     req                  = _requestBuilder
   )

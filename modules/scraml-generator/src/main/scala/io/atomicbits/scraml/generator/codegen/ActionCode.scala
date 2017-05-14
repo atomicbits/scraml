@@ -21,7 +21,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.restmodel.{ ActionSelection, ContentType, ResponseType }
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 
 /**
   * Created by peter on 20/01/17.
@@ -29,6 +29,8 @@ import io.atomicbits.scraml.ramlparser.model.Parameter
 trait ActionCode {
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String
+
+  def queryStringType(actionSelection: ActionSelection): Option[ClassPointer]
 
   /**
     * The list of body types that need to be available on a specific action function.
@@ -52,12 +54,15 @@ trait ActionCode {
 
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment
 
+  def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment
+
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
 
   def quoteString(text: String): String = s""""$text""""
 
   def generateAction(actionSelection: ActionSelection,
                      bodyType: Option[ClassPointer],
+                     queryStringType: Option[ClassPointer],
                      isBinary: Boolean,
                      actionParameters: List[String]        = List.empty,
                      formParameterMapEntries: List[String] = List.empty,

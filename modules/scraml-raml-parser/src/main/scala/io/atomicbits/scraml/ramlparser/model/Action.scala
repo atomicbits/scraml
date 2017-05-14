@@ -19,15 +19,21 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.{ JsObject, JsValue, Json }
 
-import scala.util.Try
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 10/02/16.
   */
-case class Action(actionType: Method, headers: Parameters, queryParameters: Parameters, body: Body, responses: Responses)
+case class Action(actionType: Method,
+                  headers: Parameters,
+                  queryParameters: Parameters,
+                  body: Body,
+                  responses: Responses,
+                  queryString: Option[QueryString] = None)
 
 object Action {
 
@@ -51,6 +57,11 @@ object Action {
     parseContext.traits.applyTo(jsObject) { json =>
       val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption)
 
+      val tryQueryString =
+        (json \ "queryString").toOption.collect {
+          case ParsedType(bType) => bType.map(Option(_))
+        } getOrElse Success(None)
+
       val tryHeaders = Parameters((json \ "headers").toOption)
 
       val tryBody = Body(json)
@@ -62,13 +73,15 @@ object Action {
         headers <- tryHeaders
         body <- tryBody
         responses <- tryResponses
+        queryStringOpt <- tryQueryString
       } yield
         Action(
           actionType      = actionType,
           headers         = headers,
           queryParameters = queryParameters,
           body            = body,
-          responses       = responses
+          responses       = responses,
+          queryString     = queryStringOpt.map(qs => QueryString(queryStringType = TypeRepresentation(qs)))
         )
     }
 

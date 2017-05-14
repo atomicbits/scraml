@@ -23,12 +23,33 @@
 package io.atomicbits.scraml.dsl.scalaplay
 
 import io.atomicbits.scraml.dsl.scalaplay.json.JsonOps
-import play.api.libs.json.Format
+import play.api.libs.json._
 
 /**
   * Created by peter on 27/07/15.
   */
 sealed trait HttpParam
+
+case object HttpParam {
+
+  def toFormUrlEncoded(json: JsValue): Map[String, HttpParam] = {
+
+    def flatten(jsObj: JsObject): Map[String, HttpParam] = {
+      jsObj.value.collect {
+        case (field, JsString(value))  => field -> SimpleHttpParam.create(value)
+        case (field, JsNumber(value))  => field -> SimpleHttpParam.create(value)
+        case (field, JsBoolean(value)) => field -> SimpleHttpParam.create(value)
+        case (field, jsObj: JsObject)  => field -> SimpleHttpParam.create(jsObj)
+      } toMap
+    }
+
+    json match {
+      case jsObject: JsObject => flatten(jsObject)
+      case other              => Map.empty
+    }
+  }
+
+}
 
 case class SimpleHttpParam(parameter: String) extends HttpParam
 
