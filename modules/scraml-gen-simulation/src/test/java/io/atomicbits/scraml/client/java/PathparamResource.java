@@ -60,6 +60,7 @@ public class PathparamResource extends ParamSegment<String> {
                 null,
                 null,
                 null,
+                null,
                 "application/json",
                 null,
                 this.getRequestBuilder(),

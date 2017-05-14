@@ -22,11 +22,23 @@
 
 package io.atomicbits.scraml.dsl.javajackson;
 
+import io.atomicbits.scraml.dsl.javajackson.json.Json;
+
+import java.util.Map;
+
 /**
- * Created by peter on 19/08/15.
+ * Created by peter on 14/05/17.
  */
-public interface HttpParam {
+public class TypedQueryParams {
 
+    private Map<String, HttpParam> params;
 
+    public <T> TypedQueryParams(T typedQueryParams) {
+        this.params = Json.toFormUrlEncoded(typedQueryParams);
+    }
+
+    public Map<String, HttpParam> getParams() {
+        return params;
+    }
 
 }

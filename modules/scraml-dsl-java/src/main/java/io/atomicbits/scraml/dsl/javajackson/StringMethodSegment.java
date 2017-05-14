@@ -38,6 +38,7 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
     public StringMethodSegment(Method method,
                                B theBody,
                                Map<String, HttpParam> queryParams,
+                               TypedQueryParams queryString,
                                Map<String, HttpParam> formParams,
                                List<BodyPart> multipartParams,
                                BinaryRequest binaryRequest,
@@ -46,7 +47,7 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
                                RequestBuilder req,
                                String canonicalContentType,
                                String canonicalResponseType) {
-        super(method, theBody, queryParams, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
+        super(method, theBody, queryParams, queryString, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
     }

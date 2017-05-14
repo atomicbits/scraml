@@ -52,7 +52,7 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
   }
 
   def queryStringType(actionSelection: ActionSelection): Option[ClassPointer] = {
-    actionSelection.action.queryString.map(_ classPointer ())
+    actionSelection.action.queryString.map(_.classPointer())
   }
 
   def bodyTypes(actionSelection: ActionSelection): List[Option[ClassPointer]] =
@@ -253,6 +253,10 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
         ("", "null")
       }
 
+    val queryStringValue =
+      if (queryStringType.isDefined) "new TypedQueryParams(queryString)"
+      else "null"
+
     val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
 
     val canonicalContentT = canonicalContentType(contentType).map(quoteString).getOrElse("null")
@@ -272,6 +276,7 @@ case class JavaActionCodeGenerator(javaJackson: JavaJackson) extends ActionCode 
            $method,
            $bodyFieldValue,
            $queryParams,
+           $queryStringValue,
            $formParams,
            $multipartParamsValue,
            $binaryParamValue,

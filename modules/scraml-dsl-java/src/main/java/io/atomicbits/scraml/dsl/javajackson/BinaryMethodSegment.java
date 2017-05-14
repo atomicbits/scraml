@@ -36,6 +36,7 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
     public BinaryMethodSegment(Method method,
                                B theBody,
                                Map<String, HttpParam> queryParams,
+                               TypedQueryParams queryString,
                                Map<String, HttpParam> formParams,
                                List<BodyPart> multipartParams,
                                BinaryRequest binaryRequest,
@@ -44,7 +45,7 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
                                RequestBuilder req,
                                String canonicalContentType,
                                String canonicalResponseType) {
-        super(method, theBody, queryParams, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
+        super(method, theBody, queryParams, queryString, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
     }

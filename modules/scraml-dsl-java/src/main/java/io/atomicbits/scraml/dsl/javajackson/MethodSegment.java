@@ -42,6 +42,7 @@ public abstract class MethodSegment<B, R> extends Segment {
     protected MethodSegment(Method method,
                             B theBody,
                             Map<String, HttpParam> queryParams,
+                            TypedQueryParams queryString,
                             Map<String, HttpParam> formParams,
                             List<BodyPart> multipartParams,
                             BinaryRequest binaryRequest,
@@ -53,7 +54,13 @@ public abstract class MethodSegment<B, R> extends Segment {
 
         RequestBuilder requestBuilder = req.fold(); // We're at the end of the resource path, we can fold the resource here.
         requestBuilder.setMethod(method);
-        requestBuilder.setQueryParameters(removeNullParams(queryParams));
+        Map<String, HttpParam> actualQueryParams;
+        if (queryString != null) {
+            actualQueryParams = queryString.getParams();
+        } else {
+            actualQueryParams = queryParams;
+        }
+        requestBuilder.setQueryParameters(removeNullParams(actualQueryParams));
         requestBuilder.setFormParameters(removeNullParams(formParams));
         requestBuilder.setMultipartParams(multipartParams);
         requestBuilder.setBinaryRequest(binaryRequest);
@@ -115,14 +122,14 @@ public abstract class MethodSegment<B, R> extends Segment {
     protected Boolean isFormUrlEncoded() {
         List<String> contentValues = requestBuilder.getHeaderMap().getValues("Content-Type");
         Boolean isFormUrlEncoded = false;
-        for(String contentValue : contentValues) {
-            if(contentValue.contains("application/x-www-form-urlencoded")) isFormUrlEncoded = true;
+        for (String contentValue : contentValues) {
+            if (contentValue.contains("application/x-www-form-urlencoded")) isFormUrlEncoded = true;
         }
         return isFormUrlEncoded;
     }
 
     protected String jsonBodyToString(String canonicalContentType) {
-        if(getRequestBuilder().getFormParameters().isEmpty() && getBody() != null && isFormUrlEncoded()) {
+        if (getRequestBuilder().getFormParameters().isEmpty() && getBody() != null && isFormUrlEncoded()) {
             Map<String, HttpParam> formPs = Json.toFormUrlEncoded(getBody());
             getRequestBuilder().setFormParameters(formPs);
             return null;
@@ -139,8 +146,8 @@ public abstract class MethodSegment<B, R> extends Segment {
     /**
      * see https://www.w3.org/Protocols/rfc1341/4_Content-Type.html
      * charset is case-insensitive:
-     *  * http://stackoverflow.com/questions/7718476/are-http-headers-content-type-c-case-sensitive
-     *  * https://www.w3.org/TR/html4/charset.html#h-5.2.1
+     * * http://stackoverflow.com/questions/7718476/are-http-headers-content-type-c-case-sensitive
+     * * https://www.w3.org/TR/html4/charset.html#h-5.2.1
      */
     private void setRequestCharset(RequestBuilder requestBuilder, String contentType) {
         if (requestBuilder.getHeaderMap().hasKey(contentType)) {
