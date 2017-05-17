@@ -139,11 +139,19 @@ object ScalaPlay extends Platform with CleanNameTools {
     else s"${safeFieldName(field)}: Option[${classDefinition(field.classPointer)}]"
   }
 
-  def fieldFormatUnlift(field: Field): String =
-    if (field.required)
-      s""" (__ \\ "${field.fieldName}").format[${classDefinition(field.classPointer)}]"""
-    else
-      s""" (__ \\ "${field.fieldName}").formatNullable[${classDefinition(field.classPointer)}]"""
+  // format: off
+  def fieldFormatUnlift(field: Field, recursiveFields: Set[Field]): String =
+    (field.required, recursiveFields.contains(field)) match {
+      case (true, false) =>
+        s""" (__ \\ "${field.fieldName}").format[${classDefinition(field.classPointer)}]"""
+      case (true, true) =>
+        s""" (__ \\ "${field.fieldName}").lazyFormat[${classDefinition(field.classPointer)}](Format.of[${classDefinition(field.classPointer)}])"""
+      case (false, false) =>
+        s""" (__ \\ "${field.fieldName}").formatNullable[${classDefinition(field.classPointer)}]"""
+      case (false, true) =>
+        s""" (__ \\ "${field.fieldName}").lazyFormatNullable[${classDefinition(field.classPointer)}](Format.of[${classDefinition(field.classPointer)}])"""
+    }
+  // format: on
 
   override def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
     val ownPackage = targetClassReference.packageName
