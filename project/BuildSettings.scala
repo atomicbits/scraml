@@ -29,7 +29,7 @@ trait BuildSettings { this: Build =>
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val Version = "0.6.1d" + snapshotSuffix
+  val Version = "0.6.1d" // + snapshotSuffix
 
   val scala2_10 = "2.10.5"
   val scala2_11 = "2.11.8"
