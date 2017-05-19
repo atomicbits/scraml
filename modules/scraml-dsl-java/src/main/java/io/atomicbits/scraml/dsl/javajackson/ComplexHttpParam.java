@@ -42,4 +42,9 @@ public class ComplexHttpParam implements SingleHttpParam {
         return parameter;
     }
 
+    @Override
+    public boolean nonEmpty() {
+        return parameter != null;
+    }
+
 }

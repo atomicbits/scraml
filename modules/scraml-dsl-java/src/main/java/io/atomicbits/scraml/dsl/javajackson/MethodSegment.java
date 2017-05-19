@@ -175,16 +175,13 @@ public abstract class MethodSegment<B, R> extends Segment {
     }
 
     private Map<String, HttpParam> removeNullParams(Map<String, HttpParam> map) {
-        Map<String, HttpParam> cleanedMap = new HashMap<String, HttpParam>();
+        Map<String, HttpParam> nonNullParams = new HashMap<>();
         if (map != null) {
-            for (String key : map.keySet()) {
-                HttpParam value = map.get(key);
-                if (value != null) {
-                    cleanedMap.put(key, value);
-                }
-            }
+            map.forEach((key, value) -> {
+                if (value != null && value.nonEmpty()) nonNullParams.put(key, value);
+            });
         }
-        return cleanedMap;
+        return nonNullParams;
     }
 
 }

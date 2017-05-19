@@ -27,6 +27,6 @@ package io.atomicbits.scraml.dsl.javajackson;
  */
 public interface HttpParam {
 
-
+    boolean nonEmpty();
 
 }

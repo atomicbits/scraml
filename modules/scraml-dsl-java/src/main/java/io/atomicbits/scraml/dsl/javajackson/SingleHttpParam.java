@@ -29,4 +29,6 @@ public interface SingleHttpParam extends HttpParam {
 
     String getParameter();
 
+    boolean nonEmpty();
+
 }

@@ -24,6 +24,7 @@ package io.atomicbits.scraml.dsl.javajackson;
 
 import io.atomicbits.scraml.dsl.javajackson.json.Json;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**

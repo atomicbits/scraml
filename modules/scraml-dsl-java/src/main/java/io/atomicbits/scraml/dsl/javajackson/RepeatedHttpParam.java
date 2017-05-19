@@ -46,4 +46,9 @@ public class RepeatedHttpParam implements HttpParam {
         return parameters;
     }
 
+    @Override
+    public boolean nonEmpty() {
+        return parameters != null && !parameters.isEmpty();
+    }
+
 }

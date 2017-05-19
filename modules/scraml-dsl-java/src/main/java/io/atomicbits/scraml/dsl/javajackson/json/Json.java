@@ -23,6 +23,7 @@
 package io.atomicbits.scraml.dsl.javajackson.json;
 
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.atomicbits.scraml.dsl.javajackson.HttpParam;
 import io.atomicbits.scraml.dsl.javajackson.SimpleHttpParam;
@@ -81,7 +82,11 @@ public class Json {
             Map<String, HttpParam> entries = new HashMap<>();
             for (Iterator<Map.Entry<String, JsonNode>> it = jsonNode.fields(); it.hasNext(); ) {
                 Map.Entry<String, JsonNode> entry = it.next();
-                if (entry.getValue() != null) entries.put(entry.getKey(), new SimpleHttpParam(entry.getValue().asText())); // .asText() is essential here to avoid quoted strings
+                if (!(entry.getValue() instanceof NullNode))
+                    entries.put(
+                            entry.getKey(),
+                            new SimpleHttpParam(entry.getValue().asText())
+                    ); // .asText() is essential here to avoid quoted strings
             }
             return entries;
         } catch (IllegalArgumentException e) {

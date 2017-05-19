@@ -38,4 +38,9 @@ public class SimpleHttpParam implements SingleHttpParam {
         return parameter;
     }
 
+    @Override
+    public boolean nonEmpty() {
+        return parameter != null;
+    }
+
 }
