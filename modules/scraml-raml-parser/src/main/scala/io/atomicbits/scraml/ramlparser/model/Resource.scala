@@ -21,7 +21,7 @@ package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedString
 import io.atomicbits.scraml.ramlparser.parser.ParseContext
-import play.api.libs.json.JsObject
+import play.api.libs.json.{ JsObject, Json }
 
 import scala.util.Try
 import io.atomicbits.scraml.util.TryUtils._
@@ -52,34 +52,51 @@ object Resource {
 
     parseContext.withSource(jsObject) {
 
-      // Apply all traits to the resource. This must be done *before* calling the child resources
+      // ToDo: first apply the resourceTypes to this resource, then the traits to all its methods.
+      // Apply the listed traits to all methods in the resource. ToDo: fix the current implementation! It applies the trait to the resource
+      //
+      // From the spec:
+      // "A trait can also be applied to a resource by using the is node. Using this node is equivalent to applying the trait to
+      // all methods for that resource, whether declared explicitly in the resource definition or inherited from a resource type."
+      //
+      // This must be done *before* calling the child resources
       // recursively to adhere to the trait priority as described in:
       // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md/#algorithm-of-merging-traits-and-methods
-      parseContext.traits.applyTo(jsObject) { jsObj =>
-        val displayName: Try[Option[String]] = Try(jsObj.fieldStringValue("displayName"))
-
-        val description: Try[Option[String]] = Try(jsObj.fieldStringValue("description"))
-
-        // URI parameters
-        val uriParameterMap: Try[Parameters] = Parameters((jsObj \ "uriParameters").toOption)
-
+      parseContext.resourceTypes.applyToResource(jsObject) { resourceJsObj =>
         // Actions
 
-        val tryActions =
-          jsObj.fields.collect {
-            case Action(action) => action
-          }
+        val tryMethods: Seq[(Method, Try[JsObject])] =
+          resourceJsObj.fields
+            .collect {
+              case (Method(method), jsObj: JsObject) => (method, jsObj)
+              case (Method(method), _)               => (method, Json.obj())
+            }
+            .map {
+              case (meth, jsOb) =>
+                val actionOwnTraits      = parseContext.traits.mergeInToAction(jsOb)
+                val actionResourceTraits = actionOwnTraits.flatMap(parseContext.traits.mergeInToActionFromResource(_, resourceJsObj))
+                (meth, actionResourceTraits)
+            }
 
-        val actions = accumulate(tryActions)
+        val accumulated: Try[Map[Method, JsObject]] = accumulate(tryMethods.toMap)
+        val actionSeq: Try[Seq[Try[Action]]]        = accumulated.map(methodMap => methodMap.map(Action(_)).toSeq)
+        val actions: Try[Seq[Action]]               = actionSeq.flatMap(accumulate(_))
 
         // Subresources
 
         val subResourceMap =
-          jsObj.value.toMap.collect {
+          resourceJsObj.value.toMap.collect {
             case (fieldName, jsOb: JsObject) if fieldName.startsWith("/") => Resource(fieldName, jsOb)
           } toSeq
 
         val subResources: Try[Seq[Resource]] = accumulate(subResourceMap)
+
+        val displayName: Try[Option[String]] = Try(resourceJsObj.fieldStringValue("displayName"))
+
+        val description: Try[Option[String]] = Try(resourceJsObj.fieldStringValue("description"))
+
+        // URI parameters
+        val uriParameterMap: Try[Parameters] = Parameters((resourceJsObj \ "uriParameters").toOption)
 
         /**
           * Resources in the Java RAML model can have relative URLs that consist of multiple segments in a single Resource,

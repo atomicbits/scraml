@@ -21,7 +21,7 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, GivenWhenThen}
+import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
 
 import scala.util.Try
@@ -40,18 +40,43 @@ class TraitsParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfter
     val parsedModel: Try[Raml] = parser.parse
 
     Then("we get all four actions in the userid resource")
-    val raml = parsedModel.get
-    val restResource: Resource = raml.resources.filter(_.urlSegment == "rest").head
-    val userResource: Resource = restResource.resources.filter(_.urlSegment == "user").head
-    val uploadResource: Resource = userResource.resources.filter(_.urlSegment == "upload").head
+    val raml                   = parsedModel.get
+    val restResource: Resource = raml.resourceMap("rest")
+    val userResource: Resource = restResource.resourceMap("user")
 
-    val postAction: Action = uploadResource.actions.filter(_.actionType == Post).head
-
-    val response401Opt = postAction.responses.responseMap.get(StatusCode("401"))
-    response401Opt should not be(None)
-
+    val uploadResource: Resource = userResource.resourceMap("upload")
+    val uploadPostAction: Action = uploadResource.actionMap(Post)
+    val response401Opt           = uploadPostAction.responses.responseMap.get(StatusCode("401"))
+    response401Opt should not be None
     val bodyContentOpt = response401Opt.get.body.contentMap.get(MediaType("application/json"))
-    bodyContentOpt should not be (None)
+    bodyContentOpt should not be None
+
+    val resourcetraitResource: Resource = userResource.resourceMap("resourcetrait")
+
+    val getAction: Action = resourcetraitResource.actionMap(Get)
+    val getResponse401Opt = getAction.responses.responseMap.get(StatusCode("401"))
+    getResponse401Opt should not be None
+    val getBodyContentOpt = getResponse401Opt.get.body.contentMap.get(MediaType("application/json"))
+    getBodyContentOpt should not be None
+
+    val putAction: Action = resourcetraitResource.actionMap(Put)
+    val putResponse401Opt = putAction.responses.responseMap.get(StatusCode("401"))
+    putResponse401Opt should not be None
+    val putBodyContentOpt = putResponse401Opt.get.body.contentMap.get(MediaType("application/json"))
+    putBodyContentOpt should not be None
+
+    val postAction: Action = resourcetraitResource.actionMap(Post)
+    val postResponse401Opt = postAction.responses.responseMap.get(StatusCode("401"))
+    postResponse401Opt should not be None
+    val postBodyContentOpt = postResponse401Opt.get.body.contentMap.get(MediaType("application/existing+json"))
+    postBodyContentOpt should not be None
+
+    val deleteAction: Action = resourcetraitResource.actionMap(Delete)
+    val deleteResponse401Opt = deleteAction.responses.responseMap.get(StatusCode("401"))
+    deleteResponse401Opt should not be None
+    val deleteBodyContentOpt = deleteResponse401Opt.get.body.contentMap.get(MediaType("application/alternative+json"))
+    deleteBodyContentOpt should not be None
+
   }
 
 }

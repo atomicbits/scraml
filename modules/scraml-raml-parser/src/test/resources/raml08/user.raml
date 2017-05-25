@@ -36,6 +36,34 @@
       200:
         body:
 
+/resourcetrait:
+  is: [error401]
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+  put:
+    body:
+      application/json:
+    responses:
+      200:
+        application/json:
+  post:
+    body:
+      application/json:
+    responses:
+      200:
+        application/json:
+      401:
+        body:
+          application/existing+json:
+  delete:
+    is: [error401-alternative]
+    responses:
+      200:
+        body:
+          application/json:
 
 /{userid}:
   uriParameters:

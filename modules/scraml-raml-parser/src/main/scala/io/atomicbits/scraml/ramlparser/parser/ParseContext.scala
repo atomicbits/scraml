@@ -19,17 +19,16 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import io.atomicbits.scraml.ramlparser.model.{Id, MediaType, Traits}
-import play.api.libs.json.{JsString, JsValue}
-
+import io.atomicbits.scraml.ramlparser.model.{ MediaType, ResourceTypes, Traits }
+import play.api.libs.json.{ JsString, JsValue }
 
 /**
   * Created by peter on 10/02/16.
   */
 case class ParseContext(var sourceTrail: List[String],
-                        traits: Traits = Traits(),
+                        resourceTypes: ResourceTypes        = ResourceTypes(),
+                        traits: Traits                      = Traits(),
                         defaultMediaType: Option[MediaType] = None) {
-
 
   def withSource[T](jsValue: JsValue)(fn: => T): T = {
     (jsValue \ Sourced.sourcefield).toOption.collect {
@@ -41,7 +40,6 @@ case class ParseContext(var sourceTrail: List[String],
         result
     } getOrElse fn
   }
-
 
   def head = sourceTrail.head
 

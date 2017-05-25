@@ -78,6 +78,7 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
         Set(
           List("rest", "user"),
           List("rest", "user", "upload"),
+          List("rest", "user", "resourcetrait"),
           List("rest", "user", "activate"),
           List("rest", "user", "{void}", "location"),
           List("rest", "user", "{userid}"),
