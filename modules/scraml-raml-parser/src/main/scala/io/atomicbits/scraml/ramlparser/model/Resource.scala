@@ -52,8 +52,7 @@ object Resource {
 
     parseContext.withSource(jsObject) {
 
-      // ToDo: first apply the resourceTypes to this resource, then the traits to all its methods.
-      // Apply the listed traits to all methods in the resource. ToDo: fix the current implementation! It applies the trait to the resource
+      // Apply the listed traits to all methods in the resource.
       //
       // From the spec:
       // "A trait can also be applied to a resource by using the is node. Using this node is equivalent to applying the trait to

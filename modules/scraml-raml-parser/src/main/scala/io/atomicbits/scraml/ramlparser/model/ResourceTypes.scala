@@ -23,10 +23,9 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
-import play.api.libs.json.{ JsArray, JsObject, JsValue }
+import play.api.libs.json.{ JsArray, JsObject, JsString, JsValue }
 
 import scala.util.{ Failure, Success, Try }
-import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 /**
   * Created by peter on 25/05/17.
@@ -34,12 +33,17 @@ import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 case class ResourceTypes(resourceTypesMap: Map[String, JsObject]) extends ModelMerge {
 
   def applyToResource[T](jsObject: JsObject)(f: JsObject => Try[T])(implicit parseContext: ParseContext): Try[T] = {
-    val resourceTypeName = findResourceTypeName(jsObject)
+    val resourceTypeName = findResourceTypeNames(jsObject)
     applyToForMergeNames(jsObject, resourceTypeName, resourceTypesMap).flatMap(f)
   }
 
-  def findResourceTypeName(jsObject: JsObject): Seq[String] = {
-    jsObject.fieldStringValue("type").map(List(_)).getOrElse(List.empty)
+  def findResourceTypeNames(jsObject: JsObject): Seq[String] = {
+    (jsObject \ "type").toOption
+      .collect {
+        case JsString(value) => Seq(value)
+        case jsObj: JsObject => jsObj.keys.toSeq
+      }
+      .getOrElse(Seq.empty)
   }
 
 }
