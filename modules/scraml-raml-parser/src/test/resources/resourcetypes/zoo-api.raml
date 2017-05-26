@@ -25,6 +25,13 @@ resourceTypes:
           body:
             application/json:
               type: Animal[]
+    post?:
+      body:
+        application/json:
+      responses:
+        200:
+          application/json:
+
 
 /zoo/animals:
   type: animalcollection
@@ -32,3 +39,5 @@ resourceTypes:
 /animals:
   type:
     animalcollection:
+  post:
+

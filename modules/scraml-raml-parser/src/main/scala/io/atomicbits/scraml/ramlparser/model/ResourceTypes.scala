@@ -34,7 +34,7 @@ case class ResourceTypes(resourceTypesMap: Map[String, JsObject]) extends ModelM
 
   def applyToResource[T](jsObject: JsObject)(f: JsObject => Try[T])(implicit parseContext: ParseContext): Try[T] = {
     val resourceTypeName = findResourceTypeNames(jsObject)
-    applyToForMergeNames(jsObject, resourceTypeName, resourceTypesMap).flatMap(f)
+    applyToForMergeNames(jsObject, resourceTypeName, resourceTypesMap, optionalTopLevelField = true).flatMap(f)
   }
 
   def findResourceTypeNames(jsObject: JsObject): Seq[String] = {

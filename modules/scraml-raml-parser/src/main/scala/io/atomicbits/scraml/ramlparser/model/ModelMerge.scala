@@ -33,23 +33,25 @@ import scala.util.{ Failure, Try }
   */
 trait ModelMerge {
 
-  def applyToForMergeNames(jsObject: JsObject, mergeNames: Seq[String], mergeMap: Map[String, JsObject])(
-      implicit parseContext: ParseContext): Try[JsObject] = {
+  def applyToForMergeNames(jsObject: JsObject,
+                           mergeNames: Seq[String],
+                           mergeMap: Map[String, JsObject],
+                           optionalTopLevelField: Boolean = false)(implicit parseContext: ParseContext): Try[JsObject] = {
 
-    val tryTraits: Try[Seq[JsObject]] =
+    val toMerge: Try[Seq[JsObject]] =
       accumulate(
-        mergeNames.map { traitName =>
-          Try(mergeMap(traitName))
+        mergeNames.map { mergeName =>
+          Try(mergeMap(mergeName))
             .recoverWith {
-              case e => Failure(RamlParseException(s"Unknown trait or resourceType name $traitName in ${parseContext.head}."))
+              case e => Failure(RamlParseException(s"Unknown trait or resourceType name $mergeName in ${parseContext.head}."))
             }
         }
       )
 
     val deepMerged =
-      tryTraits.map { traits =>
-        traits.foldLeft(jsObject) { (aggr, currentTrait) =>
-          deepMerge(currentTrait, aggr)
+      toMerge.map { mergeBlocks =>
+        mergeBlocks.foldLeft(jsObject) { (aggr, currentMergeBlock) =>
+          deepMerge(currentMergeBlock, aggr, optionalTopLevelField)
         }
       }
 
@@ -72,7 +74,7 @@ trait ModelMerge {
     *    - Values of object properties are subjected to steps 1-3 of this procedure.
     *
     */
-  protected def deepMerge(source: JsObject, target: JsObject): JsObject = {
+  protected def deepMerge(source: JsObject, target: JsObject, optionalTopLevelField: Boolean = false): JsObject = {
 
     /**
       * Deep merges the fieldWithValue into the aggr json object.
@@ -81,19 +83,24 @@ trait ModelMerge {
 
       val (field, value) = fieldWithValue
 
-      (aggregatedTarget \ field).toOption match {
+      val (wasOptionalField, actualField) =
+        if (optionalTopLevelField && field.endsWith("?")) (true, field.dropRight(1))
+        else (false, field)
+
+      (aggregatedTarget \ actualField).toOption match {
         case Some(aggrValue: JsObject) =>
           value match {
-            case jsOb: JsObject => aggregatedTarget + (field -> deepMerge(jsOb, aggrValue))
+            case jsOb: JsObject => aggregatedTarget + (actualField -> deepMerge(jsOb, aggrValue))
             case _              => aggregatedTarget
           }
         case Some(aggrValue: JsArray) =>
           value match {
-            case jsArr: JsArray => aggregatedTarget + (field -> mergeArrays(jsArr, aggrValue))
+            case jsArr: JsArray => aggregatedTarget + (actualField -> mergeArrays(jsArr, aggrValue))
             case _              => aggregatedTarget
           }
-        case Some(aggrValue) => aggregatedTarget
-        case None            => aggregatedTarget + (field -> value)
+        case Some(aggrValue)          => aggregatedTarget
+        case None if wasOptionalField => aggregatedTarget
+        case None                     => aggregatedTarget + (actualField -> value)
       }
 
     }

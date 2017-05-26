@@ -51,12 +51,16 @@ class ResourceTypesParseTest extends FeatureSpec with GivenWhenThen with BeforeA
     val zooAnimalGetResponse: Option[Response] = zooAnimalGetAction.responses.responseMap.get(StatusCode("200"))
     val zooAnimalGetBodyContentOpt             = zooAnimalGetResponse.get.body.contentMap.get(MediaType("application/json"))
     zooAnimalGetBodyContentOpt should not be None
+    val zooAnimalPostActionOpt: Option[Action] = zooAnimalsResource.actionMap.get(Post)
+    zooAnimalPostActionOpt shouldBe None
 
     val animalsResource: Resource           = raml.resourceMap("animals")
     val animalGetAction: Action             = animalsResource.actionMap(Get)
     val animalGetResponse: Option[Response] = animalGetAction.responses.responseMap.get(StatusCode("200"))
     val animalGetBodyContentOpt             = animalGetResponse.get.body.contentMap.get(MediaType("application/json"))
     animalGetBodyContentOpt should not be None
+    val animalPostActionOpt: Option[Action] = animalsResource.actionMap.get(Post)
+    animalPostActionOpt should not be None
 
   }
 
