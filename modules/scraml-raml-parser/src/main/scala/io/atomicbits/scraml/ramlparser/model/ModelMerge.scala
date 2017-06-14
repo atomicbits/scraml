@@ -22,10 +22,11 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
-import play.api.libs.json.{ JsArray, JsObject, JsValue }
+import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
+import play.api.libs.json._
 import io.atomicbits.scraml.util.TryUtils._
 
+import scala.language.postfixOps
 import scala.util.{ Failure, Try }
 
 /**
@@ -33,19 +34,31 @@ import scala.util.{ Failure, Try }
   */
 trait ModelMerge {
 
+  def findMergeNames(jsObject: JsObject, selectionKey: String): MergeApplicationMap = {
+    (jsObject \ selectionKey).toOption
+      .collect {
+        case JsString(value)      => Json.obj() + (value -> Json.obj())
+        case typesJsObj: JsObject => typesJsObj
+        case typesJsArr: JsArray  => KeyedList.toJsObject(typesJsArr)
+      }
+      .map(MergeApplicationMap(_))
+      .getOrElse(MergeApplicationMap())
+  }
+
   def applyToForMergeNames(jsObject: JsObject,
-                           mergeNames: Seq[String],
-                           mergeMap: Map[String, JsObject],
+                           mergeApplicationMap: MergeApplicationMap,
+                           mergeDeclaration: Map[String, JsObject],
                            optionalTopLevelField: Boolean = false)(implicit parseContext: ParseContext): Try[JsObject] = {
 
     val toMerge: Try[Seq[JsObject]] =
       accumulate(
-        mergeNames.map { mergeName =>
-          Try(mergeMap(mergeName))
-            .recoverWith {
-              case e => Failure(RamlParseException(s"Unknown trait or resourceType name $mergeName in ${parseContext.head}."))
-            }
-        }
+        mergeApplicationMap.map {
+          case (mergeName, mergeApplication) =>
+            Try(mergeDeclaration(mergeName))
+              .recoverWith {
+                case e => Failure(RamlParseException(s"Unknown trait or resourceType name $mergeName in ${parseContext.head}."))
+              }
+        } toSeq
       )
 
     val deepMerged =
@@ -116,6 +129,74 @@ trait ModelMerge {
     }
 
     source.value.toMap.foldLeft(target)(mergeFieldInto)
+  }
+
+}
+
+/**
+  * In:
+  *
+  * /books:
+  *   type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
+  *   get:
+  *     is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]
+  *
+  * these are the MergeSubstitutions:
+  *
+  * MergeSubstitution(tokenName, access_token)
+  * MergeSubstitution(maxPages, 10)
+  *
+  * and the MergeApplications:
+  *
+  * MergeApplication(secured, ...)
+  * MergeApplication(paged, ...)
+  *
+  * @param name
+  * @param value
+  */
+case class MergeSubstitution(name: String, value: JsValue)
+
+case class MergeApplication(name: String, substitutions: Seq[MergeSubstitution]) {
+
+  def mergeDef: Map[String, JsValue] = substitutions.map(sub => (sub.name, sub.value)).toMap
+
+  def get(name: String): Option[JsValue] = mergeDef.get(name)
+
+}
+
+object MergeApplication {
+
+  def apply(name: String, jsObj: JsObject): MergeApplication = {
+    val substitutions =
+      jsObj.value.map {
+        case (nm, value) => MergeSubstitution(nm, value)
+      } toSeq
+
+    MergeApplication(name, substitutions)
+  }
+
+}
+
+case class MergeApplicationMap(mergeApplications: Seq[MergeApplication] = Seq.empty) {
+
+  val mergeMap: Map[String, MergeApplication] = mergeApplications.map(md => (md.name, md)).toMap
+
+  def get(name: String): Option[MergeApplication] = mergeMap.get(name)
+
+  def map[T](f: ((String, MergeApplication)) => T): Iterable[T] = mergeMap.map(f)
+
+}
+
+object MergeApplicationMap {
+
+  def apply(jsObj: JsObject): MergeApplicationMap = {
+    val mergeDefinitions =
+      jsObj.value.collect {
+        case (name, subst: JsObject) => MergeApplication(name, subst)
+        case (name, _)               => MergeApplication(name, Json.obj())
+      } toSeq
+
+    MergeApplicationMap(mergeDefinitions)
   }
 
 }

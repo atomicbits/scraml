@@ -20,10 +20,9 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
-import play.api.libs.json.{ JsArray, JsObject, JsValue }
+import play.api.libs.json._
 
 import scala.util.{ Failure, Success, Try }
-import io.atomicbits.scraml.ramlparser.parser.JsUtils._
 
 /**
   * Created by peter on 10/02/16.
@@ -39,20 +38,20 @@ case class Traits(traitsMap: Map[String, JsObject]) extends ModelMerge {
   }
 
   def mergeInToAction(actionJsObj: JsObject)(implicit parseContext: ParseContext): Try[JsObject] = {
-    val traitNames = findTraitNames(actionJsObj)
-    applyToForMergeNames(actionJsObj, traitNames, traitsMap)
+    val appliedTraits: MergeApplicationMap = findMergeNames(actionJsObj, Traits.selectionKey)
+    applyToForMergeNames(actionJsObj, appliedTraits, traitsMap)
   }
 
   def mergeInToActionFromResource(actionJsObj: JsObject, resourceJsObj: JsObject)(implicit parseContext: ParseContext): Try[JsObject] = {
-    val traitNames = findTraitNames(resourceJsObj)
-    applyToForMergeNames(actionJsObj, traitNames, traitsMap)
+    val appliedTraits: MergeApplicationMap = findMergeNames(resourceJsObj, Traits.selectionKey)
+    applyToForMergeNames(actionJsObj, appliedTraits, traitsMap)
   }
-
-  def findTraitNames(jsObject: JsObject): Seq[String] = jsObject.fieldStringListValue("is").getOrElse(List.empty)
 
 }
 
 object Traits {
+
+  val selectionKey: String = "is"
 
   def apply(): Traits = Traits(Map.empty[String, JsObject])
 
