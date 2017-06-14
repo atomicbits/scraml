@@ -27,12 +27,15 @@ import play.api.libs.json._
 import io.atomicbits.scraml.util.TryUtils._
 
 import scala.language.postfixOps
+import scala.util.matching.Regex
 import scala.util.{ Failure, Try }
 
 /**
   * Created by peter on 25/05/17.
   */
 trait ModelMerge {
+
+  val replaceStringPattern: Regex = """<<([^<>]*)>>""".r
 
   def findMergeNames(jsObject: JsObject, selectionKey: String): MergeApplicationMap = {
     (jsObject \ selectionKey).toOption
@@ -55,6 +58,9 @@ trait ModelMerge {
         mergeApplicationMap.map {
           case (mergeName, mergeApplication) =>
             Try(mergeDeclaration(mergeName))
+              .map { jsObj =>
+                applyMerge(jsObj, mergeApplication)
+              }
               .recoverWith {
                 case e => Failure(RamlParseException(s"Unknown trait or resourceType name $mergeName in ${parseContext.head}."))
               }
@@ -131,6 +137,73 @@ trait ModelMerge {
     source.value.toMap.foldLeft(target)(mergeFieldInto)
   }
 
+  private[model] def fetchReplaceStrings(text: String): Seq[ReplaceString] = {
+    replaceStringPattern
+      .findAllIn(text)
+      .matchData
+      .map { m =>
+        ReplaceString(m.matched, m.group(1), m.matched != text)
+      }
+      .toSeq
+  }
+
+  private def applyMerge(jsObject: JsObject, mergeApplication: MergeApplication): JsObject = {
+
+    def mergeStringAsJsValue(text: String): JsValue = {
+      val replaceStrings: Seq[ReplaceString] = fetchReplaceStrings(text)
+      if (replaceStrings.size == 1 && !replaceStrings.head.partial) {
+        mergeApplication.mergeDef.get(replaceStrings.head.matchString) match {
+          case Some(jsValue) => jsValue
+          case None          => sys.error(s"Did not find trait or resourceType replacement for value ${replaceStrings.head.matchString}.")
+        }
+      } else {
+        val replaced = mergeStringAsStringHelper(text, replaceStrings)
+        JsString(replaced)
+      }
+    }
+
+    def mergeStringAsString(text: String): String = {
+      val replaceStrings: Seq[ReplaceString] = fetchReplaceStrings(text)
+      mergeStringAsStringHelper(text, replaceStrings)
+    }
+
+    def mergeStringAsStringHelper(text: String, replaceStrings: Seq[ReplaceString]): String = {
+
+      replaceStrings.foldLeft(text) { (aggrText, replaceString) =>
+        val replacement: String =
+          mergeApplication.mergeDef.get(replaceString.matchString) match {
+            case Some(JsString(stringVal))   => stringVal
+            case Some(JsBoolean(booleanVal)) => booleanVal.toString
+            case Some(JsNumber(number))      => number.toString
+            case Some(jsValue) =>
+              sys.error(s"Cannot replace the following ${replaceString.matchString} value in a trait or resourceType: $jsValue")
+            case None => sys.error(s"Did not find trait or resourceType replacement for value ${replaceString.matchString}.")
+          }
+        val transformedReplacement = replaceString.transformReplacementString(replacement)
+        text.replaceAllLiterally(replaceString.toReplace, transformedReplacement)
+      }
+
+    }
+
+    def mergeJsObject(jsObject: JsObject): JsObject = {
+      val mergedFields =
+        jsObject.fields.map {
+          case (fieldName, jsValue) => (mergeStringAsString(fieldName), mergeJsValue(jsValue))
+        }
+      JsObject(mergedFields)
+    }
+
+    def mergeJsValue(jsValue: JsValue): JsValue =
+      jsValue match {
+        case jsObject: JsObject  => mergeJsObject(jsObject)
+        case JsString(stringVal) => mergeStringAsJsValue(stringVal)
+        case JsArray(items)      => JsArray(items.map(mergeJsValue))
+        case other               => other
+      }
+
+    mergeJsObject(jsObject)
+  }
+
 }
 
 /**
@@ -161,6 +234,8 @@ case class MergeApplication(name: String, substitutions: Seq[MergeSubstitution])
   def mergeDef: Map[String, JsValue] = substitutions.map(sub => (sub.name, sub.value)).toMap
 
   def get(name: String): Option[JsValue] = mergeDef.get(name)
+
+  def isEmpty: Boolean = substitutions.isEmpty
 
 }
 
@@ -197,6 +272,118 @@ object MergeApplicationMap {
       } toSeq
 
     MergeApplicationMap(mergeDefinitions)
+  }
+
+}
+
+sealed trait ReplaceOp {
+
+  def apply(text: String): String
+
+}
+
+object ReplaceOp {
+
+  def apply(opString: String): ReplaceOp =
+    opString match {
+      case "!singularize"         => Singularize
+      case "!pluralize"           => Pluralize
+      case "!uppercase"           => Uppercase
+      case "!lowercase"           => Lowercase
+      case "!lowercamelcase"      => LowerCamelcase
+      case "!uppercamelcase"      => UpperCamelcase
+      case "!lowerunderscorecase" => LowerUnderscorecase
+      case "!upperunderscorecase" => UpperUnderscorecase
+      case "!lowerhyphencase"     => LowerHyphencase
+      case "!upperhyphencase"     => UpperHyphencase
+      case unknown                => NoOp
+    }
+
+}
+
+case object Singularize extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object Pluralize extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object Uppercase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object Lowercase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object LowerCamelcase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object UpperCamelcase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object LowerUnderscorecase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object UpperUnderscorecase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object LowerHyphencase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object UpperHyphencase extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case object NoOp extends ReplaceOp {
+
+  def apply(text: String): String = text
+
+}
+
+case class ReplaceString(toReplace: String, matchString: String, operations: Seq[ReplaceOp], partial: Boolean) {
+
+  def transformReplacementString(replacement: String): String =
+    operations.foldLeft(replacement) { (repl, op) =>
+      op(repl)
+    }
+
+}
+
+case object ReplaceString {
+
+  def apply(toReplaceInput: String, matchStringWithOps: String, partial: Boolean): ReplaceString = {
+    val matchStringParts: Seq[String] = matchStringWithOps.split('|').toSeq.map(_.trim)
+    val (matchString, ops) =
+      if (matchStringParts.nonEmpty) (matchStringParts.head, matchStringParts.tail.map(ReplaceOp(_)))
+      else ("", Seq.empty[ReplaceOp])
+    ReplaceString(toReplace = toReplaceInput, matchString = matchString, operations = ops, partial = partial)
   }
 
 }
