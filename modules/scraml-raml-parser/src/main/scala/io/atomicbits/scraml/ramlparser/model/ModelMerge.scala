@@ -22,6 +22,8 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
+import java.util.Locale
+
 import io.atomicbits.scraml.ramlparser.parser.{ KeyedList, ParseContext, RamlParseException }
 import play.api.libs.json._
 import io.atomicbits.scraml.util.TryUtils._
@@ -303,61 +305,107 @@ object ReplaceOp {
 
 case object Singularize extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    if (text.endsWith("s")) text.dropRight(1)
+    else text
+  }
 
 }
 
 case object Pluralize extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    if (!text.endsWith("s")) s"${text}s"
+    else text
+  }
 
 }
 
 case object Uppercase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = text.toUpperCase(Locale.US)
 
 }
 
 case object Lowercase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = text.toLowerCase(Locale.US)
 
 }
 
 case object LowerCamelcase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    if (textChars.nonEmpty) {
+      textChars(0) = Character.toLowerCase(textChars(0))
+      new String(textChars)
+    } else {
+      ""
+    }
+  }
 
 }
 
 case object UpperCamelcase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    if (textChars.nonEmpty) {
+      textChars(0) = Character.toUpperCase(textChars(0))
+      new String(textChars)
+    } else {
+      ""
+    }
+  }
 
 }
 
 case object LowerUnderscorecase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    textChars.foldLeft("") { (txt, char) =>
+      if (char.isUpper && txt.nonEmpty) s"${txt}_${char.toLower}"
+      else s"$txt$char"
+    }
+  }
 
 }
 
 case object UpperUnderscorecase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    textChars.foldLeft("") { (txt, char) =>
+      if (char.isUpper && txt.nonEmpty) s"${txt}_$char"
+      else s"$txt${char.toUpper}"
+    }
+  }
 
 }
 
 case object LowerHyphencase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    textChars.foldLeft("") { (txt, char) =>
+      if (char.isUpper && txt.nonEmpty) s"$txt-${char.toLower}"
+      else s"$txt$char"
+    }
+  }
 
 }
 
 case object UpperHyphencase extends ReplaceOp {
 
-  def apply(text: String): String = text
+  def apply(text: String): String = {
+    val textChars = text.toCharArray
+    textChars.foldLeft("") { (txt, char) =>
+      if (char.isUpper && txt.nonEmpty) s"$txt-$char"
+      else s"$txt${char.toUpper}"
+    }
+  }
 
 }
 
