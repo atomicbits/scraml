@@ -60,11 +60,11 @@ trait ModelMerge {
         mergeApplicationMap.map {
           case (mergeName, mergeApplication) =>
             Try(mergeDeclaration(mergeName))
-              .map { jsObj =>
-                applyMerge(jsObj, mergeApplication)
-              }
               .recoverWith {
                 case e => Failure(RamlParseException(s"Unknown trait or resourceType name $mergeName in ${parseContext.head}."))
+              }
+              .map { jsObj =>
+                applyMerge(jsObj, mergeApplication)
               }
         } toSeq
       )
