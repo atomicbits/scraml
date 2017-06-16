@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import play.api.libs.json.{JsArray, JsObject}
+import play.api.libs.json.{ JsArray, JsObject, JsString, Json }
 
 /**
   * Created by peter on 26/02/16.
@@ -64,10 +64,14 @@ object KeyedList {
     * @return
     */
   def toJsObject(keyedList: JsArray): JsObject = {
-    keyedList.value.collect {
-      case jsObj: JsObject => jsObj
-    } reduce (_ ++ _)
+    val collected: Seq[JsObject] =
+      keyedList.value.collect {
+        case jsObj: JsObject => jsObj
+        case JsString(value) => Json.obj() + (value -> Json.obj())
+      }
+    collected.foldLeft(Json.obj()) {
+      case (aggr, js) => aggr ++ js
+    }
   }
 
 }
-

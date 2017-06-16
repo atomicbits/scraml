@@ -37,24 +37,14 @@ case class Action(actionType: Method,
 
 object Action {
 
-  def unapply(actionMap: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[Action]] = {
-
-    val actionMapOpt =
-      actionMap match {
-        case (Method(method), jsObj: JsObject) => Some((method, jsObj))
-        case (Method(method), _)               => Some((method, Json.obj()))
-        case _                                 => None
-      }
-
-    actionMapOpt.collect {
-      case (method, jsObj) => createAction(method, jsObj)
-    }
-
+  def apply(actionDef: (Method, JsObject))(implicit parseContext: ParseContext): Try[Action] = {
+    val (method, jsObj) = actionDef
+    createAction(method, jsObj)
   }
 
   private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
 
-    parseContext.traits.applyTo(jsObject) { json =>
+    parseContext.traits.applyToAction(jsObject) { json =>
       val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption)
 
       val tryQueryString =

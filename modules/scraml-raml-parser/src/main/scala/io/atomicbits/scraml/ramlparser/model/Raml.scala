@@ -59,6 +59,9 @@ object Raml {
     val tryTraits: Try[Traits] =
       (ramlJson \ "traits").toOption.map(Traits(_)(parseCtxt)).getOrElse(Success(Traits()))
 
+    val tryResourceTypes: Try[ResourceTypes] =
+      (ramlJson \ "resourceTypes").toOption.map(ResourceTypes(_)(parseCtxt)).getOrElse(Success(ResourceTypes()))
+
     val mediaType: Try[Option[MediaType]] = {
       (ramlJson \ "mediaType").toOption.collect {
         case JsString(mType) => Success(Option(MediaType(mType)))
@@ -70,9 +73,10 @@ object Raml {
 
       val tryParseCtxt =
         for {
-          newTraits <- tryTraits
+          resourceTypes <- tryResourceTypes
+          traits <- tryTraits
           defaultMediaType <- mediaType
-        } yield parseCtxt.copy(traits = newTraits, defaultMediaType = defaultMediaType)
+        } yield parseCtxt.copy(resourceTypes = resourceTypes, traits = traits, defaultMediaType = defaultMediaType)
 
       tryParseCtxt match {
         case Success(ctxt) => ctxt

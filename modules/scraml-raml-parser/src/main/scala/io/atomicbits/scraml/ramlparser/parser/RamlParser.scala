@@ -44,7 +44,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
     )
 
-    val parseContext = ParseContext(List(ramlSource))
+    val parseContext = ParseContext(List(ramlSource), List.empty)
 
     Raml(parsed)(parseContext)
   }
