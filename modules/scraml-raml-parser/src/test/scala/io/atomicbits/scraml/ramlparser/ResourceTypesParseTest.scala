@@ -80,7 +80,7 @@ class ResourceTypesParseTest extends FeatureSpec with GivenWhenThen with BeforeA
       val zooKeepersResource: Resource = raml.resourceMap("zookeepers")
       val zooKeepersGetAction: Action  = zooKeepersResource.actionMap(Get)
       val allQueryParameters           = zooKeepersGetAction.queryParameters.values.map(_.name).toSet
-      allQueryParameters shouldBe Set("title", "digest_all_fields", "access_token", "numPages")
+      allQueryParameters shouldBe Set("title", "digest_all_fields", "access_token", "numPages", "zookeepers")
 
     }
 

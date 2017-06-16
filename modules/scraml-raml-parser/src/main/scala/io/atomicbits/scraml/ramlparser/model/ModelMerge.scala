@@ -149,12 +149,12 @@ trait ModelMerge {
       .toSeq
   }
 
-  private def applyMerge(jsObject: JsObject, mergeApplication: MergeApplication): JsObject = {
+  private def applyMerge(jsObject: JsObject, mergeApplication: MergeApplication)(implicit parseContext: ParseContext): JsObject = {
 
     def mergeStringAsJsValue(text: String): JsValue = {
       val replaceStrings: Seq[ReplaceString] = fetchReplaceStrings(text)
       if (replaceStrings.size == 1 && !replaceStrings.head.partial) {
-        mergeApplication.mergeDef.get(replaceStrings.head.matchString) match {
+        mergeApplication.get(replaceStrings.head.matchString) match {
           case Some(jsValue) => jsValue
           case None          => sys.error(s"Did not find trait or resourceType replacement for value ${replaceStrings.head.matchString}.")
         }
@@ -173,7 +173,7 @@ trait ModelMerge {
 
       replaceStrings.foldLeft(text) { (aggrText, replaceString) =>
         val replacement: String =
-          mergeApplication.mergeDef.get(replaceString.matchString) match {
+          mergeApplication.get(replaceString.matchString) match {
             case Some(JsString(stringVal))   => stringVal
             case Some(JsBoolean(booleanVal)) => booleanVal.toString
             case Some(JsNumber(number))      => number.toString
@@ -233,9 +233,19 @@ case class MergeSubstitution(name: String, value: JsValue)
 
 case class MergeApplication(name: String, substitutions: Seq[MergeSubstitution]) {
 
-  def mergeDef: Map[String, JsValue] = substitutions.map(sub => (sub.name, sub.value)).toMap
+  private val mergeDef: Map[String, JsValue] = substitutions.map(sub => (sub.name, sub.value)).toMap
 
-  def get(name: String): Option[JsValue] = mergeDef.get(name)
+  def get(name: String)(implicit parseContext: ParseContext): Option[JsValue] = {
+    mergeDef
+      .get(name)
+      .orElse {
+        name match {
+          case "resourcePath"     => Some(JsString(parseContext.resourcePath))
+          case "resourcePathName" => Some(JsString(parseContext.resourcePathName))
+          case other              => None
+        }
+      }
+  }
 
   def isEmpty: Boolean = substitutions.isEmpty
 

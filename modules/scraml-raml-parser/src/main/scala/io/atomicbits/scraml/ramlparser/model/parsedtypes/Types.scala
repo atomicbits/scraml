@@ -59,7 +59,7 @@ object Types {
     def typesJsObjToTypes(typesJsObj: JsObject): Try[Types] = {
       val tryTypes =
         typesJsObj.fields.collect {
-          case (key: String, incl: JsValue) => parseContext.withSource(incl)(typeObjectToType(key, incl))
+          case (key: String, incl: JsValue) => parseContext.withSourceAndUrlSegments(incl)(typeObjectToType(key, incl))
         }
       foldTryTypes(tryTypes)
     }
@@ -89,7 +89,7 @@ object Types {
       }
     }
 
-    parseContext.withSource(typesJson)(doApply(typesJson))
+    parseContext.withSourceAndUrlSegments(typesJson)(doApply(typesJson))
   }
 
 }

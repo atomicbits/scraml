@@ -35,9 +35,10 @@ resourceTypes:
     get:
       queryParameters:
         <<queryParamName>>:
-          description: Return resourcePathName that have their <<queryParamName>> matching the given value
+          description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
         <<fallbackParamName>>:
           description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+        <<resourcePathName>>: string
 
 traits:
   secured:

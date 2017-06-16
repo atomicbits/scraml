@@ -50,7 +50,15 @@ object Resource {
 
   def apply(resourceUrl: String, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Resource] = {
 
-    parseContext.withSource(jsObject) {
+    // Make sure we can handle the root segment as wel
+    val urlSegments: List[String] = {
+      if (resourceUrl == "/")
+        Nil
+      else
+        resourceUrl.split('/').toList.filter(!_.isEmpty)
+    }
+
+    parseContext.withSourceAndUrlSegments(jsObject, urlSegments) {
 
       // Apply the listed traits to all methods in the resource.
       //
@@ -149,14 +157,6 @@ object Resource {
                 val connectedResource: Resource = connectParentChildren(resource, childResources.toList)
                 connectedResource.copy(actions = actionSeq.toList)
             }
-          }
-
-          // Make sure we can handle the root segment as wel
-          val urlSegments = {
-            if (resourceUrl == "/")
-              Nil
-            else
-              resourceUrl.split('/').toList.filter(!_.isEmpty)
           }
 
           breakdownResourceUrl(urlSegments)

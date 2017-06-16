@@ -74,7 +74,7 @@ object Traits {
       }.toMap
     }
 
-    parseContext.withSource(json)(doApply(json))
+    parseContext.withSourceAndUrlSegments(json)(doApply(json))
   }
 
 }

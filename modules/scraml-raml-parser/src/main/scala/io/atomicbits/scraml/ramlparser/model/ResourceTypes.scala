@@ -33,7 +33,7 @@ import scala.util.{ Failure, Success, Try }
 case class ResourceTypes(resourceTypesMap: Map[String, JsObject]) extends ModelMerge {
 
   def applyToResource[T](jsObject: JsObject)(f: JsObject => Try[T])(implicit parseContext: ParseContext): Try[T] = {
-    val appliedResourceTypes = findMergeNames(jsObject, ResourceTypes.selectionKey)
+    val appliedResourceTypes: MergeApplicationMap = findMergeNames(jsObject, ResourceTypes.selectionKey)
     applyToForMergeNames(jsObject, appliedResourceTypes, resourceTypesMap, optionalTopLevelField = true).flatMap(f)
   }
 
@@ -64,7 +64,7 @@ object ResourceTypes {
       }.toMap
     }
 
-    parseContext.withSource(json)(doApply(json))
+    parseContext.withSourceAndUrlSegments(json)(doApply(json))
   }
 
 }
