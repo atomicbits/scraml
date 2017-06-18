@@ -31,7 +31,8 @@ case class UnionClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
   implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr = {
-    throw new RuntimeException("Union type classes are not yet supported.")
+    println("WARNING: Union type classes are not yet supported in scraml.")
+    generationAggr
   }
 
 }
