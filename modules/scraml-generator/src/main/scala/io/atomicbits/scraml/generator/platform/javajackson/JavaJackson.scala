@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.platform.javajackson
 
-import java.io.File
+import java.nio.file.{ Path, Paths }
 
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.typemodel._
@@ -29,9 +29,13 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 /**
   * Created by peter on 10/01/17.
   */
-object JavaJackson extends Platform with CleanNameTools {
+case class JavaJackson(apiBasePackageParts: List[String]) extends Platform with CleanNameTools {
 
-  implicit val platform = JavaJackson
+  implicit val platform: Platform = this
+
+  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "javajackson")
+
+  val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "javajackson")
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
 
@@ -44,7 +48,7 @@ object JavaJackson extends Platform with CleanNameTools {
       case ByteClassPointer =>
         ClassReference(name = "byte", packageParts = List.empty, predef = true)
       case BinaryDataClassPointer =>
-        ClassReference(name = "BinaryData", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+        ClassReference(name = "BinaryData", packageParts = rewrittenDslBasePackage, library = true)
       case FileClassPointer =>
         ClassReference(name = "File", packageParts = List("java", "io"), library = true)
       case InputStreamClassPointer =>
@@ -54,7 +58,7 @@ object JavaJackson extends Platform with CleanNameTools {
       case JsValueClassPointer =>
         ClassReference(name = "JsonNode", packageParts = List("com", "fasterxml", "jackson", "databind"), library = true)
       case BodyPartClassPointer =>
-        ClassReference(name = "BodyPart", packageParts = List("io", "atomicbits", "scraml", "jdsl"), library = true)
+        ClassReference(name = "BodyPart", packageParts = rewrittenDslBasePackage, library = true)
       case LongClassPointer(primitive) =>
         if (primitive) {
           ClassReference(name = "long", packageParts = List("java", "lang"), predef = true)
@@ -75,7 +79,7 @@ object JavaJackson extends Platform with CleanNameTools {
         }
       case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
-        val typeParamValues = Map(typeParameter -> typeParamValue)
+        val typeParamValues = List(typeParamValue)
         ClassReference(
           name            = "List",
           packageParts    = List("java", "util"),
@@ -98,19 +102,26 @@ object JavaJackson extends Platform with CleanNameTools {
     val classReference = classPointer.native
 
     val typedClassDefinition =
-      if (classReference.typeParameters.isEmpty) {
-        classReference.name
-      } else {
-        val typeParametersOrValues = classReference.typeParameters.map { typeParam =>
-          classReference.typeParamValues
-            .get(typeParam)
-            .map { classPointer =>
+      (classReference.typeParameters, classReference.typeParamValues) match {
+        case (Nil, _) => classReference.name
+        case (tps, Nil) =>
+          val typeParameterNames = tps.map(_.name)
+          s"${classReference.name}<${typeParameterNames.mkString(",")}>"
+        case (tps, tpvs) if tps.size == tpvs.size =>
+          val typeParameterValueClassDefinitions =
+            tpvs.map { classPointer =>
               if (fullyQualified) classPointer.native.fullyQualifiedClassDefinition
               else classPointer.native.classDefinition
             }
-            .getOrElse(typeParam.name)
-        }
-        s"${classReference.name}<${typeParametersOrValues.mkString(",")}>"
+          s"${classReference.name}<${typeParameterValueClassDefinitions.mkString(",")}>"
+        case (tps, tpvs) =>
+          val message =
+            s"""
+               |The following class definition has a different number of type parameter 
+               |values than there are type parameters: 
+               |$classPointer
+             """.stripMargin
+          sys.error(message)
       }
 
     val arrayedClassDefinition =
@@ -149,7 +160,7 @@ object JavaJackson extends Platform with CleanNameTools {
     s"${classDefinition(field.classPointer)} ${safeFieldName(field)}"
   }
 
-  override def importStatements(targetClassReference: ClassReference, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
+  override def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer] = Set.empty): Set[String] = {
     val ownPackage = targetClassReference.packageName
 
     def collectTypeImports(collected: Set[String], classPtr: ClassPointer): Set[String] = {
@@ -167,7 +178,7 @@ object JavaJackson extends Platform with CleanNameTools {
       val collectedWithClassRef =
         importFromClassReference(classReference).map(classRefImport => collected + classRefImport).getOrElse(collected)
 
-      classReference.typeParamValues.values.toSet.foldLeft(collectedWithClassRef)(collectTypeImports)
+      classReference.typeParamValues.foldLeft(collectedWithClassRef)(collectTypeImports)
     }
 
     val targetClassImports: Set[String] = collectTypeImports(Set.empty, targetClassReference)
@@ -178,32 +189,33 @@ object JavaJackson extends Platform with CleanNameTools {
   }
 
   override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition): GenerationAggr =
-    PojoGenerator.generate(generationAggr, toClassDefinition)
+    PojoGenerator(this).generate(generationAggr, toClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr =
-    InterfaceGenerator.generate(generationAggr, toInterfaceDefinition)
+    InterfaceGenerator(this).generate(generationAggr, toInterfaceDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr =
-    EnumGenerator.generate(generationAggr, enumDefinition)
+    EnumGenerator(this).generate(generationAggr, enumDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr =
-    ClientClassGenerator.generate(generationAggr, clientClassDefinition)
+    ClientClassGenerator(this).generate(generationAggr, clientClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr =
-    ResourceClassGenerator.generate(generationAggr, resourceClassDefinition)
+    ResourceClassGenerator(this).generate(generationAggr, resourceClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition): GenerationAggr =
-    HeaderSegmentClassGenerator.generate(generationAggr, headerSegmentClassDefinition)
+    HeaderSegmentClassGenerator(this).generate(generationAggr, headerSegmentClassDefinition)
 
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
-    UnionClassGenerator.generate(generationAggr, unionClassDefinition)
+    UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
 
   override def classFileExtension: String = "java"
 
-  override def toFilePath(classPointer: ClassPointer): String = {
+  override def toFilePath(classPointer: ClassPointer): Path = {
     classPointer match {
       case classReference: ClassReference =>
-        s"${classReference.safePackageParts.mkString(File.separator)}${File.separator}${classReference.name}.$classFileExtension"
+        val parts = classReference.safePackageParts :+ s"${classReference.name}.$classFileExtension"
+        Paths.get("", parts: _*) // This results in a relative path both on Windows as on Linux/Mac
       case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
     }
   }

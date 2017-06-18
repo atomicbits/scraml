@@ -62,7 +62,7 @@ object CanonicalToSourceDefinitionGenerator {
         val fieldClassPointer =
           property.ttype match {
             case CanonicalTypeParameter(tParamName) => TypeParameter(tParamName)
-            case typeReference: TypeReference       => Platform.typeReferenceToClassPointer(typeReference, genAggr)
+            case typeReference: TypeReference       => Platform.typeReferenceToClassPointer(typeReference)
           }
 
         Field(
@@ -85,7 +85,7 @@ object CanonicalToSourceDefinitionGenerator {
         TransferObjectClassDefinition(
           reference              = toClassReference,
           fields                 = objectType.properties.map(propertyToField).toList,
-          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference(_, genAggr)),
+          parents                = objectType.parents.flatMap(Platform.typeReferenceToClassReference),
           typeDiscriminator      = objectType.typeDiscriminator,
           typeDiscriminatorValue = objectType.typeDiscriminatorValue
         )
@@ -123,7 +123,7 @@ object CanonicalToSourceDefinitionGenerator {
       val unionClassDefinition =
         UnionClassDefinition(
           reference = unionClassReference,
-          union     = unionType.types.map(Platform.typeReferenceToClassPointer(_, genAggr))
+          union     = unionType.types.map(Platform.typeReferenceToClassPointer)
         )
 
       genAggr.addSourceDefinition(unionClassDefinition)

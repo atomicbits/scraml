@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import java.net.{ URI, URL }
-import java.nio.file.{ Files, Paths }
+import java.net.URI
+
 import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
 
@@ -33,62 +33,32 @@ import scala.util.{ Failure, Success, Try }
   */
 object RamlToJsonParser {
 
-  def parseToJson(source: String): (String, JsValue) = {
+  def parseToJson(source: String): JsonFile = {
     parseToJson(source, "UTF-8")
   }
 
-  def parseToJson(source: String, charsetName: String): (String, JsValue) = {
+  def parseToJson(source: String, charsetName: String): JsonFile = {
     Try {
-      val (path, ramlContent) = read(source, charsetName)
-      val ramlContentNoTabs   = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
-      val yaml                = new Yaml(SimpleRamlConstructor())
+      val SourceFile(path, ramlContent) = SourceReader.read(source, charsetName)
+      val ramlContentNoTabs             = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
+      val yaml                          = new Yaml(SimpleRamlConstructor())
       val ramlMap: Any = {
         val yamled = yaml.load(ramlContentNoTabs)
         Try(yamled.asInstanceOf[java.util.Map[Any, Any]]).getOrElse(yamled.asInstanceOf[String])
       }
       (path, anyToJson(ramlMap))
     } match {
-      case Success((path: String, jsvalue)) => (path, jsvalue)
-      case Failure(ex)                      => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
+      case Success((path, jsvalue)) => JsonFile(path, jsvalue)
+      case Failure(ex)              => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
 
-  private def read(source: String, charsetName: String): (String, String) = {
-
-    /**
-      * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
-      * uri.normalize().getPath then gives /C:/Users/someone instead of C:/Users/someone
-      * also Paths.get(uri) then assumes /C:/Users/someone
-      * One would think the java.nio.file implementation does it right, but it doesn't.
-      *
-      * This hack fixes this.
-      *
-      * see: http://stackoverflow.com/questions/18520972/converting-java-file-url-to-file-path-platform-independent-including-u
-      *
-      * http://stackoverflow.com/questions/9834776/java-nio-file-path-issue
-      *
-      */
-    def cleanWindowsTripleSlashIssue(path: String): String = {
-      val hasWindowsPrefix =
-        path.split('/').filter(_.nonEmpty).headOption.collect {
-          case first if first.endsWith(":") => true
-        } getOrElse false
-      if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
-      else path
+  private def printReadStatus(resourceType: String, resourceOpt: Option[URI]): Any = {
+    resourceOpt.map { resource =>
+      println(s"Resource found $resourceType: $resource")
+    } getOrElse {
+      println(s"Resource NOT found $resourceType")
     }
-
-    val resource            = Try(this.getClass.getResource(source).toURI).toOption
-    val classLoaderResource = Try(this.getClass.getClassLoader.getResource(source).toURI).toOption
-    val file                = Try(Paths.get(source)).filter(Files.exists(_)).map(_.toUri).toOption
-    val url                 = Try(new URL(source).toURI).toOption
-
-    val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
-
-    val uri: URI = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
-
-    val path                 = uri.normalize().getPath.split("/").dropRight(1).mkString("/")
-    val encoded: Array[Byte] = Files.readAllBytes(Paths.get(uri))
-    (cleanWindowsTripleSlashIssue(path), new String(encoded, charsetName)) // ToDo: encoding detection via the file's BOM
   }
 
   private def anyToJson(value: Any): JsValue = {
@@ -118,6 +88,12 @@ object RamlToJsonParser {
     json match {
       case JsString(stringVal) =>
         Try(Json.parse(stringVal)) match {
+          case Success(jsObject: JsObject) =>
+            if (jsObject.\("$schema").toOption.isEmpty) {
+              jsObject + ("$schema" -> JsString("http://json-schema.org/draft-03/schema"))
+            } else {
+              jsObject
+            }
           case Success(nonStringJsValue) => nonStringJsValue
           case _                         => json
         }

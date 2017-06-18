@@ -18,7 +18,7 @@
 
 import sbt._
 
-trait Dependencies { this: Build =>
+object Dependencies {
 
   // main dependencies
   val logback = "ch.qos.logback" % "logback-classic" % "1.1.1"
@@ -36,7 +36,7 @@ trait Dependencies { this: Build =>
   val asyncClient         = "com.ning"          % "async-http-client" % "1.9.36"
   val asyncClientProvided = "com.ning"          % "async-http-client" % "1.9.36" % "provided"
   val playJson            = "com.typesafe.play" %% "play-json"        % "2.4.3"
-  val play25Json          = "com.typesafe.play" %% "play-json"        % "2.5.3"
+  val play25Json          = "com.typesafe.play" %% "play-json"        % "2.5.13"
 
   val scalariform = "org.scalariform"             %% "scalariform"       % "0.1.7"
   val javaFormat  = "com.google.googlejavaformat" % "google-java-format" % "1.2"

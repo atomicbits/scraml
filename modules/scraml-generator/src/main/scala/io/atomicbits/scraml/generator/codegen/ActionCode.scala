@@ -20,8 +20,8 @@
 package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.restmodel.{ ActionSelection, ContentType, ResponseType }
-import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClassReference }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
+import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 
 /**
   * Created by peter on 20/01/17.
@@ -29,6 +29,8 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
 trait ActionCode {
 
   def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String
+
+  def queryStringType(actionSelection: ActionSelection): Option[ClassPointer]
 
   /**
     * The list of body types that need to be available on a specific action function.
@@ -39,18 +41,28 @@ trait ActionCode {
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
 
+  def chooseCallBodySerialization(optBodyType: Option[ClassPointer]): String = {
+    optBodyType.collect {
+      case StringClassPointer | ByteClassPointer | BooleanClassPointer(_) | LongClassPointer(_) | DoubleClassPointer(_) =>
+        "callWithPrimitiveBody"
+    } getOrElse "call"
+  }
+
   def responseClassDefinition(responseType: ResponseType): String
 
-  def sortQueryOrFormParameters(fieldParams: List[(String, ParsedParameter)]): List[(String, ParsedParameter)]
+  def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)]
 
-  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, ParsedParameter), noDefault: Boolean = false): String
+  def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment
 
-  def expandQueryOrFormParameterAsMapEntry(qParam: (String, ParsedParameter)): String
+  def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment
+
+  def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
 
   def quoteString(text: String): String = s""""$text""""
 
   def generateAction(actionSelection: ActionSelection,
                      bodyType: Option[ClassPointer],
+                     queryStringType: Option[ClassPointer],
                      isBinary: Boolean,
                      actionParameters: List[String]        = List.empty,
                      formParameterMapEntries: List[String] = List.empty,

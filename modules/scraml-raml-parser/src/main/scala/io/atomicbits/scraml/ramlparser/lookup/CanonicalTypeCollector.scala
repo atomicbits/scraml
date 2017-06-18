@@ -20,8 +20,9 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, TypeReference }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import org.slf4j.{ Logger, LoggerFactory }
 
 /**
   * Created by peter on 17/12/16.
@@ -81,11 +82,13 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
   private def transformResourceParsedTypesToCanonicalTypes(raml: Raml, canonicalLookupHelper: CanonicalLookupHelper): Raml = {
 
-    def transformTypeRepresentation(typeRepresentation: TypeRepresentation): TypeRepresentation = {
+    def injectCanonicalTypeRepresentation(typeRepresentation: TypeRepresentation,
+                                          nameSuggestion: Option[CanonicalName] = None): TypeRepresentation = {
       val expandedParsedType = indexer.expandRelativeToAbsoluteIds(typeRepresentation.parsed)
       val (genericReferrable, updatedCanonicalLH) =
-        ParsedToCanonicalTypeTransformer.transform(expandedParsedType, canonicalLookupHelper, None)
-      // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndex
+        ParsedToCanonicalTypeTransformer.transform(expandedParsedType, canonicalLookupHelper, nameSuggestion)
+      // We can ignore the updatedCanonicalLH here because we know this parsed type is already registered by transformParsedTypeIndexToCanonicalTypes
+
       genericReferrable match {
         case typeReference: TypeReference => typeRepresentation.copy(canonical = Some(typeReference))
         case other =>
@@ -93,14 +96,20 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       }
     }
 
-    def transformParsedParameter(parsedParameter: ParsedParameter): ParsedParameter = {
-      val updatedParameterType = transformTypeRepresentation(parsedParameter.parameterType)
+    def transformQueryString(queryString: QueryString): QueryString = {
+      val updatedQueryStringType = injectCanonicalTypeRepresentation(queryString.queryStringType)
+      queryString.copy(queryStringType = updatedQueryStringType)
+    }
+
+    def transformParsedParameter(parsedParameter: Parameter): Parameter = {
+      val canonicalNameSuggestion = canonicalNameGenerator.generate(NativeId(parsedParameter.name))
+      val updatedParameterType    = injectCanonicalTypeRepresentation(parsedParameter.parameterType, Some(canonicalNameSuggestion))
       parsedParameter.copy(parameterType = updatedParameterType)
     }
 
     def transformBodyContent(bodyContent: BodyContent): BodyContent = {
       val updatedFormParameters = bodyContent.formParameters.mapValues(transformParsedParameter)
-      val updatedBodyType       = bodyContent.bodyType.map(transformTypeRepresentation)
+      val updatedBodyType       = bodyContent.bodyType.map(injectCanonicalTypeRepresentation(_))
       bodyContent.copy(formParameters = updatedFormParameters, bodyType = updatedBodyType)
     }
 
@@ -115,6 +124,8 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
       val updatedQueryParameters = action.queryParameters.mapValues(transformParsedParameter)
 
+      val updatedQueryString = action.queryString.map(transformQueryString)
+
       val updatedBody = transformBody(action.body)
 
       val updatedResponseMap = action.responses.responseMap.mapValues { response =>
@@ -123,7 +134,11 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       }
       val updatedResponses = action.responses.copy(responseMap = updatedResponseMap)
 
-      action.copy(headers = updatedHeaders, queryParameters = updatedQueryParameters, body = updatedBody, responses = updatedResponses)
+      action.copy(headers         = updatedHeaders,
+                  queryParameters = updatedQueryParameters,
+                  queryString     = updatedQueryString,
+                  body            = updatedBody,
+                  responses       = updatedResponses)
     }
 
     def transformResource(resource: Resource): Resource = {

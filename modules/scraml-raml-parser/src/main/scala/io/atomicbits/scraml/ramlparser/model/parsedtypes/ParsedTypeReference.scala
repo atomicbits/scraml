@@ -19,10 +19,11 @@
 
 package io.atomicbits.scraml.ramlparser.model.parsedtypes
 
+import com.fasterxml.jackson.core.JsonParseException
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.parser.ParseContext
+import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
 import io.atomicbits.scraml.util.TryUtils
-import play.api.libs.json.{ JsObject, JsString, JsValue }
+import play.api.libs.json.{ JsArray, JsObject, JsString, JsValue }
 
 import scala.util.{ Failure, Success, Try }
 
@@ -30,11 +31,11 @@ import scala.util.{ Failure, Success, Try }
   * Created by peter on 1/04/16.
   */
 case class ParsedTypeReference(refersTo: Id,
-                               id: Id                                = ImplicitId,
-                               required: Option[Boolean]             = None,
-                               genericTypes: Map[String, ParsedType] = Map.empty,
-                               fragments: Fragments                  = Fragments(),
-                               model: TypeModel                      = RamlModel)
+                               id: Id                         = ImplicitId,
+                               required: Option[Boolean]      = None,
+                               genericTypes: List[ParsedType] = List.empty,
+                               fragments: Fragments           = Fragments(),
+                               model: TypeModel               = RamlModel)
     extends NonPrimitiveType
     with AllowedAsObjectField
     with Fragmented {
@@ -110,15 +111,36 @@ object ParsedTypeReference {
 
   }
 
-  private def getGenericTypes(json: JsValue)(implicit parseContext: ParseContext): Try[Map[String, ParsedType]] = {
+  private def getGenericTypes(json: JsValue)(implicit parseContext: ParseContext): Try[List[ParsedType]] = {
     (json \ "genericTypes").toOption.collect {
-      case genericTs: JsObject =>
-        val genericTsMap =
+      case genericTs: JsArray =>
+        val genericTsList =
           genericTs.value collect {
-            case (field, ParsedType(t)) => (field, t)
+            case ParsedType(t) => t
           }
-        TryUtils.accumulate[String, ParsedType](genericTsMap.toMap)
-    } getOrElse Try(Map.empty[String, ParsedType])
+        TryUtils.accumulate(genericTsList.toList)
+      case genericTs: JsObject =>
+        val message =
+          s"""
+             |-
+             |
+             |The following generic type reference refers to its type parameter values
+             |using an object map. This is the old way and it is not supported any longer.
+             |Replace it with a JSON array. The order of the elements in the array must 
+             |correspond to the order of the type parameters in the referred type. 
+             |
+             |The conflicting genericTypes construct is:
+             |
+             |$genericTs
+             |
+             |in
+             |
+             |${parseContext.sourceTrail.mkString(" <- ")}
+             |
+             |-
+           """.stripMargin
+        Failure(RamlParseException(message))
+    } getOrElse Try(List.empty[ParsedType])
   }
 
 }

@@ -20,8 +20,7 @@
 package io.atomicbits.scraml.ramlparser.model
 
 import io.atomicbits.scraml.ramlparser.lookup._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedParameters, Types }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.Types
 import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
 import io.atomicbits.scraml.util.TryUtils
 import play.api.libs.json._
@@ -37,7 +36,7 @@ case class Raml(title: String,
                 description: Option[String],
                 version: Option[String],
                 baseUri: Option[String],
-                baseUriParameters: ParsedParameters,
+                baseUriParameters: Parameters,
                 protocols: Option[Seq[String]],
                 traits: Traits,
                 types: Types,
@@ -60,6 +59,9 @@ object Raml {
     val tryTraits: Try[Traits] =
       (ramlJson \ "traits").toOption.map(Traits(_)(parseCtxt)).getOrElse(Success(Traits()))
 
+    val tryResourceTypes: Try[ResourceTypes] =
+      (ramlJson \ "resourceTypes").toOption.map(ResourceTypes(_)(parseCtxt)).getOrElse(Success(ResourceTypes()))
+
     val mediaType: Try[Option[MediaType]] = {
       (ramlJson \ "mediaType").toOption.collect {
         case JsString(mType) => Success(Option(MediaType(mType)))
@@ -71,9 +73,10 @@ object Raml {
 
       val tryParseCtxt =
         for {
-          newTraits <- tryTraits
+          resourceTypes <- tryResourceTypes
+          traits <- tryTraits
           defaultMediaType <- mediaType
-        } yield parseCtxt.copy(traits = newTraits, defaultMediaType = defaultMediaType)
+        } yield parseCtxt.copy(resourceTypes = resourceTypes, traits = traits, defaultMediaType = defaultMediaType)
 
       tryParseCtxt match {
         case Success(ctxt) => ctxt
@@ -146,7 +149,7 @@ object Raml {
       } getOrElse Success(None)
     }
 
-    val baseUriParameters: Try[ParsedParameters] = ParsedParameters((ramlJson \ "baseUriParameters").toOption)
+    val baseUriParameters: Try[Parameters] = Parameters((ramlJson \ "baseUriParameters").toOption)
 
     /**
       * According to the specs on https://github.com/raml-org/raml-spec/blob/raml-10/versions/raml-10/raml-10.md#scalar-type-specialization

@@ -19,40 +19,40 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameters
-import io.atomicbits.scraml.ramlparser.parser.{ ParseContext, RamlParseException }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedType
+import io.atomicbits.scraml.ramlparser.parser.ParseContext
 import play.api.libs.json.{ JsObject, JsValue, Json }
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Success, Try }
 
 /**
   * Created by peter on 10/02/16.
   */
-case class Action(actionType: Method, headers: ParsedParameters, queryParameters: ParsedParameters, body: Body, responses: Responses)
+case class Action(actionType: Method,
+                  headers: Parameters,
+                  queryParameters: Parameters,
+                  body: Body,
+                  responses: Responses,
+                  queryString: Option[QueryString] = None)
 
 object Action {
 
-  def unapply(actionMap: (String, JsValue))(implicit parseContext: ParseContext): Option[Try[Action]] = {
-
-    val actionMapOpt =
-      actionMap match {
-        case (Method(method), jsObj: JsObject) => Some((method, jsObj))
-        case (Method(method), _)               => Some((method, Json.obj()))
-        case _                                 => None
-      }
-
-    actionMapOpt.collect {
-      case (method, jsObj) => createAction(method, jsObj)
-    }
-
+  def apply(actionDef: (Method, JsObject))(implicit parseContext: ParseContext): Try[Action] = {
+    val (method, jsObj) = actionDef
+    createAction(method, jsObj)
   }
 
   private def createAction(actionType: Method, jsObject: JsObject)(implicit parseContext: ParseContext): Try[Action] = {
 
-    parseContext.traits.applyTo(jsObject) { json =>
-      val tryQueryParameters = ParsedParameters(jsValueOpt = (json \ "queryParameters").toOption, overrideRequired = Some(false))
+    parseContext.traits.applyToAction(jsObject) { json =>
+      val tryQueryParameters = Parameters(jsValueOpt = (json \ "queryParameters").toOption)
 
-      val tryHeaders = ParsedParameters((json \ "headers").toOption)
+      val tryQueryString =
+        (json \ "queryString").toOption.collect {
+          case ParsedType(bType) => bType.map(Option(_))
+        } getOrElse Success(None)
+
+      val tryHeaders = Parameters((json \ "headers").toOption)
 
       val tryBody = Body(json)
 
@@ -63,13 +63,15 @@ object Action {
         headers <- tryHeaders
         body <- tryBody
         responses <- tryResponses
+        queryStringOpt <- tryQueryString
       } yield
         Action(
           actionType      = actionType,
           headers         = headers,
           queryParameters = queryParameters,
           body            = body,
-          responses       = responses
+          responses       = responses,
+          queryString     = queryStringOpt.map(qs => QueryString(queryStringType = TypeRepresentation(qs)))
         )
     }
 

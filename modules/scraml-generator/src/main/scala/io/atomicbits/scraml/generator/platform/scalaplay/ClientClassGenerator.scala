@@ -19,19 +19,22 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{ ActionFunctionResult, ActionGenerator, GenerationAggr }
+import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, DslSourceRewriter, GenerationAggr, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 14/01/17.
   */
-object ClientClassGenerator extends SourceGenerator {
+case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
+
+    val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
     val apiPackage        = clientClassDefinition.classReference.safePackageParts
     val apiClassName      = clientClassDefinition.classReference.name
@@ -40,13 +43,13 @@ object ClientClassGenerator extends SourceGenerator {
     val (importClasses, dslFields, actionFunctions, headerPathSourceDefs) =
       clientClassDefinition.topLevelResourceDefinitions match {
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
-          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator.generateResourceDslField(_, generationAggr))
-          val ActionFunctionResult(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(ScalaActionCodeGenerator).generateActionFunctions(oneRoot, generationAggr)
+          val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator(platform).generateResourceDslField)
+          val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
+            ActionGenerator(ScalaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
-          val dslFields       = manyRoots.map(ResourceClassGenerator.generateResourceDslField(_, generationAggr))
+          val dslFields       = manyRoots.map(ResourceClassGenerator(platform).generateResourceDslField)
           val actionFunctions = List.empty[String]
           (importClasses, dslFields, actionFunctions, List.empty)
       }
@@ -57,9 +60,9 @@ object ClientClassGenerator extends SourceGenerator {
       s"""
          package ${apiPackage.mkString(".")}
 
-         import io.atomicbits.scraml.dsl.client.{ClientFactory, ClientConfig}
-         import io.atomicbits.scraml.dsl.RequestBuilder
-         import io.atomicbits.scraml.dsl.client.ning.Ning19ClientFactory
+         import $dslBasePackage.client.{ClientFactory, ClientConfig}
+         import $dslBasePackage.RequestBuilder
+         import $dslBasePackage.client.ning.Ning19ClientFactory
          import java.net.URL
          import play.api.libs.json._
          import java.io._
@@ -69,7 +72,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          class $apiClassName(private val _requestBuilder: RequestBuilder) {
 
-           import io.atomicbits.scraml.dsl._
+           import $dslBasePackage._
 
            ${dslFields.mkString("\n\n")}
 
@@ -81,7 +84,7 @@ object ClientClassGenerator extends SourceGenerator {
 
          object $apiClassName {
 
-           import io.atomicbits.scraml.dsl.Response
+           import $dslBasePackage.Response
            import play.api.libs.json._
 
            import scala.concurrent.ExecutionContext.Implicits.global

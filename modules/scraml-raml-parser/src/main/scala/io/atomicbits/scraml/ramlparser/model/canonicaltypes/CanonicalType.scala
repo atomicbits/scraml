@@ -38,7 +38,9 @@ trait CanonicalType {
   */
 trait PrimitiveType extends CanonicalType with TypeReference {
 
-  def genericTypes: Map[TypeParameter, TypeReference] = Map.empty
+  def genericTypes: List[TypeReference] = List.empty
+
+  def genericTypeParameters: List[TypeParameter] = List.empty
 
 }
 

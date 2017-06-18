@@ -63,21 +63,44 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
     // Types are located in the request and response BodyContent and in the ParsedParameter instances. For now we don't expect any
     // complex types in the ParsedParameter instances, so we skip those.
 
-    // ToDo: also handle complex types in the ParsedParameter objects.
+    def indexParameters(canonicalLH: CanonicalLookupHelper, parameters: Parameters): CanonicalLookupHelper = {
+      val parameterList: List[(String, Parameter)] = parameters.valueMap.toList
+      val idWithParamType: List[(NativeId, ParsedType)] =
+        parameterList.map {
+          case (paramName, parameter) =>
+            val nativeIdProposal = NativeId(paramName)
+            val parsedType       = parameter.parameterType.parsed
+            (nativeIdProposal, parsedType)
+        }
+      idWithParamType.foldLeft(canonicalLH)(indexParsedTypesInt)
+    }
 
-    def indexBodyParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, body: Body): CanonicalLookupHelper = {
-      val bodyContentList: List[BodyContent]               = body.contentMap.values.toList
+    def indexBodyParsedTypes(canonicalLH: CanonicalLookupHelper, body: Body): CanonicalLookupHelper = {
+      val bodyContentList: List[BodyContent] = body.contentMap.values.toList
+      // Register body content types
       val bodyParsedTypes: List[ParsedType]                = bodyContentList.flatMap(_.bodyType).map(_.parsed)
       val generatedNativeIds: List[Id]                     = bodyParsedTypes.map(x => NoId)
       val nativeIdsWithParsedTypes: List[(Id, ParsedType)] = generatedNativeIds.zip(bodyParsedTypes)
-      nativeIdsWithParsedTypes.foldLeft(canonicalLookupHelper)(indexParsedTypesInt)
+      val canonicalLookupWithBodyTypes                     = nativeIdsWithParsedTypes.foldLeft(canonicalLH)(indexParsedTypesInt)
+      // Register form parameter types
+      bodyContentList.map(_.formParameters).foldLeft(canonicalLookupWithBodyTypes)(indexParameters)
     }
 
-    def indexActionParsedTypes(canonicalLookupHelper: CanonicalLookupHelper, action: Action): CanonicalLookupHelper = {
-      val canonicalLHWithBody = indexBodyParsedTypes(canonicalLookupHelper, action.body)
+    def indexActionParsedTypes(canonicalLH: CanonicalLookupHelper, action: Action): CanonicalLookupHelper = {
+      val canonicalLHWithBody = indexBodyParsedTypes(canonicalLH, action.body)
 
       val responseBodies: List[Body] = action.responses.responseMap.values.toList.map(_.body)
-      responseBodies.foldLeft(canonicalLHWithBody)(indexBodyParsedTypes)
+      val canonicalLHWithResponses   = responseBodies.foldLeft(canonicalLHWithBody)(indexBodyParsedTypes)
+
+      // Register headers and query parameters
+      val canonicalLHWithHeaders = indexParameters(canonicalLHWithResponses, action.headers)
+
+      val canonicalLHWithQueryString =
+        action.queryString
+          .map(qs => indexParsedTypesInt(canonicalLHWithHeaders, (NoId, qs.queryStringType.parsed)))
+          .getOrElse(canonicalLHWithHeaders)
+
+      indexParameters(canonicalLHWithQueryString, action.queryParameters)
     }
 
     val canonicalLookupHelperWithActionTypes = resource.actions.foldLeft(canonicalLookupHelper)(indexActionParsedTypes)
@@ -241,7 +264,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
       parsedTypeWithUpdatedFragments.updated(expandedId)
     }
 
-    if (hasNativeIds(ttype)) { // ToDo: see if we can refactor this to another way of detecting RAML 1.0 versus json-schema types
+    if (ttype.model == RamlModel) { // ToDo: see if we can refactor this to another way of detecting RAML 1.0 versus json-schema types
       ttype
     } else {
       ttype.id match {
@@ -260,6 +283,7 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
 
   }
 
+  // Todo: remove hasNativeIds
   private def hasNativeIds(ttype: ParsedType): Boolean = {
 
     def isNativeId(id: Id): Boolean =

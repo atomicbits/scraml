@@ -19,13 +19,13 @@
 import sbt._
 import sbt.Keys._
 
-trait BuildSettings { this: Build =>
+object BuildSettings {
 
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val Version = "0.6.1" // + snapshotSuffix
+  val Version = "0.7.0-M1" // + snapshotSuffix
 
   val scala2_10 = "2.10.5"
   val scala2_11 = "2.11.8"
@@ -70,7 +70,7 @@ trait BuildSettings { this: Build =>
     credentials ++= publishingCredentials
   )
 
-  def buildSettings(dependencies: Seq[ModuleID]) = {
+  def projSettings(dependencies: Seq[ModuleID]) = {
     projectSettings(dependencies) ++ publishSettings
   }
 

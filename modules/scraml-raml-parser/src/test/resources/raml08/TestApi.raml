@@ -38,7 +38,8 @@ types:
         required: true
 
 traits:
-  - error401:     !include schemas/common/traits/error401.yaml
+  - error401:             !include schemas/common/traits/error401.yaml
+  - error401-alternative: !include schemas/common/traits/error401-alternative.yaml
 
 /rest/books:
   get:

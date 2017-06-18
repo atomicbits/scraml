@@ -1,0 +1,6 @@
+displayName: error401-alternative
+responses:
+  401:
+    description: Unauthorized
+    body:
+      application/alternative+json:

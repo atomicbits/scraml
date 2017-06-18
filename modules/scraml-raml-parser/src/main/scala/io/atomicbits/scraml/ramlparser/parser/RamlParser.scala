@@ -19,24 +19,23 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
+import java.nio.file.{ Path, Paths }
 
-import io.atomicbits.scraml.ramlparser.model.{Id, JsInclude, Raml, RootId}
+import io.atomicbits.scraml.ramlparser.model.{ JsInclude, Raml }
 import play.api.libs.json._
 
 import scala.util.Try
-
 
 /**
   * Created by peter on 6/02/16.
   */
 case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
 
-
   def parse: Try[Raml] = {
-    val (path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
+    val JsonFile(path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
     val parsed: JsObject =
       ramlJson match {
-        case ramlJsObj: JsObject => parseRamlJsonDocument(path, ramlJsObj)
+        case ramlJsObj: JsObject => parseRamlJsonDocument(path.getParent, ramlJsObj)
         case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
       }
 
@@ -45,7 +44,7 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
       s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
     )
 
-    val parseContext = ParseContext(List(ramlSource))
+    val parseContext = ParseContext(List(ramlSource), List.empty)
 
     Raml(parsed)(parseContext)
   }
@@ -56,34 +55,33 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
     *
     * @param raml
     */
-  private def parseRamlJsonDocument(basePath: String, raml: JsObject): JsObject = {
+  private def parseRamlJsonDocument(basePath: Path, raml: JsObject): JsObject = {
 
-    def parseNested(doc: JsValue, currentBasePath: String): JsValue = {
+    def parseNested(doc: JsValue, currentBasePath: Path): JsValue = {
       doc match {
         case JsInclude(source) =>
           // The check for empty base path below needs to be there for Windows machines, to avoid paths like "/C:/Users/..."
           // that don't resolve because of the leading "/".
           // ToDo: Refactor to use file system libraries to merge paths (and test on Windows as well).
           val nextPath =
-            if (currentBasePath.isEmpty) source
-            else s"$currentBasePath/$source"
-          val (newBasePath, included) = RamlToJsonParser.parseToJson(nextPath)
+            if (currentBasePath.normalize().toString.isEmpty) Paths.get(source)
+            else currentBasePath.resolve(source) // s"$currentBasePath/$source"
+          val JsonFile(newFilePath, included) = RamlToJsonParser.parseToJson(nextPath.normalize().toString)
           included match {
-            case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newBasePath)
-            case x              => parseNested(x, newBasePath)
+            case incl: JsObject => parseNested(incl + (Sourced.sourcefield -> JsString(source)), newFilePath.getParent)
+            case x              => parseNested(x, newFilePath.getParent)
           }
-        case jsObj: JsObject   =>
+        case jsObj: JsObject =>
           val mappedFields = jsObj.fields.collect {
             case (key, value) => key -> parseNested(value, currentBasePath)
           }
           JsObject(mappedFields)
-        case jsArr: JsArray    => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
-        case x                 => x
+        case jsArr: JsArray => JsArray(jsArr.value.map(parseNested(_, currentBasePath)))
+        case x              => x
       }
     }
 
     parseNested(raml, basePath).asInstanceOf[JsObject]
   }
-
 
 }

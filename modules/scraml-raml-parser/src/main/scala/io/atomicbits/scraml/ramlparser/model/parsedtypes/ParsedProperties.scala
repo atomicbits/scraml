@@ -57,19 +57,34 @@ object ParsedProperties {
 
   def apply(jsValueOpt: Option[JsValue], model: TypeModel)(implicit parseContext: ParseContext): Try[ParsedProperties] = {
 
+    /**
+      * @param name The name of the property
+      * @return A pair whose first element is de actual property name and the second element indicates whether or not the
+      *         property is an optional property. None (no indication for optional is given) Some(false) (it is an optional property).
+      */
+    def detectRequiredPropertyName(name: String): (String, Option[Boolean]) = {
+      if (name.length > 1 && name.endsWith("?")) (name.dropRight(1), Some(false))
+      else (name, None)
+    }
+
     def jsObjectToProperties(jsObject: JsObject): Try[ParsedProperties] = {
 
       val valueMap: Map[String, Try[ParsedProperty]] =
         jsObject.value
           .mapValues(model.mark)
           .collect {
-            case (name, ParsedType(tryType)) => // the 'model' value is not incorporated in recursive type parsing
-              name -> tryType.map { paramType =>
+            case (name, ParsedType(tryType)) =>
+              val (actualName, requiredProp) = detectRequiredPropertyName(name)
+              actualName -> tryType.map { paramType =>
                 val paramTypeWithRightTypeModel = paramType.asTypeModel(model)
                 ParsedProperty(
-                  name         = name,
+                  name         = actualName,
                   propertyType = TypeRepresentation(paramTypeWithRightTypeModel),
-                  required     = paramTypeWithRightTypeModel.required.getOrElse(paramTypeWithRightTypeModel.defaultRequiredValue)
+                  required = requiredProp.getOrElse(
+                    paramTypeWithRightTypeModel.required.getOrElse(
+                      paramTypeWithRightTypeModel.defaultRequiredValue
+                  )
+                )
               )
             }
         } toMap

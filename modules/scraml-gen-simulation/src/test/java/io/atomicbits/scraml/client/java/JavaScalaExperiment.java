@@ -21,8 +21,8 @@ package io.atomicbits.scraml.client.java;
 
 import io.atomicbits.scraml.client.manual.*;
 import io.atomicbits.scraml.client.manual.PathparamResource;
-import io.atomicbits.scraml.dsl.RequestBuilder;
-import io.atomicbits.scraml.dsl.Response;
+import io.atomicbits.scraml.dsl.scalaplay.RequestBuilder;
+import io.atomicbits.scraml.dsl.scalaplay.Response;
 import scala.concurrent.Future;
 
 /**

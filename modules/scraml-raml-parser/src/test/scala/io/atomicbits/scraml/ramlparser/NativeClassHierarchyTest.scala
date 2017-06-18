@@ -20,8 +20,6 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveTypeReference, TypeReference }
-import io.atomicbits.scraml.ramlparser.model.{ Get, MediaType, StatusCode }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._

@@ -20,18 +20,18 @@
 package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
+import io.atomicbits.scraml.generator.platform.SourceGenerator
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
-import io.atomicbits.scraml.generator.platform.javajackson.PojoGenerator.{ compileChildrenToSerialize, generateJsonTypeAnnotations }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.
   */
-object InterfaceGenerator extends SourceGenerator with PojoGeneratorSupport {
+case class InterfaceGenerator(javaJackson: JavaJackson) extends SourceGenerator with PojoGeneratorSupport {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: JavaJackson = javaJackson
 
   def generate(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
 
@@ -84,7 +84,7 @@ object InterfaceGenerator extends SourceGenerator with PojoGeneratorSupport {
 
     val discriminator: String =
       (toClassDefinition.typeDiscriminator +: recursiveExtendedParents.map(_.typeDiscriminator)).flatten.headOption
-        .getOrElse(PojoGenerator.defaultDiscriminator)
+        .getOrElse(PojoGenerator(platform).defaultDiscriminator)
 
     val jsonTypeInfo: Option[JsonTypeInfo] =
       if (generationAggr.isInHierarchy(originalToCanonicalName)) {

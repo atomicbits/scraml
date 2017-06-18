@@ -41,13 +41,12 @@ case class ActionGenerator(actionCode: ActionCode) {
     *         required if multiple contenttype and/or accept headers will lead to a different typed body and/or response (we
     *         don't support those yet, but we will do so in the future).
     */
-  def generateActionFunctions(resourceClassDefinition: ResourceClassDefinition, generationAggr: GenerationAggr)(
-      implicit platform: Platform): ActionFunctionResult = {
+  def generateActionFunctions(resourceClassDefinition: ResourceClassDefinition)(implicit platform: Platform): SourceCodeFragment = {
 
     val resourcePackageParts: List[String] = resourceClassDefinition.resourcePackage
     val resource: Resource                 = resourceClassDefinition.resource
 
-    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_, generationAggr)).toSet
+    val actionSelections: Set[ActionSelection] = resource.actions.map(ActionSelection(_)).toSet
 
     val actionsWithTypeSelection: Set[ActionSelection] =
       actionSelections.flatMap { actionSelection =>
@@ -96,20 +95,20 @@ case class ActionGenerator(actionCode: ActionCode) {
       }
 
     if (actionPathExpansion.nonEmpty) actionPathExpansion.reduce(_ ++ _)
-    else ActionFunctionResult()
+    else SourceCodeFragment()
   }
 
   private def expandContentTypePath(
       resourcePackageParts: List[String],
       contentType: ContentType,
-      acceptHeaderMap: Map[AcceptHeaderSegment, Set[ActionSelection]])(implicit platform: Platform): ActionFunctionResult = {
+      acceptHeaderMap: Map[AcceptHeaderSegment, Set[ActionSelection]])(implicit platform: Platform): SourceCodeFragment = {
 
     // create the content type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a content type path field that instantiates the above class (into the List[String] result)
     // add the List[String] results of the expansion of the acceptHeader map to source of the above class
     // add the List[ClassRep] results of the expansion of the acceptHeader map to the List[ClassRep] result
 
-    val ActionFunctionResult(acceptSegmentMethodImports, acceptSegmentMethods, acceptHeaderClasses) =
+    val SourceCodeFragment(acceptSegmentMethodImports, acceptSegmentMethods, acceptHeaderClasses) =
       expandAcceptHeaderMap(resourcePackageParts, acceptHeaderMap)
 
     // Header segment classes have the same class name in Java as in Scala.
@@ -120,51 +119,41 @@ case class ActionGenerator(actionCode: ActionCode) {
     val contentHeaderMethodName      = s"content${CleanNameTools.cleanClassName(contentType.contentTypeHeader.value)}"
     val contentHeaderSegment: String = actionCode.contentHeaderSegmentField(contentHeaderMethodName, headerSegment.reference)
 
-    ActionFunctionResult(imports                    = Set.empty,
-                         actionFunctionDefinitions  = List(contentHeaderSegment),
-                         headerPathClassDefinitions = headerSegment :: acceptHeaderClasses)
+    SourceCodeFragment(imports                    = Set.empty,
+                       sourceDefinition           = List(contentHeaderSegment),
+                       headerPathClassDefinitions = headerSegment :: acceptHeaderClasses)
   }
 
   private def expandAcceptHeaderMap(resourcePackageParts: List[String], acceptHeaderMap: Map[AcceptHeaderSegment, Set[ActionSelection]])(
-      implicit platform: Platform): ActionFunctionResult = {
+      implicit platform: Platform): SourceCodeFragment = {
 
-    val actionPathExpansion: List[ActionFunctionResult] =
+    val actionPathExpansion: List[SourceCodeFragment] =
       acceptHeaderMap.toList match {
         case (_, actionSelections) :: Nil =>
-          List(
-            ActionFunctionResult(
-              actionSelections.flatMap(generateActionImports),
-              actionSelections.flatMap(ActionFunctionGenerator(actionCode).generate).toList,
-              List.empty
-            )
-          )
+          actionSelections.map(ActionFunctionGenerator(actionCode).generate).toList
         case ahMap @ (ah :: ahs) =>
-          ahMap map {
+          ahMap flatMap {
             case (NoAcceptHeaderSegment, actionSelections) =>
-              ActionFunctionResult(
-                actionSelections.flatMap(generateActionImports),
-                actionSelections.flatMap(ActionFunctionGenerator(actionCode).generate).toList,
-                List.empty
-              )
+              actionSelections.map(ActionFunctionGenerator(actionCode).generate).toList
             case (ActualAcceptHeaderSegment(responseType), actionSelections) =>
-              expandResponseTypePath(resourcePackageParts, responseType, actionSelections)
+              List(expandResponseTypePath(resourcePackageParts, responseType, actionSelections))
           }
       }
 
-    if (actionPathExpansion.nonEmpty) actionPathExpansion.reduce(_ ++ _)
-    else ActionFunctionResult()
+    actionPathExpansion.foldLeft(SourceCodeFragment())(_ ++ _)
   }
 
   private def expandResponseTypePath(resourcePackageParts: List[String], responseType: ResponseType, actions: Set[ActionSelection])(
-      implicit platform: Platform): ActionFunctionResult = {
+      implicit platform: Platform): SourceCodeFragment = {
 
     // create the result type path class extending a HeaderSegment and add the class to the List[ClassRep] result
     // add a result type path field that instantiates the above class (into the List[String] result)
     // add the List[String] results of the expansion of the actions to the above class and also add the imports needed by the actions
     // into the above class
 
-    val actionImports = actions.flatMap(generateActionImports)
-    val actionMethods = actions.flatMap(ActionFunctionGenerator(actionCode).generate).toList
+    val actionFunctionResults = actions.map(ActionFunctionGenerator(actionCode).generate)
+    val actionImports         = actionFunctionResults.flatMap(_.imports)
+    val actionMethods         = actionFunctionResults.flatMap(_.sourceDefinition).toList
 
     // Header segment classes have the same class name in Java as in Scala.
     val headerSegmentClassName = s"Accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}HeaderSegment"
@@ -174,17 +163,7 @@ case class ActionGenerator(actionCode: ActionCode) {
     val acceptHeaderMethodName      = s"accept${CleanNameTools.cleanClassName(responseType.acceptHeader.value)}"
     val acceptHeaderSegment: String = actionCode.contentHeaderSegmentField(acceptHeaderMethodName, headerSegment.reference)
 
-    ActionFunctionResult(imports                    = Set.empty,
-                         actionFunctionDefinitions  = List(acceptHeaderSegment),
-                         headerPathClassDefinitions = List(headerSegment))
-  }
-
-  private def generateActionImports(action: ActionSelection)(implicit platform: Platform): Set[ClassPointer] = {
-
-    val bodyTypes     = actionCode.bodyTypes(action).flatten.toSet
-    val responseTypes = actionCode.responseTypes(action).flatten.toSet
-
-    bodyTypes ++ responseTypes
+    SourceCodeFragment(imports = Set.empty, sourceDefinition = List(acceptHeaderSegment), headerPathClassDefinitions = List(headerSegment))
   }
 
   private def createHeaderSegment(packageParts: List[String],

@@ -19,15 +19,12 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, CanonicalTypeCollector }
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedTypeReference }
-import io.atomicbits.scraml.ramlparser.model.{ AbsoluteFragmentId, NativeId, Raml, RootId }
+import io.atomicbits.scraml.ramlparser.model.{ Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
 import org.scalatest.Matchers._
-
-import scala.util.Try
 
 /**
   * Created by peter on 20/03/17.
@@ -63,11 +60,11 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
         zooObject.properties("animals").asInstanceOf[Property[NonPrimitiveTypeReference]]
 
       val animalTypeRef: NonPrimitiveTypeReference =
-        pagedListTypeReference.ttype.genericTypes(TypeParameter("T")).asInstanceOf[NonPrimitiveTypeReference]
+        pagedListTypeReference.ttype.genericTypes.head.asInstanceOf[NonPrimitiveTypeReference]
 
       animalTypeRef.refers shouldBe CanonicalName.create(name = "Animal", packagePath = List("io", "atomicbits", "raml10"))
 
-      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes(TypeParameter("U"))
+      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes.tail.head
 
       intTypeRef shouldBe IntegerType
 
@@ -100,14 +97,13 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
         zooObject.properties("animals").asInstanceOf[Property[NonPrimitiveTypeReference]]
 
       val animalTypeRef: NonPrimitiveTypeReference =
-        pagedListTypeReference.ttype.genericTypes(TypeParameter("T")).asInstanceOf[NonPrimitiveTypeReference]
+        pagedListTypeReference.ttype.genericTypes.head.asInstanceOf[NonPrimitiveTypeReference]
 
       animalTypeRef.refers shouldBe CanonicalName.create(name = "Animal", packagePath = List("io", "atomicbits", "raml10"))
 
-      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes(TypeParameter("U"))
+      val intTypeRef: GenericReferrable = pagedListTypeReference.ttype.genericTypes.tail.head
 
       intTypeRef shouldBe IntegerType
-
     }
 
   }

@@ -1,0 +1,64 @@
+#%RAML 1.0
+---
+title: zoo-api
+version: 1.0
+mediaType: application/json
+
+types:
+  Animal:
+    type: object
+    properties:
+      kind: string
+      gender: string
+  Zoo:
+    type: object
+    properties:
+      name: string
+      animals:
+        type: Animal[]
+
+resourceTypes:
+  animalcollection:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: Animal[]
+    post?:
+      body:
+        application/json:
+      responses:
+        200:
+          application/json:
+  searchableCollection:
+    get:
+      queryParameters:
+        <<queryParamName>>:
+          description: Return <<resourcePathName>> that have their <<queryParamName>> matching the given value
+        <<fallbackParamName>>:
+          description: If no values match the value given for <<queryParamName>>, use <<fallbackParamName>> instead
+        <<resourcePathName>>: string
+
+traits:
+  secured:
+    queryParameters:
+      <<tokenName>>:
+        description: A valid <<tokenName>> is required
+  paged:
+    queryParameters:
+      numPages:
+        description: The number of pages to return, not to exceed <<maxPages>>
+
+/zoo/animals:
+  type: animalcollection
+
+/animals:
+  type:
+    [ animalcollection: { foo: bar } ]
+  post:
+
+/zookeepers:
+  type: { searchableCollection: { queryParamName: title, fallbackParamName: digest_all_fields } }
+  get:
+    is: [ secured: { tokenName: access_token }, paged: { maxPages: 10 } ]

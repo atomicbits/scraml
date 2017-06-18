@@ -27,12 +27,13 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 1/03/17.
   */
-object UnionClassGenerator extends SourceGenerator {
+case class UnionClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: Platform = javaJackson
 
   def generate(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr = {
-    throw new RuntimeException("Union type classes are not yet supported.")
+    println("WARNING: Union type classes are not yet supported in scraml.")
+    generationAggr
   }
 
 }

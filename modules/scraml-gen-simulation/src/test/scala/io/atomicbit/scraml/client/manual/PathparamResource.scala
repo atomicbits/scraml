@@ -19,13 +19,12 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl._
+import io.atomicbits.scraml.dsl.scalaplay._
 import play.api.libs.json.JsValue
 
-
 /**
- * Created by peter on 17/08/15. 
- */
+  * Created by peter on 17/08/15.
+  */
 class PathparamResource(_value: String, private val _req: RequestBuilder) extends ParamSegment[String](_value, _req) {
 
   def withHeaders(newHeaders: (String, String)*) =
@@ -34,53 +33,53 @@ class PathparamResource(_value: String, private val _req: RequestBuilder) extend
   def get(queryparX: Double, queryparY: Int, queryParZ: Option[Int] = None) = new TypeMethodSegment[String, User](
     method = Get,
     queryParams = Map(
-      "queryparX" -> Option(queryparX).map(HttpParam(_)),
-      "queryparY" -> Option(queryparY).map(HttpParam(_)),
-      "queryParZ" -> queryParZ.map(HttpParam(_))
+      "queryparX" -> Option(queryparX).map(SimpleHttpParam.create(_)),
+      "queryparY" -> Option(queryparY).map(SimpleHttpParam.create(_)),
+      "queryParZ" -> queryParZ.map(SimpleHttpParam.create(_))
     ),
+    queryString          = None,
     expectedAcceptHeader = Some("application/json"),
-    req = _requestBuilder
+    req                  = _requestBuilder
   )
 
   def put(body: String) =
     new TypeMethodSegment[String, Address](
-      method = Put,
-      theBody = Some(body),
-      expectedAcceptHeader = Some("application/json"),
+      method                    = Put,
+      theBody                   = Some(body),
+      expectedAcceptHeader      = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = _requestBuilder
+      req                       = _requestBuilder
     )
 
   def put(body: JsValue) =
     new TypeMethodSegment[JsValue, Address](
-      method = Put,
-      theBody = Some(body),
-      expectedAcceptHeader = Some("application/json"),
+      method                    = Put,
+      theBody                   = Some(body),
+      expectedAcceptHeader      = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = _requestBuilder
+      req                       = _requestBuilder
     )
 
   def put(body: User) =
-    new TypeMethodSegment[User, Address](
-      method = Put,
-      theBody = Some(body),
-      expectedAcceptHeader = Some("application/json"),
-      expectedContentTypeHeader = Some("application/json"),
-      req = _requestBuilder)
+    new TypeMethodSegment[User, Address](method                    = Put,
+                                         theBody                   = Some(body),
+                                         expectedAcceptHeader      = Some("application/json"),
+                                         expectedContentTypeHeader = Some("application/json"),
+                                         req                       = _requestBuilder)
 
   def post(formparX: Int, formParY: Double, formParZ: Option[String]) =
     new TypeMethodSegment(
-      method = Post,
+      method  = Post,
       theBody = None,
       formParams = Map(
-        "formparX" -> Option(formparX).map(HttpParam(_)),
-        "formParY" -> Option(formParY).map(HttpParam(_)),
-        "formParZ" -> formParZ.map(HttpParam(_))
+        "formparX" -> Option(formparX).map(SimpleHttpParam.create(_)),
+        "formParY" -> Option(formParY).map(SimpleHttpParam.create(_)),
+        "formParZ" -> formParZ.map(SimpleHttpParam.create(_))
       ),
-      multipartParams = List.empty,
-      expectedAcceptHeader = Some("application/json"),
+      multipartParams           = List.empty,
+      expectedAcceptHeader      = Some("application/json"),
       expectedContentTypeHeader = Some("application/json"),
-      req = _requestBuilder
+      req                       = _requestBuilder
     )
 
 }

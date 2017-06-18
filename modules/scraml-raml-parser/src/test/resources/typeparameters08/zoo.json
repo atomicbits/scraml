@@ -10,14 +10,14 @@
     },
     "animals": {
       "$ref": "http://atomicbits.io/raml10/paged-list.json#",
-      "genericTypes": {
-        "T": {
+      "genericTypes": [
+        {
           "$ref": "http://atomicbits.io/raml10/animal.json"
         },
-        "U": {
+        {
           "type": "integer"
         }
-      }
+      ]
     }
   }
 }

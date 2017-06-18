@@ -19,11 +19,11 @@
 
 package io.atomicbits.scraml.client.manual
 
-import io.atomicbits.scraml.dsl.{PlainSegment, RequestBuilder}
+import io.atomicbits.scraml.dsl.scalaplay.{ PlainSegment, RequestBuilder }
 
 /**
- * Created by peter on 17/08/15. 
- */
+  * Created by peter on 17/08/15.
+  */
 class RestResource(private val _req: RequestBuilder) extends PlainSegment("rest", _req) {
 
   def some = new SomeResource(_requestBuilder.withAddedPathSegment("some"))

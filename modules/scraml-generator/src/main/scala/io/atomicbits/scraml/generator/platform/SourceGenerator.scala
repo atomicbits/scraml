@@ -22,8 +22,4 @@ package io.atomicbits.scraml.generator.platform
 /**
   * Created by peter on 20/01/17.
   */
-trait SourceGenerator {
-
-  def platform: Platform
-
-}
+trait SourceGenerator

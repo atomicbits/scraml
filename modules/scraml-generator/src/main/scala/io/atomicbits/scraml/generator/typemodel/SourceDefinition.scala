@@ -28,4 +28,6 @@ trait SourceDefinition {
 
   def classReference(implicit platform: Platform): ClassReference
 
+  // def basePackage: List[String]
+
 }

@@ -62,8 +62,9 @@ class JsonSchemaWithRelativeIdsTest extends FeatureSpec with GivenWhenThen with 
       val carType = canonicalLookup.map(carName).asInstanceOf[ObjectType]
       carType.properties("drive") shouldBe
         Property(
-          name  = "drive",
-          ttype = NonPrimitiveTypeReference(refers = CanonicalName(name = "Engine", packagePath = List("io", "atomicbits", "model")))
+          name = "drive",
+          ttype =
+            NonPrimitiveTypeReference(refers = CanonicalName.create(name = "Engine", packagePath = List("io", "atomicbits", "model")))
         )
     }
   }

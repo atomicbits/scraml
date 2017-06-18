@@ -19,30 +19,56 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import io.atomicbits.scraml.ramlparser.model.{Id, MediaType, Traits}
-import play.api.libs.json.{JsString, JsValue}
-
+import io.atomicbits.scraml.ramlparser.model.{ MediaType, ResourceTypes, Traits }
+import play.api.libs.json.{ JsString, JsValue }
 
 /**
   * Created by peter on 10/02/16.
   */
 case class ParseContext(var sourceTrail: List[String],
-                        traits: Traits = Traits(),
+                        var urlSegments: List[String],
+                        resourceTypes: ResourceTypes        = ResourceTypes(),
+                        traits: Traits                      = Traits(),
                         defaultMediaType: Option[MediaType] = None) {
 
+  def withSourceAndUrlSegments[T](jsValue: JsValue, urlSegs: List[String] = List.empty)(fn: => T): T = {
+    val sourceTrailOrig = sourceTrail
+    val urlSegmentsOrig = urlSegments
 
-  def withSource[T](jsValue: JsValue)(fn: => T): T = {
-    (jsValue \ Sourced.sourcefield).toOption.collect {
-      case JsString(source) =>
-        val sourceTrailOrig = sourceTrail
-        sourceTrail = source :: sourceTrailOrig
-        val result = fn
-        sourceTrail = sourceTrailOrig
-        result
-    } getOrElse fn
+    sourceTrail =
+      (jsValue \ Sourced.sourcefield).toOption.collect {
+        case JsString(source) => source :: sourceTrailOrig
+      } getOrElse {
+        sourceTrailOrig
+      }
+    urlSegments = urlSegmentsOrig ++ urlSegs
+
+    val result = fn
+
+    sourceTrail = sourceTrailOrig
+    urlSegments = urlSegmentsOrig
+
+    result
   }
 
+  def head: String = sourceTrail.head
 
-  def head = sourceTrail.head
+  def resourcePath: String = {
+    val resourcePathOptExt = urlSegments.mkString("/")
+    if (resourcePathOptExt.endsWith("{ext}")) resourcePathOptExt.dropRight(5)
+    else resourcePathOptExt
+  }
+
+  def resourcePathName: String = {
+
+    def stripParamSegments(reverseUrlSegs: List[String]): String =
+      reverseUrlSegs match {
+        case urlSeg :: urlSegs if urlSeg.contains('{') && urlSeg.contains('}') => stripParamSegments(urlSegs)
+        case urlSeg :: urlSegs                                                 => urlSeg
+        case Nil                                                               => ""
+      }
+
+    stripParamSegments(urlSegments.reverse)
+  }
 
 }

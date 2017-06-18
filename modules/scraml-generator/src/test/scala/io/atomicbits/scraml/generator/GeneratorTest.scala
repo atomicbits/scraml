@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.typemodel._
@@ -40,27 +41,26 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test the generation of an object hierarchy") {
 
       Given("a json-schema containing an object hierarcy")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("objecthierarchy/TestObjectHierarchyApi.raml")
+      val apiLocation = "objecthierarchy/TestObjectHierarchyApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = ScalaPlay
+      implicit val platform = ScalaPlay(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestObjectHierarchyApi",
-            ScalaPlay
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestObjectHierarchyApi",
+            platform
           )
           .generate
 
       Then("we should get valid a class hierarchy")
 
-      val animalToClassName = CanonicalName("Animal", List("io", "atomicbits", "schema"))
-      val catToClassName    = CanonicalName("Cat", List("io", "atomicbits", "schema"))
-      val dogToClassName    = CanonicalName("Dog", List("io", "atomicbits", "schema"))
-      val fishToClassName   = CanonicalName("Fish", List("io", "atomicbits", "schema"))
+      val animalToClassName = CanonicalName.create("Animal", List("io", "atomicbits", "schema"))
+      val catToClassName    = CanonicalName.create("Cat", List("io", "atomicbits", "schema"))
+      val dogToClassName    = CanonicalName.create("Dog", List("io", "atomicbits", "schema"))
+      val fishToClassName   = CanonicalName.create("Fish", List("io", "atomicbits", "schema"))
 
       val animalToDef: TransferObjectClassDefinition = generationAggr.toMap(animalToClassName)
 
@@ -79,24 +79,26 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test generated Scala DSL") {
 
       Given("a RAML specification")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+      val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = ScalaPlay
+      implicit val platform: Platform = ScalaPlay(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestApi",
             platform
           )
           .generate
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.scala",
@@ -142,7 +144,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       generatedFilePaths -- expectedFilePaths shouldBe Set.empty
       expectedFilePaths -- generatedFilePaths shouldBe Set.empty
 
-      val geometryToClassName = CanonicalName("Geometry", List("io", "atomicbits", "schema"))
+      val geometryToClassName = CanonicalName.create("Geometry", List("io", "atomicbits", "schema"))
 
       val bboxFieldClassPointer = generationAggr.toMap(geometryToClassName).fields.filter(_.fieldName == "bbox").head.classPointer
 
@@ -152,24 +154,26 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
     scenario("test generated Java DSL") {
 
       Given("a RAML specification")
-      val apiResourceUrl = this.getClass.getClassLoader.getResource("io/atomicbits/scraml/TestApi.raml")
+      val apiLocation = "io/atomicbits/scraml/TestApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = JavaJackson
+      implicit val platform = JavaJackson(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
           .buildGenerationAggr(
-            ramlApiPath    = apiResourceUrl.toString,
-            apiPackageName = "io.atomicbits.scraml",
-            apiClassName   = "TestApi",
+            ramlApiPath  = apiLocation,
+            apiClassName = "TestApi",
             platform
           )
           .generate
 
       Then("we should get valid class representations")
 
-      val generatedFilePaths = generationAggr.sourceFilesGenerated.map(_.filePath).toSet
+      val generatedFilePaths =
+        generationAggr.sourceFilesGenerated
+          .map(_.filePath.toString)
+          .toSet
 
       val expectedFilePaths = Set(
         "io/atomicbits/scraml/TestApi.java",
@@ -188,13 +192,11 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
         "io/atomicbits/schema/UserDefinitionsAddress.java",
         "io/atomicbits/schema/Link.java",
         "io/atomicbits/schema/PagedList.java",
-        // "io/atomicbits/schema/AnimalImpl.java", // Java Pojo can extend one another, the interfaces are introduced only when multiple-inheritance is involved!
         "io/atomicbits/schema/Animal.java",
         "io/atomicbits/schema/Dog.java",
         "io/atomicbits/schema/Cat.java",
         "io/atomicbits/schema/Fish.java",
         "io/atomicbits/schema/Method.java",
-        // "io/atomicbits/schema/GeometryImpl.java",
         "io/atomicbits/schema/Geometry.java",
         "io/atomicbits/schema/Point.java",
         "io/atomicbits/schema/LineString.java",

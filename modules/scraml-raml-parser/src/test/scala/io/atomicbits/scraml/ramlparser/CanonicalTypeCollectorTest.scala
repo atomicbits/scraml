@@ -178,10 +178,10 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       val userGetAction     = userResource.actionMap(Get)
       val queryParameterMap = userGetAction.queryParameters.valueMap
-      queryParameterMap("age").required shouldBe false
+      queryParameterMap("age").required shouldBe true
       queryParameterMap("age").parameterType.parsed.isInstanceOf[ParsedNumber] shouldBe true
       queryParameterMap("age").parameterType.canonical shouldBe Some(NumberType)
-      queryParameterMap("organization").required shouldBe false
+      queryParameterMap("organization").required shouldBe true
       queryParameterMap("organization").parameterType.parsed.isInstanceOf[ParsedArray] shouldBe true
       queryParameterMap("organization").parameterType.canonical shouldBe Some(ArrayTypeReference(genericType = StringType))
       val okResponse            = userGetAction.responses.responseMap(StatusCode("200"))
@@ -202,14 +202,14 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       val parsedPagedListType: ParsedTypeReference = pagedListTypeRepresentation.parsed.asInstanceOf[ParsedTypeReference]
       parsedPagedListType.refersTo shouldBe RootId("http://atomicbits.io/schema/paged-list.json")
-      val dogTypeReference = parsedPagedListType.genericTypes("T").asInstanceOf[ParsedTypeReference]
+      val dogTypeReference = parsedPagedListType.genericTypes.head.asInstanceOf[ParsedTypeReference]
       dogTypeReference.refersTo shouldBe RootId("http://atomicbits.io/schema/dog.json")
-      parsedPagedListType.genericTypes("U").isInstanceOf[ParsedString] shouldBe true
+      parsedPagedListType.genericTypes.tail.head.isInstanceOf[ParsedString] shouldBe true
 
       val canonicalPagedListType: NonPrimitiveTypeReference =
         pagedListTypeRepresentation.canonical.get.asInstanceOf[NonPrimitiveTypeReference]
-      canonicalPagedListType.genericTypes(TypeParameter("T")).isInstanceOf[NonPrimitiveTypeReference]
-      canonicalPagedListType.genericTypes(TypeParameter("U")).isInstanceOf[NonPrimitiveTypeReference]
+      canonicalPagedListType.genericTypes.head.isInstanceOf[NonPrimitiveTypeReference]
+      canonicalPagedListType.genericTypes.tail.head.isInstanceOf[NonPrimitiveTypeReference]
 
       // Check the paged list type model
       val pagedListType = canonicalLookup(pagedList).asInstanceOf[ObjectType]

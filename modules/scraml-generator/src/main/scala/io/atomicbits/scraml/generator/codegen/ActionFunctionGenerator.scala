@@ -19,17 +19,16 @@
 
 package io.atomicbits.scraml.generator.codegen
 
-import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.ParsedParameter
+import io.atomicbits.scraml.ramlparser.model.Parameter
 
 /**
   * Created by peter on 20/01/17.
   */
 case class ActionFunctionGenerator(actionCode: ActionCode) {
 
-  def generate(actionSelection: ActionSelection)(implicit platform: Platform): List[String] = {
+  def generate(actionSelection: ActionSelection): SourceCodeFragment = {
 
     actionSelection.selectedContentType match {
       case x: FormPostContentType      => generateFormAction(actionSelection, x)
@@ -41,25 +40,31 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
 
   }
 
-  def generateFormAction(actionSelection: ActionSelection, formPostContentType: FormPostContentType): List[String] = {
+  def generateFormAction(actionSelection: ActionSelection, formPostContentType: FormPostContentType): SourceCodeFragment = {
 
-    val actualFormParameters: Map[String, ParsedParameter] = formPostContentType.formParameters.valueMap
+    val actualFormParameters: Map[String, Parameter] = formPostContentType.formParameters.valueMap
 
-    val formParameterMethodParameters: List[String] =
+    val formParameterMethodParameterCode: List[SourceCodeFragment] =
       actionCode.sortQueryOrFormParameters(actualFormParameters.toList).map { paramPair =>
         val (name, param) = paramPair
         actionCode.expandQueryOrFormParameterAsMethodParameter((name, param))
       }
 
+    val formParameterMethodParameterImports = formParameterMethodParameterCode.flatMap(_.imports)
+    val formParameterMethodParameters       = formParameterMethodParameterCode.flatMap(_.sourceDefinition)
+
     val formParameterMapEntries: List[String] =
-      formPostContentType.formParameters.valueMap.map {
+      actualFormParameters.map {
         case (name, parameter) => actionCode.expandQueryOrFormParameterAsMapEntry((name, parameter))
       } toList
+
+    val queryStringType = actionCode.queryStringType(actionSelection)
 
     val formAction: String =
       actionCode.generateAction(
         actionSelection         = actionSelection,
         bodyType                = None,
+        queryStringType         = queryStringType,
         isBinary                = false,
         actionParameters        = formParameterMethodParameters,
         formParameterMapEntries = formParameterMapEntries,
@@ -67,15 +72,21 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         responseType            = actionSelection.selectedResponseType
       )
 
-    List(formAction)
+    val actionFunctionDefinitions = List(formAction)
+    val actionImports             = generateActionImports(actionSelection)
+
+    SourceCodeFragment(imports = actionImports ++ formParameterMethodParameterImports, sourceDefinition = actionFunctionDefinitions)
   }
 
-  def generateMultipartFormPostAction(actionSelection: ActionSelection)(implicit platform: Platform): List[String] = {
+  def generateMultipartFormPostAction(actionSelection: ActionSelection): SourceCodeFragment = {
+
+    val queryStringType = actionCode.queryStringType(actionSelection)
 
     val multipartAction: String =
       actionCode.generateAction(
         actionSelection   = actionSelection,
         bodyType          = None,
+        queryStringType   = queryStringType,
         isBinary          = false,
         actionParameters  = actionCode.expandMethodParameter(List("parts" -> ListClassPointer(BodyPartClassPointer))),
         isMultipartParams = true,
@@ -83,10 +94,13 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
         responseType      = actionSelection.selectedResponseType
       )
 
-    List(multipartAction)
+    val actionFunctionDefinitions = List(multipartAction)
+    val actionImports             = generateActionImports(actionSelection)
+
+    SourceCodeFragment(imports = actionImports, sourceDefinition = actionFunctionDefinitions)
   }
 
-  def generateBodyAction(actionSelection: ActionSelection, binary: Boolean): List[String] = {
+  def generateBodyAction(actionSelection: ActionSelection, binary: Boolean): SourceCodeFragment = {
 
     /**
       * In scala, we can get compiler issues with default values on overloaded action methods. That's why we don't add
@@ -94,43 +108,73 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
       * are multiple body types.
       */
     val bodyTypes = actionCode.bodyTypes(actionSelection)
+    // Scala action methods will have trouble with default query parameter values when there are more than one body types.
+    // Repetition of the action method will cause compiler conflicts in that case, so default values must be omitted then.
     val noDefault = bodyTypes.size > 1
-    val queryParameterMethodParameters =
+    val queryParameterMethodParameterCode: List[SourceCodeFragment] =
       actionCode
         .sortQueryOrFormParameters(actionSelection.action.queryParameters.valueMap.toList)
         .map(actionCode.expandQueryOrFormParameterAsMethodParameter(_, noDefault))
 
-    bodyTypes.map { bodyType =>
-      val actionBodyParameter =
-        bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
+    val queryParameterMethodParameterImports = queryParameterMethodParameterCode.flatMap(_.imports)
+    val queryParameterMethodParameters       = queryParameterMethodParameterCode.flatMap(_.sourceDefinition)
 
-      val allActionParameters = actionBodyParameter ++ queryParameterMethodParameters
+    val queryStringMethodParameterCode: SourceCodeFragment =
+      actionSelection.action.queryString.map(actionCode.expandQueryStringAsMethodParameter).getOrElse(SourceCodeFragment())
+    val queryStringMethodParameterImports = queryStringMethodParameterCode.imports
+    val queryStringMethodParameters       = queryStringMethodParameterCode.sourceDefinition
 
-      val segmentBodyType = if (binary) None else bodyType
+    val queryStringType = actionCode.queryStringType(actionSelection)
 
-      actionCode.generateAction(
-        actionSelection  = actionSelection,
-        bodyType         = bodyType,
-        isBinary         = binary,
-        actionParameters = allActionParameters,
-        isTypedBodyParam = actionBodyParameter.nonEmpty && !binary,
-        isBinaryParam    = actionBodyParameter.nonEmpty && binary,
-        contentType      = actionSelection.selectedContentType,
-        responseType     = actionSelection.selectedResponseType
-      )
-    }
+    val actionFunctionDefinitions =
+      bodyTypes.map { bodyType =>
+        val actionBodyParameter =
+          bodyType.map(bdType => actionCode.expandMethodParameter(List("body" -> bdType))).getOrElse(List.empty)
 
+        val allActionParameters = actionBodyParameter ++ queryParameterMethodParameters ++ queryStringMethodParameters
+
+        val segmentBodyType = if (binary) None else bodyType
+
+        actionCode.generateAction(
+          actionSelection  = actionSelection,
+          bodyType         = bodyType,
+          queryStringType  = queryStringType,
+          isBinary         = binary,
+          actionParameters = allActionParameters,
+          isTypedBodyParam = actionBodyParameter.nonEmpty && !binary,
+          isBinaryParam    = actionBodyParameter.nonEmpty && binary,
+          contentType      = actionSelection.selectedContentType,
+          responseType     = actionSelection.selectedResponseType
+        )
+      }
+
+    val actionImports = generateActionImports(actionSelection)
+
+    SourceCodeFragment(imports          = actionImports ++ queryParameterMethodParameterImports ++ queryStringMethodParameterImports,
+                       sourceDefinition = actionFunctionDefinitions)
+  }
+
+  private def generateActionImports(actionSelection: ActionSelection): Set[ClassPointer] = {
+
+    // Todo: add the imports from the Parameters (headers / query parameters)
+    actionSelection.action.queryParameters
+    actionSelection.action.headers
+
+    val bodyTypes     = actionCode.bodyTypes(actionSelection).flatten.toSet
+    val responseTypes = actionCode.responseTypes(actionSelection).flatten.toSet
+
+    bodyTypes ++ responseTypes
   }
 
 }
 
-case class ActionFunctionResult(imports: Set[ClassPointer]                         = Set.empty,
-                                actionFunctionDefinitions: List[String]            = List.empty,
-                                headerPathClassDefinitions: List[SourceDefinition] = List.empty) {
+case class SourceCodeFragment(imports: Set[ClassPointer]                         = Set.empty,
+                              sourceDefinition: List[String]                     = List.empty,
+                              headerPathClassDefinitions: List[SourceDefinition] = List.empty) {
 
-  def ++(other: ActionFunctionResult): ActionFunctionResult =
-    ActionFunctionResult(imports ++ other.imports,
-                         actionFunctionDefinitions ++ other.actionFunctionDefinitions,
-                         headerPathClassDefinitions ++ other.headerPathClassDefinitions)
+  def ++(other: SourceCodeFragment): SourceCodeFragment =
+    SourceCodeFragment(imports ++ other.imports,
+                       sourceDefinition ++ other.sourceDefinition,
+                       headerPathClassDefinitions ++ other.headerPathClassDefinitions)
 
 }

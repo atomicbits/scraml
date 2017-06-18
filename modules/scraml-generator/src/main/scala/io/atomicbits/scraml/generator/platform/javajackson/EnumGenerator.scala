@@ -21,16 +21,17 @@ package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.EnumDefinition
 import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.
   */
-object EnumGenerator extends SourceGenerator {
+case class EnumGenerator(javaJackson: JavaJackson) extends SourceGenerator {
 
-  implicit val platform: Platform = JavaJackson
+  implicit val platform: Platform = javaJackson
 
   def generate(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = {
 
@@ -72,6 +73,10 @@ object EnumGenerator extends SourceGenerator {
               }
             }
             throw new IllegalArgumentException("Cannot instantiate a ${enumDefinition.reference.name} enum element from " + value);
+          }
+
+          public String toString() {
+            return value();
           }
 
         }

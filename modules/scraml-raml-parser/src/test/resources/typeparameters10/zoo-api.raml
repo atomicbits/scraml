@@ -29,9 +29,7 @@ types:
       name: string
       animals:
         type: PagedList
-        genericTypes:
-          T: Animal
-          U: integer
+        genericTypes: [Animal, integer]
 
 /zoo:
   get:

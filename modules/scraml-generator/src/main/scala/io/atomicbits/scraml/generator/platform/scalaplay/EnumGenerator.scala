@@ -21,16 +21,17 @@ package io.atomicbits.scraml.generator.platform.scalaplay
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.{ EnumDefinition, SourceFile }
+import io.atomicbits.scraml.generator.typemodel.EnumDefinition
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.util.CleanNameUtil
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 14/01/17.
   */
-object EnumGenerator extends SourceGenerator {
+case class EnumGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
-  implicit val platform: Platform = ScalaPlay
+  implicit val platform: ScalaPlay = scalaPlay
 
   def generate(generationAggr: GenerationAggr, enumDefinition: EnumDefinition): GenerationAggr = {
 
