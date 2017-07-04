@@ -10,8 +10,8 @@ Type safe Java and Scala RAML client generator
 
 Follow the steps in these quickstart guidelines: 
 
- 1. [Java Quickstart](https://github.com/atomicbits/scraml/blob/develop/documentation/javadocumentation.adoc)
- 2. [Scala Quickstart](https://github.com/atomicbits/scraml/blob/develop/documentation/scaladocumentation.adoc)
+ 1. [Java Quickstart](https://github.com/atomicbits/scraml/blob/develop/documentation/javadocumentation.adoc#quickstart-java)
+ 2. [Scala Quickstart](https://github.com/atomicbits/scraml/blob/develop/documentation/scaladocumentation.adoc#quickstart-scala)
 
 ## Release notes
 
