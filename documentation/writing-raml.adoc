@@ -1,0 +1,85 @@
+
+== RAML basics
+
+Documentation, tutorials and detailed information about writing RAML documents are found on the RAML main website http://raml.org. This
+section will teach you some basics to get you started.
+
+=== Resource definitions and json-schema
+
+In code listing <<raml-simple>>, we see a resource hosted on `\rest\user` that provides a `GET` action that takes two query parameters
+`firstName` and `lastName`. The resulting body has a result type `application/json` that matches the expected accept header and refers
+to the JSON data this service returns. This JSON data is further defined by the schema `user`. The `!include` keyword includes the content
+of the referenced file into the document. A single RAML definition has exactly one main entry file that bootstraps the inclusion of other
+files whenever it is needed to structure the documents.
+
+[[raml-simple]]
+[source,yaml]
+.a simple resource definition
+----
+#%RAML 0.8
+---
+title: raml example
+version: v1
+
+schemas:
+  - user:         !include schemas/user.json
+
+/rest/user:
+  get:
+    queryParameters:
+      firstName:
+        description: The firstname of the user.
+        type: string
+      lastName:
+        description: The last name of the user.
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            schema: user
+----
+
+
+A http://json-schema.org/[json-schema] file describes the rules to which a JSON object needs to adhere. In the example of the `user.json`
+we see a schema definition with type `object` that has three properties `firstName` and `lastName` (these are strings) and `age`
+(an integer).
+
+Notice that the json-schema begins with two special fields: `$schema` and `id`. The `$schema` is a version identifier for the
+json-schema version that you use. According to the specs, it is a required keyword at the beginning of a json-schema file, but
+[scramlfont]#Scraml# won't use it for any specific purpose. The `id` field in a json-schema on the other hand is *essential for
+cross-referencing* between json-schemas! Therefore, [scramlfont]#Scraml# requires you to specify one on each json-schema file! The
+format should be of the form `http://atomicbits.io/api/user.json` and may end with a `#`. If the schema refers to an object,
+the canonical name of the object will be deduced from its `id`. In this case `io.atomicbits.api.User` will be the canonical class name
+that will recur in the generated class representation of a user.
+
+IMPORTANT: It is essential for cross-referencing objects that each json-schema has a unique `id` field! [scramlfont]#Scraml# requires it.
+
+[[json-simple]]
+[source,json]
+.the json-schema for the user object schemas/user.json
+----
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/api/user.json#",
+  "type": "object",
+  "description": "A user object.",
+  "properties": {
+    "firstName": {
+      "required": true,
+      "type": "string"
+    },
+    "lastName": {
+      "required": true,
+      "type": "string"
+    },
+    "age": {
+      "required": true,
+      "type": "integer"
+    }
+  }
+}
+----
+
+
+

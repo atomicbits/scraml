@@ -1,0 +1,1022 @@
+:toc:
+:linkcss:
+:icons: font
+:source-highlighter: pygments
+:pygments-style: friendly
+
+
+We are currently compatible with RAML 1.0 types, except for union types. We are fully backward compatible with version 0.8.
+The transfer objects in the samples code below are mostly expressed in json-schema, but you can easily rewrite them into RAML 1.0 types.
+
+== Quickstart Scala
+
+Setting up [scramlfont]#Scraml# using the sbt-plugin is super-easy if you follow these two steps:
+
+
+[[plugins.sbt]]
+[source,scala]
+.add the scraml sbt-plugin to project/plugins.sbt
+----
+addSbtPlugin("io.atomicbits"      % "scraml-sbt-plugin"   % "0.7.0")
+----
+
+
+[[build.sbt]]
+[source,scala]
+.configure the scraml sbt-plugin and the http client dependency in build.sbt
+----
+import io.atomicbits.scraml.sbtplugin.ScramlSbtPlugin.autoImport._
+
+scramlRamlApi in scraml in Compile := "io/atomicbits/my-api.raml"
+
+libraryDependencies ++= Seq(
+  "com.ning" % "async-http-client" % "1.9.36",
+  "io.atomicbits" %% "scraml-dsl-scala" % scramlVersion.value
+)
+
+// The path "io/atomicbits/my-api.raml" is relative to your project's src/main/resources folder.
+----
+
+
+[scramlfont]#Scraml# provides an sbt plugin that let's you configure your project's path to the main RAML file. By default, this
+path is expected to be relative to the project's `resources` folder. This relative path will also be the template for the package
+name of the client class for your API. To enable the plugin, <<plugins.sbt>>. Be sure to put `plugins.sbt` into your `project` folder.
+
+Finally, <<build.sbt>> in your project. The configuration of [scramlfont]#Scraml# is usually just a one-liner that points the
+`scramlRamlApi` variable to the relative path to your main RAML file that sits in your `src/main/resources` folder. If you
+configure [scramlfont]#Scraml# in a submodule, then just configure this variable for that module by adding it in the module's
+`build.sbt` file. If for whatever reason the RAML files are not in the `resources` folder, then use the `scramlBaseDir` variable
+to set another base directory, similar to how the `scramlRamlApi` variable is set.
+
+The two dependencies of your generated Scraml API, the ning 'http-client' and the 'scraml-dsl-scala' libraries, need to be included
+manually. This gives a clear view on the dependencies that you add to your project. In the future, other backing clients than
+the http-client will be supported through factory classes.
+
+[[scraml-play25.sbt]]
+[source,scala]
+.include this version of the scraml dsl library when using Play 2.5
+----
+  "io.atomicbits" %% "scraml-dsl-play25-scala" % scramlVersion.value
+----
+
+
+People who have already moved to Play 2.5 can include the 'scraml-dsl-play25-scala' library instead of the 'scraml-dsl-scala' library.
+With Play 2.5, there are no API changes in Scraml, but the macro expansion for the JSON formatters have another binary representation, so
+'scraml-dsl-play25-scala' is just the original 'scraml-dsl-scala' that was recompiled against the Play 2.5 macros.
+
+Compile the project using sbt to generate the [scramlfont]#Scraml# code. Continuous compile also works (`~compile`). As soon as you
+edit and save a RAML file, compilation will rerun. The generated code will appear in `target/scala-2.xx/src_managed/main/`, sbt's default
+code generation destination.
+
+To see this in action, checkout the example project on github: https://github.com/atomicbits/scraml-test-scala
+
+When you compile your project, you'll see a lot of dependencies being downloaded that are needed for the codegeneration step. Keep in
+mind that these packages are all compile-time dependencies. They will not end up in your packaged project! Only the `scraml-dsl-scala`
+artifact will be added as a dependency and it only has `ning` and `play-json` as transitive dependencies.
+
+
+[[license.key]]
+[source,scala]
+.configure a license key for activating the commercial scraml license in build.sbt
+----
+scramlLicenseKey in scraml in Compile :=
+  """
+    |U1Q7Q1ZQWnZMbHZSakQ7TGVwN0JSYkJXT2I7aW8uYXRvbWljYml0czsyMDE2LTA3LTAxOzM2NiFj
+    |VzlubUlqM2t4a1o2aUZFUFhDQm5nb01pd005bXVrb0k3MVczUnI2cmxaYjc3UC92OWlRUDFXeHBD
+    |Mk9Gd2hQcHBUVXkwYVBQZFhRCnJ6Y3VialdQv3d1c3gxVHVaOTAxNEVKbmI4cm9vdk1FakVqNlZw
+    |UG1mLzVyaHdTUXg5bWRtOWxtTDdUVnJoWTM1MEZaNVNJVWxGcG4Kb201cWVkdGp5cEs5dHRhajd3
+    |V3FEby9jN2FJOEtNZk9lME5wWjhidDBzUFFoZkdvV2VDMEZCWU9pTU1BdkZPWlNuWTZDNk1UNmhM
+    |WQo0eEoxVWFrTkNaaFNOeHhqRUQyNk44SHBFcFlybjlKWWRBa1piME5mVm9hczM0bHQ4WmN1OWJE
+    |bFExK3FmaDlmazlpbm5SdjVRVkhrCnEyMFJCZ3NKbHlubnFlZHdJYm5oNTk3V1hFTE4yVzNyTC9l
+    |Mjl3PT0=
+  """.stripMargin
+
+scramlClassHeader in scraml in Compile :=
+  """
+    |All rights reserved.
+    |This is a custom license header.
+  """.stripMargin
+----
+
+In order to use your own custom license on the generated code, you can <<license.key>>. As soon as a valid license is configured
+using the `scramlLicenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
+the `scramlClassHeader` sbt variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
+generate and your own license applies instead. Just ignore the `scramlLicenseKey` and `scramlClassHeader` variables if you want to use
+the free open source code generator.
+
+// == Writing RAML documentation
+
+include::writing-raml.adoc[]
+
+
+== Invoking Scraml
+
+The effect of having written a RAML model becomes interesting when you start using [scramlfont]#Scraml# to generate Scala code that
+brings you a typesafe and asynchronous Domain Specific Language (DSL) that will enforce you in a fluent manner to follow your RAML specs.
+
+The sample code that we use here is based on the Scala test project for [scramlfont]#Scraml#:
+https://github.com/atomicbits/scraml-test-scala. You can checkout the full codebase there and play with the RAML definition and the test
+classes that showcase the DSL.
+
+In the next sections, we first introduce the generation of case classes from json-schema followed by the integration of those typed
+Data Transfer Objects (DTOs) in the [scramlfont]#Scraml# DSL. Then we go deeper into the more advanced features that [scramlfont]#Scraml#
+offers.
+
+
+// === Cross-referencing json-schemas
+
+include::cross-referencing-json-schema.adoc[]
+
+
+=== Generated case classes
+
+The <<scala-user>> reflects the fields described by the corresponding json-schema. Notice that the types of the fields that were not
+required (such as homePage) are wrapped in the `Option` monad. The address class has a strange canonical name that is a result of the
+somewhat unconventional `id` that we gave in the nested json-schema example. All optional fields have a default value of `None`, which
+shortens the construction of those case classes when the values of those fields are empty. The <<scala-link>> is referred to by the User
+object (the `homePage` field). Because both classes are in the same package, the import statement to the Link class in User is omitted.
+
+[[scala-user]]
+[source,scala]
+.User case class
+----
+package io.atomicbits.schema
+
+import play.api.libs.json._
+
+case class User(age: Long,
+                lastName: String,
+                firstName: String,
+                id: String,
+                homePage: Option[Link] = None,
+                address: Option[UserDefinitionsAddress] = None)
+
+object User {
+
+  implicit val jsonFormatter: Format[User] = Json.format[User]
+
+}
+----
+
+JSON serialization is done with play-json 2.4, hence the dependency on `play.api.libs.json._` (together with ning our only external
+dependencies to use the DSL). The formatters are defined in the companion objects.
+
+[[scala-link]]
+[source,scala]
+.Link case class
+----
+package io.atomicbits.schema
+
+import play.api.libs.json._
+
+case class Link(href: String,
+                method: Method,
+                accept: Option[String] = None)
+
+object Link {
+
+  implicit val jsonFormatter: Format[Link] = Json.format[Link]
+
+}
+----
+
+
+Enumerations like the <<scala-method>> are implemented as a sealed trait with a name field and case objects for each choice in its
+companion object. JSON serialization goes directly to the name of the choice as a string without wrapper object.
+
+[[scala-method]]
+[source,scala]
+.Method enumeration
+----
+package io.atomicbits.schema
+
+import play.api.libs.json.{Format, Json, JsResult, JsValue, JsString}
+
+sealed trait Method {
+  def name: String
+}
+
+object Method {
+
+  case object GET extends Method {
+    val name = "GET"
+  }
+
+  case object PUT extends Method {
+    val name = "PUT"
+  }
+
+  case object POST extends Method {
+    val name = "POST"
+  }
+
+  case object DELETE extends Method {
+    val name = "DELETE"
+  }
+
+  case object HEAD extends Method {
+    val name = "HEAD"
+  }
+
+  case object CONNECT extends Method {
+    val name = "CONNECT"
+  }
+
+  case object TRACE extends Method {
+    val name = "TRACE"
+  }
+
+  case object OPTIONS extends Method {
+    val name = "OPTIONS"
+  }
+
+  val byName = Map(
+    GET.name → GET, PUT.name → PUT, POST.name → POST, DELETE.name → DELETE, HEAD.name → HEAD, CONNECT.name → CONNECT, TRACE.name → TRACE, OPTIONS.name → OPTIONS
+  )
+
+  implicit val MethodFormat = new Format[Method] {
+
+    override def reads(json: JsValue): JsResult[Method] = {
+      json.validate[String].map(Method.byName(_))
+    }
+
+    override def writes(o: Method): JsValue = {
+      JsString(o.name)
+    }
+  }
+}
+
+----
+
+=== Scraml typesafe asynchronous DSL: the basics
+
+Now that we have a feeling of how the DTOs look like, we can start to explain how [scramlfont]#Scraml# turns the RAML resource definitions
+into a typesafe DSL. Below, a <<raml-userservice>> is modeled in RAML using the json-schema definition of `user.json`, `link.json` and
+`method.json` that we introduced before.
+
+We defined a `/rest/user/' resource with a `GET` action on it that takes several query parameters. Notice that one of the query parameters
+has a `repeat: true` definition on it. We'll see in a minute how that translates into the DSL. The result body is of type `application/json`
+and more concrete an array of User objects. Here the json-schema definition is defined inline. Mind that the `id` is currently still
+necessary on inline schemas even if they aren't an unique object definion. In a future release, `id` fields will not be mandatory on inline
+schemas.
+
+Next, we have a `multipart/form-data` POST action on `/rest/user/upload` and a resource that takes URL-parameters: `/rest/user/{userid}`.
+The `userid` URL-parameter is defined as a string and [scramlfont]#Scraml# will enforce this. There is a form-POST action on
+this resource with a required and a non-required form field. The response will have a JSON format, but it is not defined which schema it
+follows. This will imply that we don't have type information in the DSL on that response. Finally, we have a DELETE action and a
+POST action that sends a User and receives a Link.
+
+
+[[raml-userservice]]
+[source,yaml]
+.user service
+----
+#%RAML 1.0
+---
+title: My api 
+version: v1
+
+types:
+  - link:         !include schemas/link.json
+  - method:       !include schemas/method.json
+  - user:         !include schemas/user.json
+  - Book:
+      type: object
+      properties:
+        isbn:
+          type: string
+          required: true
+        title:
+          description: the title has no required field, but 'true' is the default value anyway
+          type: string
+        genre:
+          type: string
+        author:
+          type: Author
+  - Author:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        hobbies?:
+          description: this is an optional field 'hobbies'
+          type: string[]
+
+
+/rest/user/:
+  get:
+    queryParameters:
+      age:
+        description: The age of the user.
+        type: number
+      firstName:
+        description: The firstname of the user.
+        type: string
+      lastName:
+        description: The last name of the user.
+        type: string
+      organization:
+        description: The organization of the user.
+        type: string
+        repeat: true
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "user.json"
+                }
+              }
+
+/rest/books:
+  get:
+    description: Get all books
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+  post:
+    body:
+      application/json:
+        type: Book
+    responses:
+      201:
+
+----
+
+Compiling the codebase using sbt, [scramlfont]#Scraml# will generate the DSL in the code generation step before actual compilation. This
+results in a client that provides access to the resources we described above. Let's assume the above RAML file sits in the folder
+`io/atomicbits/api/` under the resources folder and the filename is `user-api.raml`. The resulting DSL can be used to do the following.
+
+
+[[scala-client]]
+[source,scala]
+.client DSL code
+----
+  import io.atomicbits.api.UserApi
+  ...
+  val client = new UserApi( <1>
+    host = "localhost",
+    port = 8281,
+    protocol = "http",
+    defaultHeaders = Map(),
+    prefix = None,
+    config = ClientConfig()
+  )
+
+  val userResource = client.rest.user <2>
+
+  val eventualUsersResponse: Future[Response[List[User]]] = <5>
+    userResource
+      .get( <3>
+        age = Some(51),
+        firstName = Some("John"),
+        lastName = None,
+        organization = List("ESA", "NASA") <4>
+      )
+
+  val usersResponse: Response[List[User]] = Await.result(eventualUsersResponse, 2 seconds)
+  val users: List[User] = usersResponse.body
+----
+<1> Client initialization takes several basic parameters directly and many more advanced options through the ClientConfig parameter.
+<2> Resources that you build with the DSL are immutable constructs with pure value semantics, so you can assign them to variables and reuse them many times, they will always have the same meaning.
+<3> `get(...)` executes the GET request on the resource, consuming several fully typed query parameters.
+<4> Remember the `repeat: true` statement in the json-schema of this resource? The DSL will provide a list to represent the repeated parameter.
+<5> The result is asynchronous (hence the `Future[]`) and it is wrapped inside a `Result[T]` object. The body is a `List[User]`, matching the array of user type that is defined in the schema for this resource. `Result[T]` also contains the response headers and status code.
+
+The `UserApi` class is the starting point for establishing client requests using the DSL. It takes various basic parameters that are used
+to establish a connection with a remote service. In addition to the basic parameters, many more detailed parameters can be passed by
+configuring a `ClientConfig` object. It takes parameters such as `requestTimeout`, `maxRequestRetry`, `connectTimeout`,
+`connectionTTL`, `maxConnections`, `maxConnectionsPerHost`, `allowPoolingConnections` and several more. These parameters are passed to
+the underlying ning client that handles the actual requests. The rest path is constructed in the DSL by following the corresponding
+field paths on the DSL entries: `client.rest.user` corresponds to the resource on `http:\\localhost:8281\rest\user`. The `.get(...)`
+action executes the actual request with some additional query parameters that are passed to the `.get()` method. The query parameters in
+the RAML example above weren't required parameters (default is false). That's why we need to wrap the parameters as an `Option[T]` here.
+The `organization` query parameter has the `repeat: true` setting, which results in a `List[String]` parameter on the GET action.
+
+[[scala-request-get]]
+.GET request with query parameters
+----
+GET
+http://localhost:8281/rest/user?age=51.0&firstName=John&organization=ESA&organization=NASA
+headers:	Accept=application/json
+----
+
+[[scala-response-get]]
+.GET response
+----
+headers:  "Transfer-Encoding=chunked"; "Server=Jetty(6.1.26)"
+body:     [{"address": {"streetAddress": "Mulholland Drive", "city": "LA", "state": "California"}, "firstName":"John", "lastName": "Doe", "age": 21, "id": "1"}]
+status:   200 "OK"
+----
+
+In <<scala-request-get>>, we see what the actual request looks like that goes out. Mind the double organization query parameter to match
+the repeated character for this parameter. Also notice that [scramlfont]#Scraml# automatically adds the accept header that was specified
+in the RAML model for this GET action. The same goes for the `Content-Type` header when a request body is present. The result of
+the <<scala-response-get>> shows that the result is a `200 "OK"` response whose body contains a list of user object in JSON format.
+
+Let's add some <<raml-userservice-more>> and see how [scramlfont]#Scraml# handles it.
+
+[[raml-userservice-more]]
+[source,yaml]
+.more actions in the user service
+----
+/rest/user/{userid}:
+  uriParameters:
+    userid:
+      description: The user's id.
+      type: string
+      required: true
+  post:
+    body:
+      application/x-www-form-urlencoded:
+        formParameters:
+          text:
+            description: Text to post as a comment on the user.
+            type: string
+            required: true
+          value:
+            description: Value to give to a user.
+            type: integer
+            required: false
+    responses:
+      200:
+        body:
+  delete:
+  put:
+    body:
+      application/json:
+        schema: user
+    responses:
+      200:
+        body:
+          application/json:
+            schema: link
+
+/rest/user/upload:
+  post:
+    body:
+      multipart/form-data:
+    responses:
+      200:
+        body:
+----
+
+The resource `/rest/user/{userid}` takes a path parameter that must be a string and as three actions defined on it: POST, DELETE
+and PUT. The POST action represents a form post that contains a string parameter `text` and an integer parameter `value`. The result
+type is not specified. The DELETE action has no specific configuration at all, and the PUT action sends a user object as JSON in the
+request and expects a link object as JSON in its response. Finally, there is also a `/rest/user/upload` resource on which a
+multipart form upload is defined. After running [scramlfont]#Scraml# in the source-generation step of sbt, we get a DSL that enables
+<<scala-client-more>>.
+
+
+[[scala-client-more]]
+[source,scala]
+.more client DSL functionality
+----
+  val userFoobarResource = client.rest.user.userid("foobar") <1>
+
+
+  // POST
+  val eventualPostResponse: Future[Response[String]] =
+    userFoobarResource
+      .post(text = "Hello Foobar", value = None) <2>
+
+  val postResponse: Response[String] = Await.result(eventualPostResponse, 2 seconds)  <3>
+
+  assertResult(200)(postResponse.status) <4>
+  assertResult("Some server response")(postResponse.body) <5>
+
+
+  // DELETE
+  val eventualDeleteResponse: Future[Response[String]] = userFoobarResource.delete()
+  val deleteResponse = Await.result(eventualDeleteResponse, 2 seconds)
+  assertResult(200)(deleteResponse.status)
+
+
+  // PUT
+  val user = User(
+    homePage = Some(Link("http://foo.bar", Method.GET, None)),
+    address = Some(UserDefinitionsAddress("Mulholland Drive", "LA", "California")),
+    age = 21,
+    firstName = "John",
+    lastName = "Doe",
+    id = "1"
+  )
+
+  val eventualPutResponse: Future[Response[Link]] = userFoobarResource.put(user)
+  val putResponse = Await.result(eventualPutResponse, 2 seconds)
+  assertResult(Link("http://foo.bar", Method.GET, None))(putResponse.body)
+
+
+  // multipart form POST
+  val multipartFormPostResponse: Future[Response[String]] =
+    client.rest.user.upload.post(List(StringPart(name = "test", value = "string part value"))) <6>
+----
+<1> We construct the resource we need using the DSL, filling in the path parameter `userid` as a string value.
+<2> We call the POST action on this resource sending the form fields `text` and `value` with it.
+<3> We wait for the future to finish (you should only do this in test code, obviously).
+<4> We check that the response status code is 200.
+<5> The response body should be the text sent back from the service.
+<6> Multipart form POST requests take a list of either StringPart, FilePart or ByteArrayPart objects.
+
+
+=== Adding custom headers
+
+[scramlfont]#Scraml# allows you to add one or more headers on each resource in the DSL. The following example illustrates how to
+<<scala-custom-headers>> before calling a PUT action.
+
+[[scala-custom-headers]]
+[source,scala]
+.add custom headers
+----
+val listBodyResponse =
+  client.rest.user.activate
+    .addHeaders("Cookie" -> "user=roger", "Cookie" -> "key=regor")
+    .put(List(user))
+----
+
+
+If you want to have a certain header on all calls under a certain parent resource, then you can add it on that parent resource and build
+on from there, see how to <<scala-custom-header-reuse>>. Everywhere you reuse `resResource`, you'll get the cookie header that was set on
+it.
+
+
+[[scala-custom-header-reuse]]
+[source,scala]
+.add a custom header on all subresources
+----
+val restResource = client.rest.addHeaders("Cookie" -> "user=roger")
+
+val listBodyResponse = resResource.user.activate.put(List(user))
+----
+
+
+=== Handling multiple request content types and response accept types
+
+Imagine that you encode a version number in your content type and accept headers and that you can send several different types of content
+to your service, depending on the content type that you have. The next example shows the use of <<raml-userservice-double-content>> in RAML.
+
+
+[[raml-userservice-double-content]]
+[source,yaml]
+.double content types
+----
+/rest/user/:
+  put:
+    body:
+      application/vnd-v1.0+json:
+        schema: user
+      application/vnd-v0.1+json:
+        schema: user-old
+    responses:
+      200:
+        body:
+          application/vnd-v1.0+json:
+            schema: link
+----
+
+
+In this case, [scramlfont]#Scraml# forces you to choose which type you want to send before calling the `PUT` action. The following
+code sample shows how you <<scala-userservice-double-content>>.
+
+
+[[scala-userservice-double-content]]
+[source,scala]
+.choose a content type before executing the action
+----
+val eventualResponse: Future[Response[Link]] =
+  client.rest.user
+    .contentApplicationVndV10Json
+    .put(user)
+----
+
+By chosing the `contentApplicationVndV10Json` header selection, you get access to a `.put(user)` action that takes a user of the type that
+matches the `application/vnd-v1.0+json` content type.
+
+=== The asType, asJson and asString mappers
+The response of a request has the form `Future[Response[T]]`, where `T` is the type of the response body. The `Response` object also
+contains status information and the headers that were sent back with the server response. We are often only interested in the response
+body. That's where the `asType` mapper can help you to map `Response[T]` to its body `T`. It is, however, extremely important to
+realize that when using `asType` all responses without a body (204 responses), 300-responses and all failure codes (status > 400)
+are mapped to a failed future! So, `asType` really assumes that the user expects a 200-response as the only successful Future.
+
+IMPORTANT: When `asType` is invoked, all non-200 responses will be mapped to a *failed Future*!
+
+[[scala-asType]]
+[source,scala]
+.asType mapper
+----
+  val eventualUsersResponse: Future[List[User]] =
+    userResource
+      .get(
+        age = Some(51),
+        firstName = Some("John"),
+        lastName = None,
+        organization = List("ESA", "NASA")
+      )
+      .asType  // <1>
+
+  val users: List[User] = Await.result(eventualUsersResponse, 2 seconds)
+----
+<1> The `asType` keyword maps the response to its body on a successful response (status == 200), all other statuses (status != 200) will
+give a *failed Future* once `asType` is invoked!
+
+When a response doesn't have a typed body, we can call `.asString` to get the body as a string. Or when we know it should contain
+arbitrary JSON, we can call `.asJson` to get the JSON body.
+
+
+
+=== Generic typing in json-schema and RAML 1.0
+
+Officially, there is no generic typing possible neither in json-schema, nor in RAML 1.0!
+Scraml, however supports a way around using language extensions that should not break the existing specs.
+
+Generic typing is added as a json-schema extension that [scramlfont]#Scraml# knows how to process. The illustration below shows a
+<<raml-generic-typing>>. It is a representation for a paged list that has two type variables `T` and `U` referring to the type of the
+elements in the paged list and the optional owner of the list respectively. The `typeVariables` field is added to the object's
+specification and represents the type symbols as an array of strings. The type symbols are repeated further down the object model's
+properties where they apply. They must be specified on an object type that takes no configuration other than the `genericType`
+field that refers to the type symbol.
+
+TIP: The "id" field in a json-schema file is mandatory, but we don't require to use the full URI format. You can also use
+ a relative reference instead. Whereas the full URI version is scoped by the URI path, the relative verion will be scoped by
+  relative main raml file location. Instead of the "id" field, the "title" field can also be used.
+
+[[raml-generic-typing]]
+[source,json]
+.json-schema extension that enables modelling generic types
+----
+{
+  "id": "http://atomicbits.io/schema/paged-list.json#",
+  "type": "object",
+  "typeVariables": ["T", "U"],
+  "description": "A paged list with an optional owner of the list",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "required": true
+    },
+    "elements": {
+      "required": true,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "genericType": "T"
+      }
+    },
+    "owner": {
+      "required": false,
+      "type": "object",
+      "genericType": "U"
+    }
+  }
+}
+----
+
+During the code generation step, [scramlfont]#Scraml# creates a fully typed generic object that carries the two type references, see the
+<<scala-generic-typing>> example below.
+
+[[scala-generic-typing]]
+[source,scala]
+.generic typed object
+----
+package io.atomicbits.schema
+
+import play.api.libs.json._
+
+case class PagedList[T, U](count: Long, elements: List[T], owner: Option[U] = None)
+
+object PagedList {
+
+  import play.api.libs.functional.syntax._
+
+  implicit def jsonFormatter[T: Format, U: Format]: Format[PagedList[T, U]] =
+    ((__ \ "count").format[Long] ~
+      (__ \ "elements").format[List[T]] ~
+      (__ \ "owner").formatNullable[U])(PagedList.apply, unlift(PagedList.unapply))
+
+}
+----
+
+Because of the type parameters, the Play formats for this case class have to be generated in a different way, which [scramlfont]#Scraml#
+delivers automatically.
+
+The RAML 1.0 extension works exactly the same:
+
+[[raml10-generic-typing]]
+[source,yaml]
+.raml 1.0 extension that enables modelling generic types
+----
+  PagedList:
+    type: object
+    typeVariables: [T, U]
+    properties:
+      count:
+        type: integer
+      elements:
+        type: array
+        items:
+          type: object
+          genericType: T
+      owner:
+        type: object
+        genericType: U
+----
+
+[[json-schema-generic-type-referencing]]
+[source,json]
+.referencing a generic type in json-schema
+----
+{
+  "$ref": "http://atomicbits.io/raml10/paged-list.json#",
+  "genericTypes": [
+    {
+      "$ref": "http://atomicbits.io/raml10/dog.json"
+    },
+    {
+      "type": "string"
+    }
+  ]
+}
+----
+
+[[raml10-generic-type-referencing]]
+[source,yaml]
+.referencing a generic type in raml 1.0
+----
+  Book:
+    type: object
+    discriminator: kind
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+      author:
+        type: Author
+        required: true
+      fans:
+        type: PagedList
+        genericTypes: [User, integer]
+----
+
+
+=== Type hierarchies using RAML 1.0 types
+
+We support the generation of code for RAML 1.0's multiple inheritance. Where needed, Scala traits are introduced in the generated code
+to simulate the behavior expected form multiple inheritance.
+
+[[raml-bookservice]]
+[source,yaml]
+.book service
+----
+#%RAML 1.0
+---
+title: book api
+version: 1.0
+mediaType: application/json
+
+types:
+  Book:
+    type: object
+    discriminator: kind
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+      author:
+        type: Author
+        required: true
+  Author:
+    type: object
+    properties:
+      firstName:
+        type: string
+        required: true
+      lastName:
+        type: string
+        required: true
+  WithVillain:
+    type: object
+    properties:
+      villain:
+        type: string
+  ComicBook:
+    type: [Book, WithVillain]
+    properties:
+      hero:
+        type: string
+  SciFiComicBook:
+    type: ComicBook
+    discriminatorValue: ScienceFictionComicBook
+    properties:
+      era:
+        type: string
+
+/books:
+  get:
+    description: Get all books
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+  post:
+    body:
+      application/json:
+        type: Book
+    responses:
+      201:
+
+/books/comicbooks:
+  get:
+    description: Get all comicbooks
+    responses:
+      200:
+        body:
+          application/json:
+            type: ComicBook[]
+  post:
+    body:
+      application/json:
+        type: ComicBook
+    responses:
+      201:
+
+/books/comicbooks/scificomicbooks:
+  get:
+    description: Get all SciFi comicbooks
+    responses:
+      200:
+        body:
+          application/json:
+            type: SciFiComicBook[]
+  post:
+    body:
+      application/json:
+        type: SciFiComicBook
+    responses:
+      201:
+
+----
+
+
+
+=== Type hierarchies in json-schema
+
+As said in the previous section, json-schema was never meant to be an object-oriented modeling language. And although there is a way
+to express someting that may be interpreted as a type hierarchy that [scramlfont]#Scraml# understands, it is in a specific way our own
+interpretation of the model.
+
+In json-schema, there is the `oneOf` keyword that lets you choose between several versions of a schema to use in a larger schema. If we
+apply this on an object type and let you choose between sets of properties that you can have on that object, we have a way to express
+type hierarchies as they appear in object-oriented models. The following sample illustrates a <<raml-type-hierarchy>>.
+
+
+[[raml-type-hierarchy]]
+[source,json]
+.json-schema modelling a type hierarchy using the oneOf operator
+----
+{
+  "id": "http://atomicbits.io/schema/animal.json#",
+  "type": "object",
+  "typeDiscriminator": "_type",
+  "description": "An animal object.",
+  "properties": {
+    "gender": {
+      "required": true,
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Cat"
+          ]
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        }
+      }
+    },
+    {
+      "id": "http://atomicbits.io/schema/dog.json#",
+      "type": "object",
+      "properties": {
+        "_type": {
+          "enum": [
+            "Dog"
+          ]
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        },
+        "canBark": {
+          "required": true,
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Fish"
+          ]
+        }
+      }
+    }
+  ]
+}
+----
+
+The top-level class represents an animal with one field, the `gender`. The other fields are dependent on the specifics of the animal.
+In the case of a dog, there is a `name` field and a `canBark` field present. The convention here is that each subclass has a type field
+that points to an enumeration that contains only one element: the discriminator for the type. Since a json object has no class information
+attached to it by default, we need to inject a type discriminator field. The name of the field is `type` by default, but it can be changed
+by adding the `typeDiscriminator` string field at the top-level object.
+
+
+[[scala-class-hierarchy]]
+[source,scala]
+.generated case class hierarchy with common parent trait
+----
+package io.atomicbits.schema
+
+import play.api.libs.json._
+import io.atomicbits.scraml.dsl.json.TypedJson._
+
+sealed trait Animal {
+
+  def gender: String
+
+}
+
+object Animal {
+
+  implicit val jsonFormat: Format[Animal] =
+    TypeHintFormat(
+      "_type",
+      Cat.jsonFormatter.withTypeHint("Cat"),
+      Dog.jsonFormatter.withTypeHint("Dog"),
+      Fish.jsonFormatter.withTypeHint("Fish")
+    )
+
+}
+
+case class Cat(gender: String, name: Option[String] = None) extends Animal
+
+object Cat {
+
+  implicit val jsonFormatter: Format[Cat] = Json.format[Cat]
+
+}
+
+case class Dog(gender: String, canBark: Boolean, name: Option[String] = None) extends Animal
+
+object Dog {
+
+  implicit val jsonFormatter: Format[Dog] = Json.format[Dog]
+
+}
+
+case class Fish(gender: String) extends Animal
+
+object Fish {
+
+  implicit val jsonFormatter: Format[Fish] = Json.format[Fish]
+
+}
+----
+
+The above code sample shows the <<scala-class-hierarchy>>. The parent trait defines the common property `gender`, while the leaf classes
+harbor the specifics for each kind of animal. To handle the JSON formatting of this hierarchy in an elegant way, we introduce the helper
+class `TypedJson` to deal with the type field to discriminate between the kinds of animals during serialization and deserialization.
+Have a look at the test class `RamlModelGeneratorTest` in the GitHub project https://github.com/atomicbits/scraml-test-scala to see
+class hierarchy serialization and the other examples used in this documentation in action.
+
+
+
+
+
+

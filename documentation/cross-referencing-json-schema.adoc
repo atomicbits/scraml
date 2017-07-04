@@ -1,0 +1,109 @@
+
+=== Cross-referencing json-schemas
+
+The example in <<json-user>> shows us a nested json-schema definition in which an object (an address) is defined inside the schema for a
+user object. The address has a `fragment id` in this case: \#/definitions/address and it wasn't necessary to set the id explicitly
+in this case because it is also deduced from its relative path inside its enclosing schema. The address object is referenced to from
+the address field in the user object: `"$ref": "#/definitions/address"`.
+
+
+[[json-user]]
+[source,json]
+.a more extensive json-schema for a user
+----
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/user.json#",
+  "type": "object",
+  "description": "A user object.",
+  "definitions": {
+    "address": {
+      "id": "#/definitions/address",
+      "type": "object",
+      "properties": {
+        "streetAddress": { "type": "string" },
+        "city":          { "type": "string" },
+        "state":         { "type": "string" }
+      },
+      "required": ["streetAddress", "city", "state"]
+    }
+  },
+  "properties": {
+    "id": {
+      "required": true,
+      "type": "string"
+    },
+    "firstName": {
+      "required": true,
+      "type": "string"
+    },
+    "lastName": {
+      "required": true,
+      "type": "string"
+    },
+    "age": {
+      "required": true,
+      "type": "integer"
+    },
+    "homePage": {
+      "required": false,
+      "$ref": "link.json"
+    },
+    "address": {
+      "$ref": "#/definitions/address"
+    }
+  }
+}
+----
+
+
+A more common approach to refer to another object is defining the object in another schema file and refer to its absolute `id`.
+The `homePage` field of the user object refers to `"$ref": "link.json"`. This reference is an relative reference and it is completed
+by the anchor of the id of the enclosing user schema: `http://atomicbits.io/schema/`, so the full reference becomes:
+`http://atomicbits.io/schema/link.json`. So there must be another json-schema file included in the RAML model that has exactly this id.
+Mind the different approaches to define the required fields in the address object versus the user object. Both approaches are properly
+interpreted by [scramlfont]#Scraml# (see further for the different handling of required versus non-required fields).
+
+The <<json-link>> object and the <<json-method>> complete the user object and the objects it refers to.
+
+[[json-link]]
+[source,json]
+.link object
+----
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/link.json#",
+  "type": "object",
+  "description": "A href",
+  "properties": {
+    "href": {
+      "type": "string",
+      "required": true
+    },
+    "method": {
+      "required": true,
+      "$ref": "method.json"
+    },
+    "accept": {
+      "type": "string",
+      "required": false
+    }
+  }
+}
+----
+
+
+[[json-method]]
+[source,json]
+.method enumeration
+----
+{
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "id": "http://atomicbits.io/schema/method.json#",
+  "enum": [ "GET", "PUT", "POST", "DELETE", "HEAD", "CONNECT", "TRACE", "OPTIONS" ]
+}
+----
+
+
+Now, let's see how the generated case classes look like.
+
