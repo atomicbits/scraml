@@ -7,7 +7,7 @@
 
 Scraml is on its way to version 1.0 while feedback from users is
 constantly used to improve the tool. Scraml is being thoroughly
-tested as a DSL for acceptance testing of real-live projects and it is
+tested as a DSL for acceptance testing in real-life projects and it is
 also being used as a runtime client in several production sytems. Be sure
 to check these release notes when upgrading to a newer version.
 

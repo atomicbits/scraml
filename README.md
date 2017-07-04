@@ -13,6 +13,9 @@ Follow the steps in these quickstart guidelines:
  1. Java: http://scraml.io/javadocumentation
  2. Scala: http://scraml.io/scaladocumentation
 
+## Release notes
+
+[Read here about the most recent releases](https://github.com/atomicbits/scraml/blob/develop/documentation/release-notes.adoc) 
 
 ## Scraml 
 
