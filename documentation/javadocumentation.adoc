@@ -118,6 +118,7 @@ the free open source code generator.
 
 // == Writing RAML documentation
 
+Learn more about writing RAML:
 include::writing-raml.adoc[]
 
 
@@ -137,6 +138,7 @@ offers.
 
 // === Cross-referencing json-schemas
 
+Learn more about cross-referencing json-schema:
 include::cross-referencing-json-schema.adoc[]
 
 
@@ -327,8 +329,7 @@ into a typesafe DSL. Below, a <<raml-userservice>> is modeled in RAML using the 
 We defined a `/rest/user/' resource with a `GET` action on it that takes several query parameters. Notice that one of the query parameters
 has a `repeat: true` definition on it. We'll see in a minute how that translates into the DSL. The result body is of type `application/json`
 and more concrete an array of User objects. Here the json-schema definition is defined inline. Mind that the `id` is currently still
-necessary on inline schemas even if they aren't an unique object definion. In a future release, `id` fields will not be mandatory on inline
-schemas.
+necessary on inline schemas even if they aren't an unique object definion. The `id` fields are not mandatory in inline schemas.
 
 Next, we have a `multipart/form-data` POST action on `/rest/user/upload` and a resource that takes URL-parameters: `/rest/user/{userid}`.
 The `userid` URL-parameter is defined as a string and [scramlfont]#Scraml# will enforce this. There is a form-POST action on

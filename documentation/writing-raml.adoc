@@ -53,7 +53,7 @@ format should be of the form `http://atomicbits.io/api/user.json` and may end wi
 the canonical name of the object will be deduced from its `id`. In this case `io.atomicbits.api.User` will be the canonical class name
 that will recur in the generated class representation of a user.
 
-IMPORTANT: It is essential for cross-referencing objects that each json-schema has a unique `id` field! [scramlfont]#Scraml# requires it.
+IMPORTANT: It is essential for cross-referencing objects that each json-schema has a unique `id` field or `title` field! You may use absolute references ("http://atomicbits.io/api/user.json") or relative references ("user.json").
 
 [[json-simple]]
 [source,json]
