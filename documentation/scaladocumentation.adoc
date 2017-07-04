@@ -119,14 +119,15 @@ The sample code that we use here is based on the Scala test project for [scramlf
 https://github.com/atomicbits/scraml-test-scala. You can checkout the full codebase there and play with the RAML definition and the test
 classes that showcase the DSL.
 
-In the next sections, we first introduce the generation of case classes from json-schema followed by the integration of those typed
+In the next sections, we first introduce the generation of case classes followed by the integration of those typed
 Data Transfer Objects (DTOs) in the [scramlfont]#Scraml# DSL. Then we go deeper into the more advanced features that [scramlfont]#Scraml#
 offers.
 
 
 // === Cross-referencing json-schemas
 
-Learn more about cross-referencing json-schema:
+If you're using json-schema instead of the native RAML 1.0 types, then you can read more about
+cross-referencing json-schema types here:
 include::cross-referencing-json-schema.adoc[]
 
 
