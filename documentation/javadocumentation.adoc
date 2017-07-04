@@ -47,15 +47,25 @@ Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add 
     <dependencies>
 
         <dependency>
-            <groupId>io.atomicbits</groupId>
-            <artifactId>scraml-dsl-java</artifactId>
-            <version>${scraml.version}</version>
+            <groupId>com.ning</groupId>
+            <artifactId>async-http-client</artifactId>
+            <version>1.9.40</version>
         </dependency>
 
         <dependency>
-            <groupId>com.ning</groupId>
-            <artifactId>async-http-client</artifactId>
-            <version>1.9.36</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.8.6</version>
         </dependency>
 
     </dependencies>

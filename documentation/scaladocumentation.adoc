@@ -30,8 +30,8 @@ import io.atomicbits.scraml.sbtplugin.ScramlSbtPlugin.autoImport._
 scramlRamlApi in scraml in Compile := "io/atomicbits/my-api.raml"
 
 libraryDependencies ++= Seq(
-  "com.ning" % "async-http-client" % "1.9.36",
-  "io.atomicbits" %% "scraml-dsl-scala" % scramlVersion.value
+  "com.ning" % "async-http-client" % "1.9.40",
+  "com.typesafe.play"      %% "play-json"        % "2.5.14"
 )
 
 // The path "io/atomicbits/my-api.raml" is relative to your project's src/main/resources folder.
