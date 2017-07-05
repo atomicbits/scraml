@@ -48,21 +48,9 @@ configure [scramlfont]#Scraml# in a submodule, then just configure this variable
 `build.sbt` file. If for whatever reason the RAML files are not in the `resources` folder, then use the `scramlBaseDir` variable
 to set another base directory, similar to how the `scramlRamlApi` variable is set.
 
-The two dependencies of your generated Scraml API, the ning 'http-client' and the 'scraml-dsl-scala' libraries, need to be included
+The two dependencies of your generated Scraml API, the ning 'http-client' and the 'play-json' libraries, need to be included
 manually. This gives a clear view on the dependencies that you add to your project. In the future, other backing clients than
 the http-client will be supported through factory classes.
-
-[[scraml-play25.sbt]]
-[source,scala]
-.include this version of the scraml dsl library when using Play 2.5
-----
-  "io.atomicbits" %% "scraml-dsl-play25-scala" % scramlVersion.value
-----
-
-
-People who have already moved to Play 2.5 can include the 'scraml-dsl-play25-scala' library instead of the 'scraml-dsl-scala' library.
-With Play 2.5, there are no API changes in Scraml, but the macro expansion for the JSON formatters have another binary representation, so
-'scraml-dsl-play25-scala' is just the original 'scraml-dsl-scala' that was recompiled against the Play 2.5 macros.
 
 Compile the project using sbt to generate the [scramlfont]#Scraml# code. Continuous compile also works (`~compile`). As soon as you
 edit and save a RAML file, compilation will rerun. The generated code will appear in `target/scala-2.xx/src_managed/main/`, sbt's default
