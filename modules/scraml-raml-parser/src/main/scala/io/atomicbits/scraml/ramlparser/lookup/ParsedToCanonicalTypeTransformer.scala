@@ -59,7 +59,9 @@ object ParsedToCanonicalTypeTransformer {
       case ParsedTypeContext(fragments: Fragments, _, _, _, _) =>
         LOGGER.info(s"Skipped unknown json-schema fragments.")
         (NullType, canonicalLookupHelper)
-      case x => sys.error(s"Error transforming $x")
+      case FallbackTransformer(typeReference, updatedLookupHelper) =>
+        println(s"WARNING: type ${parsed.getClass.getSimpleName} is not yet supported, we use 'string' as the fallback type for now.")
+        (typeReference, updatedLookupHelper)
       // Currently not yet supported:
       //      case parsedFile: ParsedFile                               => ???
       //      case parsedNull: ParsedNull                               => ???
@@ -69,6 +71,7 @@ object ParsedToCanonicalTypeTransformer {
       //      case parsedDateTimeOnly: ParsedDateTimeOnly               => ???
       //      case parsedDateTimeDefault: ParsedDateTimeDefault         => ???
       //      case parsedDateTimeRFC2616: ParsedDateTimeRFC2616         => ???
+      case x => sys.error(s"Error transforming $x")
     }
 
   }

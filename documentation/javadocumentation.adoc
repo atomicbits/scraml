@@ -1,0 +1,1167 @@
+:toc:
+:linkcss:
+:icons: font
+:source-highlighter: pygments
+:pygments-style: friendly
+
+
+We are currently compatible with RAML 1.0 types, except for union types. We are fully backward compatible with version 0.8.
+The transfer objects in the samples code below are mostly expressed in json-schema, but you can easily rewrite them into RAML 1.0 types.
+
+== Quickstart Java
+
+Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add the following configuration to your `pom.xml` file:
+
+[[pom.xml]]
+[source,xml]
+.configure the scraml maven-plugin, the dsl dependency and the http client dependency in your maven pom.xml file
+----
+    <properties>
+        <scraml.version>0.7.0-M1</scraml.version>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>io.atomicbits</groupId>
+                <artifactId>scraml-maven-plugin</artifactId>
+                <version>${scraml.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-client-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
+                        </configuration>
+                        <goals>
+                            <goal>scraml</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.ning</groupId>
+            <artifactId>async-http-client</artifactId>
+            <version>1.9.40</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.8.6</version>
+        </dependency>
+
+    </dependencies>
+----
+
+
+[scramlfont]#Scraml# provides a maven plugin that let's you configure your project's path to the main RAML file. By default, this
+path is expected to be relative to the project's `resources` folder. This relative path will also be the template for the package
+name of the client class for your API. To enable the plugin, <<pom.xml>>.
+
+The configuration points the `ramlApi` variable to the relative path of your main RAML file that sits in your `src/main/resources`
+folder. If you configure [scramlfont]#Scraml# in a submodule, then just configure this variable for that module by configuring the
+plugin for that module only. If for whatever reason the RAML files are not in the `resources` folder, then use the `resourceDirectory`
+variable to set another base directory, similar to how the `ramlApi` variable is set.
+
+Since version 0.4.7, the ning http-client dependency is set as 'provided', meaning that projects using [scramlfont]#Scraml# need to
+include the ning library themselves. The main reason is that de backing http-client became free of choice and a factory class can
+load other backing clients if you want.
+
+Compile the project using maven to generate the [scramlfont]#Scraml# code. The generated code will appear in
+`target/generated-sources/scraml`, maven's default code generation destination.
+
+To see this in action, checkout the example project on github: https://github.com/atomicbits/scraml-test-java
+
+When you compile your project, you'll see a lot of dependencies being downloaded that are needed for the codegeneration step. Keep in
+mind that these packages are all compile-time dependencies. They will not end up in your packaged project! Only the `scraml-dsl-java`
+artifact will be added as a dependency and it only has `ning` and `jackson` as transitive dependencies.
+
+
+=== Optional: use a license to overcome AGPL limitations
+
+[[license.key]]
+[source,scala]
+.configure a license key for activating the commercial scraml license in your maven pom.xml file
+----
+<configuration>
+    <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
+    <licenseKey>
+        U1Q7Q1ZQWnZMbHZSakQ7TGVwN0JSYkJXT2I7aW8uYXRvbWljYml0czsyMDE2LTA3LTAxOzM2NiFj
+        VzlubUlqM2t4a1o2aUZFUFhDQm5nb01pd005bXVrb0k3MVczUnI2cmxaYjc3UC92OWlRUDFXeHBD
+        Mk9Gd2hQcHBUVXkwYVBQZFhRCnJ6Y3VialdQv3d1c3gxVHVaOTAxNEVKbmI4cm9vdk1FakVqNlZw
+        UG1mLzVyaHdTUXg5bWRtOWxtTDdUVnJoWTM1MEZaNVNJVWxGcG4Kb201cWVkdGp5cEs5dHRhajd3
+        V3FEby9jN2FJOEtNZk9lME5wWjhidDBzUFFoZkdvV2VDMEZCWU9pTU1BdkZPWlNuWTZDNk1UNmhM
+        WQo0eEoxVWFrTkNaaFNOeHhqRUQyNk44SHBFcFlybjlKWWRBa1piME5mVm9hczM0bHQ4WmN1OWJE
+        bFExK3FmaDlmazlpbm5SdjVRVkhrCnEyMFJCZ3NKbHlubnFlZHdJYm5oNTk3V1hFTE4yVzNyTC9l
+        Mjl3PT0=
+    </licenseKey>
+    <classHeader>
+        All rights reserved.
+        This is a custom class header.
+    </classHeader>
+</configuration>
+----
+
+In order to use your own custom license on the generated code, you can <<license.key>>. As soon as a valid license is configured
+using the `licenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
+the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
+generate and your own license applies instead. Just ignore the `licenseKey` and `classHeader` variables if you want to use
+the free open source code generator.
+
+
+
+// == Writing RAML documentation
+
+Learn more about writing RAML:
+include::writing-raml.adoc[]
+
+
+== Invoking Scraml
+
+The effect of having written a RAML model becomes interesting when you start using [scramlfont]#Scraml# to generate Java code that
+brings you a typesafe and asynchronous Domain Specific Language (DSL) that will enforce you in a fluent manner to follow your RAML specs.
+
+The sample code that we use here is based on the Java test project for [scramlfont]#Scraml#:
+https://github.com/atomicbits/scraml-test-java. You can checkout the full codebase there and play with the RAML definition and the test
+classes that showcase the DSL.
+
+In the next sections, we first introduce the generation of case classes followed by the integration of those typed
+Data Transfer Objects (DTOs) in the [scramlfont]#Scraml# DSL. Then we go deeper into the more advanced features that [scramlfont]#Scraml#
+offers.
+
+
+// === Cross-referencing json-schemas
+
+If you're using json-schema instead of the native RAML 1.0 types, then you can read more about
+cross-referencing json-schema types here:
+include::cross-referencing-json-schema.adoc[]
+
+
+=== Generated POJOs
+
+The <<java-user>> reflects the fields described by the corresponding json-schema. The address class has a strange canonical name that is
+a result of the somewhat unconventional `id` that we gave in the nested json-schema example. The <<java-link>> is referred to by the User
+object (the `homePage` field). Because both classes are in the same package, the import statement to the Link class in User is omitted.
+
+[[java-user]]
+[source,java]
+.User POJO
+----
+package io.atomicbits.schema;
+
+import com.fasterxml.jackson.annotation.*;
+
+public class User {
+
+    @JsonProperty(value = "address")
+    private UserDefinitionsAddress address;
+
+    @JsonProperty(value = "age")
+    private Long age;
+
+    @JsonProperty(value = "firstName")
+    private String firstName;
+
+    @JsonProperty(value = "homePage")
+    private Link homePage;
+
+    @JsonProperty(value = "id")
+    private String id;
+
+    @JsonProperty(value = "lastName")
+    private String lastName;
+
+    public User() {}
+
+    public User(UserDefinitionsAddress address, Long age, String firstName, Link homePage, String id, String lastName) {
+        this.setAddress(address);
+        this.setAge(age);
+        this.setFirstName(firstName);
+        this.setHomePage(homePage);
+        this.setId(id);
+        this.setLastName(lastName);
+    }
+
+    public UserDefinitionsAddress getAddress() {
+        return address;
+    }
+
+    public void setAddress(UserDefinitionsAddress address) {
+        this.address = address;
+    }
+
+    public Long getAge() {
+        return age;
+    }
+
+    public void setAge(Long age) {
+        this.age = age;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public Link getHomePage() {
+        return homePage;
+    }
+
+    public void setHomePage(Link homePage) {
+        this.homePage = homePage;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+}
+----
+
+JSON serialization is done with jackson, hence the dependency on jackson annotations, which is together with ning our only external
+dependency to use the DSL.
+
+[[java-link]]
+[source,java]
+.Link POJO
+----
+package io.atomicbits.schema;
+
+import com.fasterxml.jackson.annotation.*;
+
+public class Link {
+
+    @JsonProperty(value = "accept")
+    private String accept;
+
+    @JsonProperty(value = "href")
+    private String href;
+
+    @JsonProperty(value = "method")
+    private Method method;
+
+    public Link() {}
+
+    public Link(String accept, String href, Method method) {
+        this.setAccept(accept);
+        this.setHref(href);
+        this.setMethod(method);
+    }
+
+    public String getAccept() {
+        return accept;
+    }
+
+    public void setAccept(String accept) {
+        this.accept = accept;
+    }
+
+    public String getHref() {
+        return href;
+    }
+
+    public void setHref(String href) {
+        this.href = href;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public void setMethod(Method method) {
+        this.method = method;
+    }
+
+}
+----
+
+
+Enumerations like the <<java-method>> are transformed into Java enums.
+
+[[java-method]]
+[source,java]
+.Method enumeration
+----
+package io.atomicbits.schema;
+
+public enum Method {
+
+    GET,
+    PUT,
+    POST,
+    DELETE,
+    HEAD,
+    CONNECT,
+    TRACE,
+    OPTIONS
+
+}
+----
+
+
+
+=== Scraml typesafe asynchronous DSL: the basics
+
+Now that we have a feeling of how the DTOs look like, we can start to explain how [scramlfont]#Scraml# turns the RAML resource definitions
+into a typesafe DSL. Below, a <<raml-userservice>> is modeled in RAML using the json-schema definition of `user.json`, `link.json` and
+`method.json` that we introduced before.
+
+We defined a `/rest/user/' resource with a `GET` action on it that takes several query parameters. Notice that one of the query parameters
+has a `repeat: true` definition on it. We'll see in a minute how that translates into the DSL. The result body is of type `application/json`
+and more concrete an array of User objects. Here the json-schema definition is defined inline. Mind that the `id` is currently still
+necessary on inline schemas even if they aren't an unique object definion. The `id` fields are not mandatory in inline schemas.
+
+Next, we have a `multipart/form-data` POST action on `/rest/user/upload` and a resource that takes URL-parameters: `/rest/user/{userid}`.
+The `userid` URL-parameter is defined as a string and [scramlfont]#Scraml# will enforce this. There is a form-POST action on
+this resource with a required and a non-required form field. The response will have a JSON format, but it is not defined which schema it
+follows. This implies that we don't have type information in the DSL on that response. Finally, we have a DELETE action and a
+POST action that sends a User and receives a Link.
+
+
+[[raml-userservice]]
+[source,yaml]
+.user service
+----
+#%RAML 1.0
+---
+title: My api
+version: v1
+
+types:
+  - link:         !include schemas/link.json
+  - method:       !include schemas/method.json
+  - user:         !include schemas/user.json
+  - Book:
+      type: object
+      properties:
+        isbn:
+          type: string
+          required: true
+        title:
+          description: the title has no required field, but 'true' is the default value anyway
+          type: string
+        genre:
+          type: string
+        author:
+          type: Author
+  - Author:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        hobbies?:
+          description: this is an optional field 'hobbies'
+          type: string[]
+
+
+/rest/user/:
+  get:
+    queryParameters:
+      age:
+        description: The age of the user.
+        type: number
+      firstName:
+        description: The firstname of the user.
+        type: string
+      lastName:
+        description: The last name of the user.
+        type: string
+      organization:
+        description: The organization of the user.
+        type: string
+        repeat: true
+    responses:
+      200:
+        body:
+          application/json:
+            schema: |
+              {
+                "id": "http://atomicbits.io/schema/anonymous1.json",
+                "type": "array",
+                "items": {
+                  "$ref": "user.json"
+                }
+              }
+----
+
+Compiling the codebase using maven, [scramlfont]#Scraml# will generate the DSL in the code generation step before actual compilation. This
+results in a client that provides access to the resources we described above. Let's assume the above RAML file sits in the folder
+`io/atomicbits/api/` under the resources folder and the filename is `user-api.raml`. The resulting DSL can be used to do the following.
+
+
+[[java-client]]
+[source,java]
+.client DSL code
+----
+  import io.atomicbits.api.UserApi;
+  ...
+  UserApi client = new UserApi("localhost", 8281, "http", null, new ClientConfig(), new HashMap<>()); <1>
+
+  UserResource userResource = client.rest.user; <2>
+
+  CompletableFuture<Response<User>> eventualUser = <5>
+    userResource
+      .get( <3>
+        51L,
+        "John",
+        null,
+        Arrays.asList("ESA", "NASA") <4>
+      );
+
+  Response<List<User>> usersResponse = eventualUser.get(10, TimeUnit.SECONDS);
+
+  List<User> users = usersResponse.getBody();
+----
+<1> Client initialization takes several basic parameters directly and many more advanced options through the ClientConfig parameter.
+<2> Resources that you build with the DSL are immutable constructs with pure value semantics, so you can assign them to variables and reuse them many times, they will always have the same meaning.
+<3> `get(...)` executes the GET request on the resource, consuming several fully typed query parameters.
+<4> Remember the `repeat: true` statement in the json-schema of this resource? The DSL will provide a list to represent the repeated parameter.
+<5> The result is asynchronous (hence the `Future<>`) and it is wrapped inside a `Result<T>` object. The body is a `List<User>`, matching the array of user type that is defined in the schema for this resource. `Result<T>` also contains the response headers and status code.
+
+
+The `UserApi` class is the starting point for establishing client requests using the DSL. It takes various basic parameters that are used
+to establish a connection with a remote service. In addition to the basic parameters, many more detailed parameters can be passed by
+configuring a `ClientConfig` object. It takes parameters such as `requestTimeout`, `maxRequestRetry`, `connectTimeout`,
+`connectionTTL`, `maxConnections`, `maxConnectionsPerHost`, `allowPoolingConnections` and several more. These parameters are passed to
+the underlying ning client that handles the actual requests. The rest path is constructed in the DSL by following the corresponding
+field paths on the DSL entries: `client.rest.user` corresponds to the resource on `http:\\localhost:8281\rest\user`. The `.get(...)`
+action executes the actual request with some additional query parameters that are passed to the `.get()` method.
+The `organization` query parameter has the `repeat: true` setting, which results in a `List[String]` parameter on the GET action.
+
+[[request-get]]
+.GET request with query parameters
+----
+GET
+http://localhost:8281/rest/user?age=51.0&firstName=John&organization=ESA&organization=NASA
+headers:	Accept=application/json
+----
+
+[[response-get]]
+.GET response
+----
+headers:  "Transfer-Encoding=chunked"; "Server=Jetty(6.1.26)"
+body:     [{"address": {"streetAddress": "Mulholland Drive", "city": "LA", "state": "California"}, "firstName":"John", "lastName": "Doe", "age": 21, "id": "1"}]
+status:   200 "OK"
+----
+
+In <<request-get>>, we see what the actual request looks like that goes out. Mind the double organization query parameter to match
+the repeated character for this parameter. Also notice that [scramlfont]#Scraml# automatically adds the accept header that was specified
+in the RAML model for this GET action. The same goes for the `Content-Type` header when a request body is present. The result of
+the <<response-get>> shows that the result is a `200 "OK"` response whose body contains a list of user object in JSON format.
+
+Let's add some <<raml-userservice-more>> and see how [scramlfont]#Scraml# handles it.
+
+[[raml-userservice-more]]
+[source,yaml]
+.more actions in the user service
+----
+/rest/user/{userid}:
+  uriParameters:
+    userid:
+      description: The user's id.
+      type: string
+      required: true
+  post:
+    body:
+      application/x-www-form-urlencoded:
+        formParameters:
+          text:
+            description: Text to post as a comment on the user.
+            type: string
+            required: true
+          value:
+            description: Value to give to a user.
+            type: integer
+            required: false
+    responses:
+      200:
+        body:
+  delete:
+  put:
+    body:
+      application/json:
+        schema: user
+    responses:
+      200:
+        body:
+          application/json:
+            schema: link
+
+/rest/user/upload:
+  post:
+    body:
+      multipart/form-data:
+    responses:
+      200:
+        body:
+----
+
+The resource `/rest/user/{userid}` takes a path parameter that must be a string and as three actions defined on it: POST, DELETE
+and PUT. The POST action represents a form post that contains a string parameter `text` and an integer parameter `value`. The result
+type is not specified. The DELETE action has no specific configuration at all, and the PUT action sends a user object as JSON in the
+request and expects a link object as JSON in its response. Finally, there is also a `/rest/user/upload` resource on which a
+multipart form upload is defined. After running [scramlfont]#Scraml# in the source-generation step of sbt, we get a DSL that enables
+<<java-client-more>>.
+
+
+[[java-client-more]]
+[source,java]
+.more client DSL functionality
+----
+  UseridResource userFoobarResource = client.rest.user.userid("foobar"); <1>
+
+
+  // POST
+  CompletableFuture<Response<String>> eventualPostResponse =
+    userFoobarResource.post("Hello Foobar", null); <2>
+
+  Response<String> postResponse = eventualPostResponse.get(10, TimeUnit.SECONDS); <3>
+
+  assertEquals(200, postResponse.getStatus()); <4>
+  assertEquals("Post OK", postResponse.getBody()); <5>
+
+
+  // DELETE
+  CompletableFuture<Response<String>> eventualDeleteResponse = userFoobarResource.delete();
+  Response<String> deleteResponse = eventualDeleteResponse.get(10, TimeUnit.SECONDS);
+  assertEquals(200, deleteResponse.getStatus());
+
+
+  // PUT
+  User user = new User(
+    new UserDefinitionsAddress("LA", "California", "Mulholland Drive"),
+    21L,
+    "Doe",
+    new Link(null, "http://foo.bar", Method.GET),
+    "1",
+    "John"
+  );
+
+  CompletableFuture<Response<Link>> eventualPutResponse =
+    userFoobarResource.put(user);
+
+  Link link = eventualPutResponse.get(10, TimeUnit.SECONDS).getBody();
+  assertEquals("http://foo.bar", link.getHref());
+
+
+  // multipart form POST
+  List<BodyPart> bodyParts =
+    Collections.singletonList(new StringPart("test", "string part value"));
+
+  CompletableFuture<Response<String>> multipartFormPostResponse =
+    client.rest.user.upload.post(bodyParts); <6>
+----
+<1> We construct the resource we need using the DSL, filling in the path parameter `userid` as a string value.
+<2> We call the POST action on this resource sending the form fields `text` and `value` with it.
+<3> We wait for the future to finish (you should only do this in test code, obviously).
+<4> We check that the response status code is 200.
+<5> The response body should be the text sent back from the service.
+<6> Multipart form POST requests take a list of either StringPart, FilePart or ByteArrayPart objects.
+
+
+=== Adding custom headers
+
+[scramlfont]#Scraml# allows you to add one or more headers on each resource in the DSL. The following example illustrates how to
+<<java-custom-headers>> before calling a PUT action.
+
+[[java-custom-headers]]
+[source,java]
+.add custom headers
+----
+CompletableFuture<Response<String>> response =
+  client.rest.user.activate
+    .addHeader("Cookie", "user=roger")
+    .addHeader("Cookie", "key=regor")
+    .put(userList)
+----
+
+
+If you want to have a certain header on all calls under a certain parent resource, then you can add it on that parent resource and build
+on from there, see how to <<java-custom-header-reuse>>. Everywhere you reuse `resResource`, you'll get the cookie header that was set on
+it.
+
+
+[[java-custom-header-reuse]]
+[source,java]
+.add a custom header on all subresources
+----
+RestResource restResource = client.rest.addHeader("Cookie", "user=roger")
+
+CompletableFuture<Response<String>> response =
+  resResource.user.activate.put(userList)
+----
+
+
+
+=== Handling multiple request content types and response accept types
+
+Imagine that you encode a version number in your content type and accept headers and that you can send several different types of content
+to your service, depending on the content type that you have. The next example shows the use of <<raml-userservice-double-content>> in RAML.
+
+
+[[raml-userservice-double-content]]
+[source,yaml]
+.double content types
+----
+/rest/user/:
+  put:
+    body:
+      application/vnd-v1.0+json:
+        schema: user
+      application/vnd-v0.1+json:
+        schema: user-old
+    responses:
+      200:
+        body:
+          application/vnd-v1.0+json:
+            schema: link
+----
+
+
+In this case, [scramlfont]#Scraml# forces you to choose which type you want to send before calling the `PUT` action. The following
+code sample shows how you <<java-userservice-double-content>>.
+
+
+[[java-userservice-double-content]]
+[source,java]
+.choose a content type before executing the action
+----
+CompletableFuture<Response<Link>> eventualResponse =
+  client.rest.user
+    .contentApplicationVndV10Json
+    .put(user)
+----
+
+By chosing the `contentApplicationVndV10Json` header selection, you get access to a `.put(user)` action that takes a user of the type that
+matches the `application/vnd-v1.0+json` content type.
+
+
+=== Generic typing in json-schema or RAML 1.0
+
+Officially, there is no generic typing possible neither in json-schema, nor in RAML 1.0!
+Scraml, however supports a way around using language extensions that should not break the existing specs.
+
+Generic typing is added as a json-schema extension that [scramlfont]#Scraml# knows how to process. The illustration below shows a
+<<raml-generic-typing>>. It is a representation for a paged list that has two type variables `T` and `U` referring to the type of the
+elements in the paged list and the optional owner of the list respectively. The `typeVariables` field is added to the object's
+specification and represents the type symbols as an array of strings. The type symbols are repeated further down the object model's
+properties where they apply. They must be specified on an object type that takes no configuration other than the `genericType`
+field that refers to the type symbol.
+
+TIP: The "id" field in a json-schema file is mandatory, but we don't require to use the full URI format. You can also use
+ a relative reference instead. Whereas the full URI version is scoped by the URI path, the relative verion will be scoped by
+  relative main raml file location. Instead of the "id" field, the "title" field can also be used.
+
+[[raml-generic-typing]]
+[source,json]
+.json-schema extension that enables modelling generic types
+----
+{
+  "id": "http://atomicbits.io/schema/paged-list.json#",
+  "type": "object",
+  "typeVariables": ["T", "U"],
+  "description": "A paged list with an optional owner of the list",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "required": true
+    },
+    "elements": {
+      "required": true,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "genericType": "T"
+      }
+    },
+    "owner": {
+      "required": false,
+      "type": "object",
+      "genericType": "U"
+    }
+  }
+}
+----
+
+During the code generation step, [scramlfont]#Scraml# creates a fully typed generic object that carries the two type references, see the
+<<java-generic-typing>> example below.
+
+[[java-generic-typing]]
+[source,java]
+.generic typed object
+----
+package io.atomicbits.schema;
+
+import java.util.List;
+import com.fasterxml.jackson.annotation.*;
+
+public class PagedList<T, U> {
+
+    @JsonProperty(value = "count")
+    private Long count;
+
+    @JsonProperty(value = "elements")
+    private List<T> elements;
+
+    @JsonProperty(value = "owner")
+    private U owner;
+
+    public PagedList() {}
+
+    public PagedList(Long count, List<T> elements, U owner) {
+        this.setCount(count);
+        this.setElements(elements);
+        this.setOwner(owner);
+    }
+
+    public Long getCount() {
+        return count;
+    }
+
+    public void setCount(Long count) {
+        this.count = count;
+    }
+
+    public List<T> getElements() {
+        return elements;
+    }
+
+    public void setElements(List<T> elements) {
+        this.elements = elements;
+    }
+
+    public U getOwner() {
+        return owner;
+    }
+
+    public void setOwner(U owner) {
+        this.owner = owner;
+    }
+
+}
+----
+
+The RAML 1.0 extension works exactly the same:
+
+[[raml10-generic-typing]]
+[source,yaml]
+.raml 1.0 extension that enables modelling generic types
+----
+  PagedList:
+    type: object
+    typeVariables: [T, U]
+    properties:
+      count:
+        type: integer
+      elements:
+        type: array
+        items:
+          type: object
+          genericType: T
+      owner:
+        type: object
+        genericType: U
+----
+
+[[json-schema-generic-type-referencing]]
+[source,json]
+.referencing a generic type in json-schema
+----
+{
+  "$ref": "http://atomicbits.io/raml10/paged-list.json#",
+  "genericTypes": [
+    {
+      "$ref": "http://atomicbits.io/raml10/dog.json"
+    },
+    {
+      "type": "string"
+    }
+  ]
+}
+----
+
+[[raml10-generic-type-referencing]]
+[source,yaml]
+.referencing a generic type in raml 1.0
+----
+  Book:
+    type: object
+    discriminator: kind
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+      author:
+        type: Author
+        required: true
+      fans:
+        type: PagedList
+        genericTypes: [User, integer]
+----
+
+
+=== Type hierarchies using RAML 1.0 types
+
+We support the generation of code for RAML 1.0's multiple inheritance. Where needed, Java interfaces are introduced in the generated code
+to simulate the behavior expected form multiple inheritance.
+
+[[raml-bookservice]]
+[source,yaml]
+.book service
+----
+#%RAML 1.0
+---
+title: book api
+version: 1.0
+mediaType: application/json
+
+types:
+  Book:
+    type: object
+    discriminator: kind
+    properties:
+      isbn:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      genre:
+        type: string
+      author:
+        type: Author
+        required: true
+  Author:
+    type: object
+    properties:
+      firstName:
+        type: string
+        required: true
+      lastName:
+        type: string
+        required: true
+  WithVillain:
+    type: object
+    properties:
+      villain:
+        type: string
+  ComicBook:
+    type: [Book, WithVillain]
+    properties:
+      hero:
+        type: string
+  SciFiComicBook:
+    type: ComicBook
+    discriminatorValue: ScienceFictionComicBook
+    properties:
+      era:
+        type: string
+
+/books:
+  get:
+    description: Get all books
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+  post:
+    body:
+      application/json:
+        type: Book
+    responses:
+      201:
+
+/books/comicbooks:
+  get:
+    description: Get all comicbooks
+    responses:
+      200:
+        body:
+          application/json:
+            type: ComicBook[]
+  post:
+    body:
+      application/json:
+        type: ComicBook
+    responses:
+      201:
+
+/books/comicbooks/scificomicbooks:
+  get:
+    description: Get all SciFi comicbooks
+    responses:
+      200:
+        body:
+          application/json:
+            type: SciFiComicBook[]
+  post:
+    body:
+      application/json:
+        type: SciFiComicBook
+    responses:
+      201:
+
+----
+
+
+
+
+=== Type hierarchies in json-schema
+
+As said in the previous section, json-schema was never meant to be an object-oriented modeling language. And although there is a way
+to express someting that may be interpreted as a type hierarchy that [scramlfont]#Scraml# understands, it is in a specific way our own
+interpretation of the model.
+
+In json-schema, there is the `oneOf` keyword that lets you choose between several versions of a schema to use in a larger schema. If we
+apply this on an object type and let you choose between sets of properties that you can have on that object, we have a way to express
+type hierarchies as they appear in object-oriented models. The following sample illustrates a <<raml-type-hierarchy>>.
+
+
+[[raml-type-hierarchy]]
+[source,json]
+.json-schema modelling a type hierarchy using the oneOf operator
+----
+{
+  "id": "http://atomicbits.io/schema/animal.json#",
+  "type": "object",
+  "typeDiscriminator": "_type",
+  "description": "An animal object.",
+  "properties": {
+    "gender": {
+      "required": true,
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Cat"
+          ]
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        }
+      }
+    },
+    {
+      "id": "http://atomicbits.io/schema/dog.json#",
+      "type": "object",
+      "properties": {
+        "_type": {
+          "enum": [
+            "Dog"
+          ]
+        },
+        "name": {
+          "required": false,
+          "type": "string"
+        },
+        "canBark": {
+          "required": true,
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "properties": {
+        "_type": {
+          "enum": [
+            "Fish"
+          ]
+        }
+      }
+    }
+  ]
+}
+----
+
+The top-level class represents an animal with one field, the `gender`. The other fields are dependent on the specifics of the animal.
+In the case of a dog, there is a `name` field and a `canBark` field present. The convention here is that each subclass has a type field
+that points to an enumeration that contains only one element: the discriminator for the type. Since a json object has no class information
+attached to it by default, we need to inject a type discriminator field. The name of the field is `type` by default, but it can be changed
+by adding the `typeDiscriminator` string field at the top-level object.
+
+
+[[java-class-hierarchy-animal]]
+[source,java]
+.generated class hierarchy - Animal
+----
+package io.atomicbits.schema;
+
+import com.fasterxml.jackson.annotation.*;
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
+@JsonSubTypes(
+        {
+                @JsonSubTypes.Type(value = Cat.class, name = "Cat"),
+                @JsonSubTypes.Type(value = Dog.class, name = "Dog"),
+                @JsonSubTypes.Type(value = Fish.class, name = "Fish")
+        })
+public abstract class Animal {
+
+    @JsonProperty(value = "gender")
+    private String gender;
+
+    public Animal() {
+    }
+
+    public Animal(String gender) {
+        this.setGender(gender);
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+}
+----
+
+
+
+[[java-class-hierarchy-dog]]
+[source,java]
+.generated class hierarchy - Dog
+----
+package io.atomicbits.schema;
+
+import com.fasterxml.jackson.annotation.*;
+
+public class Dog extends Animal {
+
+    @JsonProperty(value = "canBark")
+    private Boolean canBark;
+
+    @JsonProperty(value = "name")
+    private String name;
+
+    public Dog() {}
+
+    public Dog(Boolean canBark, String gender, String name) {
+        this.setCanBark(canBark);
+        this.setGender(gender);
+        this.setName(name);
+    }
+
+    public Boolean getCanBark() {
+        return canBark;
+    }
+
+    public void setCanBark(Boolean canBark) {
+        this.canBark = canBark;
+    }
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+}
+----
+
+
+[[java-class-hierarchy-cat]]
+[source,java]
+.generated class hierarchy - Cat
+----
+package io.atomicbits.schema;
+
+import com.fasterxml.jackson.annotation.*;
+
+public class Cat extends Animal {
+
+    @JsonProperty(value = "name")
+    private String name;
+
+    public Cat() {}
+
+    public Cat(String gender, String name) {
+        this.setGender(gender);
+        this.setName(name);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+}
+----
+
+
+[[java-class-hierarchy-fish]]
+[source,java]
+.generated class hierarchy - Fish
+----
+package io.atomicbits.schema;
+
+public class Fish extends Animal {
+
+    public Fish() {}
+
+    public Fish(String gender) {
+        this.setGender(gender);
+    }
+
+}
+----
+
+
+The above code samples show the class hierarchy as generated form the animal json-schema definition. The parent class, `Animal` contains
+the common property `gender`, while the leaf classes harbor the specifics for each kind of animal.
+Have a look at the test class `RamlModelGeneratorTest` in the GitHub project https://github.com/atomicbits/scraml-test-java to see
+class hierarchy serialization and the other examples used in this documentation in action.

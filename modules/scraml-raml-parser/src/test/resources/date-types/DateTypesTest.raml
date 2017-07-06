@@ -1,0 +1,27 @@
+#%RAML 1.0
+---
+title: date-types-test
+version: 1.0
+mediaType: application/json
+
+types:
+  birthday:
+    type: date-only # no implications about time or offset
+  lunchtime:
+    type: time-only # no implications about date or offset
+  fireworks:
+    type: datetime-only # no implications about offset
+  created:
+    type: datetime
+    format: rfc3339 # the default, so no need to specify
+  If-Modified-Since:
+    type: datetime
+    format: rfc2616 # this time it's required, otherwise, the example format is invalid
+
+/date:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: date-only

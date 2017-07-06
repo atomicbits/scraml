@@ -1,0 +1,51 @@
+
+== RAML basics
+
+Documentation, tutorials and detailed information about writing RAML documents are found on the RAML main website http://raml.org. This
+section will teach you some basics to get you started.
+
+=== Resource definitions and json-schema
+
+In code listing <<raml-simple>>, we see a resource hosted on `\rest\user` that provides a `GET` action that takes two query parameters
+`firstName` and `lastName`. The resulting body has a result type `application/json` that matches the expected accept header and refers
+to the JSON data this service returns. This JSON data is further defined by the type `User`.
+
+[[raml-simple]]
+[source,yaml]
+.a simple resource definition
+----
+#%RAML 1.0
+---
+title: raml example
+version: v1
+
+types:
+  User:
+    type: object
+    properties:
+      firstName:
+        type: string
+        required: true
+      lastName:
+        type: string
+        required: true
+
+/rest/user:
+  get:
+    queryParameters:
+      firstName:
+        description: The firstname of the user.
+        type: string
+      lastName:
+        description: The last name of the user.
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: User
+----
+
+
+
+

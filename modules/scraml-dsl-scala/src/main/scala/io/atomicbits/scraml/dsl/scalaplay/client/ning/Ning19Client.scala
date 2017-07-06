@@ -34,7 +34,7 @@ import play.api.libs.json._
 
 import scala.concurrent.{ Future, Promise }
 import scala.util.{ Failure, Success, Try }
-import scala.collection.JavaConversions._
+import scala.collection.JavaConversions._ // ToDo: remove for scala 2.12 !
 import scala.collection.JavaConverters._
 
 /**

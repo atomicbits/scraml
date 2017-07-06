@@ -1,0 +1,114 @@
+:linkcss:
+:icons: font
+:source-highlighter: pygments
+:pygments-style: friendly
+
+== SCRAML RELEASE NOTES
+
+Scraml is on its way to version 1.0 while feedback from users is
+constantly used to improve the tool. Scraml is being thoroughly
+tested as a DSL for acceptance testing in real-life projects and it is
+also being used as a runtime client in several production sytems. Be sure
+to check these release notes when upgrading to a newer version.
+
+Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
+
+=== Version 0.7.0-M1
+
+This is a major release with several RAML 1.0 additions.
+
+ - we no longer need to include the DSL support libray, but only the external dependencies (http client and json library)
+ - optional properties and parameters can now be marked with an trailing '?'
+ - support for parameterized traits
+ - support for parameterized resource types
+ - queryString? support
+ - support for property-based form parameters (application/x-www-form-urlencoded headers)
+
+Migration highlights:
+
+ - Following the RAML specs, query parameters are now required by default (they used to be optional by default).
+ - References to types with type parameters now list the type parameter values in an array rather than an object map.
+
+
+=== VERSION 0.6.1
+
+This is a minor bug fix release.
+
+ - A bug concerning the required fields in jsoh-schema was fixed.
+ - Other small regression bugfixes that were introduced by the 0.6.0 refactoring steps.
+
+Migration highlights: none. We should be fully backward compatible.
+
+=== VERSION 0.6.0
+
+Version 0.6 is finally out with some huge refactorings in the underlying generation engine. Scraml now has an entirely new typesystem underneath that is built to better support RAML 1.0 types and to make the process of generating other languages a lot easier. We see the addition of support for Android, iOS (Swift), Python and C# within reach as soon as our RAML 1.0 support is complete.
+
+ - Version 0.6 now fully supports RAML 1.0 types, including multiple-inheritance, except for union types. We will focus on union types in version 0.8.
+ - Our RAML 1.0 parser currently has no support yet for the following basic features: parameterized traits and resource types, default media types, question mark for optional fields, baseUriParameters, date support and file type support. These features will be the focus for the 0.7 release. Other more advanced features such as libraries, overlays and extensions will end up in either 0.8 or 0.9.
+ - This version is more relaxed toward 'id' references in json-schema. You no longer have to provide a full URI in the root of a json-schema. Relative references are allowed now and you may also put them under the 'title' field instead of the 'id' field.
+
+Migration highlights: none. We should be fully backward compatible.
+
+=== VERSION 0.5.0
+
+ - This version uses a entirely new RAML parser that is ready to process basic RAML 1.0 types. Json-schema is still supported as before. The beta version is a request to all scraml users to test against regression bugs.
+ - This version of scraml will be extended in the coming months to support more and more RAML 1.0 features.
+
+Migration highlights: none. We should be fully backward compatible.
+
+=== VERSION 0.4.14
+
+ - The client configuration now has the option to set a default request charset. If this option is not set manually, it defaults to the Java VM's default charset. This request charset will automatically be added to all outgoing requests that contain a string value and where the RAML specs didn't specify a charset parameter with the media type. For example when the user specifies the mediatype 'application/json' (content-type) for a request, then scraml will add the default charset. If the user specifies 'application/json;charset=utf-8', then the specified charset will be sent.
+ - Scraml will no parse the incoming charset value of the content-type header and use that charset to interpret the string value of that response. If no charset value is present, then the default incoming charset value (which was already present as a clientconfig option) will be used. The default value of the incoming charset parameter is the JVM's default charset.
+
+Migration highlights: none.
+
+=== VERSION 0.4.13
+
+ - The SBT plugin has been extended to support multi-project builds that generate code in multiple submodules simultaneously. This enables people to build a Scala and Java client in the same project, or any number of scraml clients (one per submodule) in parallel. Drop us an email if you're interested in an example for such an SBT project setup. The maven plugin remains unchanged for now.
+ - The SBT plugin doesn't automatically inject the scraml-dsl-scala dependency any longer. This feature was very cool and handy, but it isn't possible to tune the dependency injection so that it only injects that dependency in certain submodules and it also isn't possible to choose which dependency to inject based on the language set (e.g. injecting scraml-dsl-java when Java is set as the client source language). Now you have to set the library dependency yourself, but you can use the scramlVersion.value variable in your built.sbt definition so that the scraml version is automatically copied from the scraml plugin's version.
+
+Migration highlights: You now have to set the DSL library dependency for the scraml client manually in Scala projects. See the https://github.com/atomicbits/scraml/blob/develop/documentation/scaladocumentation.adoc#quickstart-scala[Scala quickstart].
+
+=== VERSION 0.4.12
+
+ - Improvement: all response bodies in the 200 status-range can now have typed bodies, given there is only one possible response type for that method. Multi-status typed responses is still on the backlog.
+ - Bugfix: error response statuses on requests with typed responses are now handled properly.
+
+Migration highlights: none, but please upgrade the ning dependency to 1.9.36, it has some bugfixes in its connection pool.
+
+
+=== VERSION 0.4.11
+
+ - Minor bugfix, generated parameter names are now sanitized for Java/Scala compliancy.
+
+Migration highlights: none.
+
+=== VERSION 0.4.10
+
+ - Minor bugfix in the imports of the generated code.
+
+Migration highlights: none.
+
+=== VERSION 0.4.9
+
+- Renamed the Java DSL package name to io.atomicbits.scraml.jdsl
+- Schema ids are no longer required on inline json-schema's
+
+Migration highlights: The java supporting DSL package has been renamed to io.atomicbits.scraml.jdsl
+
+
+
+=== VERSION 0.4.8
+
+ - Important bugfix in the Java DSL backing library on the addHeader() method.
+ - No breaking changes in the generated DSL.
+
+Migration highlights: none.
+
+=== VERSION 0.4.7
+ - Factory classes for backing client injection
+ - Ning dependency is now set to 'provided', meaning it needs to be manually included in projects using Scraml.
+ - No breaking changes in the generated DSL.
+
+Migration highlights: update your pom.xml (Java) or build.sbt (Scala) files to manually include the ning http-client dependency.
