@@ -11,20 +11,6 @@ lazy val scramlDslScala = Project(
     )
 )
 
-// builds the dsl but against play25
-lazy val scramlDslPlay25Scala = {
-  //if I choose just the module dir, the test sources get build in the main compile too :/
-  val sourceDir = (baseDirectory in ThisBuild)(b => Seq(b / "modules/scraml-dsl-scala" / "src" / "main" / "scala"))
-
-  Project(
-    id       = "scraml-dsl-play25-scala",
-    base     = file("modules/scraml-dsl-play25-scala"),
-    settings = projSettings(dependencies = scramlDslPlay25DepsScala ++ testDeps)
-  ).settings(unmanagedSourceDirectories in Compile <<= sourceDir)
-    // play25 is enkel scala 2.11
-    .settings(crossScalaVersions := Seq(scala2_11))
-}
-
 lazy val scramlDslJava = Project(
   id   = "scraml-dsl-java",
   base = file("modules/scraml-dsl-java"),
@@ -70,5 +56,4 @@ lazy val main = Project(
   .settings(
     publish := (),
     publishLocal := ()
-  ) aggregate (scramlRamlParser,
-scramlDslScala, scramlDslPlay25Scala, scramlDslJava, scramlGenSimulation, scramlGenerator)
+  ) aggregate (scramlRamlParser, scramlDslScala, scramlDslJava, scramlGenSimulation, scramlGenerator)

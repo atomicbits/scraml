@@ -20,6 +20,7 @@ Setting up [scramlfont]#Scraml# using the sbt-plugin is super-easy if you follow
 addSbtPlugin("io.atomicbits"      % "scraml-sbt-plugin"   % "0.7.0-M1")
 ----
 
+=== Optional: use a license to overcome AGPL limitations
 
 [[build.sbt]]
 [source,scala]

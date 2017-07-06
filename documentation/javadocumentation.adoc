@@ -95,6 +95,8 @@ mind that these packages are all compile-time dependencies. They will not end up
 artifact will be added as a dependency and it only has `ning` and `jackson` as transitive dependencies.
 
 
+=== Optional: use a license to overcome AGPL limitations
+
 [[license.key]]
 [source,scala]
 .configure a license key for activating the commercial scraml license in your maven pom.xml file

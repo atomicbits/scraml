@@ -1,0 +1,48 @@
+/*
+ *
+ *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *
+ *  All rights reserved. This program and the accompanying materials
+ *  are made available under the terms of the GNU Affero General Public License
+ *  (AGPL) version 3.0 which accompanies this distribution, and is available in
+ *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ *  Alternatively, you may also use this code under the terms of the
+ *  Scraml Commercial License, see http://scraml.io
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  Affero General Public License or the Scraml Commercial License for more
+ *  details.
+ *
+ *  Contributors:
+ *      Peter Rigole
+ *
+ */
+
+package io.atomicbits.scraml.ramlparser.lookup.transformers
+
+import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, StringType, TypeReference }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedString, ParsedType }
+
+/**
+  * Created by peter on 6/07/17.
+  *
+  * This transformer transforms any parsed type to a string type.
+  */
+object FallbackTransformer {
+
+  // format: off
+  def unapply(parsedTypeContext: ParsedTypeContext)
+             (implicit canonicalNameGenerator: CanonicalNameGenerator): Option[(TypeReference, CanonicalLookupHelper)] = { // format: on
+
+    val parsed: ParsedType                           = parsedTypeContext.parsedType
+    val canonicalLookupHelper: CanonicalLookupHelper = parsedTypeContext.canonicalLookupHelper
+
+    parsed match {
+      case _ => Some((StringType, canonicalLookupHelper))
+    }
+  }
+
+}

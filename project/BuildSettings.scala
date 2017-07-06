@@ -29,6 +29,7 @@ object BuildSettings {
 
   val scala2_10 = "2.10.5"
   val scala2_11 = "2.11.8"
+//  val scala2_12 = "2.12.2" // ToDo: we have to replace scalariform in orde to build with 2.12 !
 
   val ScalaVersion = scala2_11
 
