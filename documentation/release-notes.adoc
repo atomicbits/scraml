@@ -19,7 +19,7 @@ Changes:
 
  - Bugfix, we now don't fail on types that we don't process yet, such as dates. Those types are now transformed into string types.
 
-Migration highlights: None. 
+Migration highlights: None.
 
 === Version 0.7.0-M1
 

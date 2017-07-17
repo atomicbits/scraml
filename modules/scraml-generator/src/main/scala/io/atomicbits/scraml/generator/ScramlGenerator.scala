@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import io.atomicbits.scraml.generator.formatting.JavaFormatter
+import io.atomicbits.scraml.generator.formatting.{ JavaFormatter, ScalaFormatter }
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.language.postfixOps
@@ -34,8 +34,6 @@ import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.parser.{ RamlParseException, RamlParser, SourceFile }
 
 import scala.util.{ Failure, Success, Try }
-import scalariform.formatter.ScalaFormatter
-import scalariform.formatter.preferences._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
@@ -148,18 +146,10 @@ object ScramlGenerator {
     generationAggregator
   }
 
-  private val formatSettings =
-    FormattingPreferences()
-      .setPreference(RewriteArrowSymbols, true)
-      .setPreference(AlignParameters, true)
-      .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(DoubleIndentClassDeclaration, true)
-      .setPreference(IndentSpaces, 2)
-
   private def addLicenseAndFormat(sourceFile: SourceFile, platform: Platform, licenseHeader: String): SourceFile = {
     val content = s"$licenseHeader\n${sourceFile.content}"
     val formattedContent = platform match {
-      case ScalaPlay(_)   => Try(ScalaFormatter.format(content, formatSettings)).getOrElse(content)
+      case ScalaPlay(_)   => Try(ScalaFormatter.format(content)).getOrElse(content)
       case JavaJackson(_) => Try(JavaFormatter.format(content)).getOrElse(content)
     }
     sourceFile.copy(content = formattedContent)

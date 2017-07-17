@@ -20,6 +20,7 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.nio.charset.Charset
+import java.util.{ Map => JMap, List => JList }
 import java.util.concurrent.CompletionStage
 import java.util.function.{ BiConsumer, Function => JFunction }
 
@@ -34,7 +35,6 @@ import play.api.libs.json._
 
 import scala.concurrent.{ Future, Promise }
 import scala.util.{ Failure, Success, Try }
-import scala.collection.JavaConversions._ // ToDo: remove for scala 2.12 !
 import scala.collection.JavaConverters._
 
 /**
@@ -77,8 +77,7 @@ case class Ning19Client(protocol: String,
     }
   }
 
-  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(
-      implicit responseFormat: Format[R]): Future[Response[R]] = {
+  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(implicit responseFormat: Format[R]): Future[Response[R]] = {
     // In case of a non-200 or non-204 response, we set the typed body to None and keep the future successful and return the
     // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
     // in that case we violate the RAML specs.
@@ -113,9 +112,10 @@ case class Ning19Client(protocol: String,
 
     val transformer: com.ning.http.client.Response => Response[String] = { response =>
       val headers: Map[String, List[String]] =
-        mapAsScalaMap(response.getHeaders).foldLeft(Map.empty[String, List[String]]) { (map, headerPair) =>
-          val (key, value) = headerPair
-          map + (key -> value.asScala.toList)
+        response.getHeaders.asInstanceOf[JMap[String, JList[String]]].asScala.foldLeft(Map.empty[String, List[String]]) {
+          (map, headerPair) =>
+            val (key, value) = headerPair
+            map + (key -> value.asScala.toList)
         }
 
       val responseCharset: String = getResponseCharsetFromHeaders(headers).getOrElse(config.responseCharset.displayName)
@@ -134,9 +134,10 @@ case class Ning19Client(protocol: String,
       val binaryData: BinaryData = new Ning19BinaryData(response)
 
       val headers: Map[String, List[String]] =
-        mapAsScalaMap(response.getHeaders).foldLeft(Map.empty[String, List[String]]) { (map, headerPair) =>
-          val (key, value) = headerPair
-          map + (key -> value.asScala.toList)
+        response.getHeaders.asInstanceOf[JMap[String, JList[String]]].asScala.foldLeft(Map.empty[String, List[String]]) {
+          (map, headerPair) =>
+            val (key, value) = headerPair
+            map + (key -> value.asScala.toList)
         }
 
       Response[BinaryData](response.getStatusCode, None, None, Some(binaryData), headers)
