@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
 /**
  * Created by peter on 19/08/15.
  */
+// ToDo: rename to MethodSegment to Request (which is what it is)
 public abstract class MethodSegment<B, R> extends Segment {
 
     private B body;
