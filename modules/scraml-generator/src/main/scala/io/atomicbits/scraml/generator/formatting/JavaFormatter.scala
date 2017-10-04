@@ -26,9 +26,12 @@ import com.google.googlejavaformat.java.Formatter
   */
 object JavaFormatter {
 
+  // instances of Formatter are thread-safe
+  val formatter = new Formatter()
+
   /**
     * See https://github.com/google/google-java-format
     */
-  def format(code: String): String = new Formatter().formatSource(code)
+  def format(code: String): String = formatter.formatSource(code)
 
 }

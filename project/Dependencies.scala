@@ -33,8 +33,9 @@ object Dependencies {
   val asyncClientProvided = "com.ning"          % "async-http-client" % "1.9.40" % "provided"
   val playJson            = "com.typesafe.play" %% "play-json"        % "2.6.2"
 
-  val scalaFmt   = "com.geirsson"                %% "scalafmt-core"     % "1.1.0"
-  val javaFormat = "com.google.googlejavaformat" % "google-java-format" % "1.2"
+  val scalariform = "org.scalariform"             %% "scalariform"       % "0.2.3"
+  val javaFormat  = "com.google.googlejavaformat" % "google-java-format" % "1.2"
+  // val scalaFmt    = "com.geirsson"                %% "scalafmt-core"     % "1.1.0"
 
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.12"
 
@@ -52,7 +53,7 @@ object Dependencies {
 
   // inclusion of the above dependencies in the modules
   val scramlGeneratorDeps = Seq(
-    scalaFmt,
+    scalariform,
     javaFormat,
     junit
   )

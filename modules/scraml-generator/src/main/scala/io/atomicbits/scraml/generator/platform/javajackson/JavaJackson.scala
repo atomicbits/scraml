@@ -33,6 +33,8 @@ case class JavaJackson(apiBasePackageParts: List[String]) extends Platform with 
 
   implicit val platform: Platform = this
 
+  val name: String = "Java Jackson"
+
   val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "javajackson")
 
   val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "javajackson")
@@ -89,6 +91,7 @@ case class JavaJackson(apiBasePackageParts: List[String]) extends Platform with 
         )
       case typeParameter: TypeParameter =>
         ClassReference(name = typeParameter.name, predef = true, isTypeParameter = true)
+      case _: io.atomicbits.scraml.generator.typemodel.PrimitiveClassPointer => ???
     }
   }
 

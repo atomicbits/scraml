@@ -31,6 +31,8 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
   */
 case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with CleanNameTools {
 
+  val name: String = "Scala Play"
+
   implicit val platform: ScalaPlay = this
 
   val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "scalaplay")
@@ -71,6 +73,7 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
         ClassReference(name = "List", typeParameters = List(typeParameter), typeParamValues = typeParamValues, predef = true)
       case typeParameter: TypeParameter =>
         ClassReference(name = typeParameter.name, predef = true, isTypeParameter = true)
+      case _: io.atomicbits.scraml.generator.typemodel.PrimitiveClassPointer => ???
     }
   }
 

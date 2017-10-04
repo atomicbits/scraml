@@ -27,12 +27,13 @@ object BuildSettings {
 
   val Version = "0.7.0-M3" + snapshotSuffix
 
-  val scala2_11 = "2.11.8"
-  val scala2_12 = "2.12.2"
+  val scala2_10 = "2.10.6"
+  val scala2_11 = "2.11.11"
+  val scala2_12 = "2.12.3"
 
   val ScalaVersion = scala2_12
 
-  val defaultCrossScalaVersions = Seq(scala2_11, scala2_12)
+  val defaultCrossScalaVersions = Seq(scala2_10, scala2_11, scala2_12)
 
   val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 

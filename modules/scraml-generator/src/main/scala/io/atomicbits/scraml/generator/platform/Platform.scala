@@ -47,6 +47,8 @@ import io.atomicbits.scraml.generator.typemodel._
   */
 trait Platform {
 
+  def name: String
+
   def apiBasePackageParts: List[String]
   def apiBasePackage: String = apiBasePackageParts.mkString(".")
   def apiBaseDir: String     = apiBasePackageParts.mkString("/", "/", "")
