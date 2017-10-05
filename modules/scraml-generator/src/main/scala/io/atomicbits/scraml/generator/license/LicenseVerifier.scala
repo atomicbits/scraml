@@ -90,7 +90,7 @@ object LicenseVerifier {
             )
           )
 
-      Some(
+      val licenseData =
         LicenseData(
           customerId   = "-1",
           licenseId    = "-1",
@@ -99,7 +99,10 @@ object LicenseVerifier {
           period       = -1,
           purchaseDate = LocalDate.now()
         )
-      )
+
+      println(s"Free Scraml license used by ${licenseData.owner}.")
+
+      Some(licenseData)
     } else {
       None
     }
@@ -208,7 +211,7 @@ object LicenseVerifier {
 
   private def getFreeLicenseKeyUser(licenseKey: String): Option[String] = {
     licenseKey.split(',').toList match {
-      case l1 :: name :: ln => Some(name)
+      case l1 :: name :: ln => Some(name.trim)
       case _                => None
     }
   }

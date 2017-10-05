@@ -65,7 +65,7 @@ object ScramlGenerator {
                                      scramlLicenseKey: String,
                                      thirdPartyClassHeader: String): JMap[String, String] = {
 
-    println(s"Generating client for platform ${platform.getClass.getName}.")
+    println(s"Generating client for platform ${platform.name}.")
 
     implicit val thePlatform = platform
 
