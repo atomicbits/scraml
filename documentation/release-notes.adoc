@@ -13,6 +13,14 @@ to check these release notes when upgrading to a newer version.
 
 Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
 
+=== Version 0.7.0-M2
+
+Changes:
+
+ - Bugfix, we now don't fail on types that we don't process yet, such as dates. Those types are now transformed into string types.
+
+Migration highlights: None.
+
 === Version 0.7.0-M1
 
 This is a major release with several RAML 1.0 additions.

@@ -19,7 +19,7 @@
 
 package io.atomicbits.scraml.generator.license
 
-import java.security.{KeyFactory, PublicKey, Signature}
+import java.security.{ KeyFactory, PublicKey, Signature }
 import java.security.spec.X509EncodedKeySpec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -33,12 +33,16 @@ import scala.util.Try
   */
 object LicenseVerifier {
 
-  val charset = "UTF-8"
+  val charset     = "UTF-8"
   val datePattern = "yyyy-MM-dd"
 
   val algorithm = "RSA"
   // Encryption algorithm
   val signatureAlgorithm = "SHA1WithRSA"
+
+  val freeLicenseStatementMandatoryPart =
+    "use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else"
+  val freeLicenseStatementOfIntend = s"<We/I>, <enter name here>, $freeLicenseStatementMandatoryPart."
 
   val publicKeyPEM =
     """
@@ -53,9 +57,8 @@ object LicenseVerifier {
   @volatile
   private var validatedLicenses: Map[String, Option[LicenseData]] = Map.empty
 
-
   def validateLicense(licenseKey: String): Option[LicenseData] = {
-    val cleanKey = cleanLicenseKey(licenseKey)
+    val cleanKey = cleanCommercialLicenseKey(licenseKey)
     // Make sure decodeAndRegister is only executed if the key is not yet contained in validatedLicenses!
     // Do not simply the expression below with validatedLicenses.getOrElse(licenseKey, decodeAndRegister(licenseKey)) !
     validatedLicenses.get(cleanKey) match {
@@ -64,17 +67,51 @@ object LicenseVerifier {
     }
   }
 
-
   private def decodeVerifyAndRegister(licenseKey: String): Option[LicenseData] = {
     val decoded = decodeLicense(licenseKey).flatMap(checkExpiryDate)
     addValidatedLicense(licenseKey, decoded)
     decoded
   }
 
+  private def decodeLicense(licenseKey: String): Option[LicenseData] =
+    decodeFreeLicense(licenseKey).orElse(decodeCommercialLicense(licenseKey))
 
-  private def decodeLicense(licenseKey: String): Option[LicenseData] = {
+  private def decodeFreeLicense(licenseKey: String): Option[LicenseData] = {
+
+    val cleanKey = cleanFreeLicenseKey(licenseKey)
+
+    if (licenseKey.toLowerCase.contains(freeLicenseStatementMandatoryPart.toLowerCase)) {
+
+      val userName =
+        getFreeLicenseKeyUser(cleanKey)
+          .getOrElse(
+            sys.error(
+              s"Please state the free license intend as:\n$freeLicenseStatementOfIntend\n and fill in your name between the commas."
+            )
+          )
+
+      val licenseData =
+        LicenseData(
+          customerId   = "-1",
+          licenseId    = "-1",
+          licenseType  = "Free",
+          owner        = userName,
+          period       = -1,
+          purchaseDate = LocalDate.now()
+        )
+
+      println(s"Free Scraml license used by ${licenseData.owner}.")
+
+      Some(licenseData)
+    } else {
+      None
+    }
+  }
+
+  private def decodeCommercialLicense(licenseKey: String): Option[LicenseData] = {
     val encodedKey = licenseKey.trim
-    val signedKeyBytes = new BASE64Decoder().decodeBuffer(encodedKey)
+    val signedKeyBytes =
+      Try(new BASE64Decoder().decodeBuffer(encodedKey)).getOrElse(sys.error(s"Cannot verify license key with bad key format."))
     val signedKey = new String(signedKeyBytes, charset)
     val (unsignedKey, signature) = signedKey.split('!').toList match {
       case uKey :: sig :: _ => (uKey, sig)
@@ -85,17 +122,17 @@ object LicenseVerifier {
         case List(licenseType, customerId, licenseId, owner, purchaseDateString, periodString) =>
           val licenseData =
             LicenseData(
-              customerId = customerId,
-              licenseId = licenseId,
-              owner = owner,
+              customerId  = customerId,
+              licenseId   = licenseId,
+              owner       = owner,
               licenseType = licenseType,
-              period = Try(periodString.toLong).getOrElse(0),
+              period      = Try(periodString.toLong).getOrElse(0),
               purchaseDate =
                 Try(LocalDate.parse(purchaseDateString, DateTimeFormatter.ofPattern(datePattern))).getOrElse(LocalDate.ofYearDay(1950, 1))
             )
           println(s"Scraml license $licenseId is licensed to $owner.")
           Some(licenseData)
-        case x                                                                                 =>
+        case x =>
           println(s"Invalid license key. Falling back to default AGPL license.")
           None
       }
@@ -105,10 +142,9 @@ object LicenseVerifier {
     }
   }
 
-
   private def checkExpiryDate(licenseKey: LicenseData): Option[LicenseData] = {
-    val today = LocalDate.now()
-    val expiryDate = licenseKey.purchaseDate.plusDays(licenseKey.period)
+    val today       = LocalDate.now()
+    val expiryDate  = licenseKey.purchaseDate.plusDays(licenseKey.period)
     val warningDate = licenseKey.purchaseDate.plusDays(licenseKey.period - 31)
 
     if (licenseKey.period < 0) {
@@ -139,24 +175,21 @@ object LicenseVerifier {
     }
   }
 
-
   private def verifySignature(text: String, signature: String): Boolean = {
     val textBytes: Array[Byte] = text.getBytes("UTF8")
-    val signer: Signature = Signature.getInstance(signatureAlgorithm)
+    val signer: Signature      = Signature.getInstance(signatureAlgorithm)
     signer.initVerify(publicKey)
     signer.update(textBytes)
     signer.verify(new BASE64Decoder().decodeBuffer(signature))
   }
 
-
   lazy val publicKey: PublicKey = {
-    val b64: BASE64Decoder = new BASE64Decoder
-    val decoded: Array[Byte] = b64.decodeBuffer(publicKeyPEM)
+    val b64: BASE64Decoder       = new BASE64Decoder
+    val decoded: Array[Byte]     = b64.decodeBuffer(publicKeyPEM)
     val spec: X509EncodedKeySpec = new X509EncodedKeySpec(decoded)
-    val kf: KeyFactory = KeyFactory.getInstance(algorithm)
+    val kf: KeyFactory           = KeyFactory.getInstance(algorithm)
     kf.generatePublic(spec)
   }
-
 
   private def addValidatedLicense(licenseKey: String, licenseData: Option[LicenseData]): Unit = {
     LicenseVerifier.synchronized {
@@ -164,10 +197,23 @@ object LicenseVerifier {
     }
   }
 
-
-  private def cleanLicenseKey(licenseKey: String): String = {
+  private def cleanCommercialLicenseKey(licenseKey: String): String = {
     licenseKey.split('\n').map(line => line.trim).mkString("\n")
   }
 
+  /**
+    * replace all (successive) whitespace with a single space character
+    *
+    * see: https://stackoverflow.com/questions/5455794/removing-whitespace-from-strings-in-java
+    *
+    */
+  private def cleanFreeLicenseKey(licenseKey: String): String = licenseKey.replaceAll("\\s+", " ")
+
+  private def getFreeLicenseKeyUser(licenseKey: String): Option[String] = {
+    licenseKey.split(',').toList match {
+      case l1 :: name :: ln => Some(name.trim)
+      case _                => None
+    }
+  }
 
 }

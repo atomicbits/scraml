@@ -54,6 +54,7 @@ class HeaderSegment(_req: RequestBuilder) extends Segment {
 
 }
 
+// ToDo: rename to MethodSegment to Request (which is what it is)
 abstract class MethodSegment[B, R](method: Method,
                                    theBody: Option[B],
                                    queryParams: Map[String, Option[HttpParam]],
