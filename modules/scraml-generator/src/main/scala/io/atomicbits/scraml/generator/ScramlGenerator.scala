@@ -89,7 +89,6 @@ object ScramlGenerator {
     val dslSources: Set[SourceFile] =
       DslSourceExtractor
         .extract()
-        .getOrElse(sys.error(s"Could not read the DSL source files!"))
         .map(DslSourceRewriter.rewrite)
 
     val tupleList =

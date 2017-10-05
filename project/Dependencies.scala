@@ -64,12 +64,6 @@ object Dependencies {
     asyncClientProvided
   )
 
-//  val scramlDslPlay25DepsScala = Seq(
-//    slf4j,
-//    play25Json,
-//    asyncClientProvided
-//  )
-
   val scramlDslDepsJava = Seq(
     slf4j,
     junit,

@@ -25,10 +25,10 @@ package io.atomicbits.scraml.ramlparser.parser
 import java.io._
 import java.net.{ URI, URL }
 import java.nio.file.{ FileSystems, Files, Path, Paths, FileSystem }
+import java.nio.file.{ FileSystem => _, _ }
 import java.util.Collections
 
 import scala.util.Try
-
 import scala.collection.JavaConversions._
 
 /**
@@ -39,7 +39,7 @@ object SourceReader {
   /**
     * Read the content of a given source.
     *
-    * @param source The source to read.
+    * @param source      The source to read.
     * @param charsetName The charset the file content is encoded in.
     * @return A pair consisting of a file path and the file content. Todo: refactor and make it return a SourceFile (aka io.atomicbits.scraml.generator.typemodel, but put it in the parser code)
     */
@@ -67,7 +67,14 @@ object SourceReader {
     val (thePath, fs): (Path, Option[FileSystem]) =
       uri.getScheme match {
         case "jar" =>
-          val fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any])
+          val fileSystem: FileSystem =
+            Try(FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any]))
+              .recover {
+                case exc: FileSystemAlreadyExistsException => FileSystems.getFileSystem(uri)
+              }
+              .getOrElse {
+                sys.error(s"Could not create or open filesystem for resource $uri")
+              }
           (fileSystem.getPath(source), Some(fileSystem))
         case _ => (Paths.get(uri), None)
       }
@@ -87,9 +94,8 @@ object SourceReader {
     * http://stackoverflow.com/questions/31406471/get-resource-file-from-dependency-in-sbt
     * http://alvinalexander.com/blog/post/java/read-text-file-from-jar-file
     *
-    *
-    * @param path The path that we want to read all files from recursively.
-    * @param extension The extension of the files that we want to read.
+    * @param path        The path that we want to read all files from recursively.
+    * @param extension   The extension of the files that we want to read.
     * @param charsetName The charset the file contents are encoded in.
     * @return
     */
