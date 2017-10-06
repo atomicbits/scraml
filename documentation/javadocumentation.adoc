@@ -98,7 +98,7 @@ artifact will be added as a dependency and it only has `ning` and `jackson` as t
 === Optional: use a license to overcome AGPL limitations
 
 [[license.key]]
-[source,scala]
+[source,xml]
 .configure a license key for activating the commercial scraml license in your maven pom.xml file
 ----
 <configuration>
@@ -142,7 +142,7 @@ can replace the license key in the previous section with the following statement
 For example:
 
 [[statement.of.intend.example]]
-[source,java]
+[source,xml]
 .configure a free license statement of intend
 ----
 <configuration>
