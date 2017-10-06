@@ -23,8 +23,8 @@ latter shall prevail.
 
 1. Parties
 
-(a) "Licensor" means Atomic BITS b.v.b.a, having its principal place of
-business in Belgium.
+(a) "Licensor" means Atomic BITS bvba, having its principal place of business
+in Belgium.
 
 (b) "Licensee" means the sole proprietor or legal entity specified in the
 License Key.
@@ -142,11 +142,11 @@ no refund policy on licenses that have been sold.
 Scraml, Scraml support tools and documentation are "as is" without any warranty
 as to their performance, merchantability or fitness for any particular purpose.
 The licensee assumes the entire risk as to the quality and performance of the
-software. In no event shall Scraml or anyone else who has been involved in the
-creation, development, production, or delivery of this software be liable for
-any direct, incidental or consequential damages, such as, but not limited to,
-loss of anticipated profits, benefits, use, or data resulting from the use of
-this software, or arising out of any breach of warranty.
+software. In no event shall Atomic BITS or anyone else who has been involved in
+the creation, development, production, or delivery of this software be liable
+for any direct, incidental or consequential damages, such as, but not limited
+to, loss of anticipated profits, benefits, use, or data resulting from the use
+of this software, or arising out of any breach of warranty.
 
 
 8. Limited warranty and disclaimer of damages: the Generated Code
@@ -154,7 +154,7 @@ this software, or arising out of any breach of warranty.
 The Generated Code is provided "as is" without any warranty as to their
 performance, merchantability or fitness for any particular purpose. The
 licensee assumes the entire risk as to the quality and performance of the
-Generated Code. In no event shall the Generated Code or anyone else who has
+Generated Code. In no event shall Atomic BITS or anyone else who has
 been involved in the creation, development, production, or delivery of this
 software be liable for any direct, incidental or consequential damages, such
 as, but not limited to, loss of anticipated profits, benefits, use, or data
