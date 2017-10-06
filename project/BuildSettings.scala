@@ -25,7 +25,7 @@ object BuildSettings {
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val Version = "0.7.0-M4" // + snapshotSuffix // Change in 1 place
+  val Version = "0.7.0-M5" + snapshotSuffix // Change in 1 place
 
   val scala2_10 = "2.10.6"
   val scala2_11 = "2.11.11"
