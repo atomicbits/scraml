@@ -95,7 +95,7 @@ the free open source code generator.
 
 === Optional: use a free license for non-commercial use
 
-In order to use the [EULA](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) under its free license conditions, you
+In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
 can replace the license key in the previous section with the following statement of intend:
 
 [[statement.of.intend]]

@@ -129,7 +129,7 @@ the free open source code generator.
 
 === Optional: use a free license for non-commercial use
 
-In order to use the [EULA](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) under its free license conditions, you
+In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
 can replace the license key in the previous section with the following statement of intend:
 
 [[statement.of.intend]]
@@ -148,8 +148,8 @@ For example:
 <configuration>
     <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
     <licenseKey>
-        "We, Atomic BITS, use the free scraml license in this project without any intend to serve
-        commercial purposes for ourselves or anyone else."
+        We, Atomic BITS, use the free scraml license in this project without any intend to serve
+        commercial purposes for ourselves or anyone else.
     </licenseKey>
     <classHeader>
         All rights reserved.
