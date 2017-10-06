@@ -93,6 +93,37 @@ the `scramlClassHeader` sbt variable. From that point on, the default AGPL licen
 generate and your own license applies instead. Just ignore the `scramlLicenseKey` and `scramlClassHeader` variables if you want to use
 the free open source code generator.
 
+=== Optional: use a free license for non-commercial use
+
+In order to use the [EULA](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) under its free license conditions, you
+can replace the license key in the previous section with the following statement of intend:
+
+[[statement.of.intend]]
+[source,scala]
+.Free license statement of intend
+----
+<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
+----
+
+For example:
+
+[[statement.of.intend.example]]
+[source,scala]
+.configure a free license statement of intend
+----
+scramlLicenseKey in scraml in Compile :=
+  "We, Atomic BITS, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else."
+
+scramlClassHeader in scraml in Compile :=
+  """
+    |All rights reserved.
+    |This is a custom license header.
+  """.stripMargin
+----
+
+
+
+
 // == Writing RAML documentation
 
 Learn more about writing RAML:

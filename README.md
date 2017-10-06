@@ -35,7 +35,7 @@ Copyright 2017 Atomic BITS bvba. Code released under a dual license philosophy, 
 
    1. [AGPLv3](https://github.com/atomicbits/scraml/blob/develop/LICENSE) license (default) 
       * the generated code inherits the AGPLv3 license
-   2. [End-User License Agreement](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) with a free variant for non-commercial use
+   2. [Scraml End-User License Agreement](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) with a free variant for non-commercial use
       * the generated code has no license restrictions but your own
 
 
