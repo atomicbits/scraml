@@ -25,12 +25,15 @@ package io.atomicbits.scraml.generator.codegen
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.parser.{ SourceFile, SourceReader }
 
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 /**
   * Created by peter on 12/04/17.
   */
 object DslSourceExtractor {
+
+  @volatile
+  var cache: Map[(String, String), Set[SourceFile]] = Map.empty
 
   /**
     * Extract all source files from the DSL jar dependency.
@@ -38,7 +41,38 @@ object DslSourceExtractor {
     * @param platform The platform.
     * @return A set of source files wrapped in a Try monad. On read exceptions, the Try will be a Failure.
     */
-  def extract()(implicit platform: Platform): Try[Set[SourceFile]] =
-    Try(SourceReader.readResources(platform.dslBaseDir, s".${platform.classFileExtension}"))
+  def extract()(implicit platform: Platform): Set[SourceFile] = {
+    val baseDir   = platform.dslBaseDir
+    val extension = platform.classFileExtension
+    cache.getOrElse((baseDir, extension), fetchFiles(baseDir, extension))
+  }
+
+  private def fetchFiles(baseDir: String, extension: String): Set[SourceFile] = {
+    val files =
+      DslSourceExtractor.synchronized { // opening the same jar file several times in parallel... it doesn't work well
+        Try(SourceReader.readResources(baseDir, s".$extension")) match {
+          case Success(theFiles) => theFiles
+          case Failure(exception) =>
+            sys.error(
+              s"""
+                 |Could not read the DSL source files from $baseDir with extension $extension
+                 |The exception was:
+                 |${exception.getClass.getName}
+                 |${exception.getMessage}
+             """.stripMargin
+            )
+            Set.empty[SourceFile]
+        }
+      }
+    add(baseDir, extension, files)
+    files
+  }
+
+  private def add(baseDir: String, extension: String, files: Set[SourceFile]): Unit = {
+    val baseDirAndExtension = (baseDir, extension)
+    DslSourceExtractor.synchronized {
+      cache += baseDirAndExtension -> files
+    }
+  }
 
 }
