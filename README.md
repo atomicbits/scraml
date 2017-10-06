@@ -31,10 +31,12 @@ Enable code generation with scraml in your project with the [scraml-maven-plugin
 
 
 ## Copyright and License
-Copyright 2017 Atomic BITS b.v.b.a. Code released under a dual license philosophy, you can choose which license you use: 
+Copyright 2017 Atomic BITS bvba. Code released under a dual license philosophy, you can choose which license you use: 
 
-   1. AGPLv3 license (default) 
-   2. commercial license with a free community variant for registered open source projects (needs registration)
+   1. [AGPLv3](https://github.com/atomicbits/scraml/blob/develop/LICENSE) license (default) 
+      * the generated code inherits the AGPLv3 license
+   2. [End-User License Agreement](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) with a free variant for non-commercial use
+      * the generated code has no license restrictions but your own
 
 
 
