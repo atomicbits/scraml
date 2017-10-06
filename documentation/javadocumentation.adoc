@@ -17,7 +17,7 @@ Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add 
 .configure the scraml maven-plugin, the dsl dependency and the http client dependency in your maven pom.xml file
 ----
     <properties>
-        <scraml.version>0.7.0-M2</scraml.version>
+        <scraml.version>0.7.0-M4</scraml.version>
     </properties>
 
     <build>
