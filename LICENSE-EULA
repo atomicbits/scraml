@@ -27,7 +27,7 @@ latter shall prevail.
 business in Belgium.
 
 (b) "Licensee" means the sole proprietor or legal entity specified in the
-license key.
+License Key.
 
 
 2. Definitions
@@ -50,10 +50,10 @@ software under the conditions of this EULA.
 
 3. Grant of license
 
-Scraml is provided as open source with AGPL as its default license. When using
-this EULA, which is done by activating a license key, all terms provided by the
-default AGPL license are voided and replaced by the terms stated in this
-license. In order to activate this license, the license key must be entered
+The Software is provided as open source with AGPL as its default license. When
+using this EULA, which is done by activating a License Key, all terms provided
+by the default AGPL license are voided and replaced by the terms stated in this
+license. In order to activate this license, the License Key must be entered
 into the Scraml configuration file, as is explained in the Scraml
 documentation.
 
@@ -64,16 +64,16 @@ See the Scraml documentation for an explanation on how to activate this EULA
 under the free license conditions using a statement of intend as the License
 Key.
 
-(b) If you intend to use Scraml at your place of business or for commercial
-purposes, you must purchase a commercial license key via our web site
-(https://scraml.io).
+(b) If you intend to use the Software at your place of business or for
+commercial purposes, you must purchase a commercial License Key via our web
+site (https://scraml.io).
 
 (c) Under this EULA, Atomic BITS hereby grants to Licensee a worldwide,
 non-exclusive license to use the Software for Licensee's purposes for the
-duration of the license. The Generated Code that results from using Scraml
-during the license period is not limited by this EULA. The Generated Code can
-be used perpetually by Licensee on their own terms, provided that the limited
-warranty statement of section 8 below is added to its terms of use. The
+duration of the license. The Generated Code that results from using the
+Software during the license period is not limited by this EULA. The Generated
+Code can be used perpetually by Licensee on their own terms, provided that the
+limited warranty statement of section 8 below is added to its terms of use. The
 Generated Code will contain source code that overlaps with Generated Code that
 is produced by other license holders. Licensee cannot claim exclusive rights
 over these parts of the Generated Code when they would be distributed as
@@ -85,11 +85,11 @@ to others the Software or documentation or copies thereof. This limitation does
 not hold for the Generated Code.
 
 (e) Licensee may not remove any proprietary notices, labels, trademarks on the
-Software or documentation. The source code of Scraml and its tools is open
-source and all contributions that are made to it fall under the default AGPL
-license of the Software. The commercial rights of all contributions made to the
-Software are automatically transferred to Atomic BITS and may be exclusively
-commercially exploited by Atomic BITS.
+Software or documentation. The source code of the Software and its tools is
+open source and all contributions that are made to it fall under the default
+AGPL license of the Software. The commercial rights of all contributions made
+to the Software are automatically transferred to Atomic BITS and may be
+exclusively commercially exploited by Atomic BITS.
 
 (f) If Licensee fails to comply with the terms and conditions of this
 Agreement, this Agreement and Licensee's right and license to use Software will
