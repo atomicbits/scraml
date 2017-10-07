@@ -78,3 +78,13 @@ case object JsValueClassPointer extends ClassPointer
 case class ListClassPointer(typeParamValue: ClassPointer) extends ClassPointer
 
 case object BodyPartClassPointer extends ClassPointer
+
+case object DateTimeRFC3339ClassPointer extends ClassPointer
+
+case object DateTimeRFC2616ClassPointer extends ClassPointer
+
+case object DateTimeOnlyClassPointer extends ClassPointer
+
+case object TimeOnlyClassPointer extends ClassPointer
+
+case object DateOnlyClassPointer extends ClassPointer
