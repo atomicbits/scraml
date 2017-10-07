@@ -1,5 +1,6 @@
 :linkcss:
 :icons: font
+:iconfont-remote!:
 :source-highlighter: pygments
 :pygments-style: friendly
 
