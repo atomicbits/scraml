@@ -12,28 +12,29 @@
 |Status
 
 |RAML 1.0 types
-|icon:check[]
+|OK
+//|icon:check[]
 
 |Json-schema types (backward combatible with RAML 0.8)
-|icon:check[]
+|OK
 
 |Multiple inheritance
-|icon:check[]
+|OK
 
 |Parameterized Traits
-|icon:check[]
+|OK
 
 |Parameterized Resource Types
-|icon:check[]
+|OK
 
 |Default mediaType
 |Partial (now for single media type)
 
 |Question mark for optional fields and parameters
-|icon:check[]
+|OK
 
 |queryString? support
-|icon:check[]
+|OK
 
 |Date support
 |Ongoing
