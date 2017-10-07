@@ -13,6 +13,23 @@ to check these release notes when upgrading to a newer version.
 
 Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
 
+=== Version 0.7.0-M4
+
+Changes:
+
+ - Fixed threading issues with multi-module sbt projects that generate multiple clients in parallel
+
+Migration highlights: None.
+
+=== Version 0.7.0-M3
+
+Changes:
+
+ - Minor bugfixes
+ - Support for use of a free license
+
+Migration highlights: None.
+
 === Version 0.7.0-M2
 
 Changes:

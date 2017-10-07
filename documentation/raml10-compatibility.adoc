@@ -1,0 +1,77 @@
+:linkcss:
+:icons: font
+:source-highlighter: pygments
+:pygments-style: friendly
+
+== RAML 1.0 Compatibility List
+
+[cols="2, 1", options="header"]
+.RAML 1.0 compatiblity
+|===
+|RAML 1.0 Feature
+|Status
+
+|RAML 1.0 types
+|icon:check[]
+
+|Json-schema types (backward combatible with RAML 0.8)
+|icon:check[]
+
+|Multiple inheritance
+|icon:check[]
+
+|Parameterized Traits
+|icon:check[]
+
+|Parameterized Resource Types
+|icon:check[]
+
+|Default mediaType
+|Partial (now for single media type)
+
+|Question mark for optional fields and parameters
+|icon:check[]
+
+|queryString? support
+|icon:check[]
+
+|Date support
+|Ongoing
+
+|File type support
+|Ongoing
+
+|Union types
+|Ongoing
+
+|Multidimensional arrays
+|Ongoing
+
+|Additional object properties
+|Ongoing
+
+|Libraries
+|Ongoing
+
+|Overlays & Extensions
+|Ongoing
+
+|Partial URI parameter templates
+|Ongoing
+
+//|Security Schemes
+//|Not started
+//
+//|Default security definition
+//|Not started
+//
+//|Annotations
+//|Not started
+//
+//|Facets and custom facets
+//|Not started
+//
+//|XML Schema
+//|Not started
+
+|===
