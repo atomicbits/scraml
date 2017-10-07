@@ -6,7 +6,6 @@
 == RAML 1.0 Compatibility List
 
 [cols="2, 1", options="header"]
-.RAML 1.0 compatiblity
 |===
 |RAML 1.0 Feature
 |Status
