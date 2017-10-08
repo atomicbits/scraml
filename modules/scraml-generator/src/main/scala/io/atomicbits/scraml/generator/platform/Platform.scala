@@ -22,6 +22,7 @@ package io.atomicbits.scraml.generator.platform
 import java.nio.file.Path
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ TypeParameter => ParserTypeParameter }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   ArrayTypeReference,
   BooleanType,
