@@ -22,11 +22,12 @@
 
 package io.atomicbits.scraml.dsl.javajackson.json;
 
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import io.atomicbits.scraml.dsl.javajackson.HttpParam;
-import io.atomicbits.scraml.dsl.javajackson.SimpleHttpParam;
+import io.atomicbits.scraml.dsl.javajackson.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -45,6 +46,24 @@ public class Json {
 
     static {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        SimpleModule module = new SimpleModule("WdbModule", new Version(1, 0, 0, null, "io.atomicbits", "scraml"));
+
+        module.addSerializer(DateTimeRFC3339.class, new DateTimeRFC3339Serializer());
+        module.addDeserializer(DateTimeRFC3339.class, new DateTimeRFC3339Deserializer());
+
+        module.addSerializer(DateTimeRFC2616.class, new DateTimeRFC2616Serializer());
+        module.addDeserializer(DateTimeRFC2616.class, new DateTimeRFC2616Deserializer());
+
+        module.addSerializer(DateTimeOnly.class, new DateTimeOnlySerializer());
+        module.addDeserializer(DateTimeOnly.class, new DateTimeOnlyDeserializer());
+
+        module.addSerializer(DateOnly.class, new DateOnlySerializer());
+        module.addDeserializer(DateOnly.class, new DateOnlyDeserializer());
+
+        module.addSerializer(TimeOnly.class, new TimeOnlySerializer());
+        module.addDeserializer(TimeOnly.class, new TimeOnlyDeserializer());
+
+        objectMapper.registerModule(module);
     }
 
     /**

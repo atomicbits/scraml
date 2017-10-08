@@ -1,6 +1,6 @@
 /*
  *
- *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *  (C) Copyright 2017 Atomic BITS (http://atomicbits.io).
  *
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the GNU Affero General Public License
@@ -87,7 +87,7 @@ object DateTimeRFC2616 {
       case JsString(s) =>
         Try(parse(s)) match {
           case Success(dateTime) => JsSuccess(dateTime)
-          case Failure(_)        => JsError("error.expected.RFC2616DateTime")
+          case Failure(_)        => JsError("error.expected.RFC1123DateTime")
         }
       case _ => JsError("error.expected.jsstring")
     }
