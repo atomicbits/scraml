@@ -29,6 +29,13 @@ import java.time.LocalDateTime;
  */
 public class DateTimeOnly {
 
+    public DateTimeOnly() {
+    }
+
+    public DateTimeOnly(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
+    }
+
     private LocalDateTime dateTime;
 
     public LocalDateTime getDateTime() {

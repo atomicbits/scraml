@@ -33,7 +33,14 @@ public class ComplexHttpParam implements SingleHttpParam {
 
     public ComplexHttpParam(Object parameter, String canonicalType) {
         if (parameter != null) {
-            this.parameter = Json.writeBodyToString(parameter, canonicalType);
+            String parameterFromJson = Json.writeBodyToString(parameter, canonicalType);
+            if(parameterFromJson.startsWith("\"") && parameterFromJson.endsWith("\"")) {
+                // When writing out a simple JSON-string value, we need to remove the quotes that Jackson has put around it.
+                this.parameter = parameterFromJson.substring(1, parameterFromJson.length()-1);
+            } else {
+                // More complex JSON objects can be kept as they are.
+                this.parameter = parameterFromJson;
+            }
         }
     }
 

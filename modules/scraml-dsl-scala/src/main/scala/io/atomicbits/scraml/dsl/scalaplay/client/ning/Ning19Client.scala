@@ -77,7 +77,8 @@ case class Ning19Client(protocol: String,
     }
   }
 
-  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(implicit responseFormat: Format[R]): Future[Response[R]] = {
+  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(
+      implicit responseFormat: Format[R]): Future[Response[R]] = {
     // In case of a non-200 or non-204 response, we set the typed body to None and keep the future successful and return the
     // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
     // in that case we violate the RAML specs.
@@ -253,6 +254,9 @@ case class Ning19Client(protocol: String,
         override def onThrowable(t: Throwable) {
           super.onThrowable(t)
           promise.failure(t)
+          // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
+          // such as "-Ywarn-value-discard"
+          ()
         }
 
       }
@@ -314,8 +318,17 @@ case class Ning19Client(protocol: String,
 
     val consumer = new BiConsumer[B, Throwable] {
       override def accept(v: B, t: Throwable): Unit =
-        if (t == null) p.complete(Success(v))
-        else p.complete(Failure(t))
+        if (t == null) {
+          p.complete(Success(v))
+          // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
+          // such as "-Ywarn-value-discard"
+          ()
+        } else {
+          p.complete(Failure(t))
+          // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
+          // such as "-Ywarn-value-discard"
+          ()
+        }
     }
 
     jfuture.whenComplete(consumer)

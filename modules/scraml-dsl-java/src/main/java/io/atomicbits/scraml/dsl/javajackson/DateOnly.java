@@ -29,6 +29,12 @@ import java.time.LocalDate;
  */
 public class DateOnly {
 
+    public DateOnly(){}
+
+    public DateOnly(LocalDate date) {
+        this.date = date;
+    }
+
     private LocalDate date;
 
     public LocalDate getDate() {

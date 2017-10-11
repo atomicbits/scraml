@@ -122,4 +122,8 @@ public class Json {
         }
     }
 
+    public static ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
 }

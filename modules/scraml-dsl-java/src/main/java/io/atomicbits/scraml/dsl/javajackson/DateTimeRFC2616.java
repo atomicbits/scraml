@@ -29,6 +29,13 @@ import java.time.OffsetDateTime;
  */
 public class DateTimeRFC2616 {
 
+    public DateTimeRFC2616() {
+    }
+
+    public DateTimeRFC2616(OffsetDateTime dateTime) {
+        this.dateTime = dateTime;
+    }
+
     private OffsetDateTime dateTime;
 
     public OffsetDateTime getDateTime() {

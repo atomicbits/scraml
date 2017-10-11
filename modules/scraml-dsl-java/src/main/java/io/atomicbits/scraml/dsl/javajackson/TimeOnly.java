@@ -29,6 +29,13 @@ import java.time.LocalTime;
  */
 public class TimeOnly {
 
+    public TimeOnly() {
+    }
+
+    public TimeOnly(LocalTime time) {
+        this.time = time;
+    }
+
     private LocalTime time;
 
     public LocalTime getTime() {
