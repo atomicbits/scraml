@@ -1,19 +1,19 @@
 /*
  *
- *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ *  (C) Copyright 2017 Atomic BITS (http://atomicbits.io).
  *
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the GNU Affero General Public License
  *  (AGPL) version 3.0 which accompanies this distribution, and is available in
  *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
  *  Alternatively, you may also use this code under the terms of the
- *  Scraml Commercial License, see http://scraml.io
+ *  Scraml End-User License Agreement, see http://scraml.io
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License or the Scraml Commercial License for more
- *  details.
+ *  Affero General Public License or the Scraml End-User License Agreement for
+ *  more details.
  *
  *  Contributors:
  *      Peter Rigole
@@ -75,7 +75,7 @@ object DslSourceRewriter {
     if (path.isAbsolute) path
     else {
       // Beware! The code below will make an absolute path from a relative path on Linux/Mac. It will keep a directory relative path
-      // on windows as a directory relative path (that starts with a single backslash '\'). It may be confusing
+      // on windows as a directory relative path (that starts with a single backslash '\'). It may be confusing.
       Paths.get(FileSystems.getDefault.getSeparator).resolve(path)
     }
   }

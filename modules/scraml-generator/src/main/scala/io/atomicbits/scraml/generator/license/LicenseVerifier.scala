@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter
 import sun.misc.BASE64Decoder
 
 import scala.util.Try
+import scala.util.control.NonFatal
 
 /**
   * Created by peter on 29/06/16.
@@ -80,7 +81,7 @@ object LicenseVerifier {
 
     val cleanKey = cleanFreeLicenseKey(licenseKey)
 
-    if (licenseKey.toLowerCase.contains(freeLicenseStatementMandatoryPart.toLowerCase)) {
+    if (cleanKey.toLowerCase.contains(freeLicenseStatementMandatoryPart.toLowerCase)) {
 
       val userName =
         getFreeLicenseKeyUser(cleanKey)
@@ -137,7 +138,7 @@ object LicenseVerifier {
           None
       }
     } else {
-      println(s"Invalid license key. Falling back to default AGPL license.")
+      println(s"Invalid license key. Falling back to default AGPL license.\n$licenseKey")
       None
     }
   }
@@ -180,7 +181,9 @@ object LicenseVerifier {
     val signer: Signature      = Signature.getInstance(signatureAlgorithm)
     signer.initVerify(publicKey)
     signer.update(textBytes)
-    signer.verify(new BASE64Decoder().decodeBuffer(signature))
+    Try(signer.verify(new BASE64Decoder().decodeBuffer(signature))).recover {
+      case NonFatal(exc) => false
+    }.get
   }
 
   lazy val publicKey: PublicKey = {

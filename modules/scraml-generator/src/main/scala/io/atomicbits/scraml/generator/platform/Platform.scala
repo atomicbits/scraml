@@ -27,6 +27,10 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   ArrayTypeReference,
   BooleanType,
   CanonicalName,
+  DateOnlyType,
+  DateTimeDefaultType,
+  DateTimeOnlyType,
+  DateTimeRFC2616Type,
   DateType,
   FileType,
   GenericReferrable,
@@ -37,6 +41,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   NumberType,
   ObjectType,
   StringType,
+  TimeOnlyType,
   TypeReference,
   TypeParameter => CanonicalTypeParameter
 }
@@ -142,14 +147,18 @@ object Platform {
     }
 
     typeReference match {
-      case BooleanType        => BooleanClassPointer(false)
-      case StringType         => StringClassPointer
-      case JsonType           => JsObjectClassPointer
-      case IntegerType        => LongClassPointer(false)
-      case NumberType         => DoubleClassPointer(false)
-      case NullType           => StringClassPointer // not sure what we have to do in this case
-      case FileType           => FileClassPointer
-      case dateType: DateType => StringClassPointer // ToDo: support date types
+      case BooleanType         => BooleanClassPointer(false)
+      case StringType          => StringClassPointer
+      case JsonType            => JsObjectClassPointer
+      case IntegerType         => LongClassPointer(false)
+      case NumberType          => DoubleClassPointer(false)
+      case NullType            => StringClassPointer // not sure what we have to do in this case
+      case FileType            => FileClassPointer
+      case DateTimeDefaultType => DateTimeRFC3339ClassPointer
+      case DateTimeRFC2616Type => DateTimeRFC2616ClassPointer
+      case DateTimeOnlyType    => DateTimeOnlyClassPointer
+      case TimeOnlyType        => TimeOnlyClassPointer
+      case DateOnlyType        => DateOnlyClassPointer
       case ArrayTypeReference(genericType) =>
         genericType match {
           case typeReference: TypeReference =>

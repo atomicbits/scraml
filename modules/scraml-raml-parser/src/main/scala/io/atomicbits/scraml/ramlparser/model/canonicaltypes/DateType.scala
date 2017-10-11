@@ -64,7 +64,7 @@ case object DateTimeDefaultType extends DateType {
 
   val format = RFC3339DateTime
 
-  val canonicalName = CanonicalName.create("DateTimeDefault")
+  val canonicalName = CanonicalName.create("DateTimeRFC3339")
 
   val refers: CanonicalName = canonicalName
 

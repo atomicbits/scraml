@@ -35,7 +35,19 @@ object BuildSettings {
 
   val defaultCrossScalaVersions = Seq(scala2_10, scala2_11, scala2_12)
 
-  val scalacBuildOptions = Seq("-unchecked", "-deprecation") // Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
+  val scalacBuildOptions =
+    Seq(
+      "-unchecked",
+      "-deprecation",
+      "-feature",
+      // "-Xfatal-warnings",
+      // "-Xlint:-infer-any",
+      // "-Ywarn-value-discard",
+      "-encoding",
+      "UTF-8"
+      // "-target:jvm-1.8",
+      // "-Ydelambdafy:method"
+    )
 
   def projectSettings(extraDependencies: Seq[ModuleID]) = Seq(
     organization := Organization,

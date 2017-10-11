@@ -39,9 +39,13 @@ object SourceReader {
   /**
     * Read the content of a given source.
     *
+    * Mind that this function is NOT thread safe when reading from jar files.
+    *
+    * ToDo: extract & refactor the common parts in 'read' and 'readResources'
+    *
     * @param source      The source to read.
     * @param charsetName The charset the file content is encoded in.
-    * @return A pair consisting of a file path and the file content. Todo: refactor and make it return a SourceFile (aka io.atomicbits.scraml.generator.typemodel, but put it in the parser code)
+    * @return A pair consisting of a file path and the file content.
     */
   def read(source: String, charsetName: String = "UTF-8"): SourceFile = {
 
@@ -61,7 +65,7 @@ object SourceReader {
     val url = Try(new URL(source).toURI).toOption
     // printReadStatus("url resource", url)
 
-    val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url)
+    val uris: List[Option[URI]] = List(resource, classLoaderResource, file, url) // ToDo: replace with orElse structure & test
     val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $source"))
 
     val (thePath, fs): (Path, Option[FileSystem]) =
@@ -71,6 +75,7 @@ object SourceReader {
             Try(FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any]))
               .recover {
                 case exc: FileSystemAlreadyExistsException => FileSystems.getFileSystem(uri)
+                // ToDo: see if reusing an open filesystem is a problem because it is closed below by the first thread that reaches that statement
               }
               .getOrElse {
                 sys.error(s"Could not create or open filesystem for resource $uri")
@@ -89,6 +94,8 @@ object SourceReader {
   /**
     * Read all files with a given extension in a given path, recursively through all subdirectories.
     *
+    * Mind that this function is NOT thread safe when reading from jar files.
+    *
     * http://www.uofr.net/~greg/java/get-resource-listing.html
     * http://alvinalexander.com/source-code/scala/create-list-all-files-beneath-directory-scala
     * http://stackoverflow.com/questions/31406471/get-resource-file-from-dependency-in-sbt
@@ -104,13 +111,21 @@ object SourceReader {
     val resource            = Try(this.getClass.getResource(path).toURI).toOption
     val classLoaderResource = Try(this.getClass.getClassLoader.getResource(path).toURI).toOption
 
-    val uris: List[Option[URI]] = List(resource, classLoaderResource)
+    val uris: List[Option[URI]] = List(resource, classLoaderResource) // ToDo: replace with orElse structure & test
     val uri: URI                = uris.flatten.headOption.getOrElse(sys.error(s"Unable to find resource $path"))
 
     val (thePath, fs): (Path, Option[FileSystem]) =
       uri.getScheme match {
         case "jar" =>
-          val fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any])
+          val fileSystem =
+            Try(FileSystems.newFileSystem(uri, Collections.emptyMap[String, Any]))
+              .recover {
+                case exc: FileSystemAlreadyExistsException => FileSystems.getFileSystem(uri)
+                // ToDo: see if reusing an open filesystem is a problem because it is closed below by the first thread that reaches that statement
+              }
+              .getOrElse {
+                sys.error(s"Could not create or open filesystem for resource $uri")
+              }
           (fileSystem.getPath(path), Some(fileSystem))
         case _ =>
           (Paths.get(uri), None)
