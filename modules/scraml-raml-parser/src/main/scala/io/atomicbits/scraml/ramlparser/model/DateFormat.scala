@@ -19,7 +19,6 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 /**
@@ -30,8 +29,6 @@ sealed trait DateFormat {
   def pattern: String
 
   def formatter: DateTimeFormatter
-
-  def parse(dateTime: String): OffsetDateTime = OffsetDateTime.parse(dateTime, formatter)
 
 }
 
@@ -81,18 +78,15 @@ case object RFC2616 extends DateFormat {
 
   // e.g. Sun, 28 Feb 2016 16:41:41 GMT
 
-  val formatter: DateTimeFormatter  = DateTimeFormatter.RFC_1123_DATE_TIME
-
-
+  val formatter: DateTimeFormatter = DateTimeFormatter.RFC_1123_DATE_TIME
   /**
-    * see: http://stackoverflow.com/questions/7707555/getting-date-in-http-format-in-java
-    *
-    * java8 time:
-    * java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")))
-    *
-    * joda time:
-    * private static final DateTimeFormatter RFC1123_DATE_TIME_FORMATTER = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'").withZoneUTC().withLocale(Locale.US);
-    */
+  * see: http://stackoverflow.com/questions/7707555/getting-date-in-http-format-in-java
+  *
+  * java8 time:
+  * java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")))
+  *
+  * joda time:
+  * private static final DateTimeFormatter RFC1123_DATE_TIME_FORMATTER = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'").withZoneUTC().withLocale(Locale.US);
+  */
 
 }
-

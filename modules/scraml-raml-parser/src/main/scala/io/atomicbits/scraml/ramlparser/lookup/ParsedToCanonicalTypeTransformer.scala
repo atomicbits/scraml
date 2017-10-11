@@ -56,6 +56,7 @@ object ParsedToCanonicalTypeTransformer {
       case ParsedIntegerTransformer(typeReference, updatedLookupHelper)       => (typeReference, updatedLookupHelper)
       case ParsedNullTransformer(typeReference, updatedLookupHelper)          => (typeReference, updatedLookupHelper)
       case ParsedGenericObjectTransformer(typeReference, updatedLookupHelper) => (typeReference, updatedLookupHelper)
+      case ParsedDateTransformer(typeReference, updatedLookupHelper)          => (typeReference, updatedLookupHelper)
       case ParsedTypeContext(fragments: Fragments, _, _, _, _) =>
         LOGGER.info(s"Skipped unknown json-schema fragments.")
         (NullType, canonicalLookupHelper)
@@ -66,11 +67,6 @@ object ParsedToCanonicalTypeTransformer {
       //      case parsedFile: ParsedFile                               => ???
       //      case parsedNull: ParsedNull                               => ???
       //      case parsedUnionType: ParsedUnionType                     => ???
-      //      case parsedDateOnly: ParsedDateOnly                       => ???
-      //      case parsedTimeOnly: ParsedTimeOnly                       => ???
-      //      case parsedDateTimeOnly: ParsedDateTimeOnly               => ???
-      //      case parsedDateTimeDefault: ParsedDateTimeDefault         => ???
-      //      case parsedDateTimeRFC2616: ParsedDateTimeRFC2616         => ???
       case x => sys.error(s"Error transforming $x")
     }
 

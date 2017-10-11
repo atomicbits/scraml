@@ -13,6 +13,23 @@ to check these release notes when upgrading to a newer version.
 
 Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
 
+=== Version 0.7.0-M4
+
+Changes:
+
+ - Fixed threading issues with multi-module sbt projects that generate multiple clients in parallel
+
+Migration highlights: None.
+
+=== Version 0.7.0-M3
+
+Changes:
+
+ - Minor bugfixes
+ - Support for use of a free license
+
+Migration highlights: None.
+
 === Version 0.7.0-M2
 
 Changes:
@@ -35,6 +52,8 @@ This is a major release with several RAML 1.0 additions.
 Migration highlights:
 
  - Following the RAML specs, query parameters are now required by default (they used to be optional by default).
+   So, solve this problem quickly by adding 'required: false' to every query parameter that doesn't have a 'reqruired'
+   property yet in your existing models to stay consistent with earlier scraml versions.
  - References to types with type parameters now list the type parameter values in an array rather than an object map.
 
 

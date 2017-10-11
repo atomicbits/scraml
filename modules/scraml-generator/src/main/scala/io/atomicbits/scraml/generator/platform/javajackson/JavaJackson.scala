@@ -79,6 +79,16 @@ case class JavaJackson(apiBasePackageParts: List[String]) extends Platform with 
         } else {
           ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
         }
+      case DateTimeRFC3339ClassPointer =>
+        ClassReference(name = "DateTimeRFC3339", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+      case DateTimeRFC2616ClassPointer =>
+        ClassReference(name = "DateTimeRFC2616", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+      case DateTimeOnlyClassPointer =>
+        ClassReference(name = "DateTimeOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+      case TimeOnlyClassPointer =>
+        ClassReference(name = "TimeOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+      case DateOnlyClassPointer =>
+        ClassReference(name = "DateOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
       case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
         val typeParamValues = List(typeParamValue)

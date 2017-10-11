@@ -98,7 +98,7 @@ artifact will be added as a dependency and it only has `ning` and `jackson` as t
 === Optional: use a license to overcome AGPL limitations
 
 [[license.key]]
-[source,scala]
+[source,xml]
 .configure a license key for activating the commercial scraml license in your maven pom.xml file
 ----
 <configuration>
@@ -125,6 +125,38 @@ using the `licenseKey` variable, a custom header will be put above each generate
 the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
 generate and your own license applies instead. Just ignore the `licenseKey` and `classHeader` variables if you want to use
 the free open source code generator.
+
+
+=== Optional: use a free license for non-commercial use
+
+In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
+can replace the license key in the previous section with the following statement of intend:
+
+[[statement.of.intend]]
+[source,java]
+.Free license statement of intend
+----
+<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
+----
+
+For example:
+
+[[statement.of.intend.example]]
+[source,xml]
+.configure a free license statement of intend
+----
+<configuration>
+    <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
+    <licenseKey>
+        We, Atomic BITS, use the free scraml license in this project without any intend to serve
+        commercial purposes for ourselves or anyone else.
+    </licenseKey>
+    <classHeader>
+        All rights reserved.
+        This is a custom class header.
+    </classHeader>
+</configuration>
+----
 
 
 

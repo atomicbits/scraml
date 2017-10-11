@@ -20,7 +20,6 @@ Setting up [scramlfont]#Scraml# using the sbt-plugin is super-easy if you follow
 addSbtPlugin("io.atomicbits"      % "scraml-sbt-plugin"   % "0.7.0-M4")
 ----
 
-=== Optional: use a license to overcome AGPL limitations
 
 [[build.sbt]]
 [source,scala]
@@ -64,6 +63,8 @@ mind that these packages are all compile-time dependencies. They will not end up
 artifact will be added as a dependency and it only has `ning` and `play-json` as transitive dependencies.
 
 
+=== Optional: use a license to overcome AGPL limitations
+
 [[license.key]]
 [source,scala]
 .configure a license key for activating the commercial scraml license in build.sbt
@@ -92,6 +93,37 @@ using the `scramlLicenseKey` variable, a custom header will be put above each ge
 the `scramlClassHeader` sbt variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
 generate and your own license applies instead. Just ignore the `scramlLicenseKey` and `scramlClassHeader` variables if you want to use
 the free open source code generator.
+
+=== Optional: use a free license for non-commercial use
+
+In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
+can replace the license key in the previous section with the following statement of intend:
+
+[[statement.of.intend]]
+[source,scala]
+.Free license statement of intend
+----
+<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
+----
+
+For example:
+
+[[statement.of.intend.example]]
+[source,scala]
+.configure a free license statement of intend
+----
+scramlLicenseKey in scraml in Compile :=
+  "We, Atomic BITS, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else."
+
+scramlClassHeader in scraml in Compile :=
+  """
+    |All rights reserved.
+    |This is a custom license header.
+  """.stripMargin
+----
+
+
+
 
 // == Writing RAML documentation
 

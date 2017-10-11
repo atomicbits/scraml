@@ -40,7 +40,7 @@ case object HttpParam {
         case (field, JsNumber(value))  => field -> SimpleHttpParam.create(value)
         case (field, JsBoolean(value)) => field -> SimpleHttpParam.create(value)
         case (field, jsObj: JsObject)  => field -> SimpleHttpParam.create(jsObj)
-      } toMap
+      }.toMap
     }
 
     json match {
