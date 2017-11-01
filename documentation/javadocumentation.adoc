@@ -224,7 +224,7 @@ variable to set another base directory, similar to how the `ramlApi` variable is
 
 Add the ning http-client and the jackson dependencies as a dependency of your project. They will be used by the generated client code.
 
-Compile the project using maven to generate the [scramlfont]#Scraml# code. The generated code will appear in
+Build the project using gradle to generate and compile the [scramlfont]#Scraml# code (`./gradlew build`). The generated code will appear in
 `build/generated-sources/scraml`.
 
 To see this in action, checkout the example project on github: https://github.com/atomicbits/scraml-test-java-gradle
