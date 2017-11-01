@@ -28,9 +28,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
+case class ClientClassGenerator(javaJackson: CommonJavaJackson) extends SourceGenerator {
 
-  implicit val platform: JavaJackson = javaJackson
+  implicit val platform: CommonJavaJackson = javaJackson
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 

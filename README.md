@@ -41,6 +41,3 @@ Copyright 2017 Atomic BITS bvba. Code released under a dual license philosophy, 
       * the generated code inherits the AGPLv3 license
    2. [Scraml End-User License Agreement](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) with a free variant for non-commercial use
       * the generated code has no license restrictions but your own
-
-
-

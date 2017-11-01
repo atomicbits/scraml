@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class InterfaceGenerator(javaJackson: JavaJackson) extends SourceGenerator with PojoGeneratorSupport {
+case class InterfaceGenerator(javaJackson: CommonJavaJackson) extends SourceGenerator with PojoGeneratorSupport {
 
-  implicit val platform: JavaJackson = javaJackson
+  implicit val platform: CommonJavaJackson = javaJackson
 
   def generate(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition): GenerationAggr = {
 
