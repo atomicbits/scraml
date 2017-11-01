@@ -75,8 +75,10 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
   def addParsedTypeIndex(id: Id, parsedType: ParsedType, lookupOnly: Boolean = false): CanonicalLookupHelper = {
 
     def warnDuplicate(uniqueId: UniqueId): Unit = {
-      if (parsedTypeIndex.get(uniqueId).isDefined) logger.warn(s"Duplicate type definition found for id $uniqueId")
-      else ()
+      parsedTypeIndex.get(uniqueId).collect {
+        case existingParsedType if parsedType != existingParsedType =>
+          logger.warn(s"Duplicate type definition found for id $uniqueId")
+      }
     }
 
     id match {
