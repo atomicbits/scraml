@@ -32,7 +32,7 @@ import TypedRestOps._
 /**
   * Created by peter on 1/03/17.
   */
-case class JavaActionCodeGenerator(javaJackson: CommonJavaJackson) extends ActionCode {
+case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) extends ActionCode {
 
   import Platform._
 

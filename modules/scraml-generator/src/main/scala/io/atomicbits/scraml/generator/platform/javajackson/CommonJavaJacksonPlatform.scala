@@ -32,7 +32,7 @@ import io.atomicbits.scraml.generator.codegen.GenerationAggr
 /**
   * Created by peter on 1/11/17.
   */
-trait CommonJavaJackson extends Platform with CleanNameTools {
+trait CommonJavaJacksonPlatform extends Platform with CleanNameTools {
 
   implicit val platform: Platform
 

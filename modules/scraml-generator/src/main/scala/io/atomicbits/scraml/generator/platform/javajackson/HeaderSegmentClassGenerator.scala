@@ -28,7 +28,7 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class HeaderSegmentClassGenerator(javaJackson: CommonJavaJackson) extends SourceGenerator {
+case class HeaderSegmentClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator {
 
   import Platform._
 

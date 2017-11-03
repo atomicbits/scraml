@@ -29,7 +29,7 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class PojoGenerator(javaJackson: CommonJavaJackson) extends SourceGenerator with PojoGeneratorSupport {
+case class PojoGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator with PojoGeneratorSupport {
 
   implicit val platform: Platform = javaJackson
 

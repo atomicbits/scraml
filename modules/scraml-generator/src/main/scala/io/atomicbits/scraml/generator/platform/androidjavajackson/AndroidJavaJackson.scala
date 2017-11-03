@@ -22,13 +22,13 @@
 
 package io.atomicbits.scraml.generator.platform.androidjavajackson
 
-import io.atomicbits.scraml.generator.platform.javajackson.CommonJavaJackson
+import io.atomicbits.scraml.generator.platform.javajackson.CommonJavaJacksonPlatform
 import io.atomicbits.scraml.generator.platform.Platform
 
 /**
   * Created by peter on 1/11/17.
   */
-case class AndroidJavaJackson(apiBasePackageParts: List[String]) extends CommonJavaJackson {
+case class AndroidJavaJackson(apiBasePackageParts: List[String]) extends CommonJavaJacksonPlatform {
 
   implicit val platform: Platform = this
 

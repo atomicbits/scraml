@@ -30,6 +30,25 @@ lazy val scramlDslJava = Project(
     )
 )
 
+lazy val scramlDslAndroid = Project(
+  id   = "scraml-dsl-android",
+  base = file("modules/scraml-dsl-android"),
+  // This is a pure Java project without scala versioning,
+  // see http://stackoverflow.com/questions/8296280/use-sbt-to-build-pure-java-project
+  // We also override the crossScalaVersions to avoid publish overwrite problems during release publishing, and because that
+  // doesn't work (although I think it should), we also override the publishArtifact property.
+  settings = projSettings(dependencies = scramlDslDepsAndroid ++ testDeps) ++
+    Seq(
+      crossPaths := false,
+      autoScalaLibrary := false,
+      publishArtifact <<= scalaVersion { sv =>
+        sv != BuildSettings.ScalaVersion
+      }, // , crossScalaVersions := Seq(ScalaVersion)
+      // Copy all source files into the artifact.
+      (unmanagedResourceDirectories in Compile) += (javaSource in Compile).value
+    )
+)
+
 lazy val scramlGenSimulation = Project(
   id       = "scraml-gen-simulation",
   base     = file("modules/scraml-gen-simulation"),
@@ -46,7 +65,7 @@ lazy val scramlGenerator = Project(
   id       = "scraml-generator",
   base     = file("modules/scraml-generator"),
   settings = projSettings(dependencies = scramlGeneratorDeps ++ testDeps)
-) dependsOn (scramlRamlParser, scramlDslScala, scramlDslJava)
+) dependsOn (scramlRamlParser, scramlDslScala, scramlDslJava, scramlDslAndroid)
 
 lazy val main = Project(
   id       = "scraml-project",
@@ -56,4 +75,4 @@ lazy val main = Project(
   .settings(
     publish := (),
     publishLocal := ()
-  ) aggregate (scramlRamlParser, scramlDslScala, scramlDslJava, scramlGenSimulation, scramlGenerator)
+  ) aggregate (scramlRamlParser, scramlDslScala, scramlDslJava, scramlDslAndroid, scramlGenSimulation, scramlGenerator)

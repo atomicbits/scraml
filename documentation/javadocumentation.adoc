@@ -169,6 +169,7 @@ buildscript {
         mavenLocal()
         mavenCentral()
         jcenter()
+        google() // Must be added because of the android tools dependency of the gradle plugin, this has no impact if your project is a pure Java project and not an android project.
 
         dependencies {
              classpath 'io.atomicbits:scraml-gradle-plugin:0.7.0-M1'

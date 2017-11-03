@@ -24,7 +24,7 @@ import io.atomicbits.scraml.generator.platform.Platform
 /**
   * Created by peter on 10/01/17.
   */
-case class JavaJackson(apiBasePackageParts: List[String]) extends CommonJavaJackson {
+case class JavaJackson(apiBasePackageParts: List[String]) extends CommonJavaJacksonPlatform {
 
   implicit val platform: Platform = this
 

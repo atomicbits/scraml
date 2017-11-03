@@ -29,7 +29,7 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class EnumGenerator(javaJackson: CommonJavaJackson) extends SourceGenerator {
+case class EnumGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator {
 
   implicit val platform: Platform = javaJackson
 
