@@ -22,14 +22,10 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 
-import io.atomicbits.scraml.dsl.androidjavajackson.BinaryData;
-import io.atomicbits.scraml.dsl.androidjavajackson.Client;
-import io.atomicbits.scraml.dsl.androidjavajackson.RequestBuilder;
-import io.atomicbits.scraml.dsl.androidjavajackson.Response;
+import io.atomicbits.scraml.dsl.androidjavajackson.*;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 3/11/17.
@@ -44,19 +40,20 @@ public class OkHttpScramlClient implements Client {
                               Map<String, String> defaultHeaders) {
     }
 
+
     @Override
-    public CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, String body) {
-        return null;
+    public void callToStringResponse(RequestBuilder request, String body, Callback<String> callback) {
+
     }
 
     @Override
-    public CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder request, String body) {
-        return null;
+    public void callToBinaryResponse(RequestBuilder request, String body, Callback<BinaryData> callback) {
+
     }
 
     @Override
-    public <R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType) {
-        return null;
+    public <R> void callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType, Callback<R> callback) {
+
     }
 
     @Override

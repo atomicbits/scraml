@@ -23,13 +23,11 @@
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
 import io.atomicbits.scraml.dsl.androidjavajackson.json.Json;
-import io.atomicbits.scraml.dsl.androidjavajackson.util.Pair;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 /**
  * Created by peter on 19/08/15.
@@ -83,22 +81,6 @@ public abstract class MethodSegment<B, R> extends Segment {
         this.requestBuilder = requestBuilder;
     }
 
-
-    protected Future<Response<String>> callToStringResponse(String canonicalContentType) {
-        String stringBody = null;
-        if (this.getBody() != null) {
-            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
-        }
-        return requestBuilder.callToStringResponse(stringBody);
-    }
-
-    protected Future<Response<R>> callToTypeResponse(String canonicalContentType, String canonicalResponseType) {
-        String stringBody = null;
-        if (this.getBody() != null) {
-            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
-        }
-        return requestBuilder.callToTypeResponse(stringBody, canonicalResponseType);
-    }
 
     protected B getBody() {
         return body;

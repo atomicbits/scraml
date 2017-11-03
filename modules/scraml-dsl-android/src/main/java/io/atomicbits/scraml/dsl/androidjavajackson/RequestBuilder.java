@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
@@ -204,16 +203,16 @@ public class RequestBuilder {
         this.path.add(pathElement);
     }
 
-    public CompletableFuture<Response<String>> callToStringResponse(String body) {
-        return client.callToStringResponse(this, body);
+    public void callToStringResponse(String body, Callback<String> callback) {
+        client.callToStringResponse(this, body, callback);
     }
 
-    public CompletableFuture<Response<BinaryData>> callToBinaryResponse(String body) {
-        return client.callToBinaryResponse(this, body);
+    public void callToBinaryResponse(String body, Callback<BinaryData> callback) {
+        client.callToBinaryResponse(this, body, callback);
     }
 
-    public <R> CompletableFuture<Response<R>> callToTypeResponse(String body, String canonicalResponseType) {
-        return client.callToTypeResponse(this, body, canonicalResponseType);
+    public <R> void callToTypeResponse(String body, String canonicalResponseType, Callback<R> callback) {
+        client.callToTypeResponse(this, body, canonicalResponseType, callback);
     }
 
     @Override

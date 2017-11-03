@@ -22,11 +22,8 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
-import io.atomicbits.scraml.dsl.androidjavajackson.util.Pair;
-
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
@@ -52,12 +49,12 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
         this.canonicalContentType = canonicalContentType;
     }
 
-    public CompletableFuture<Response<String>> callWithPrimitiveBody() {
-        return getRequestBuilder().callToStringResponse(getPlainStringBody());
+    public void callWithPrimitiveBody(Callback<String> callback) {
+        getRequestBuilder().callToStringResponse(getPlainStringBody(), callback);
     }
 
-    public CompletableFuture<Response<String>> call() {
-        return getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType));
+    public void call(Callback<String> callback) {
+        getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType), callback);
     }
 
 }

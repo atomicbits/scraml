@@ -24,7 +24,6 @@ package io.atomicbits.scraml.dsl.androidjavajackson;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 22/01/16.
@@ -51,12 +50,12 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
     }
 
 
-    public CompletableFuture<Response<BinaryData>> callWithPrimitiveBody() {
-        return getRequestBuilder().callToBinaryResponse(getPlainStringBody());
+    public void callWithPrimitiveBody(Callback<BinaryData> callback) {
+        getRequestBuilder().callToBinaryResponse(getPlainStringBody(), callback);
     }
 
-    public CompletableFuture<Response<BinaryData>> call() {
-        return getRequestBuilder().callToBinaryResponse(jsonBodyToString(canonicalContentType));
+    public void call(Callback<BinaryData> callback) {
+        getRequestBuilder().callToBinaryResponse(jsonBodyToString(canonicalContentType), callback);
     }
 
 }

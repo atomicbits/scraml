@@ -24,7 +24,6 @@ package io.atomicbits.scraml.dsl.androidjavajackson;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 23/09/15.
@@ -53,12 +52,12 @@ public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
     }
 
 
-    public CompletableFuture<Response<R>> callWithPrimitiveBody() {
-        return getRequestBuilder().callToTypeResponse(getPlainStringBody(), canonicalResponseType);
+    public void callWithPrimitiveBody(Callback<R> callback) {
+        getRequestBuilder().callToTypeResponse(getPlainStringBody(), canonicalResponseType, callback);
     }
 
-    public CompletableFuture<Response<R>> call() {
-        return getRequestBuilder().callToTypeResponse(jsonBodyToString(canonicalContentType), canonicalResponseType);
+    public void call(Callback<R> callback) {
+        getRequestBuilder().callToTypeResponse(jsonBodyToString(canonicalContentType), canonicalResponseType, callback);
     }
 
 }

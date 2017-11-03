@@ -25,18 +25,17 @@ package io.atomicbits.scraml.dsl.androidjavajackson;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by peter on 19/08/15.
  */
 public interface Client extends AutoCloseable {
 
-    CompletableFuture<Response<String>> callToStringResponse(RequestBuilder request, String body);
+    void callToStringResponse(RequestBuilder request, String body, Callback<String> callback);
 
-    CompletableFuture<Response<BinaryData>> callToBinaryResponse(RequestBuilder request, String body);
+    void callToBinaryResponse(RequestBuilder request, String body, Callback<BinaryData> callback);
 
-    <R> CompletableFuture<Response<R>> callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType);
+    <R> void callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType, Callback<R> callback);
 
     ClientConfig getConfig();
 
