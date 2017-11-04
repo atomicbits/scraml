@@ -30,4 +30,8 @@ case class JavaJackson(apiBasePackageParts: List[String]) extends CommonJavaJack
 
   val name: String = "Java Jackson"
 
+  override val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "javajackson")
+
+  override val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "javajackson")
+
 }

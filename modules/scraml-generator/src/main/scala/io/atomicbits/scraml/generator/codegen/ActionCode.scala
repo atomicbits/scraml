@@ -41,11 +41,10 @@ trait ActionCode {
 
   def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String]
 
-  def chooseCallBodySerialization(optBodyType: Option[ClassPointer]): String = {
+  def hasPrimitiveBody(optBodyType: Option[ClassPointer]): Boolean = {
     optBodyType.collect {
-      case StringClassPointer | ByteClassPointer | BooleanClassPointer(_) | LongClassPointer(_) | DoubleClassPointer(_) =>
-        "callWithPrimitiveBody"
-    } getOrElse "call"
+      case StringClassPointer | ByteClassPointer | BooleanClassPointer(_) | LongClassPointer(_) | DoubleClassPointer(_) => true
+    } getOrElse false
   }
 
   def responseClassDefinition(responseType: ResponseType): String

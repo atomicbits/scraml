@@ -32,9 +32,11 @@ public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
 
     private String canonicalContentType;
     private String canonicalResponseType;
+    private Boolean primitiveBody;
 
     public TypeMethodSegment(Method method,
                              B theBody,
+                             Boolean primitiveBody,
                              Map<String, HttpParam> queryParams,
                              TypedQueryParams queryString,
                              Map<String, HttpParam> formParams,
@@ -49,15 +51,15 @@ public class TypeMethodSegment<B, R> extends MethodSegment<B, R> {
 
         this.canonicalContentType = canonicalContentType;
         this.canonicalResponseType = canonicalResponseType;
-    }
-
-
-    public void callWithPrimitiveBody(Callback<R> callback) {
-        getRequestBuilder().callToTypeResponse(getPlainStringBody(), canonicalResponseType, callback);
+        this.primitiveBody = primitiveBody;
     }
 
     public void call(Callback<R> callback) {
-        getRequestBuilder().callToTypeResponse(jsonBodyToString(canonicalContentType), canonicalResponseType, callback);
+        if (this.primitiveBody) {
+            getRequestBuilder().callToTypeResponse(getPlainStringBody(), canonicalResponseType, callback);
+        } else {
+            getRequestBuilder().callToTypeResponse(jsonBodyToString(canonicalContentType), canonicalResponseType, callback);
+        }
     }
 
 }

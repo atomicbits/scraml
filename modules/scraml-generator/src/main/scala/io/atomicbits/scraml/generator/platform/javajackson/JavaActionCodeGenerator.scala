@@ -263,7 +263,7 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
 
     val callResponseType = responseClassDefinition(responseType)
 
-    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+    val primitiveBody: Boolean = hasPrimitiveBody(segmentBodyType)
 
     s"""
        public $callResponseType $actionTypeMethod(${actionParameters.mkString(", ")}) {
@@ -275,6 +275,7 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
          return new $segmentType(
            $method,
            $bodyFieldValue,
+           $primitiveBody,
            $queryParams,
            $queryStringValue,
            $formParams,
@@ -285,7 +286,7 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
            this.getRequestBuilder(),
            $canonicalContentT,
            $canonicalResponseT
-         ).$callMethod();
+         ).call();
        }
      """
 

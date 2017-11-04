@@ -36,9 +36,9 @@ trait CommonJavaJacksonPlatform extends Platform with CleanNameTools {
 
   implicit val platform: Platform
 
-  val dslBasePackageParts: List[String] = List("io", "atomicbits", "scraml", "dsl", "javajackson")
+  def dslBasePackageParts: List[String]
 
-  val rewrittenDslBasePackage: List[String] = apiBasePackageParts ++ List("dsl", "javajackson")
+  def rewrittenDslBasePackage: List[String]
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
 

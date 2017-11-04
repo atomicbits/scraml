@@ -145,14 +145,15 @@ abstract class MethodSegment[B, R](method: Method,
 }
 
 class StringMethodSegment[B](method: Method,
-                             theBody: Option[B] = None,
-                             queryParams: Map[String, Option[HttpParam]],
-                             queryString: Option[TypedQueryParams]      = None,
-                             formParams: Map[String, Option[HttpParam]] = Map.empty,
-                             multipartParams: List[BodyPart]            = List.empty,
-                             binaryParam: Option[BinaryRequest]         = None,
-                             expectedAcceptHeader: Option[String]       = None,
-                             expectedContentTypeHeader: Option[String]  = None,
+                             theBody: Option[B]                          = None,
+                             primitiveBody: Boolean                      = false,
+                             queryParams: Map[String, Option[HttpParam]] = Map.empty,
+                             queryString: Option[TypedQueryParams]       = None,
+                             formParams: Map[String, Option[HttpParam]]  = Map.empty,
+                             multipartParams: List[BodyPart]             = List.empty,
+                             binaryParam: Option[BinaryRequest]          = None,
+                             expectedAcceptHeader: Option[String]        = None,
+                             expectedContentTypeHeader: Option[String]   = None,
                              req: RequestBuilder)
     extends MethodSegment[B, String](method,
                                      theBody,
@@ -165,27 +166,28 @@ class StringMethodSegment[B](method: Method,
                                      expectedContentTypeHeader,
                                      req) {
 
-  def callWithPrimitiveBody(): Future[Response[String]] = {
-    val bodyToSend = body.map(_.toString())
-    _requestBuilder.callToStringResponse(bodyToSend)
-  }
-
   def call()(implicit bodyFormat: Format[B]): Future[Response[String]] = {
-    val (reqBuilder, preparedBody) = jsonBodyToString()
-    reqBuilder.callToStringResponse(preparedBody)
+    if (primitiveBody) {
+      val bodyToSend = body.map(_.toString())
+      _requestBuilder.callToStringResponse(bodyToSend)
+    } else {
+      val (reqBuilder, preparedBody) = jsonBodyToString()
+      reqBuilder.callToStringResponse(preparedBody)
+    }
   }
 
 }
 
 class JsonMethodSegment[B](method: Method,
-                           theBody: Option[B] = None,
-                           queryParams: Map[String, Option[HttpParam]],
-                           queryString: Option[TypedQueryParams]      = None,
-                           formParams: Map[String, Option[HttpParam]] = Map.empty,
-                           multipartParams: List[BodyPart]            = List.empty,
-                           binaryParam: Option[BinaryRequest]         = None,
-                           expectedAcceptHeader: Option[String]       = None,
-                           expectedContentTypeHeader: Option[String]  = None,
+                           theBody: Option[B]                          = None,
+                           primitiveBody: Boolean                      = false,
+                           queryParams: Map[String, Option[HttpParam]] = Map.empty,
+                           queryString: Option[TypedQueryParams]       = None,
+                           formParams: Map[String, Option[HttpParam]]  = Map.empty,
+                           multipartParams: List[BodyPart]             = List.empty,
+                           binaryParam: Option[BinaryRequest]          = None,
+                           expectedAcceptHeader: Option[String]        = None,
+                           expectedContentTypeHeader: Option[String]   = None,
                            req: RequestBuilder)
     extends MethodSegment[B, JsValue](method,
                                       theBody,
@@ -198,20 +200,21 @@ class JsonMethodSegment[B](method: Method,
                                       expectedContentTypeHeader,
                                       req) {
 
-  def callWithPrimitiveBody(): Future[Response[JsValue]] = {
-    val bodyToSend = body.map(_.toString())
-    _requestBuilder.callToJsonResponse(bodyToSend)
-  }
-
   def call()(implicit bodyFormat: Format[B]): Future[Response[JsValue]] = {
-    val (reqBuilder, preparedBody) = jsonBodyToString()
-    reqBuilder.callToJsonResponse(preparedBody)
+    if (primitiveBody) {
+      val bodyToSend = body.map(_.toString())
+      _requestBuilder.callToJsonResponse(bodyToSend)
+    } else {
+      val (reqBuilder, preparedBody) = jsonBodyToString()
+      reqBuilder.callToJsonResponse(preparedBody)
+    }
   }
 
 }
 
 class TypeMethodSegment[B, R](method: Method,
                               theBody: Option[B]                          = None,
+                              primitiveBody: Boolean                      = false,
                               queryParams: Map[String, Option[HttpParam]] = Map.empty,
                               queryString: Option[TypedQueryParams]       = None,
                               formParams: Map[String, Option[HttpParam]]  = Map.empty,
@@ -231,27 +234,28 @@ class TypeMethodSegment[B, R](method: Method,
                                 expectedContentTypeHeader,
                                 req) {
 
-  def callWithPrimitiveBody()(implicit responseFormat: Format[R]): Future[Response[R]] = {
-    val bodyToSend = body.map(_.toString())
-    _requestBuilder.callToTypeResponse[R](bodyToSend)
-  }
-
   def call()(implicit bodyFormat: Format[B], responseFormat: Format[R]): Future[Response[R]] = {
-    val (reqBuilder, preparedBody) = jsonBodyToString()
-    reqBuilder.callToTypeResponse(preparedBody)
+    if (primitiveBody) {
+      val bodyToSend = body.map(_.toString())
+      _requestBuilder.callToTypeResponse[R](bodyToSend)
+    } else {
+      val (reqBuilder, preparedBody) = jsonBodyToString()
+      reqBuilder.callToTypeResponse(preparedBody)
+    }
   }
 
 }
 
 class BinaryMethodSegment[B](method: Method,
-                             theBody: Option[B] = None,
-                             queryParams: Map[String, Option[HttpParam]],
-                             queryString: Option[TypedQueryParams]      = None,
-                             formParams: Map[String, Option[HttpParam]] = Map.empty,
-                             multipartParams: List[BodyPart]            = List.empty,
-                             binaryParam: Option[BinaryRequest]         = None,
-                             expectedAcceptHeader: Option[String]       = None,
-                             expectedContentTypeHeader: Option[String]  = None,
+                             theBody: Option[B]                          = None,
+                             primitiveBody: Boolean                      = false,
+                             queryParams: Map[String, Option[HttpParam]] = Map.empty,
+                             queryString: Option[TypedQueryParams]       = None,
+                             formParams: Map[String, Option[HttpParam]]  = Map.empty,
+                             multipartParams: List[BodyPart]             = List.empty,
+                             binaryParam: Option[BinaryRequest]          = None,
+                             expectedAcceptHeader: Option[String]        = None,
+                             expectedContentTypeHeader: Option[String]   = None,
                              req: RequestBuilder)
     extends MethodSegment[B, BinaryData](method,
                                          theBody,
@@ -264,14 +268,14 @@ class BinaryMethodSegment[B](method: Method,
                                          expectedContentTypeHeader,
                                          req) {
 
-  def callWithPrimitiveBody(): Future[Response[BinaryData]] = {
-    val bodyToSend = body.map(_.toString())
-    _requestBuilder.callToBinaryResponse(bodyToSend)
-  }
-
   def call()(implicit bodyFormat: Format[B]): Future[Response[BinaryData]] = {
-    val (reqBuilder, preparedBody) = jsonBodyToString()
-    reqBuilder.callToBinaryResponse(preparedBody)
+    if (primitiveBody) {
+      val bodyToSend = body.map(_.toString())
+      _requestBuilder.callToBinaryResponse(bodyToSend)
+    } else {
+      val (reqBuilder, preparedBody) = jsonBodyToString()
+      reqBuilder.callToBinaryResponse(preparedBody)
+    }
   }
 
 }

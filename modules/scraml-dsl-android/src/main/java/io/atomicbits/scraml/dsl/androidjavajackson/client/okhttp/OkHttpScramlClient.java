@@ -24,6 +24,7 @@ package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 
 import io.atomicbits.scraml.dsl.androidjavajackson.*;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
+import okhttp3.OkHttpClient;
 
 import java.util.Map;
 
@@ -38,6 +39,7 @@ public class OkHttpScramlClient implements Client {
                               String prefix,
                               ClientConfig config,
                               Map<String, String> defaultHeaders) {
+        // OkHttpClient client  = new OkHttpClient();
     }
 
 

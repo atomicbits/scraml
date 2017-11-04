@@ -31,9 +31,11 @@ import java.util.Map;
 public class StringMethodSegment<B> extends MethodSegment<B, String> {
 
     private String canonicalContentType;
+    private Boolean primitiveBody;
 
     public StringMethodSegment(Method method,
                                B theBody,
+                               Boolean primitiveBody,
                                Map<String, HttpParam> queryParams,
                                TypedQueryParams queryString,
                                Map<String, HttpParam> formParams,
@@ -47,14 +49,15 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
         super(method, theBody, queryParams, queryString, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
-    }
-
-    public void callWithPrimitiveBody(Callback<String> callback) {
-        getRequestBuilder().callToStringResponse(getPlainStringBody(), callback);
+        this.primitiveBody = primitiveBody;
     }
 
     public void call(Callback<String> callback) {
-        getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType), callback);
+        if (this.primitiveBody) {
+            getRequestBuilder().callToStringResponse(getPlainStringBody(), callback);
+        } else {
+            getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType), callback);
+        }
     }
 
 }

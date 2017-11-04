@@ -60,8 +60,8 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
     val (defaultClientFactory, defaultClientImportStatement) =
       platform match {
         case android: AndroidJavaJackson =>
-          val defaultCF  = "JavaxHttpsURLConnectionClientFactory"
-          val defaultCIS = s"import $dslBasePackage.client.javax.$defaultCF;"
+          val defaultCF  = "OkHttpScramlClientFactory"
+          val defaultCIS = s"import $dslBasePackage.client.okhttp.$defaultCF;"
           (defaultCF, defaultCIS)
         case _ =>
           val defaultCF  = "Ning19ClientFactory"

@@ -41,6 +41,7 @@ lazy val scramlDslAndroid = Project(
     Seq(
       crossPaths := false,
       autoScalaLibrary := false,
+      javacOptions ++= Seq("-source", "1.7"), // Android 4 till android 7 and above are on Java 1.7
       publishArtifact <<= scalaVersion { sv =>
         sv != BuildSettings.ScalaVersion
       }, // , crossScalaVersions := Seq(ScalaVersion)

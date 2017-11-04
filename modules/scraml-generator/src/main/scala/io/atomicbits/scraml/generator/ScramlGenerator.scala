@@ -19,9 +19,6 @@
 
 package io.atomicbits.scraml.generator
 
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
 import io.atomicbits.scraml.generator.formatting.{ JavaFormatter, ScalaFormatter }
 
 import scala.collection.JavaConversions.mapAsJavaMap
@@ -38,6 +35,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRewriter, GenerationAggr }
+import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
 
 /**
   * The main Scraml generator class.
@@ -45,6 +43,54 @@ import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRew
   */
 object ScramlGenerator {
 
+  val JAVA_JACKSON: String         = "JavaJackson".toLowerCase
+  val SCALA_PLAY: String           = "ScalaPlay".toLowerCase
+  val ANDROID_JAVA_JACKSON: String = "AndroidJavaJackson".toLowerCase
+  val OSX_SWIFT: String            = "OsxSwift".toLowerCase
+  val PYTHON: String               = "Python".toLowerCase
+  val CSHARP: String               = "C#".toLowerCase
+
+  /**
+    * This is (and must be) a Java-friendly interface!
+    */
+  def generateScramlCode(platform: String,
+                         ramlApiPath: String,
+                         apiPackageName: String,
+                         apiClassName: String,
+                         licenseKey: String,
+                         thirdPartyClassHeader: String): JMap[String, String] =
+    platform.toLowerCase match {
+      case JAVA_JACKSON =>
+        generateFor(
+          JavaJackson(packageNameToPackagParts(apiPackageName)),
+          ramlApiPath,
+          apiClassName,
+          licenseKey,
+          thirdPartyClassHeader
+        )
+      case SCALA_PLAY =>
+        generateFor(
+          ScalaPlay(packageNameToPackagParts(apiPackageName)),
+          ramlApiPath,
+          apiClassName,
+          licenseKey,
+          thirdPartyClassHeader
+        )
+      case ANDROID_JAVA_JACKSON =>
+        generateFor(
+          AndroidJavaJackson(packageNameToPackagParts(apiPackageName)),
+          ramlApiPath,
+          apiClassName,
+          licenseKey,
+          thirdPartyClassHeader
+        )
+      case OSX_SWIFT => sys.error(s"There is no iOS support yet.")
+      case PYTHON    => sys.error(s"There is no Python support yet.")
+      case CSHARP    => sys.error(s"There is no C# support yet.")
+      case unknown   => sys.error(s"Unknown platform: $unknown")
+    }
+
+  @deprecated("Use generateScramlCode instead", "since 0.7.0")
   def generateScalaCode(ramlApiPath: String,
                         apiPackageName: String,
                         apiClassName: String,
@@ -52,6 +98,7 @@ object ScramlGenerator {
                         thirdPartyClassHeader: String): JMap[String, String] =
     generateFor(ScalaPlay(packageNameToPackagParts(apiPackageName)), ramlApiPath, apiClassName, licenseKey, thirdPartyClassHeader)
 
+  @deprecated("Use generateScramlCode instead", "since 0.7.0")
   def generateJavaCode(ramlApiPath: String,
                        apiPackageName: String,
                        apiClassName: String,
@@ -148,8 +195,10 @@ object ScramlGenerator {
   private def addLicenseAndFormat(sourceFile: SourceFile, platform: Platform, licenseHeader: String): SourceFile = {
     val content = s"$licenseHeader\n${sourceFile.content}"
     val formattedContent = platform match {
-      case ScalaPlay(_)   => Try(ScalaFormatter.format(content)).getOrElse(content)
-      case JavaJackson(_) => Try(JavaFormatter.format(content)).getOrElse(content)
+      case ScalaPlay(_)          => Try(ScalaFormatter.format(content)).getOrElse(content)
+      case JavaJackson(_)        => Try(JavaFormatter.format(content)).getOrElse(content)
+      case AndroidJavaJackson(_) => Try(JavaFormatter.format(content)).getOrElse(content)
+      case unknown               => content
     }
     sourceFile.copy(content = formattedContent)
   }

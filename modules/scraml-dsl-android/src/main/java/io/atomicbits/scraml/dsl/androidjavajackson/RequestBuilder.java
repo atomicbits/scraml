@@ -68,13 +68,25 @@ public class RequestBuilder {
         if (getClient() != null) {
             folded.setClient(getClient());
         }
-        path.forEach(folded::appendPathElement);
+        // Java 1.7 specific
+        for (String pathElement : path) {
+            folded.appendPathElement(pathElement);
+        }
         if (method != null) {
             folded.setMethod(method);
         }
-        queryParameters.forEach(folded::addQueryParameter);
-        formParameters.forEach(folded::addFormParameter);
-        multipartParams.forEach(folded::addMultipartParameter);
+        // Java 1.7 specific
+        for (Map.Entry<String, HttpParam> entry : queryParameters.entrySet()) {
+            folded.addQueryParameter(entry.getKey(), entry.getValue());
+        }
+        // Java 1.7 specific
+        for (Map.Entry<String, HttpParam> entry : formParameters.entrySet()) {
+            folded.addFormParameter(entry.getKey(), entry.getValue());
+        }
+        // Java 1.7 specific
+        for (BodyPart bodyPart : multipartParams) {
+            folded.addMultipartParameter(bodyPart);
+        }
         if (binaryRequest != null) {
             folded.setBinaryRequest(binaryRequest);
         }
