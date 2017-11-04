@@ -44,7 +44,7 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
           val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator(platform).generateResourceDslField)
           val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
+            ActionGenerator(new JavaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]

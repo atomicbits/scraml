@@ -81,15 +81,15 @@ trait CommonJavaJacksonPlatform extends Platform with CleanNameTools {
           ClassReference(name = "Boolean", packageParts = List("java", "lang"), predef = true)
         }
       case DateTimeRFC3339ClassPointer =>
-        ClassReference(name = "DateTimeRFC3339", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+        ClassReference(name = "DateTimeRFC3339", packageParts = rewrittenDslBasePackage, library = true)
       case DateTimeRFC2616ClassPointer =>
-        ClassReference(name = "DateTimeRFC2616", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+        ClassReference(name = "DateTimeRFC2616", packageParts = rewrittenDslBasePackage, library = true)
       case DateTimeOnlyClassPointer =>
-        ClassReference(name = "DateTimeOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+        ClassReference(name = "DateTimeOnly", packageParts = rewrittenDslBasePackage, library = true)
       case TimeOnlyClassPointer =>
-        ClassReference(name = "TimeOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+        ClassReference(name = "TimeOnly", packageParts = rewrittenDslBasePackage, library = true)
       case DateOnlyClassPointer =>
-        ClassReference(name = "DateOnly", packageParts = rewrittenDslBasePackage, library = true) // ToDo: implement actual class & jackson transformer
+        ClassReference(name = "DateOnly", packageParts = rewrittenDslBasePackage, library = true)
       case ListClassPointer(typeParamValue) =>
         val typeParameter   = TypeParameter("T")
         val typeParamValues = List(typeParamValue)

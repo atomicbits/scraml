@@ -16,7 +16,6 @@
  *      Peter Rigole
  *
  */
-
 package io.atomicbits.scraml.generator.platform.javajackson
 
 import java.util.Locale
@@ -25,35 +24,31 @@ import io.atomicbits.scraml.generator.codegen.{ ActionCode, SourceCodeFragment }
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 import io.atomicbits.scraml.generator.restmodel._
 import io.atomicbits.scraml.generator.typemodel._
-import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
+import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 import TypedRestOps._
+import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
 
 /**
   * Created by peter on 1/03/17.
   */
-case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) extends ActionCode {
+class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extends ActionCode {
 
   import Platform._
 
   implicit val platform: Platform = javaJackson
 
-  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference): String = {
+  def contentHeaderSegmentField(contentHeaderMethodName: String, headerSegment: ClassReference) =
     s"""public ${headerSegment.fullyQualifiedName} $contentHeaderMethodName =
           new ${headerSegment.fullyQualifiedName}(this.getRequestBuilder());"""
-  }
 
   // ToDo: generate the imports!
-  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = {
-    parameters map { parameterDef =>
-      val (field, classPtr) = parameterDef
-      s"${classPtr.classDefinition} $field"
-    }
+  def expandMethodParameter(parameters: List[(String, ClassPointer)]): List[String] = parameters map { parameterDef =>
+    val (field, classPtr) = parameterDef
+    s"${classPtr.classDefinition} $field"
   }
 
-  def queryStringType(actionSelection: ActionSelection): Option[ClassPointer] = {
-    actionSelection.action.queryString.map(_.classPointer())
-  }
+  def queryStringType(actionSelection: ActionSelection): Option[ClassPointer] = actionSelection.action.queryString.map(_.classPointer())
 
   def bodyTypes(actionSelection: ActionSelection): List[Option[ClassPointer]] =
     actionSelection.selectedContentType match {
@@ -114,46 +109,38 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
 
   }
 
-  def responseClassDefinition(responseType: ResponseType): String = {
-    responseType match {
-      case BinaryResponseType(acceptHeader)     => "CompletableFuture<Response<BinaryData>>"
-      case JsonResponseType(acceptHeader)       => "CompletableFuture<Response<String>>"
-      case typedResponseType: TypedResponseType => s"CompletableFuture<Response<${typedResponseType.classPointer.classDefinition}>>"
-      case x                                    => "CompletableFuture<Response<String>>"
-    }
+  def responseClassDefinition(responseType: ResponseType): String = responseType match {
+    case BinaryResponseType(acceptHeader)     => "CompletableFuture<Response<BinaryData>>"
+    case JsonResponseType(acceptHeader)       => "CompletableFuture<Response<String>>"
+    case typedResponseType: TypedResponseType => s"CompletableFuture<Response<${typedResponseType.classPointer.classDefinition}>>"
+    case x                                    => "CompletableFuture<Response<String>>"
   }
 
-  def canonicalResponseType(responseType: ResponseType): Option[String] = {
-    responseType match {
-      case BinaryResponseType(acceptHeader)     => None
-      case JsonResponseType(acceptHeader)       => None
-      case typedResponseType: TypedResponseType => Some(typedResponseType.classPointer.fullyQualifiedClassDefinition)
-      case x                                    => None
-    }
+  def canonicalResponseType(responseType: ResponseType): Option[String] = responseType match {
+    case BinaryResponseType(acceptHeader)     => None
+    case JsonResponseType(acceptHeader)       => None
+    case typedResponseType: TypedResponseType => Some(typedResponseType.classPointer.fullyQualifiedClassDefinition)
+    case x                                    => None
   }
 
-  def canonicalContentType(contentType: ContentType): Option[String] = {
-    contentType match {
-      case JsonContentType(contentTypeHeader) => None
-      case typedContentType: TypedContentType => Some(typedContentType.classPointer.fullyQualifiedClassDefinition)
-      case x                                  => None
-    }
+  def canonicalContentType(contentType: ContentType): Option[String] = contentType match {
+    case JsonContentType(contentTypeHeader) => None
+    case typedContentType: TypedContentType => Some(typedContentType.classPointer.fullyQualifiedClassDefinition)
+    case x                                  => None
   }
 
   def sortQueryOrFormParameters(fieldParams: List[(String, Parameter)]): List[(String, Parameter)] = fieldParams.sortBy(_._1)
 
-  def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = {
-    primitiveType match {
-      // The cases below go wrong when the primitive ends up in a list like List<double> versus List<Double>.
-      //      case integerType: IntegerType if required => "long"
-      //      case numbertype: NumberType if required   => "double"
-      //      case booleanType: BooleanType if required => "boolean"
-      case stringtype: ParsedString   => "String"
-      case integerType: ParsedInteger => "Long"
-      case numbertype: ParsedNumber   => "Double"
-      case booleanType: ParsedBoolean => "Boolean"
-      case other                      => sys.error(s"RAML type $other is not yet supported.")
-    }
+  def primitiveTypeToJavaType(primitiveType: PrimitiveType, required: Boolean): String = primitiveType match {
+    // The cases below go wrong when the primitive ends up in a list like List<double> versus List<Double>.
+    //      case integerType: IntegerType if required => "long"
+    //      case numbertype: NumberType if required   => "double"
+    //      case booleanType: BooleanType if required => "boolean"
+    case stringtype: ParsedString   => "String"
+    case integerType: ParsedInteger => "Long"
+    case numbertype: ParsedNumber   => "Double"
+    case booleanType: ParsedBoolean => "Boolean"
+    case other                      => sys.error(s"RAML type $other is not yet supported.")
   }
 
   def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment = {
@@ -183,7 +170,7 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
     val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
 
     val classPointer = parameter.classPointer()
-    val (httpParamType, callParameters): (String, List[String]) =
+    val (httpParamType, callParameters) =
       classPointer match {
         case ListClassPointer(typeParamValue: PrimitiveClassPointer) => ("RepeatedHttpParam", List(sanitizedParameterName))
         case primitive: PrimitiveClassPointer                        => ("SimpleHttpParam", List(sanitizedParameterName))
@@ -193,6 +180,12 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
 
     s"""params.put("$queryParameterName", new $httpParamType(${callParameters.mkString(", ")}));"""
   }
+
+  def getCallMethod: String =
+    platform match {
+      case AndroidJavaJackson(_) => ""
+      case JavaJackson(_)        => ".call()"
+    }
 
   def generateAction(actionSelection: ActionSelection,
                      bodyType: Option[ClassPointer],
@@ -206,11 +199,11 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
                      contentType: ContentType,
                      responseType: ResponseType): String = {
 
-    val segmentBodyType: Option[ClassPointer] = if (isBinary) None else bodyType
-    val segmentType: String                   = createSegmentType(actionSelection.selectedResponseType, segmentBodyType)
+    val segmentBodyType = if (isBinary) None else bodyType
+    val segmentType     = createSegmentType(actionSelection.selectedResponseType, segmentBodyType)
 
-    val actionType               = actionSelection.action.actionType
-    val actionTypeMethod: String = actionType.toString.toLowerCase
+    val actionType       = actionSelection.action.actionType
+    val actionTypeMethod = actionType.toString.toLowerCase
 
     val queryParameterMapEntries = actionSelection.action.queryParameters.valueMap.toList.map(expandQueryOrFormParameterAsMapEntry)
 
@@ -228,30 +221,26 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
     val method = s"Method.${actionType.toString.toUpperCase(Locale.ENGLISH)}"
 
     val (queryParamMap, queryParams) =
-      if (queryParameterMapEntries.nonEmpty) {
+      if (queryParameterMapEntries.nonEmpty)
         (
           s"""
-           Map<String, HttpParam> params = new HashMap<String, HttpParam>();
-           ${queryParameterMapEntries.mkString("\n")}
-         """,
+         Map<String, HttpParam> params = new HashMap<String, HttpParam>();
+         ${queryParameterMapEntries.mkString("\n")}
+       """,
           "params"
         )
-      } else {
-        ("", "null")
-      }
+      else ("", "null")
 
     val (formParamMap, formParams) =
-      if (formParameterMapEntries.nonEmpty) {
+      if (formParameterMapEntries.nonEmpty)
         (
           s"""
-           Map<String, HttpParam> params = new HashMap<String, HttpParam>();
-           ${formParameterMapEntries.mkString("\n")}
-         """,
+         Map<String, HttpParam> params = new HashMap<String, HttpParam>();
+         ${formParameterMapEntries.mkString("\n")}
+       """,
           "params"
         )
-      } else {
-        ("", "null")
-      }
+      else ("", "null")
 
     val queryStringValue =
       if (queryStringType.isDefined) "new TypedQueryParams(queryString)"
@@ -261,9 +250,15 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
 
     val canonicalContentT = canonicalContentType(contentType).map(quoteString).getOrElse("null")
 
-    val callResponseType = responseClassDefinition(responseType)
+    val callResponseType: String =
+      platform match {
+        case AndroidJavaJackson(_) => segmentType
+        case JavaJackson(_)        => responseClassDefinition(responseType)
+      }
 
-    val primitiveBody: Boolean = hasPrimitiveBody(segmentBodyType)
+    val primitiveBody = hasPrimitiveBody(segmentBodyType)
+
+    val callMethod = getCallMethod
 
     s"""
        public $callResponseType $actionTypeMethod(${actionParameters.mkString(", ")}) {
@@ -286,7 +281,7 @@ case class JavaActionCodeGenerator(javaJackson: CommonJavaJacksonPlatform) exten
            this.getRequestBuilder(),
            $canonicalContentT,
            $canonicalResponseT
-         ).call();
+         )$callMethod;
        }
      """
 

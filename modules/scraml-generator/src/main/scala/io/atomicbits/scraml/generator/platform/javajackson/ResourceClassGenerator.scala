@@ -41,7 +41,7 @@ case class ResourceClassGenerator(javaJackson: CommonJavaJacksonPlatform) extend
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
     val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
+      ActionGenerator(new JavaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 
