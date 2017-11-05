@@ -22,6 +22,7 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson.json;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -29,8 +30,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeRFC2616;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -43,9 +46,21 @@ public class DateTimeRFC2616Deserializer extends JsonDeserializer<DateTimeRFC261
         String dateString = jp.getText();
 
         if (dateString != null && !dateString.isEmpty()) {
-            OffsetDateTime offsetDateTime = OffsetDateTime.parse(dateString, DateTimeFormatter.RFC_1123_DATE_TIME);
-            dateTimeRFC2616 = new DateTimeRFC2616();
-            dateTimeRFC2616.setDateTime(offsetDateTime);
+
+            SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.getDefault());
+
+            try {
+                Date date = format.parse(dateString);
+                dateTimeRFC2616 = new DateTimeRFC2616();
+                dateTimeRFC2616.setDateTime(date);
+            } catch (ParseException e) {
+                throw new JsonParseException(
+                        "The date " + dateString + " is not a RFC2616 date (EEE, dd MMM yyyy HH:mm:ss 'GMT').",
+                        jp.getCurrentLocation(),
+                        e
+                );
+            }
+
         }
 
         return dateTimeRFC2616;

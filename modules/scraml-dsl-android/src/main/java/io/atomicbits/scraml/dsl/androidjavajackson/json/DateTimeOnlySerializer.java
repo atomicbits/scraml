@@ -29,7 +29,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeOnly;
 
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -39,10 +40,13 @@ public class DateTimeOnlySerializer extends JsonSerializer<DateTimeOnly> {
     @Override
     public void serialize(DateTimeOnly value, JsonGenerator jgen, SerializerProvider serializers)
             throws IOException, JsonProcessingException {
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]", Locale.getDefault());
+
         if (value == null) {
             jgen.writeNull();
         } else {
-            jgen.writeString(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value.getDateTime()));
+            jgen.writeString(format.format(value.getDateTime()));
         }
     }
 }

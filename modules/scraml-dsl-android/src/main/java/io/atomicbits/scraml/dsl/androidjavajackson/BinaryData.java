@@ -23,11 +23,9 @@
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Created by peter on 22/01/16.
@@ -49,16 +47,27 @@ public abstract class BinaryData {
 
     public abstract String asString(String charset) throws IOException;
 
-    public void writeToFile(Path path, CopyOption... options) throws IOException {
-        Path parent =  path.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-        Files.copy(asStream(), path, options);
-    }
-
     public void writeToFile(File file) throws IOException {
-        writeToFile(file.toPath());
+        File parent = file.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+        InputStream inputStream = asStream();
+        FileOutputStream outputStream = new FileOutputStream(file);
+        try {
+            int read = 0;
+            byte[] bytes = new byte[1024];
+
+            while ((read = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, read);
+            }
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            outputStream.flush();
+            outputStream.close();
+        }
     }
 
 }

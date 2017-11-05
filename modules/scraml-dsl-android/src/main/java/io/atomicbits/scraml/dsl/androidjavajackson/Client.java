@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Created by peter on 19/08/15.
  */
-public interface Client extends AutoCloseable {
+public interface Client {
 
     void callToStringResponse(RequestBuilder request, String body, Callback<String> callback);
 

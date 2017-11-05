@@ -22,7 +22,8 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
-import java.time.LocalDate;
+
+import java.util.Date;
 
 /**
  * Created by peter on 8/10/17.
@@ -31,17 +32,18 @@ public class DateOnly {
 
     public DateOnly(){}
 
-    public DateOnly(LocalDate date) {
+    public DateOnly(Date date) {
         this.date = date;
     }
 
-    private LocalDate date;
+    private Date date;
 
-    public LocalDate getDate() {
+    public Date getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(Date date) {
         this.date = date;
     }
+
 }

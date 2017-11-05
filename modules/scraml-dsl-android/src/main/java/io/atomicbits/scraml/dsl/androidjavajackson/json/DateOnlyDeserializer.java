@@ -22,6 +22,7 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson.json;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -29,8 +30,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateOnly;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -43,9 +46,17 @@ public class DateOnlyDeserializer extends JsonDeserializer<DateOnly> {
         String dateString = jp.getText();
 
         if (dateString != null && !dateString.isEmpty()) {
-            LocalDate localDate = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE);
-            dateOnly = new DateOnly();
-            dateOnly.setDate(localDate);
+
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+            try {
+                Date date = format.parse(dateString);
+                dateOnly = new DateOnly();
+                dateOnly.setDate(date);
+            } catch (ParseException e) {
+                throw new JsonParseException("The date " + dateString + " is not a date only (yyy-MM-dd).", jp.getCurrentLocation(), e);
+            }
+
         }
 
         return dateOnly;

@@ -29,7 +29,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeRFC3339;
 
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -39,10 +40,13 @@ public class DateTimeRFC3339Serializer extends JsonSerializer<DateTimeRFC3339> {
     @Override
     public void serialize(DateTimeRFC3339 value, JsonGenerator jgen, SerializerProvider serializers)
             throws IOException, JsonProcessingException {
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX", Locale.getDefault());
+
         if (value == null) {
             jgen.writeNull();
         } else {
-            jgen.writeString(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(value.getDateTime()));
+            jgen.writeString(format.format(value.getDateTime()));
         }
     }
 }

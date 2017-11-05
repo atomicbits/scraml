@@ -29,7 +29,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeRFC2616;
 
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -38,10 +39,13 @@ public class DateTimeRFC2616Serializer extends JsonSerializer<DateTimeRFC2616> {
     @Override
     public void serialize(DateTimeRFC2616 value, JsonGenerator jgen, SerializerProvider serializers)
             throws IOException, JsonProcessingException {
+
+        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.getDefault());
+
         if (value == null) {
             jgen.writeNull();
         } else {
-            jgen.writeString(DateTimeFormatter.RFC_1123_DATE_TIME.format(value.getDateTime()));
+            jgen.writeString(format.format(value.getDateTime()));
         }
     }
 }

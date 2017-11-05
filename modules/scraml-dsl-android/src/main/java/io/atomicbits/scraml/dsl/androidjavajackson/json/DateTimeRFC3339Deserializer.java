@@ -22,6 +22,7 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson.json;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -29,8 +30,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeRFC3339;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -43,9 +46,21 @@ public class DateTimeRFC3339Deserializer extends JsonDeserializer<DateTimeRFC333
         String dateString = jp.getText();
 
         if (dateString != null && !dateString.isEmpty()) {
-            OffsetDateTime offsetDateTime = OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            dateTimeRFC3339 = new DateTimeRFC3339();
-            dateTimeRFC3339.setDateTime(offsetDateTime);
+
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX", Locale.getDefault());
+
+            try {
+                Date date = format.parse(dateString);
+                dateTimeRFC3339 = new DateTimeRFC3339();
+                dateTimeRFC3339.setDateTime(date);
+            } catch (ParseException e) {
+                throw new JsonParseException(
+                        "The date " + dateString + " is not an RFC3339 date (yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX).",
+                        jp.getCurrentLocation(),
+                        e
+                );
+            }
+
         }
 
         return dateTimeRFC3339;

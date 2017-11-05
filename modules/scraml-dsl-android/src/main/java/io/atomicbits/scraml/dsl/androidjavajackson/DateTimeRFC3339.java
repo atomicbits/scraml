@@ -22,7 +22,7 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
-import java.time.OffsetDateTime;
+import java.util.Date;
 
 /**
  * Created by peter on 8/10/17.
@@ -32,17 +32,18 @@ public class DateTimeRFC3339 {
     public DateTimeRFC3339() {
     }
 
-    public DateTimeRFC3339(OffsetDateTime dateTime) {
+    public DateTimeRFC3339(Date dateTime) {
         this.dateTime = dateTime;
     }
 
-    private OffsetDateTime dateTime;
+    private Date dateTime;
 
-    public OffsetDateTime getDateTime() {
+    public Date getDateTime() {
         return dateTime;
     }
 
-    public void setDateTime(OffsetDateTime dateTime) {
+    public void setDateTime(Date dateTime) {
         this.dateTime = dateTime;
     }
+
 }

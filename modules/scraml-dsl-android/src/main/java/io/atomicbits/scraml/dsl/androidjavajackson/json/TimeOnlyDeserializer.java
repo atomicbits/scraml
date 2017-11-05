@@ -22,6 +22,7 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson.json;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -29,8 +30,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import io.atomicbits.scraml.dsl.androidjavajackson.TimeOnly;
 
 import java.io.IOException;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by peter on 8/10/17.
@@ -43,9 +46,21 @@ public class TimeOnlyDeserializer extends JsonDeserializer<TimeOnly> {
         String dateString = jp.getText();
 
         if (dateString != null && !dateString.isEmpty()) {
-            LocalTime localTime = LocalTime.parse(dateString, DateTimeFormatter.ISO_LOCAL_TIME);
-            timeOnly = new TimeOnly();
-            timeOnly.setTime(localTime);
+
+            SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss[.SSS]", Locale.getDefault());
+
+            try {
+                Date date = format.parse(dateString);
+                timeOnly = new TimeOnly();
+                timeOnly.setTime(date);
+            } catch (ParseException e) {
+                throw new JsonParseException(
+                        "The date " + dateString + " is not a time-only date (HH:mm:ss[.SSS]).",
+                        jp.getCurrentLocation(),
+                        e
+                );
+            }
+
         }
 
         return timeOnly;
