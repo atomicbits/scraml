@@ -24,7 +24,6 @@ package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 
 import io.atomicbits.scraml.dsl.androidjavajackson.*;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
-import okhttp3.OkHttpClient;
 
 import java.util.Map;
 

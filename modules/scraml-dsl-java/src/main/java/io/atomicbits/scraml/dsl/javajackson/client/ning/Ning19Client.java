@@ -27,7 +27,6 @@ import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig;
 import io.atomicbits.scraml.dsl.javajackson.json.Json;
-import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.ByteArrayPart;
 import io.atomicbits.scraml.dsl.javajackson.FilePart;
 import io.atomicbits.scraml.dsl.javajackson.StringPart;

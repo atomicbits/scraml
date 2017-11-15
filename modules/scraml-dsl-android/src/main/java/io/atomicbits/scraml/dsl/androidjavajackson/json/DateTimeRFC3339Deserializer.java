@@ -32,13 +32,19 @@ import io.atomicbits.scraml.dsl.androidjavajackson.DateTimeRFC3339;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
+import java.util.List;
+
 
 /**
  * Created by peter on 8/10/17.
+ *
+ * See: https://www.ietf.org/rfc/rfc3339.txt
+ *
  */
 public class DateTimeRFC3339Deserializer extends JsonDeserializer<DateTimeRFC3339> {
+
 
     @Override
     public DateTimeRFC3339 deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
@@ -47,20 +53,42 @@ public class DateTimeRFC3339Deserializer extends JsonDeserializer<DateTimeRFC333
 
         if (dateString != null && !dateString.isEmpty()) {
 
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX", Locale.getDefault());
+            Date date = null;
 
-            try {
-                Date date = format.parse(dateString);
-                dateTimeRFC3339 = new DateTimeRFC3339();
-                dateTimeRFC3339.setDateTime(date);
-            } catch (ParseException e) {
-                throw new JsonParseException(
-                        "The date " + dateString + " is not an RFC3339 date (yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX).",
-                        jp.getCurrentLocation(),
-                        e
-                );
+            // Keep in mind that SimpleDateFormat is NOT THREADSAFE!
+            // Don't instantiate these variables on the class-level! Leave them here!
+            List<SimpleDateFormat> knownPatterns = new ArrayList<SimpleDateFormat>();
+            // See:
+            // https://stackoverflow.com/questions/40369287/what-pattern-should-be-used-to-parse-rfc-3339-datetime-strings-in-java
+            // https://stackoverflow.com/questions/4024544/how-to-parse-dates-in-multiple-formats-using-simpledateformat/4024604#4024604
+            // the first three, see: play.api.libs.json.IsoDateReads
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX"));
+            // the last in the row, see:
+            // https://stackoverflow.com/questions/4024544/how-to-parse-dates-in-multiple-formats-using-simpledateformat/4024604#4024604
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm.ss'Z'"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss"));
+            knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"));
+
+            for (SimpleDateFormat pattern : knownPatterns) {
+                try {
+                    if (date == null) {
+                        date = pattern.parse(dateString);
+                    }
+                } catch (ParseException pe) {
+                    // Loop on
+                }
             }
 
+            if (date == null) {
+                throw new JsonParseException("The date " + dateString + " is not an RFC3339 date.", jp.getCurrentLocation());
+            }
+
+            dateTimeRFC3339 = new DateTimeRFC3339();
+            dateTimeRFC3339.setDateTime(date);
         }
 
         return dateTimeRFC3339;
