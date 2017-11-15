@@ -23,14 +23,32 @@
 package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 
 import io.atomicbits.scraml.dsl.androidjavajackson.*;
+import io.atomicbits.scraml.dsl.androidjavajackson.Callback;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
+import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by peter on 3/11/17.
  */
 public class OkHttpScramlClient implements Client {
+
+    private String protocol;
+    private String host;
+    private int port;
+    private String prefix;
+    private ClientConfig config;
+    private Map<String, String> defaultHeaders;
+
+    private OkHttpClient okHttpClient;
+
+    private Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     public OkHttpScramlClient(String host,
                               Integer port,
@@ -38,57 +56,218 @@ public class OkHttpScramlClient implements Client {
                               String prefix,
                               ClientConfig config,
                               Map<String, String> defaultHeaders) {
-        // OkHttpClient client  = new OkHttpClient();
+
+        if (host != null) {
+            this.host = host;
+        } else {
+            this.host = "localhost";
+        }
+        if (port != null) {
+            this.port = port;
+        } else {
+            this.port = 80;
+        }
+        if (protocol != null) {
+            this.protocol = protocol;
+        } else {
+            this.protocol = "http";
+        }
+        this.prefix = prefix;
+        if (config != null) {
+            this.config = config;
+        } else {
+            this.config = new ClientConfig();
+        }
+        if (defaultHeaders != null) {
+            this.defaultHeaders = defaultHeaders;
+        } else {
+            this.defaultHeaders = new HashMap<>();
+        }
+
+
+        // Configure the client
+        // See: https://github.com/square/okhttp/wiki/Recipes
+
+        int maxIdleConnectionsPerHost = config.getMaxIdleConnectionsPerHost();
+
+        TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+
+        long keepAliveDuration;
+        if (config.getConnectionTTL() == -1) {
+            keepAliveDuration = 5 * 60 * 1000;
+        } else {
+            keepAliveDuration = config.getConnectionTTL();
+        }
+
+        ConnectionPool connectionPool = new ConnectionPool(maxIdleConnectionsPerHost, keepAliveDuration, timeUnit);
+
+        // We don't need to be able to set all configuration options, but we list them all below for reference
+        this.okHttpClient =
+                new OkHttpClient.Builder()
+                        // .protocols(null) // always use the default {Protocol.HTTP_2, Protocol.HTTP_1_1}
+                        .connectTimeout(config.getConnectTimeout(), TimeUnit.MILLISECONDS)
+                        .readTimeout(config.getReadTimeout(), TimeUnit.MILLISECONDS)
+                        .writeTimeout(config.getWriteTimeout(), TimeUnit.MILLISECONDS)
+                        // .pingInterval(0, TimeUnit.MILLISECONDS) // interval between web socket pings, default is 0 => disable client-initiated pings
+                        .connectionPool(connectionPool)
+                        // .connectionSpecs(null) // use the defaults, see: https://github.com/square/okhttp/wiki/HTTPS
+                        // .cache(null) // we probably don't need response caching on a REST client
+                        .followRedirects(config.getFollowRedirect())
+                        .followSslRedirects(config.getFollowRedirect())
+                        .retryOnConnectionFailure(config.getMaxRequestRetry() > 0)
+                        // .proxy(null) // set the proxy
+                        // .proxyAuthenticator(null)
+                        // .socketFactory(null) // use the default
+                        .sslSocketFactory(config.getSslContext().getSocketFactory(), config.getTrustManager()) // use for client certificates
+                        // .hostnameVerifier(null)
+                        // .authenticator(null) // use for basic auth
+                        // .certificatePinner(null) // see: https://github.com/square/okhttp/wiki/HTTPS
+                        // .cookieJar(null) // Default is no automatic cookie handling
+                        // .dispatcher(null)
+                        // .dns(null) // use the system DNS by default
+                        // .eventListener(null) // useful for collecting metrics or logging requests
+                        // .eventListenerFactory(null) // useful for creating per-call scoped listeners
+                        // .addInterceptor(null) // usefull for intercepting or changing the request chain
+                        // .addNetworkInterceptor(null) // similar to 'addInterceptor', don't see the difference at this point
+                        .build();
+
     }
 
 
     @Override
-    public void callToStringResponse(RequestBuilder request, String body, Callback<String> callback) {
+    public void callToStringResponse(RequestBuilder requestBuilder, String body, Callback<String> callback) {
 
     }
 
     @Override
-    public void callToBinaryResponse(RequestBuilder request, String body, Callback<BinaryData> callback) {
+    public void callToBinaryResponse(RequestBuilder requestBuilder, String body, Callback<BinaryData> callback) {
 
     }
 
     @Override
-    public <R> void callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType, Callback<R> callback) {
+    public <R> void callToTypeResponse(RequestBuilder requestBuilder, String body, String canonicalResponseType, Callback<R> callback) {
+
+        String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
+
+        Headers.Builder headerBuilder = new Headers.Builder();
+
+        for (Map.Entry<String, String> entrySet : defaultHeaders.entrySet()) {
+            headerBuilder = headerBuilder.add(entrySet.getKey(), entrySet.getValue());
+        }
+
+        for (Map.Entry<String, List<String>> entrySet : requestBuilder.getHeaderMap().getHeaders().entrySet()) {
+            if (!entrySet.getValue().isEmpty()) {
+                headerBuilder = headerBuilder.add(entrySet.getKey(), entrySet.getValue().get(0));
+            }
+        }
+
+        Headers headers = headerBuilder.build();
+
+
+        HttpUrl.Builder urlBuilder =
+                new HttpUrl.Builder()
+                        .scheme(protocol)
+                        .host(host)
+                        .port(port)
+                        .addPathSegments(getCleanPrefix())
+                        .addPathSegments(requestBuilder.getRelativePath());
+
+        for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
+            if (queryParam.getValue() instanceof RepeatedHttpParam) {
+                RepeatedHttpParam params = (RepeatedHttpParam) queryParam.getValue();
+                if (params.getParameters() != null) {
+                    for (String param : params.getParameters()) {
+                        urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param);
+                    }
+                }
+            } else if (queryParam.getValue() instanceof SingleHttpParam) {
+                SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
+                if (param.getParameter() != null) {
+                    urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param.getParameter());
+                }
+            }
+        }
+
+
+        HttpUrl url = urlBuilder.build();
+
+
+        RequestBody requestBody = null;
+
+        String contentType = headers.get("Content-Type");
+        MediaType mediaType = null;
+        if (contentType != null) {
+            mediaType = MediaType.parse(contentType);
+        }
+
+        if (body != null) {
+            requestBody = RequestBody.create(mediaType, body);
+        }
+
+        // ToDo: other body types
+
+        Request request =
+                new Request.Builder()
+                        .headers(headers)
+                        .method(requestBuilder.getMethod().name(), requestBody)
+                        .url(url)
+                        .build();
+
 
     }
+
 
     @Override
     public ClientConfig getConfig() {
-        return null;
+        return this.config;
     }
 
     @Override
     public Map<String, String> getDefaultHeaders() {
-        return null;
+        return this.defaultHeaders;
     }
 
     @Override
     public String getHost() {
-        return null;
+        return this.host;
     }
 
     @Override
     public int getPort() {
-        return 0;
+        return this.port;
     }
 
     @Override
     public String getProtocol() {
-        return null;
+        return this.protocol;
     }
 
     @Override
     public String getPrefix() {
-        return null;
+        return this.prefix;
+    }
+
+    public String getCleanPrefix() {
+        if (prefix != null) {
+            String cleanPrefix = prefix;
+            if (prefix.startsWith("/")) {
+                cleanPrefix = cleanPrefix.substring(1);
+            }
+            if (prefix.endsWith("/")) {
+                cleanPrefix = cleanPrefix.substring(0, cleanPrefix.length() - 1);
+            }
+            return "/" + cleanPrefix;
+        } else {
+            return "";
+        }
     }
 
     @Override
     public void close() {
-
     }
+
+    public OkHttpClient getClient() {
+        return okHttpClient;
+    }
+
 }

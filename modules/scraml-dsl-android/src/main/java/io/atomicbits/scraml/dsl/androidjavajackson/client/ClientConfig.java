@@ -24,6 +24,7 @@ package io.atomicbits.scraml.dsl.androidjavajackson.client;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 import java.nio.charset.Charset;
 
 /**
@@ -33,24 +34,16 @@ public class ClientConfig {
 
     private Charset requestCharset = Charset.defaultCharset();
     private Charset responseCharset = Charset.defaultCharset();
-    private int requestTimeout = 60000;
     private int maxRequestRetry = 5;
     private int connectTimeout = 50000;
     private int connectionTTL = -1;
     private int readTimeout = 60000;
-    private int webSocketTimeout = 900000;
-    private int maxConnections = -1;
-    private int maxConnectionsPerHost = -1;
-    private Boolean allowPoolingConnections = true;
-    private Boolean allowPoolingSslConnections = true;
-    private int pooledConnectionIdleTimeout = 60000;
-    private Boolean acceptAnyCertificate = false;
+    private int writeTimeout = 60000;
+    private int maxIdleConnectionsPerHost = 5;
+
     private Boolean followRedirect = true;
-    private int maxRedirects = 5;
-    private Boolean strict302Handling = false;
-    private Integer sslSessionTimeout = 900000;
-    private Integer sslSessionCacheSize = null;
     private SSLContext sslContext = null;
+    private X509TrustManager trustManager = null;
     private HostnameVerifier hostnameVerifier = null;
 
     public ClientConfig() {
@@ -58,40 +51,21 @@ public class ClientConfig {
 
     public ClientConfig(Charset requestCharset,
                         Charset responseCharset,
-                        Boolean acceptAnyCertificate,
-                        Boolean allowPoolingConnections,
-                        Boolean allowPoolingSslConnections,
                         int connectionTTL,
                         int connectTimeout,
                         Boolean followRedirect,
-                        int maxConnections,
-                        int maxConnectionsPerHost,
-                        int maxRedirects,
+                        int maxIdleConnectionsPerHost,
                         int maxRequestRetry,
-                        int pooledConnectionIdleTimeout,
-                        int readTimeout,
-                        Boolean removeQueryParamOnRedirect,
-                        int requestTimeout,
-                        Boolean strict302Handling,
-                        int webSocketTimeout) {
+                        int readTimeout) {
 
         this.requestCharset = requestCharset;
         this.responseCharset = responseCharset;
-        this.acceptAnyCertificate = acceptAnyCertificate;
-        this.allowPoolingConnections = allowPoolingConnections;
-        this.allowPoolingSslConnections = allowPoolingSslConnections;
         this.connectionTTL = connectionTTL;
         this.connectTimeout = connectTimeout;
         this.followRedirect = followRedirect;
-        this.maxConnections = maxConnections;
-        this.maxConnectionsPerHost = maxConnectionsPerHost;
-        this.maxRedirects = maxRedirects;
+        this.maxIdleConnectionsPerHost = maxIdleConnectionsPerHost;
         this.maxRequestRetry = maxRequestRetry;
-        this.pooledConnectionIdleTimeout = pooledConnectionIdleTimeout;
         this.readTimeout = readTimeout;
-        this.requestTimeout = requestTimeout;
-        this.strict302Handling = strict302Handling;
-        this.webSocketTimeout = webSocketTimeout;
     }
 
     public Charset getRequestCharset() {
@@ -110,30 +84,10 @@ public class ClientConfig {
         this.responseCharset = responseCharset;
     }
 
-    public Boolean getAcceptAnyCertificate() {
-        return acceptAnyCertificate;
-    }
-
-    public void setAcceptAnyCertificate(Boolean acceptAnyCertificate) {
-        this.acceptAnyCertificate = acceptAnyCertificate;
-    }
-
-    public Boolean getAllowPoolingConnections() {
-        return allowPoolingConnections;
-    }
-
-    public void setAllowPoolingConnections(Boolean allowPoolingConnections) {
-        this.allowPoolingConnections = allowPoolingConnections;
-    }
-
-    public Boolean getAllowPoolingSslConnections() {
-        return allowPoolingSslConnections;
-    }
-
-    public void setAllowPoolingSslConnections(Boolean allowPoolingSslConnections) {
-        this.allowPoolingSslConnections = allowPoolingSslConnections;
-    }
-
+    /**
+     * Connection TTL in ms
+     * -1 means unlimited
+     */
     public int getConnectionTTL() {
         return connectionTTL;
     }
@@ -142,6 +96,9 @@ public class ClientConfig {
         this.connectionTTL = connectionTTL;
     }
 
+    /**
+     * Connection timeout in ms
+     */
     public int getConnectTimeout() {
         return connectTimeout;
     }
@@ -158,29 +115,6 @@ public class ClientConfig {
         this.followRedirect = followRedirect;
     }
 
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
-    public void setMaxConnections(int maxConnections) {
-        this.maxConnections = maxConnections;
-    }
-
-    public int getMaxConnectionsPerHost() {
-        return maxConnectionsPerHost;
-    }
-
-    public void setMaxConnectionsPerHost(int maxConnectionsPerHost) {
-        this.maxConnectionsPerHost = maxConnectionsPerHost;
-    }
-
-    public int getMaxRedirects() {
-        return maxRedirects;
-    }
-
-    public void setMaxRedirects(int maxRedirects) {
-        this.maxRedirects = maxRedirects;
-    }
 
     public int getMaxRequestRetry() {
         return maxRequestRetry;
@@ -190,60 +124,15 @@ public class ClientConfig {
         this.maxRequestRetry = maxRequestRetry;
     }
 
-    public int getPooledConnectionIdleTimeout() {
-        return pooledConnectionIdleTimeout;
-    }
-
-    public void setPooledConnectionIdleTimeout(int pooledConnectionIdleTimeout) {
-        this.pooledConnectionIdleTimeout = pooledConnectionIdleTimeout;
-    }
-
+    /**
+     * Read timeout in ms
+     */
     public int getReadTimeout() {
         return readTimeout;
     }
 
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
-    }
-
-    public int getRequestTimeout() {
-        return requestTimeout;
-    }
-
-    public void setRequestTimeout(int requestTimeout) {
-        this.requestTimeout = requestTimeout;
-    }
-
-    public Boolean getStrict302Handling() {
-        return strict302Handling;
-    }
-
-    public void setStrict302Handling(Boolean strict302Handling) {
-        this.strict302Handling = strict302Handling;
-    }
-
-    public int getWebSocketTimeout() {
-        return webSocketTimeout;
-    }
-
-    public void setWebSocketTimeout(int webSocketTimeout) {
-        this.webSocketTimeout = webSocketTimeout;
-    }
-
-    public Integer getSslSessionTimeout() {
-        return sslSessionTimeout;
-    }
-
-    public void setSslSessionTimeout(Integer sslSessionTimeout) {
-        this.sslSessionTimeout = sslSessionTimeout;
-    }
-
-    public Integer getSslSessionCacheSize() {
-        return sslSessionCacheSize;
-    }
-
-    public void setSslSessionCacheSize(Integer sslSessionCacheSize) {
-        this.sslSessionCacheSize = sslSessionCacheSize;
     }
 
     public SSLContext getSslContext() {
@@ -260,5 +149,32 @@ public class ClientConfig {
 
     public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
         this.hostnameVerifier = hostnameVerifier;
+    }
+
+    public X509TrustManager getTrustManager() {
+        return trustManager;
+    }
+
+    public void setTrustManager(X509TrustManager trustManager) {
+        this.trustManager = trustManager;
+    }
+
+    public int getMaxIdleConnectionsPerHost() {
+        return maxIdleConnectionsPerHost;
+    }
+
+    public void setMaxIdleConnectionsPerHost(int maxIdleConnectionsPerHost) {
+        this.maxIdleConnectionsPerHost = maxIdleConnectionsPerHost;
+    }
+
+    /**
+     * Write timeout in ms
+     */
+    public int getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    public void setWriteTimeout(int writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 }

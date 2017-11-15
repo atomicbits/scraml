@@ -31,11 +31,11 @@ import java.util.Map;
  */
 public interface Client {
 
-    void callToStringResponse(RequestBuilder request, String body, Callback<String> callback);
+    void callToStringResponse(RequestBuilder requestBuilder, String body, Callback<String> callback);
 
-    void callToBinaryResponse(RequestBuilder request, String body, Callback<BinaryData> callback);
+    void callToBinaryResponse(RequestBuilder requestBuilder, String body, Callback<BinaryData> callback);
 
-    <R> void callToTypeResponse(RequestBuilder request, String body, String canonicalResponseType, Callback<R> callback);
+    <R> void callToTypeResponse(RequestBuilder requestBuilder, String body, String canonicalResponseType, Callback<R> callback);
 
     ClientConfig getConfig();
 
