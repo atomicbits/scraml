@@ -26,9 +26,13 @@ import io.atomicbits.scraml.dsl.androidjavajackson.*;
 import io.atomicbits.scraml.dsl.androidjavajackson.Callback;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
 import okhttp3.*;
+import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,9 +149,17 @@ public class OkHttpScramlClient implements Client {
     }
 
     @Override
-    public <R> void callToTypeResponse(RequestBuilder requestBuilder, String body, String canonicalResponseType, Callback<R> callback) {
+    public <R> void callToTypeResponse(RequestBuilder requestBuilder,
+                                       String body,
+                                       String canonicalResponseType,
+                                       final Callback<R> callback) {
 
-        String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
+    }
+
+
+    public <R> void callToResponse(RequestBuilder requestBuilder,
+                                   String body,
+                                   final Callback<R> callback) {
 
         Headers.Builder headerBuilder = new Headers.Builder();
 
@@ -204,7 +216,93 @@ public class OkHttpScramlClient implements Client {
             requestBody = RequestBody.create(mediaType, body);
         }
 
-        // ToDo: other body types
+        if (requestBuilder.getBinaryRequest() != null) {
+            BinaryRequest binaryRequest = requestBuilder.getBinaryRequest();
+            if (binaryRequest.isFile()) {
+                File file = ((FileBinaryRequest) binaryRequest).getFile();
+                requestBody = RequestBody.create(mediaType, file);
+            }
+            if (binaryRequest.isInputStream()) {
+                try {
+                    InputStream stream = ((InputStreamBinaryRequest) binaryRequest).getInputStream();
+                    int[] lengthWrapper = new int[1];
+                    byte[] cachedBytes = new byte[0];
+                    cachedBytes = readFully(stream, lengthWrapper);
+                    int cachedBytesLenght = lengthWrapper[0];
+                    requestBody = RequestBody.create(mediaType, cachedBytes, 0, cachedBytesLenght);
+                } catch (IOException e) {
+                    callback.onFailure(e);
+                }
+            }
+            if (binaryRequest.isByteArray()) {
+                byte[] bytes = ((ByteArrayBinaryRequest) binaryRequest).getBytes();
+                requestBody = RequestBody.create(mediaType, bytes);
+            }
+            if (binaryRequest.isString()) {
+                String text = ((StringBinaryRequest) binaryRequest).getText();
+                requestBody = RequestBody.create(mediaType, text);
+            }
+        }
+
+        if (!requestBuilder.getFormParameters().isEmpty()) {
+            FormBody.Builder formBodyBuilder = new FormBody.Builder();
+            for (Map.Entry<String, HttpParam> formParam : requestBuilder.getFormParameters().entrySet()) {
+                if (formParam.getValue() instanceof RepeatedHttpParam) {
+                    RepeatedHttpParam params = (RepeatedHttpParam) formParam.getValue();
+                    if (params.getParameters() != null) {
+                        for (String param : params.getParameters()) {
+                            formBodyBuilder.add(formParam.getKey(), param);
+                        }
+                    }
+                } else if (formParam.getValue() instanceof SingleHttpParam) {
+                    SingleHttpParam param = (SingleHttpParam) formParam.getValue();
+                    if (param.getParameter() != null) {
+                        formBodyBuilder.add(formParam.getKey(), param.getParameter());
+                    }
+                }
+            }
+            requestBody = formBodyBuilder.build();
+        }
+
+
+        if (!requestBuilder.getMultipartParams().isEmpty()) {
+
+            MultipartBody.Builder multipartBodyBuilder = new MultipartBody.Builder();
+
+            for (BodyPart bodyPart : requestBuilder.getMultipartParams()) {
+
+                if (bodyPart.isString()) {
+                    StringPart part = (StringPart) bodyPart;
+                    multipartBodyBuilder.addFormDataPart(part.getName(), part.getValue());
+                }
+
+                if (bodyPart.isFile()) {
+                    FilePart part = (FilePart) bodyPart;
+                    MediaType contentMediaType = MediaType.parse(part.getContentType());
+                    multipartBodyBuilder
+                            .addFormDataPart(
+                                    part.getName(),
+                                    part.getFileName(),
+                                    RequestBody.create(contentMediaType, part.getFile())
+                            );
+                }
+
+                if (bodyPart.isByteArray()) {
+                    ByteArrayPart part = (ByteArrayPart) bodyPart;
+                    MediaType contentMediaType = MediaType.parse(part.getContentType());
+                    multipartBodyBuilder
+                            .addFormDataPart(
+                                    part.getName(),
+                                    part.getFileName(),
+                                    RequestBody.create(contentMediaType, part.getBytes())
+                            );
+                }
+
+            }
+
+            requestBody = multipartBodyBuilder.build();
+        }
+
 
         Request request =
                 new Request.Builder()
@@ -214,6 +312,91 @@ public class OkHttpScramlClient implements Client {
                         .build();
 
 
+        getClient().newCall(request).enqueue(new okhttp3.Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.onFailure(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                ResponseBody responseBody = response.body();
+                try {
+                    if (response.isSuccessful()) {
+                        io.atomicbits.scraml.dsl.androidjavajackson.Response<R> scramlResponse =
+                                null;
+                        callback.onOkResponse(scramlResponse);
+                    } else {
+
+                        // callback.onNokResponse();
+                    }
+
+                    //  Headers responseHeaders = response.headers();
+                    //  for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+                    //      System.out.println(responseHeaders.name(i) + ": " + responseHeaders.value(i));
+                    //  }
+                    //  System.out.println(responseBody.string());
+                } catch (Throwable t) {
+                    callback.onFailure(t);
+                }
+            }
+
+        });
+
+    }
+
+    private io.atomicbits.scraml.dsl.androidjavajackson.Response<String> transformToStringBody(Response response) throws IOException {
+
+        ResponseBody responseBody = response.body();
+        String responseString;
+        if (responseBody != null) {
+            responseString = responseBody.string();
+        } else {
+            responseString = "";
+        }
+
+        return new io.atomicbits.scraml.dsl.androidjavajackson.Response<String>(
+                responseString,
+                responseString,
+                response.code(),
+                response.headers().toMultimap()
+        );
+    }
+
+    /**
+     * NOTICE This part reuses software under the Apache 2.0 license.
+     * See com.ning.http.util.AsyncHttpProviderUtils in async-http-client
+     */
+    private byte[] readFully(InputStream in, int[] lengthWrapper) throws IOException {
+        // just in case available() returns bogus (or -1), allocate non-trivial chunk
+        byte[] b = new byte[Math.max(512, in.available())];
+        int offset = 0;
+        while (true) {
+            int left = b.length - offset;
+            int count = in.read(b, offset, left);
+            if (count < 0) { // EOF
+                break;
+            }
+            offset += count;
+            if (count == left) { // full buffer, need to expand
+                b = doubleUp(b);
+            }
+        }
+        // wish Java had Tuple return type...
+        lengthWrapper[0] = offset;
+        return b;
+    }
+
+    /**
+     * NOTICE This part reuses software under the Apache 2.0 license.
+     * See com.ning.http.util.AsyncHttpProviderUtils in async-http-client
+     */
+    private byte[] doubleUp(byte[] b) {
+        int len = b.length;
+        byte[] b2 = new byte[len + len];
+        System.arraycopy(b, 0, b2, 0, len);
+        return b2;
     }
 
 

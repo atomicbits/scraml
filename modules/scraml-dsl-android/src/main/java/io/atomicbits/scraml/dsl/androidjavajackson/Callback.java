@@ -22,14 +22,12 @@
 
 package io.atomicbits.scraml.dsl.androidjavajackson;
 
-import java.io.IOException;
-
 /**
  * Created by peter on 3/11/17.
  */
 public interface Callback<T> {
 
-    void onFailure(IOException e);
+    void onFailure(Throwable t);
 
     void onNokResponse(Response<String> response);
 
