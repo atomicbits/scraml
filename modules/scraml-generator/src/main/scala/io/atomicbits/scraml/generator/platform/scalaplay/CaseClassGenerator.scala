@@ -268,10 +268,17 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
             val formatFields   = group.map(field => platform.fieldFormatUnlift(field, recursiveFields))
             val fieldGroupName = s"fieldGroup$index"
             val fieldGroupDefinition =
-              s"""
+              if (formatFields.size > 1) {
+                s"""
                 val fieldGroup$index =
                   (${formatFields.mkString("~\n")}).tupled
                """
+              } else {
+                s"""
+                val fieldGroup$index =
+                  (${formatFields.mkString("~\n")})
+               """
+              }
             (fieldGroupDefinition, fieldGroupName)
         } unzip
 
