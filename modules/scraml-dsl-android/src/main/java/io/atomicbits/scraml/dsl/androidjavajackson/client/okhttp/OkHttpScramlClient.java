@@ -25,6 +25,7 @@ package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 import io.atomicbits.scraml.dsl.androidjavajackson.*;
 import io.atomicbits.scraml.dsl.androidjavajackson.Callback;
 import io.atomicbits.scraml.dsl.androidjavajackson.client.ClientConfig;
+import io.atomicbits.scraml.dsl.androidjavajackson.json.Json;
 import okhttp3.*;
 import okhttp3.Response;
 import org.slf4j.Logger;
@@ -139,27 +140,121 @@ public class OkHttpScramlClient implements Client {
 
 
     @Override
-    public void callToStringResponse(RequestBuilder requestBuilder, String body, Callback<String> callback) {
+    public void callToStringResponse(RequestBuilder requestBuilder, String body, final Callback<String> callback) {
+
+        Request request = null;
+
+        try {
+            request = buildRequest(requestBuilder, body);
+        } catch (IOException e) {
+            callback.onFailure(e);
+        }
+
+        getClient().newCall(request).enqueue(new okhttp3.Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.onFailure(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+
+                    io.atomicbits.scraml.dsl.androidjavajackson.Response<String> scramlResponse = transformToStringBody(response);
+
+                    if (response.isSuccessful()) {
+                        callback.onOkResponse(scramlResponse);
+                    } else {
+                        callback.onNokResponse(scramlResponse);
+                    }
+
+                } catch (Throwable t) {
+                    callback.onFailure(t);
+                }
+            }
+
+        });
 
     }
 
     @Override
-    public void callToBinaryResponse(RequestBuilder requestBuilder, String body, Callback<BinaryData> callback) {
+    public void callToBinaryResponse(RequestBuilder requestBuilder, String body, final Callback<BinaryData> callback) {
 
+        Request request = null;
+
+        try {
+            request = buildRequest(requestBuilder, body);
+        } catch (IOException e) {
+            callback.onFailure(e);
+        }
+
+        getClient().newCall(request).enqueue(new okhttp3.Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.onFailure(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (response.isSuccessful()) {
+                        io.atomicbits.scraml.dsl.androidjavajackson.Response<BinaryData> scramlResponse = transformToBinaryBody(response);
+                        callback.onOkResponse(scramlResponse);
+                    } else {
+                        callback.onNokResponse(transformToStringBody(response));
+                    }
+                } catch (Throwable t) {
+                    callback.onFailure(t);
+                }
+            }
+
+        });
     }
 
     @Override
     public <R> void callToTypeResponse(RequestBuilder requestBuilder,
                                        String body,
-                                       String canonicalResponseType,
+                                       final String canonicalResponseType,
                                        final Callback<R> callback) {
+
+        Request request = null;
+
+        try {
+            request = buildRequest(requestBuilder, body);
+        } catch (IOException e) {
+            callback.onFailure(e);
+        }
+
+        getClient().newCall(request).enqueue(new okhttp3.Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.onFailure(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (response.isSuccessful()) {
+                        io.atomicbits.scraml.dsl.androidjavajackson.Response<R> scramlResponse =
+                                transformToTypedBody(response, canonicalResponseType);
+                        callback.onOkResponse(scramlResponse);
+                    } else {
+                         callback.onNokResponse(transformToStringBody(response));
+                    }
+                } catch (Throwable t) {
+                    callback.onFailure(t);
+                }
+            }
+
+        });
 
     }
 
 
-    public <R> void callToResponse(RequestBuilder requestBuilder,
-                                   String body,
-                                   final Callback<R> callback) {
+    public Request buildRequest(RequestBuilder requestBuilder, String body) throws IOException {
 
         Headers.Builder headerBuilder = new Headers.Builder();
 
@@ -223,16 +318,12 @@ public class OkHttpScramlClient implements Client {
                 requestBody = RequestBody.create(mediaType, file);
             }
             if (binaryRequest.isInputStream()) {
-                try {
-                    InputStream stream = ((InputStreamBinaryRequest) binaryRequest).getInputStream();
-                    int[] lengthWrapper = new int[1];
-                    byte[] cachedBytes = new byte[0];
-                    cachedBytes = readFully(stream, lengthWrapper);
-                    int cachedBytesLenght = lengthWrapper[0];
-                    requestBody = RequestBody.create(mediaType, cachedBytes, 0, cachedBytesLenght);
-                } catch (IOException e) {
-                    callback.onFailure(e);
-                }
+                InputStream stream = ((InputStreamBinaryRequest) binaryRequest).getInputStream();
+                int[] lengthWrapper = new int[1];
+                byte[] cachedBytes = new byte[0];
+                cachedBytes = readFully(stream, lengthWrapper);
+                int cachedBytesLenght = lengthWrapper[0];
+                requestBody = RequestBody.create(mediaType, cachedBytes, 0, cachedBytesLenght);
             }
             if (binaryRequest.isByteArray()) {
                 byte[] bytes = ((ByteArrayBinaryRequest) binaryRequest).getBytes();
@@ -311,40 +402,9 @@ public class OkHttpScramlClient implements Client {
                         .url(url)
                         .build();
 
-
-        getClient().newCall(request).enqueue(new okhttp3.Callback() {
-
-            @Override
-            public void onFailure(Call call, IOException e) {
-                callback.onFailure(e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                ResponseBody responseBody = response.body();
-                try {
-                    if (response.isSuccessful()) {
-                        io.atomicbits.scraml.dsl.androidjavajackson.Response<R> scramlResponse =
-                                null;
-                        callback.onOkResponse(scramlResponse);
-                    } else {
-
-                        // callback.onNokResponse();
-                    }
-
-                    //  Headers responseHeaders = response.headers();
-                    //  for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-                    //      System.out.println(responseHeaders.name(i) + ": " + responseHeaders.value(i));
-                    //  }
-                    //  System.out.println(responseBody.string());
-                } catch (Throwable t) {
-                    callback.onFailure(t);
-                }
-            }
-
-        });
-
+        return request;
     }
+
 
     private io.atomicbits.scraml.dsl.androidjavajackson.Response<String> transformToStringBody(Response response) throws IOException {
 
@@ -363,6 +423,43 @@ public class OkHttpScramlClient implements Client {
                 response.headers().toMultimap()
         );
     }
+
+    private io.atomicbits.scraml.dsl.androidjavajackson.Response<BinaryData> transformToBinaryBody(Response response) throws IOException {
+
+        ResponseBody responseBody = response.body();
+        BinaryData binaryData = null;
+
+        if (response.isSuccessful() && responseBody != null) {
+            binaryData = new OkHttpScramlBinaryData(responseBody);
+        }
+
+        return new io.atomicbits.scraml.dsl.androidjavajackson.Response<BinaryData>(
+                null,
+                binaryData,
+                response.code(),
+                response.headers().toMultimap()
+        );
+    }
+
+    private <R> io.atomicbits.scraml.dsl.androidjavajackson.Response<R> transformToTypedBody(Response response,
+                                                                                             String canonicalResponseType) throws IOException {
+        ResponseBody responseBody = response.body();
+        String responseString = null;
+        R typedResponse = null;
+
+        if (response.isSuccessful() && responseBody != null) {
+            responseString = responseBody.string();
+            typedResponse = Json.parseBodyToObject(responseString, canonicalResponseType);
+        }
+
+        return new io.atomicbits.scraml.dsl.androidjavajackson.Response<R>(
+                responseString,
+                typedResponse,
+                response.code(),
+                response.headers().toMultimap()
+        );
+    }
+
 
     /**
      * NOTICE This part reuses software under the Apache 2.0 license.

@@ -23,6 +23,7 @@
 package io.atomicbits.scraml.dsl.androidjavajackson.client.okhttp;
 
 import io.atomicbits.scraml.dsl.androidjavajackson.BinaryData;
+import okhttp3.ResponseBody;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,24 +33,30 @@ import java.io.InputStream;
  */
 public class OkHttpScramlBinaryData extends BinaryData {
 
+    private ResponseBody innerResponse;
+
+    public OkHttpScramlBinaryData(ResponseBody innerResponse) {
+        this.innerResponse = innerResponse;
+    }
+
     @Override
     public byte[] asBytes() throws IOException {
-        return new byte[0];
+        return innerResponse.bytes();
     }
 
     @Override
     public InputStream asStream() throws IOException {
-        return null;
+        return innerResponse.byteStream();
     }
 
     @Override
     public String asString() throws IOException {
-        return null;
+        return innerResponse.string();
     }
 
     @Override
     public String asString(String charset) throws IOException {
-        return null;
+        return innerResponse.string();
     }
 
 }
