@@ -171,7 +171,7 @@ buildscript {
         jcenter()
 
         dependencies {
-             classpath 'io.atomicbits:scraml-gradle-plugin:0.7.0-M1'
+             classpath 'io.atomicbits:scraml-gradle-plugin:0.7.1'
         }
 
     }
