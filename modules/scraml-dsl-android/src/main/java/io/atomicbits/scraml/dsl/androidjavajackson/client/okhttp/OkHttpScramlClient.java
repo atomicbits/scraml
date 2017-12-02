@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +109,8 @@ public class OkHttpScramlClient implements Client {
         ConnectionPool connectionPool = new ConnectionPool(maxIdleConnectionsPerHost, keepAliveDuration, timeUnit);
 
         // We don't need to be able to set all configuration options, but we list them all below for reference
-        this.okHttpClient =
+
+        OkHttpClient.Builder okHttpClientBuilder =
                 new OkHttpClient.Builder()
                         // .protocols(null) // always use the default {Protocol.HTTP_2, Protocol.HTTP_1_1}
                         .connectTimeout(config.getConnectTimeout(), TimeUnit.MILLISECONDS)
@@ -120,22 +123,27 @@ public class OkHttpScramlClient implements Client {
                         .followRedirects(config.getFollowRedirect())
                         .followSslRedirects(config.getFollowRedirect())
                         .retryOnConnectionFailure(config.getMaxRequestRetry() > 0)
-                        // .proxy(null) // set the proxy
-                        // .proxyAuthenticator(null)
-                        // .socketFactory(null) // use the default
-                        .sslSocketFactory(config.getSslContext().getSocketFactory(), config.getTrustManager()) // use for client certificates
-                        // .hostnameVerifier(null)
-                        // .authenticator(null) // use for basic auth
-                        // .certificatePinner(null) // see: https://github.com/square/okhttp/wiki/HTTPS
-                        // .cookieJar(null) // Default is no automatic cookie handling
-                        // .dispatcher(null)
-                        // .dns(null) // use the system DNS by default
-                        // .eventListener(null) // useful for collecting metrics or logging requests
-                        // .eventListenerFactory(null) // useful for creating per-call scoped listeners
-                        // .addInterceptor(null) // usefull for intercepting or changing the request chain
-                        // .addNetworkInterceptor(null) // similar to 'addInterceptor', don't see the difference at this point
-                        .build();
+                // .proxy(null) // set the proxy
+                // .proxyAuthenticator(null)
+                // .socketFactory(null) // use the default
+                // .hostnameVerifier(null)
+                // .authenticator(null) // use for basic auth
+                // .certificatePinner(null) // see: https://github.com/square/okhttp/wiki/HTTPS
+                // .cookieJar(null) // Default is no automatic cookie handling
+                // .dispatcher(null)
+                // .dns(null) // use the system DNS by default
+                // .eventListener(null) // useful for collecting metrics or logging requests
+                // .eventListenerFactory(null) // useful for creating per-call scoped listeners
+                // .addInterceptor(null) // usefull for intercepting or changing the request chain
+                // .addNetworkInterceptor(null) // similar to 'addInterceptor', don't see the difference at this point
+                ;
 
+        if (config.getSslContext() != null && config.getTrustManager() != null) {
+            // use for client certificates
+            okHttpClientBuilder.sslSocketFactory(config.getSslContext().getSocketFactory(), config.getTrustManager());
+        }
+
+        this.okHttpClient = okHttpClientBuilder.build();
     }
 
 
@@ -242,7 +250,7 @@ public class OkHttpScramlClient implements Client {
                                 transformToTypedBody(response, canonicalResponseType);
                         callback.onOkResponse(scramlResponse);
                     } else {
-                         callback.onNokResponse(transformToStringBody(response));
+                        callback.onNokResponse(transformToStringBody(response));
                     }
                 } catch (Throwable t) {
                     callback.onFailure(t);
@@ -279,18 +287,27 @@ public class OkHttpScramlClient implements Client {
                         .addPathSegments(getCleanPrefix())
                         .addPathSegments(requestBuilder.getRelativePath());
 
+
         for (Map.Entry<String, HttpParam> queryParam : requestBuilder.getQueryParameters().entrySet()) {
             if (queryParam.getValue() instanceof RepeatedHttpParam) {
                 RepeatedHttpParam params = (RepeatedHttpParam) queryParam.getValue();
                 if (params.getParameters() != null) {
                     for (String param : params.getParameters()) {
-                        urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param);
+                        // urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param); // don't use this
+                        // okhttp has problems encoding certain characters such as ^, [, ], {, }; so we encode them here
+                        String urlencodedKey = urlEncode(queryParam.getKey());
+                        String urlencodedValue = urlEncode(param);
+                        urlBuilder = urlBuilder.addEncodedQueryParameter(urlencodedKey, urlencodedValue);
                     }
                 }
             } else if (queryParam.getValue() instanceof SingleHttpParam) {
                 SingleHttpParam param = (SingleHttpParam) queryParam.getValue();
                 if (param.getParameter() != null) {
-                    urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param.getParameter());
+                    // urlBuilder = urlBuilder.addQueryParameter(queryParam.getKey(), param.getParameter()); // don't use this
+                    // okhttp has problems encoding certain characters such as ^, [, ], {, }; so we encode them here
+                    String urlencodedKey = urlEncode(queryParam.getKey());
+                    String urlencodedValue = urlEncode(param.getParameter());
+                    urlBuilder = urlBuilder.addEncodedQueryParameter(urlencodedKey, urlencodedValue);
                 }
             }
         }
@@ -342,13 +359,21 @@ public class OkHttpScramlClient implements Client {
                     RepeatedHttpParam params = (RepeatedHttpParam) formParam.getValue();
                     if (params.getParameters() != null) {
                         for (String param : params.getParameters()) {
-                            formBodyBuilder.add(formParam.getKey(), param);
+                            // formBodyBuilder.add(formParam.getKey(), param); // don't use this
+                            // okhttp has problems encoding certain characters such as ^, [, ], {, }; so we encode them here
+                            String urlencodedKey = urlEncode(formParam.getKey());
+                            String urlencodedValue = urlEncode(param);
+                            formBodyBuilder.addEncoded(urlencodedKey, urlencodedValue);
                         }
                     }
                 } else if (formParam.getValue() instanceof SingleHttpParam) {
                     SingleHttpParam param = (SingleHttpParam) formParam.getValue();
                     if (param.getParameter() != null) {
-                        formBodyBuilder.add(formParam.getKey(), param.getParameter());
+                        // formBodyBuilder.add(formParam.getKey(), param.getParameter()); // don't use this
+                        // okhttp has problems encoding certain characters such as ^, [, ], {, }; so we encode them here
+                        String urlencodedKey = urlEncode(formParam.getKey());
+                        String urlencodedValue = urlEncode(param.getParameter());
+                        formBodyBuilder.addEncoded(urlencodedKey, urlencodedValue);
                     }
                 }
             }
@@ -405,6 +430,11 @@ public class OkHttpScramlClient implements Client {
         return request;
     }
 
+    private String urlEncode(String text) throws UnsupportedEncodingException {
+        // The java.net URLEncode encodes a space to a + symbol, so we have to correct it to %20
+        // This is safe because a + is urlencoded to %2B
+        return URLEncoder.encode(text, "UTF-8").replace("+", "%20");
+    }
 
     private io.atomicbits.scraml.dsl.androidjavajackson.Response<String> transformToStringBody(Response response) throws IOException {
 
