@@ -42,7 +42,7 @@ object RamlToJsonParser {
       val SourceFile(path, ramlContent) = SourceReader.read(source, charsetName)
       val ramlContentNoTabs             = ramlContent.replace("\t", "  ") // apparently, the yaml parser does not handle tabs well
       val yaml                          = new Yaml(SimpleRamlConstructor())
-      val ramlMap: Any = (yaml load ramlContentNoTabs)
+      val ramlMap: Any                  = yaml.load(ramlContentNoTabs)
 
       (path, anyToJson(ramlMap))
     } match {

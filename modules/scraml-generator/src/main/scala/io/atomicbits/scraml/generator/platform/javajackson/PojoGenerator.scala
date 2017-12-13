@@ -20,7 +20,7 @@
 package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
+import io.atomicbits.scraml.generator.platform.{Platform, SourceGenerator}
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
@@ -54,16 +54,16 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
       if (toHasOwnInterface) Seq(toClassDefinition)
       else Seq.empty
 
-    val ownFields: Seq[Field]            = toClassDefinition.fields
+    val ownFields: Seq[Field] = toClassDefinition.fields
     val parentNames: List[CanonicalName] = generationAggr.allParents(originalToCanonicalName)
-    val interfacesAndFieldsAggr          = (initialTosWithInterface, ownFields)
+    val interfacesAndFieldsAggr = (initialTosWithInterface, ownFields)
 
     val (recursiveExtendedParents, allFields) =
       parentNames.foldLeft(interfacesAndFieldsAggr) { (aggr, parentName) =>
         val (interfaces, fields) = aggr
         val parentDefinition: TransferObjectClassDefinition =
           generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
-        val withParentFields    = fields ++ parentDefinition.fields
+        val withParentFields = fields ++ parentDefinition.fields
         val withParentInterface = interfaces :+ parentDefinition
         (withParentInterface, withParentFields)
       }
@@ -83,28 +83,28 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
 
     val (interfacesToImplement, fieldsToGenerate, classToExtend) =
       (toHasOwnInterface, hasMultipleDirectParents) match {
-        case (true, _) =>
+        case (true, _)      =>
           val interfaceToImpl = List(TransferObjectInterfaceDefinition(toClassDefinition, discriminator))
-          val fieldsToGen     = allFields
-          val classToExt      = None
+          val fieldsToGen = allFields
+          val classToExt = None
           (interfaceToImpl, fieldsToGen, classToExt)
         case (false, false) =>
           val interfaceToImpl = List.empty[TransferObjectInterfaceDefinition]
-          val fieldsToGen     = ownFields
+          val fieldsToGen = ownFields
           val classToExt =
             generationAggr
               .directParents(originalToCanonicalName)
               .headOption // There should be at most one direct parent.
               .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
           (interfaceToImpl, fieldsToGen, classToExt)
-        case (false, true) =>
+        case (false, true)  =>
           val interfaceToImpl =
             generationAggr
               .directParents(originalToCanonicalName)
               .map(parent => generationAggr.toMap.getOrElse(parent, sys.error(s"Expected to find $parent in the generation aggregate.")))
               .map(TransferObjectInterfaceDefinition(_, discriminator))
           val fieldsToGen = allFields
-          val classToExt  = None
+          val classToExt = None
           (interfaceToImpl.toList, fieldsToGen, classToExt)
       }
 
@@ -115,9 +115,15 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
       else Set.empty[ChildToSerialize]
 
     val importPointers: Seq[ClassPointer] = {
-      fieldsToGenerate.map(_.classPointer) ++ childrenToSerialize.map(_.classReference) ++
-        interfacesToImplement.map(_.origin.reference.classPointer) ++ Seq(classToExtend.map(_.reference.classPointer)).flatten
+
+      val fieldTypesToImport = allFields.map(_.classPointer)
+      val children = childrenToSerialize.map(_.classReference)
+      val interfaces = interfacesToImplement.map(_.origin.reference.classPointer)
+      val parentClass = Seq(classToExtend.map(_.reference.classPointer)).flatten
+
+      fieldTypesToImport ++ children ++ interfaces ++ parentClass
     }
+
     val imports: Set[String] = platform.importStatements(actualToCanonicalClassReference, importPointers.toSet)
 
     val jsonTypeAnnotations = generateJsonTypeAnnotations(childrenToSerialize, jsonTypeInfo)
@@ -131,12 +137,14 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
         ${imports.mkString("\n")}
 
         $jsonTypeAnnotations
-        ${generatePojoSource(actualToCanonicalClassReference,
-                             interfacesToImplement,
-                             classToExtend,
-                             fieldsToGenerate,
-                             allFields,
-                             skipFieldName)}
+        ${
+        generatePojoSource(actualToCanonicalClassReference,
+          interfacesToImplement,
+          classToExtend,
+          fieldsToGenerate,
+          allFields,
+          skipFieldName)
+      }
      """
 
     val generationAggrWithAddedInterfaces = interfacesToImplement.foldLeft(generationAggr) { (aggr, interf) =>
@@ -146,7 +154,7 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
     val sourceFile =
       SourceFile(
         filePath = actualToCanonicalClassReference.toFilePath,
-        content  = source
+        content = source
       )
 
     generationAggrWithAddedInterfaces.copy(sourceFilesGenerated = sourceFile +: generationAggrWithAddedInterfaces.sourceFilesGenerated)
@@ -166,10 +174,10 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
     }
 
     val selectedFields = fieldsWithoutSkipField(fieldsToGenerate)
-    val sortedFields   = selectedFields.sortBy(_.safeFieldName) // In Java Pojo's, we sort by field name!
+    val sortedFields = selectedFields.sortBy(_.safeFieldName) // In Java Pojo's, we sort by field name!
 
     val selectedFieldsWithParentFields = fieldsWithoutSkipField(allFields)
-    val sortedFieldsWithParentFields   = selectedFieldsWithParentFields.sortBy(_.safeFieldName)
+    val sortedFieldsWithParentFields = selectedFieldsWithParentFields.sortBy(_.safeFieldName)
 
     val privateFieldExpressions = sortedFields.map { field =>
       s"""
@@ -179,7 +187,7 @@ case class PojoGenerator(javaJackson: JavaJackson) extends SourceGenerator with 
     }
 
     val getterAndSetters = sortedFields map {
-      case fieldRep @ Field(fieldName, classPointer, required) =>
+      case fieldRep@Field(fieldName, classPointer, required) =>
         val fieldNameCap = fieldRep.safeFieldName.capitalize
         s"""
            public ${classPointer.classDefinition} get$fieldNameCap() {
