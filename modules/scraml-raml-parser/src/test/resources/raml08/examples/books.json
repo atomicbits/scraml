@@ -1,0 +1,20 @@
+[
+  {
+    "isbn": "9780735300620",
+    "title": "Where the Wild Things Are",
+    "genre": "Fantasy Fiction",
+    "author": {
+      "firstName": "Maurice",
+      "lastName": "Sendak"
+    }
+  },
+  {
+    "isbn": "0079808800167",
+    "title": "Green Eggs and Ham",
+    "genre": "Children's literature",
+    "author": {
+      "firstName": "Dr.",
+      "lastName": "Seuss"
+    }
+  }
+]

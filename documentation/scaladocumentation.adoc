@@ -17,7 +17,7 @@ Setting up [scramlfont]#Scraml# using the sbt-plugin is super-easy if you follow
 [source,scala]
 .add the scraml sbt-plugin to project/plugins.sbt
 ----
-addSbtPlugin("io.atomicbits"      % "scraml-sbt-plugin"   % "0.7.0")
+addSbtPlugin("io.atomicbits"      % "scraml-sbt-plugin"   % "0.7.2")
 ----
 
 
