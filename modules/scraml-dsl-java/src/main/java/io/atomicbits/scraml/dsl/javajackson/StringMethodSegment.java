@@ -22,8 +22,6 @@
 
 package io.atomicbits.scraml.dsl.javajackson;
 
-import io.atomicbits.scraml.dsl.javajackson.util.Pair;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -34,9 +32,11 @@ import java.util.concurrent.CompletableFuture;
 public class StringMethodSegment<B> extends MethodSegment<B, String> {
 
     private String canonicalContentType;
+    private Boolean primitiveBody;
 
     public StringMethodSegment(Method method,
                                B theBody,
+                               Boolean primitiveBody,
                                Map<String, HttpParam> queryParams,
                                TypedQueryParams queryString,
                                Map<String, HttpParam> formParams,
@@ -50,14 +50,15 @@ public class StringMethodSegment<B> extends MethodSegment<B, String> {
         super(method, theBody, queryParams, queryString, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
-    }
-
-    public CompletableFuture<Response<String>> callWithPrimitiveBody() {
-        return getRequestBuilder().callToStringResponse(getPlainStringBody());
+        this.primitiveBody = primitiveBody;
     }
 
     public CompletableFuture<Response<String>> call() {
-        return getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType));
+        if (this.primitiveBody) {
+            return getRequestBuilder().callToStringResponse(getPlainStringBody());
+        } else {
+            return getRequestBuilder().callToStringResponse(jsonBodyToString(canonicalContentType));
+        }
     }
 
 }

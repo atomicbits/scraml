@@ -17,7 +17,7 @@ Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add 
 .configure the scraml maven-plugin and the http client dependency in your maven pom.xml file
 ----
     <properties>
-        <scraml.version>0.7.1</scraml.version>
+        <scraml.version>0.7.2</scraml.version>
     </properties>
 
     <build>
@@ -169,9 +169,10 @@ buildscript {
         mavenLocal()
         mavenCentral()
         jcenter()
+        google() // Must be added because of the android tools dependency of the gradle plugin, this has no impact if your project is a pure Java project and not an android project.
 
         dependencies {
-             classpath 'io.atomicbits:scraml-gradle-plugin:0.7.1'
+             classpath 'io.atomicbits:scraml-gradle-plugin:0.7.2'
         }
 
     }

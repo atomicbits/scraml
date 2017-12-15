@@ -27,7 +27,7 @@ import io.atomicbits.scraml.generator.platform.Platform._
 /**
   * Created by peter on 1/03/17.
   */
-case class UnionClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
+case class UnionClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator {
 
   implicit val platform: Platform = javaJackson
 

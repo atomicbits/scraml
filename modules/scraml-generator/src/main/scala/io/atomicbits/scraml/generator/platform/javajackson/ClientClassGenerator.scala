@@ -20,17 +20,18 @@
 package io.atomicbits.scraml.generator.platform.javajackson
 
 import io.atomicbits.scraml.generator.codegen.{ ActionGenerator, GenerationAggr, SourceCodeFragment }
-import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
+import io.atomicbits.scraml.generator.platform.SourceGenerator
 import io.atomicbits.scraml.generator.typemodel.{ ClassPointer, ClientClassDefinition }
 import io.atomicbits.scraml.generator.platform.Platform._
+import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
 import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 1/03/17.
   */
-case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
+case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator {
 
-  implicit val platform: JavaJackson = javaJackson
+  implicit val platform: CommonJavaJacksonPlatform = javaJackson
 
   def generate(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition): GenerationAggr = {
 
@@ -43,7 +44,7 @@ case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerato
         case oneRoot :: Nil if oneRoot.resource.urlSegment.isEmpty =>
           val dslFields = oneRoot.childResourceDefinitions.map(ResourceClassGenerator(platform).generateResourceDslField)
           val SourceCodeFragment(importClasses, actionFunctions, headerPathSourceDefs) =
-            ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
+            ActionGenerator(new JavaActionCodeGenerator(platform)).generateActionFunctions(oneRoot)
           (importClasses, dslFields, actionFunctions, headerPathSourceDefs)
         case manyRoots =>
           val importClasses   = Set.empty[ClassPointer]
@@ -56,6 +57,18 @@ case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerato
 
     val dslBasePackage = platform.rewrittenDslBasePackage.mkString(".")
 
+    val (defaultClientFactory, defaultClientImportStatement) =
+      platform match {
+        case android: AndroidJavaJackson =>
+          val defaultCF  = "OkHttpScramlClientFactory"
+          val defaultCIS = s"import $dslBasePackage.client.okhttp.$defaultCF;"
+          (defaultCF, defaultCIS)
+        case _ =>
+          val defaultCF  = "Ning19ClientFactory"
+          val defaultCIS = s"import $dslBasePackage.client.ning.$defaultCF;"
+          (defaultCF, defaultCIS)
+      }
+
     val sourcecode =
       s"""
            package ${apiPackage.mkString(".")};
@@ -64,7 +77,7 @@ case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerato
            import $dslBasePackage.client.ClientConfig;
            import $dslBasePackage.client.ClientFactory;
            import $dslBasePackage.Client;
-           import $dslBasePackage.client.ning.Ning19ClientFactory;
+           $defaultClientImportStatement
 
            import java.util.*;
            import java.util.concurrent.CompletableFuture;
@@ -93,7 +106,7 @@ case class ClientClassGenerator(javaJackson: JavaJackson) extends SourceGenerato
                                     ClientConfig clientConfig,
                                     Map<String, String> defaultHeaders,
                                     ClientFactory clientFactory) {
-                   ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
+                   ClientFactory cFactory = clientFactory != null ? clientFactory : new $defaultClientFactory();
                    Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
                    this._requestBuilder.setClient(client);
                }

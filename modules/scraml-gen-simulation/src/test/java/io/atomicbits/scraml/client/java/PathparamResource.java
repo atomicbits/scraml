@@ -56,6 +56,7 @@ public class PathparamResource extends ParamSegment<String> {
         return new TypeMethodSegment<String, Person>(
                 Method.GET,
                 null,
+                false,
                 queryParams,
                 null,
                 null,

@@ -30,8 +30,9 @@ object Dependencies {
 
   val snakeYaml = "org.yaml" % "snakeyaml" % "1.16"
 
-  val asyncClientProvided = "com.ning"          % "async-http-client" % "1.9.40" % "provided"
-  val playJson            = "com.typesafe.play" %% "play-json"        % "2.6.2"
+  val asyncClientProvided = "com.ning"             % "async-http-client" % "1.9.40" % "provided"
+  val okHttpProvided      = "com.squareup.okhttp3" % "okhttp"            % "3.9.0" % "provided"
+  val playJson            = "com.typesafe.play"    %% "play-json"        % "2.6.2"
 
   val scalariform = "org.scalariform"             %% "scalariform"       % "0.2.3"
   val javaFormat  = "com.google.googlejavaformat" % "google-java-format" % "1.2"
@@ -62,6 +63,15 @@ object Dependencies {
     slf4j,
     playJson,
     asyncClientProvided
+  )
+
+  val scramlDslDepsAndroid = Seq(
+    slf4j,
+    junit,
+    jacksonCore,
+    jacksonAnnotations,
+    jacksonDatabind,
+    okHttpProvided
   )
 
   val scramlDslDepsJava = Seq(

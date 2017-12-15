@@ -32,9 +32,11 @@ import java.util.concurrent.CompletableFuture;
 public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
 
     private String canonicalContentType;
+    private Boolean primitiveBody;
 
     public BinaryMethodSegment(Method method,
                                B theBody,
+                               Boolean primitiveBody,
                                Map<String, HttpParam> queryParams,
                                TypedQueryParams queryString,
                                Map<String, HttpParam> formParams,
@@ -48,15 +50,15 @@ public class BinaryMethodSegment<B> extends MethodSegment<B, BinaryData> {
         super(method, theBody, queryParams, queryString, formParams, multipartParams, binaryRequest, expectedAcceptHeader, expectedContentTypeHeader, req);
 
         this.canonicalContentType = canonicalContentType;
-    }
-
-
-    public CompletableFuture<Response<BinaryData>> callWithPrimitiveBody() {
-        return getRequestBuilder().callToBinaryResponse(getPlainStringBody());
+        this.primitiveBody = primitiveBody;
     }
 
     public CompletableFuture<Response<BinaryData>> call() {
-        return getRequestBuilder().callToBinaryResponse(jsonBodyToString(canonicalContentType));
+        if (this.primitiveBody) {
+            return getRequestBuilder().callToBinaryResponse(getPlainStringBody());
+        } else {
+            return getRequestBuilder().callToBinaryResponse(jsonBodyToString(canonicalContentType));
+        }
     }
 
 }
