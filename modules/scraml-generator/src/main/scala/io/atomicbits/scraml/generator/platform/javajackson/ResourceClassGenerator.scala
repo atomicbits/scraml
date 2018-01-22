@@ -29,9 +29,9 @@ import io.atomicbits.scraml.ramlparser.parser.SourceFile
 /**
   * Created by peter on 1/03/17.
   */
-case class ResourceClassGenerator(javaJackson: JavaJackson) extends SourceGenerator {
+case class ResourceClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceGenerator {
 
-  implicit val platform: JavaJackson = javaJackson
+  implicit val platform: CommonJavaJacksonPlatform = javaJackson
 
   def generate(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition): GenerationAggr = {
 
@@ -41,7 +41,7 @@ case class ResourceClassGenerator(javaJackson: JavaJackson) extends SourceGenera
     val dslFields = resourceClassDefinition.childResourceDefinitions.map(generateResourceDslField)
 
     val SourceCodeFragment(actionImports, actionFunctions, headerPathSourceDefs) =
-      ActionGenerator(JavaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
+      ActionGenerator(new JavaActionCodeGenerator(platform)).generateActionFunctions(resourceClassDefinition)
 
     val imports = platform.importStatements(resourceClassReference, actionImports)
 

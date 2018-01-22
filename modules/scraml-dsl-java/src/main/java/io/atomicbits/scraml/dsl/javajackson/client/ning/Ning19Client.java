@@ -27,7 +27,6 @@ import com.ning.http.client.generators.InputStreamBodyGenerator;
 import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig;
 import io.atomicbits.scraml.dsl.javajackson.json.Json;
-import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.ByteArrayPart;
 import io.atomicbits.scraml.dsl.javajackson.FilePart;
 import io.atomicbits.scraml.dsl.javajackson.StringPart;
@@ -155,6 +154,10 @@ public class Ning19Client implements Client {
         builder.setFollowRedirect(config.getFollowRedirect());
         builder.setMaxRedirects(config.getMaxRedirects());
         builder.setStrict302Handling(config.getStrict302Handling());
+        builder.setSSLContext(config.getSslContext());
+        builder.setSslSessionCacheSize(config.getSslSessionCacheSize());
+        builder.setSslSessionTimeout(config.getSslSessionTimeout());
+        builder.setHostnameVerifier(config.getHostnameVerifier());
         return builder;
     }
 
@@ -248,7 +251,7 @@ public class Ning19Client implements Client {
                         ningRb.addFormParam(formParam.getKey(), param);
                     }
                 }
-            } else if(formParam.getValue() instanceof SingleHttpParam) {
+            } else if (formParam.getValue() instanceof SingleHttpParam) {
                 SingleHttpParam param = (SingleHttpParam) formParam.getValue();
                 if (param.getParameter() != null) {
                     ningRb.addFormParam(formParam.getKey(), param.getParameter());

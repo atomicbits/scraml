@@ -20,9 +20,9 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedNull, ParsedType }
-import org.slf4j.{ Logger, LoggerFactory }
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{CanonicalName, NonPrimitiveType}
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedNull, ParsedType}
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Created by peter on 17/12/16.
@@ -42,9 +42,9 @@ import org.slf4j.{ Logger, LoggerFactory }
   *                                        have their own json-schema id internally. This map enables us to translate the canonical
   *                                        name that matches the native id to the canonical name that matches the json-schema id.
   */
-case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveType]          = Map.empty,
-                                 parsedTypeIndex: Map[UniqueId, ParsedType]                 = Map.empty,
-                                 referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType]    = Map.empty,
+case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveType] = Map.empty,
+                                 parsedTypeIndex: Map[UniqueId, ParsedType] = Map.empty,
+                                 referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType] = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId] = Map.empty) {
 
   val logger: Logger = LoggerFactory.getLogger(CanonicalLookupHelper.getClass)
@@ -52,14 +52,14 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
   def getParsedTypeWithProperId(id: Id): Option[ParsedType] = {
     val parsedTypeOpt =
       id match {
-        case NoId =>
+        case NoId               =>
           Some(ParsedNull())
         case nativeId: NativeId =>
           val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
           List(parsedTypeIndex.get(realIndex), referenceOnlyParsedTypeIndex.get(realIndex)).flatten.headOption
         case uniqueId: UniqueId =>
           List(parsedTypeIndex.get(uniqueId), referenceOnlyParsedTypeIndex.get(uniqueId)).flatten.headOption
-        case other => None
+        case other              => None
       }
     parsedTypeOpt.map { parsedType =>
       parsedType.id match {
@@ -74,9 +74,11 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
 
   def addParsedTypeIndex(id: Id, parsedType: ParsedType, lookupOnly: Boolean = false): CanonicalLookupHelper = {
 
-    def warnDuplicate(uniqueId: UniqueId): Unit = {
-      if (parsedTypeIndex.get(uniqueId).isDefined) logger.warn(s"Duplicate type definition found for id $uniqueId")
-      else ()
+    def warnDuplicate(uniqueId: UniqueId, parsedT: ParsedType): Unit = {
+      parsedTypeIndex.get(uniqueId).collect {
+        case pType if pType != parsedT => logger.debug(s"Duplicate type definition found for id $uniqueId")
+      }
+      ()
     }
 
     id match {
@@ -84,10 +86,10 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
         if (lookupOnly) {
           copy(referenceOnlyParsedTypeIndex = referenceOnlyParsedTypeIndex + (uniqueId -> parsedType))
         } else {
-          warnDuplicate(uniqueId)
+          warnDuplicate(uniqueId, parsedType)
           copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
         }
-      case _ => this
+      case _                  => this
     }
   }
 

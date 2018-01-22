@@ -219,13 +219,14 @@ case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
     val multipartParamsValue = if (isMultipartParams) "parts" else "List.empty"
     val binaryParamValue     = if (isBinaryParam) "Some(BinaryRequest(body))" else "None"
 
-    val callMethod: String = chooseCallBodySerialization(segmentBodyType)
+    val primitiveBody: Boolean = hasPrimitiveBody(segmentBodyType)
 
     s"""
        def $actionTypeMethod(${actionParameters.mkString(", ")}) =
          new $segmentType(
            method = $actionType,
            theBody = $bodyFieldValue,
+           primitiveBody = $primitiveBody,
            queryParams = Map(
              ${queryParameterMapEntries.mkString(",")}
            ),
@@ -238,7 +239,7 @@ case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
            expectedAcceptHeader = $acceptHeader,
            expectedContentTypeHeader = $contentHeader,
            req = _requestBuilder
-         ).$callMethod()
+         ).call()
      """
   }
 

@@ -8,16 +8,16 @@
 We are currently compatible with RAML 1.0 types, except for union types. We are fully backward compatible with version 0.8.
 The transfer objects in the samples code below are mostly expressed in json-schema, but you can easily rewrite them into RAML 1.0 types.
 
-== Quickstart Java
+== Quickstart Java (using maven)
 
 Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add the following configuration to your `pom.xml` file:
 
 [[pom.xml]]
 [source,xml]
-.configure the scraml maven-plugin, the dsl dependency and the http client dependency in your maven pom.xml file
+.configure the scraml maven-plugin and the http client dependency in your maven pom.xml file
 ----
     <properties>
-        <scraml.version>0.7.0-M4</scraml.version>
+        <scraml.version>0.7.2</scraml.version>
     </properties>
 
     <build>
@@ -72,18 +72,12 @@ Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add 
 ----
 
 
-[scramlfont]#Scraml# provides a maven plugin that let's you configure your project's path to the main RAML file. By default, this
-path is expected to be relative to the project's `resources` folder. This relative path will also be the template for the package
-name of the client class for your API. To enable the plugin, <<pom.xml>>.
-
 The configuration points the `ramlApi` variable to the relative path of your main RAML file that sits in your `src/main/resources`
 folder. If you configure [scramlfont]#Scraml# in a submodule, then just configure this variable for that module by configuring the
 plugin for that module only. If for whatever reason the RAML files are not in the `resources` folder, then use the `resourceDirectory`
 variable to set another base directory, similar to how the `ramlApi` variable is set.
 
-Since version 0.4.7, the ning http-client dependency is set as 'provided', meaning that projects using [scramlfont]#Scraml# need to
-include the ning library themselves. The main reason is that de backing http-client became free of choice and a factory class can
-load other backing clients if you want.
+Add the ning http-client and the jackson dependencies as a dependency of your project. They will be used by the generated client code.
 
 Compile the project using maven to generate the [scramlfont]#Scraml# code. The generated code will appear in
 `target/generated-sources/scraml`, maven's default code generation destination.
@@ -91,8 +85,7 @@ Compile the project using maven to generate the [scramlfont]#Scraml# code. The g
 To see this in action, checkout the example project on github: https://github.com/atomicbits/scraml-test-java
 
 When you compile your project, you'll see a lot of dependencies being downloaded that are needed for the codegeneration step. Keep in
-mind that these packages are all compile-time dependencies. They will not end up in your packaged project! Only the `scraml-dsl-java`
-artifact will be added as a dependency and it only has `ning` and `jackson` as transitive dependencies.
+mind that these packages are all compile-time dependencies. They will not end up in your packaged project!
 
 
 === Optional: use a license to overcome AGPL limitations
@@ -123,8 +116,7 @@ artifact will be added as a dependency and it only has `ning` and `jackson` as t
 In order to use your own custom license on the generated code, you can <<license.key>>. As soon as a valid license is configured
 using the `licenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
 the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
-generate and your own license applies instead. Just ignore the `licenseKey` and `classHeader` variables if you want to use
-the free open source code generator.
+generate and your own license applies instead.
 
 
 === Optional: use a free license for non-commercial use
@@ -157,6 +149,150 @@ For example:
     </classHeader>
 </configuration>
 ----
+
+
+
+
+
+== Quickstart Java (using gradle)
+
+Setting up [scramlfont]#Scraml# using the gradle-plugin is super-easy if you add the following configuration to your `build.gradle` project
+file:
+
+[[build.gradle]]
+[source,groovy]
+.configure the scraml gradle-plugin and the http client dependency in your maven build.gradle file
+----
+buildscript {
+    repositories {
+
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        google() // Must be added because of the android tools dependency of the gradle plugin, this has no impact if your project is a pure Java project and not an android project.
+
+        dependencies {
+             classpath 'io.atomicbits:scraml-gradle-plugin:0.7.2'
+        }
+
+    }
+}
+
+
+apply plugin: 'java'
+apply plugin: 'io.atomicbits.scraml'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+
+scraml {
+    ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
+
+    // Optional:
+    // platform 'JavaJackson' or 'ScalaPlay' // on roadmap: 'AndroidJavaJackson', 'OsxSwift' and 'Python' // default is JavaJackson
+    // apiPackage // Override the base package name  (optional)
+    // resourceDirectory  // override the base location of the RAML files  (optional)
+    // outputDirectory  // Override the default output directory (optional)
+    // licenseKey  // Set a license key to switch from AGPL to EULA license
+    // classHeader  // Your custom class header when using the EULA license
+
+}
+
+
+repositories {
+    mavenLocal()
+    jcenter()
+}
+
+dependencies {
+
+    compile 'com.ning:async-http-client:1.9.40'
+
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.6'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.6'
+
+}
+
+----
+
+
+The configuration points the `ramlApi` variable to the relative path of your main RAML file that sits in your `src/main/resources`
+folder. If you configure [scramlfont]#Scraml# in a submodule, then just configure this variable for that module by configuring the
+plugin for that module only. If for whatever reason the RAML files are not in the `resources` folder, then use the `resourceDirectory`
+variable to set another base directory, similar to how the `ramlApi` variable is set.
+
+Add the ning http-client and the jackson dependencies as a dependency of your project. They will be used by the generated client code.
+
+Build the project using gradle to generate and compile the [scramlfont]#Scraml# code (`./gradlew build`). The generated code will appear in
+`build/generated-sources/scraml`.
+
+To see this in action, checkout the example project on github: https://github.com/atomicbits/scraml-test-java-gradle
+
+When you compile your project, you might see a lot of dependencies being downloaded that are needed for the codegeneration step. Keep in
+mind that these packages are all compile-time dependencies. They will not end up in your packaged project!
+
+
+=== Optional: use a license to overcome AGPL limitations
+
+[[gradle-license.key]]
+[source,groovy]
+.configure a license key for activating the commercial scraml license in your build.gralde file
+----
+scraml {
+    ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
+    licenseKey """U1Q7Q1ZQWnZMbHZSakQ7TGVwN0JSYkJXT2I7aW8uYXRvbWljYml0czsyMDE2LTA3LTAxOzM2NiFj
+                 |VzlubUlqM2t4a1o2aUZFUFhDQm5nb01pd005bXVrb0k3MVczUnI2cmxaYjc3UC92OWlRUDFXeHBD
+                 |Mk9Gd2hQcHBUVXkwYVBQZFhRCnJ6Y3VialdQv3d1c3gxVHVaOTAxNEVKbmI4cm9vdk1FakVqNlZw
+                 |UG1mLzVyaHdTUXg5bWRtOWxtTDdUVnJoWTM1MEZaNVNJVWxGcG4Kb201cWVkdGp5cEs5dHRhajd3
+                 |V3FEby9jN2FJOEtNZk9lME5wWjhidDBzUFFoZkdvV2VDMEZCWU9pTU1BdkZPWlNuWTZDNk1UNmhM
+                 |WQo0eEoxVWFrTkNaaFNOeHhqRUQyNk44SHBFcFlybjlKWWRBa1piME5mVm9hczM0bHQ4WmN1OWJE
+                 |bFExK3FmaDlmazlpbm5SdjVRVkhrCnEyMFJCZ3NKbHlubnFlZHdJYm5oNTk3V1hFTE4yVzNyTC9l
+                 |Mjl3PT0=""".stripMargin()
+    classHeader """All rights reserved.
+                  |This is a custom class header.""".stripMargin()
+}
+----
+
+In order to use your own custom license on the generated code, you can <<gradle-license.key>>. As soon as a valid license is configured
+using the `licenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
+the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
+generate and your own license applies instead.
+
+
+=== Optional: use a free license for non-commercial use
+
+In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
+can replace the license key in the previous section with the following statement of intend:
+
+[[gradle.statement.of.intend]]
+[source,java]
+.Free license statement of intend
+----
+<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
+----
+
+For example:
+
+[[gradle.statement.of.intend.example]]
+[source,groovy]
+.configure a free license statement of intend
+----
+scraml {
+    ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
+    licenseKey """We, Atomic BITS, use the free scraml license in this project without any intend
+                 |to serve commercial purposes for ourselves or anyone else.""".stripMargin()
+    classHeader """All rights reserved.
+                  |This is a custom class header.""".stripMargin()
+}
+----
+
+
+
+
+
+
 
 
 

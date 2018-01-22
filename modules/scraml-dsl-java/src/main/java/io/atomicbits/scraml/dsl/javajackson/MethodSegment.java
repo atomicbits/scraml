@@ -84,21 +84,21 @@ public abstract class MethodSegment<B, R> extends Segment {
     }
 
 
-    protected Future<Response<String>> callToStringResponse(String canonicalContentType) {
-        String stringBody = null;
-        if (this.getBody() != null) {
-            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
-        }
-        return requestBuilder.callToStringResponse(stringBody);
-    }
-
-    protected Future<Response<R>> callToTypeResponse(String canonicalContentType, String canonicalResponseType) {
-        String stringBody = null;
-        if (this.getBody() != null) {
-            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
-        }
-        return requestBuilder.callToTypeResponse(stringBody, canonicalResponseType);
-    }
+//    protected Future<Response<String>> callToStringResponse(String canonicalContentType) {
+//        String stringBody = null;
+//        if (this.getBody() != null) {
+//            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
+//        }
+//        return requestBuilder.callToStringResponse(stringBody);
+//    }
+//
+//    protected Future<Response<R>> callToTypeResponse(String canonicalContentType, String canonicalResponseType) {
+//        String stringBody = null;
+//        if (this.getBody() != null) {
+//            stringBody = Json.writeBodyToString(this.getBody(), canonicalContentType);
+//        }
+//        return requestBuilder.callToTypeResponse(stringBody, canonicalResponseType);
+//    }
 
     protected B getBody() {
         return body;

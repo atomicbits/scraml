@@ -37,7 +37,7 @@
 |OK
 
 |Date support
-|Ongoing
+|OK
 
 |File type support
 |Ongoing

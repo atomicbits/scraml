@@ -24,6 +24,8 @@ package io.atomicbits.scraml.dsl.javajackson.client;
 
 import com.ning.http.client.AsyncHttpClientConfigDefaults;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.nio.charset.Charset;
 
 /**
@@ -48,6 +50,10 @@ public class ClientConfig {
     private Boolean followRedirect = AsyncHttpClientConfigDefaults.defaultFollowRedirect();
     private int maxRedirects = AsyncHttpClientConfigDefaults.defaultMaxRedirects();
     private Boolean strict302Handling = AsyncHttpClientConfigDefaults.defaultStrict302Handling();
+    private Integer sslSessionTimeout = AsyncHttpClientConfigDefaults.defaultSslSessionTimeout();
+    private Integer sslSessionCacheSize = AsyncHttpClientConfigDefaults.defaultSslSessionCacheSize();
+    private SSLContext sslContext;
+    private HostnameVerifier hostnameVerifier;
 
     public ClientConfig() {
     }
@@ -224,5 +230,37 @@ public class ClientConfig {
 
     public void setWebSocketTimeout(int webSocketTimeout) {
         this.webSocketTimeout = webSocketTimeout;
+    }
+
+    public Integer getSslSessionTimeout() {
+        return sslSessionTimeout;
+    }
+
+    public void setSslSessionTimeout(Integer sslSessionTimeout) {
+        this.sslSessionTimeout = sslSessionTimeout;
+    }
+
+    public Integer getSslSessionCacheSize() {
+        return sslSessionCacheSize;
+    }
+
+    public void setSslSessionCacheSize(Integer sslSessionCacheSize) {
+        this.sslSessionCacheSize = sslSessionCacheSize;
+    }
+
+    public SSLContext getSslContext() {
+        return sslContext;
+    }
+
+    public void setSslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+    }
+
+    public HostnameVerifier getHostnameVerifier() {
+        return hostnameVerifier;
+    }
+
+    public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+        this.hostnameVerifier = hostnameVerifier;
     }
 }
