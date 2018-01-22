@@ -38,7 +38,7 @@ case class EnumGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceG
     // Accompany the enum names with their 'Java-safe' name.
     val enumsWithSafeName =
       enumDefinition.values map { value =>
-        val safeName = CleanNameUtil.escapeJavaKeyword(CleanNameUtil.cleanEnumName(value))
+        val safeName = javaJackson.escapeJavaKeyword(CleanNameUtil.cleanEnumName(value))
         s"""$safeName("$value")""" // e.g. space("spa ce")
       }
 
@@ -88,7 +88,7 @@ case class EnumGenerator(javaJackson: CommonJavaJacksonPlatform) extends SourceG
         content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggr.addSourceFile(sourceFile)
   }
 
 }

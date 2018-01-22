@@ -28,6 +28,7 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model.{ Parameter, QueryString }
 import TypedRestOps._
 import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 
 /**
   * Created by peter on 1/03/17.
@@ -175,7 +176,7 @@ class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extend
         case ListClassPointer(typeParamValue: PrimitiveClassPointer) => ("RepeatedHttpParam", List(sanitizedParameterName))
         case primitive: PrimitiveClassPointer                        => ("SimpleHttpParam", List(sanitizedParameterName))
         case complex =>
-          ("ComplexHttpParam", List(sanitizedParameterName, quoteString(classPointer.fullyQualifiedClassDefinition)))
+          ("ComplexHttpParam", List(sanitizedParameterName, CleanNameTools.quoteString(classPointer.fullyQualifiedClassDefinition)))
       }
 
     s"""params.put("$queryParameterName", new $httpParamType(${callParameters.mkString(", ")}));"""
@@ -246,9 +247,9 @@ class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extend
       if (queryStringType.isDefined) "new TypedQueryParams(queryString)"
       else "null"
 
-    val canonicalResponseT = canonicalResponseType(responseType).map(quoteString).getOrElse("null")
+    val canonicalResponseT = canonicalResponseType(responseType).map(CleanNameTools.quoteString).getOrElse("null")
 
-    val canonicalContentT = canonicalContentType(contentType).map(quoteString).getOrElse("null")
+    val canonicalContentT = canonicalContentType(contentType).map(CleanNameTools.quoteString).getOrElse("null")
 
     val callResponseType: String =
       platform match {

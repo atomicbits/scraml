@@ -135,7 +135,7 @@ case class TraitGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
         content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggr.addSourceFile(sourceFile)
   }
 
 }

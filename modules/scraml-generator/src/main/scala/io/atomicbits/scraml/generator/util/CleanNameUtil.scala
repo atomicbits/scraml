@@ -20,16 +20,14 @@
 package io.atomicbits.scraml.generator.util
 
 /**
- * Created by peter on 22/08/15. 
- */
+  * Created by peter on 22/08/15.
+  */
 object CleanNameUtil {
-
 
   def cleanClassNameFromFileName(fileName: String): String = {
     val withOutExtension = fileName.split('.').filter(_.nonEmpty).head
     cleanClassName(withOutExtension)
   }
-
 
   def cleanClassName(dirtyName: String): String = {
     // capitalize after special characters and drop those characters along the way
@@ -49,12 +47,9 @@ object CleanNameUtil {
     prepend$IfStartsWithNumber(dropInvalidCharacters(capitalized))
   }
 
-
   def cleanMethodName: String => String = cleanFieldName
 
-
   def cleanEnumName: String => String = cleanFieldName
-
 
   def cleanFieldName(dirtyName: String): String = {
     // we don't do capitalization on field names, we keep them as close to the original as possible!
@@ -63,12 +58,11 @@ object CleanNameUtil {
   }
 
   private def prepend$IfStartsWithNumber(name: String): String = {
-    if((0 to 9).map(number => name.startsWith(number.toString)).reduce(_ || _)) "$" + name
+    if ((0 to 9).map(number => name.startsWith(number.toString)).reduce(_ || _)) "$" + name
     else name
   }
 
   private def dropInvalidCharacters(name: String): String = name.replaceAll("[^A-Za-z0-9$_]", "")
-
 
   def camelCased(dirtyName: String): String = {
     val chars = dirtyName.toCharArray
@@ -76,41 +70,10 @@ object CleanNameUtil {
     new String(chars)
   }
 
-
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
 
-
-  def escapeJavaKeyword(someName: String, escape: String = "$"): String = {
-
-    val javaReservedWords =
-      List("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do",
-        "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof",
-        "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static",
-        "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while")
-
-    javaReservedWords.foldLeft(someName) { (name, resWord) =>
-      if (name == resWord) s"$name$escape"
-      else name
-    }
-
-  }
-
-
-  def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
-    val scalaReservedwords =
-      List("Byte", "Short", "Char", "Int", "Long", "Float", "Double", "Boolean", "Unit", "String", "abstract", "case", "catch", "class",
-        "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new",
-        "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try",
-        "true", "type", "val", "var", "while", "with", "yield")
-
-
-    scalaReservedwords.foldLeft(someName) { (name, resWord) =>
-      if (name == resWord) s"$name$$"
-      else name
-    }
-
-  }
+  def quoteString(text: String): String = s""""$text""""
 
 }

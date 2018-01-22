@@ -227,65 +227,63 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
     }
   }
 
-  def escapeScalaKeyword(someName: String, escape: String = "$"): String = {
-    val scalaReservedwords =
-      List(
-        "Byte",
-        "Short",
-        "Char",
-        "Int",
-        "Long",
-        "Float",
-        "Double",
-        "Boolean",
-        "Unit",
-        "String",
-        "abstract",
-        "case",
-        "catch",
-        "class",
-        "def",
-        "do",
-        "else",
-        "extends",
-        "false",
-        "final",
-        "finally",
-        "for",
-        "forSome",
-        "if",
-        "implicit",
-        "import",
-        "lazy",
-        "match",
-        "new",
-        "null",
-        "object",
-        "override",
-        "package",
-        "private",
-        "protected",
-        "return",
-        "sealed",
-        "super",
-        "this",
-        "throw",
-        "trait",
-        "try",
-        "true",
-        "type",
-        "val",
-        "var",
-        "while",
-        "with",
-        "yield"
-      )
+  val reservedKeywords =
+    Set(
+      "Byte",
+      "Short",
+      "Char",
+      "Int",
+      "Long",
+      "Float",
+      "Double",
+      "Boolean",
+      "Unit",
+      "String",
+      "abstract",
+      "case",
+      "catch",
+      "class",
+      "def",
+      "do",
+      "else",
+      "extends",
+      "false",
+      "final",
+      "finally",
+      "for",
+      "forSome",
+      "if",
+      "implicit",
+      "import",
+      "lazy",
+      "match",
+      "new",
+      "null",
+      "object",
+      "override",
+      "package",
+      "private",
+      "protected",
+      "return",
+      "sealed",
+      "super",
+      "this",
+      "throw",
+      "trait",
+      "try",
+      "true",
+      "type",
+      "val",
+      "var",
+      "while",
+      "with",
+      "yield"
+    )
 
-    scalaReservedwords.foldLeft(someName) { (name, resWord) =>
+  def escapeScalaKeyword(someName: String, escape: String = "$"): String =
+    reservedKeywords.foldLeft(someName) { (name, resWord) =>
       if (name == resWord) s"$name$escape"
       else name
     }
-
-  }
 
 }

@@ -57,8 +57,6 @@ trait ActionCode {
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String
 
-  def quoteString(text: String): String = s""""$text""""
-
   def generateAction(actionSelection: ActionSelection,
                      bodyType: Option[ClassPointer],
                      queryStringType: Option[ClassPointer],

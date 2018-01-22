@@ -46,6 +46,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   TypeParameter => CanonicalTypeParameter
 }
 import io.atomicbits.scraml.generator.typemodel._
+import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
   * Created by peter on 10/01/17.
@@ -120,6 +121,14 @@ trait Platform {
     * @return The relative file name for the given class.
     */
   def toFilePath(classPointer: ClassPointer): Path
+
+  /**
+    * Platform specific mapping from the generated sourcefiles. Mostly the original sources will be kept, hence the
+    * default implementation. Other platforms will map the sources into a single file (e.g. typescript).
+    */
+  def mapSourceFiles(sources: Set[SourceFile], combinedSourcesFileName: Option[String] = None): Set[SourceFile] = sources
+
+  def reservedKeywords: Set[String]
 
 }
 
