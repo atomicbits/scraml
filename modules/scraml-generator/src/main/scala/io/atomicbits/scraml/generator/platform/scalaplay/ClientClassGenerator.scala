@@ -61,6 +61,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
          package ${apiPackage.mkString(".")}
 
          import $dslBasePackage.client.{ClientFactory, ClientConfig}
+         import $dslBasePackage.RestException
          import $dslBasePackage.RequestBuilder
          import $dslBasePackage.client.ning.Ning19ClientFactory
          import java.net.URL
@@ -141,7 +142,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                  val message =
                    if (resp.status != 200) s"The response has no string body because the request was not successful (status = $${resp.status})."
                    else "The response has no string body despite status 200."
-                 throw new IllegalArgumentException(message)
+                 throw new RestException(message, resp.status)
                }
              }
 
@@ -151,7 +152,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                    val message =
                      if (resp.status != 200) s"The response has no JSON body because the request was not successful (status = $${resp.status})."
                      else "The response has no JSON body despite status 200."
-                   throw new IllegalArgumentException(message)
+                   throw new RestException(message, resp.status)
                  }
                }
 
@@ -161,7 +162,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                    val message =
                      if (resp.status != 200) s"The response has no typed body because the request was not successful (status = $${resp.status})."
                      else "The response has no typed body despite status 200."
-                   throw new IllegalArgumentException(message)
+                   throw new RestException(message, resp.status)
                  }
                }
 
