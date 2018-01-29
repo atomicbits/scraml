@@ -38,7 +38,7 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
     Given("a RAML 1.0 specification with some types defined")
     val defaultBasePath = List("io", "atomicbits", "types")
-    val parser          = RamlParser("/types/TypesTestApi.raml", "UTF-8", defaultBasePath)
+    val parser          = RamlParser("/types/TypesTestApi.raml", "UTF-8")
 
     When("we parse the specification")
     val parsedModel: Try[Raml] = parser.parse

@@ -40,7 +40,7 @@ class DateTypesTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
 
     Given("a RAML 1.0 specification with date types")
     val defaultBasePath = List("io", "atomicbits", "types")
-    val parser          = RamlParser("/date-types/DateTypesTest.raml", "UTF-8", defaultBasePath)
+    val parser          = RamlParser("/date-types/DateTypesTest.raml", "UTF-8")
 
     When("we parse the specification")
     val parsedModel: Try[Raml] = parser.parse

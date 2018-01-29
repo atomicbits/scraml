@@ -35,7 +35,7 @@ class NativeClassHierarchyTest extends FeatureSpec with GivenWhenThen with Befor
 
       Given("a RAML 1.0 specification with json-schema types")
       val defaultBasePath = List("io", "atomicbits", "model")
-      val parser          = RamlParser("/nativeclasshierarchy/NativeClassHierarchyTest.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/nativeclasshierarchy/NativeClassHierarchyTest.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel = parser.parse

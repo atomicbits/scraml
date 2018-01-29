@@ -37,7 +37,7 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
 
       Given("a RAML specification containing a json-schema definition with type parameters")
       val defaultBasePath = List("io", "atomicbits", "raml10")
-      val parser          = RamlParser("/typeparameters08/zoo-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/typeparameters08/zoo-api.raml", "UTF-8")
 
       When("we parse the specification")
       val raml: Raml                     = parser.parse.get
@@ -74,7 +74,7 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
 
       Given("a RAML specification containing a RAML 1.0 definition with type parameters")
       val defaultBasePath = List("io", "atomicbits", "raml10")
-      val parser          = RamlParser("/typeparameters10/zoo-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/typeparameters10/zoo-api.raml", "UTF-8")
 
       When("we parse the specification")
       val raml: Raml                     = parser.parse.get

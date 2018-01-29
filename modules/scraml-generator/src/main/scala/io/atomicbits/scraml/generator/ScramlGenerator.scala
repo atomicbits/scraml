@@ -139,7 +139,11 @@ object ScramlGenerator {
         .extract()
         .map(DslSourceRewriter.rewrite)
 
-    val combinedSources = platform.mapSourceFiles((sources ++ dslSources).toSet, Option(singleTargeSourceFileName))
+    val singleSourceFile =
+      Option(singleTargeSourceFileName).collect {
+        case name if name.nonEmpty => name
+      }
+    val combinedSources = platform.mapSourceFiles((sources ++ dslSources).toSet, singleSourceFile)
 
     val tupleList =
       combinedSources
@@ -157,7 +161,7 @@ object ScramlGenerator {
 
     // Generate the RAML model
     println("Running RAML model generation")
-    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName, thePlatform.apiBasePackageParts).parse
+    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName).parse
     val raml = tryRaml match {
       case Success(rml) => rml
       case Failure(rpe: RamlParseException) =>

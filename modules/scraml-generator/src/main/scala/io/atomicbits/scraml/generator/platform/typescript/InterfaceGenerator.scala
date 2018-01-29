@@ -53,7 +53,7 @@ case class InterfaceGenerator(typeScript: TypeScript) extends SourceGenerator {
       s"""
          |export interface ${classReference.classDefinition} $extendsInterfaces {
          |  ${fieldDefinitions.mkString("\n")}
-         |  [k: string]: any
+         |  [otherFields: string]: any
          |}
        """.stripMargin
 

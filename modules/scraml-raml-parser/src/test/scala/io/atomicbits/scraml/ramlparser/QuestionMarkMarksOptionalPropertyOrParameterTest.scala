@@ -36,7 +36,7 @@ class QuestionMarkMarksOptionalPropertyOrParameterTest extends FeatureSpec with 
 
       Given("a RAML specification with an optional property marked by a '?'")
       val defaultBasePath = List("io", "atomicbits", "raml10")
-      val parser          = RamlParser("/questionmarkforoptional/questionmark-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/questionmarkforoptional/questionmark-api.raml", "UTF-8")
 
       When("we parse the RAML spec")
       val raml: Raml = parser.parse.get
@@ -57,7 +57,7 @@ class QuestionMarkMarksOptionalPropertyOrParameterTest extends FeatureSpec with 
 
       Given("a RAML specification with an optional parameter marked by a '?'")
       val defaultBasePath = List("io", "atomicbits", "raml10")
-      val parser          = RamlParser("/questionmarkforoptional/questionmark-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/questionmarkforoptional/questionmark-api.raml", "UTF-8")
 
       When("we parse the RAML spec")
       val raml: Raml = parser.parse.get

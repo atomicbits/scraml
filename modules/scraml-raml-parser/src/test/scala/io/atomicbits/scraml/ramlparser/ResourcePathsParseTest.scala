@@ -40,7 +40,7 @@ class ResourcePathsParseTest extends FeatureSpec with GivenWhenThen with BeforeA
 
       Given("a RAML 1.0 specification")
       val defaultBasePath = List("io", "atomicbits", "schema")
-      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

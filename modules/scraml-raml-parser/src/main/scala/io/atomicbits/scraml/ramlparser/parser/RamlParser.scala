@@ -29,7 +29,7 @@ import scala.util.Try
 /**
   * Created by peter on 6/02/16.
   */
-case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: List[String]) {
+case class RamlParser(ramlSource: String, charsetName: String) {
 
   def parse: Try[Raml] = {
     val JsonFile(path, ramlJson) = RamlToJsonParser.parseToJson(ramlSource, charsetName)
@@ -38,11 +38,6 @@ case class RamlParser(ramlSource: String, charsetName: String, defaultPackage: L
         case ramlJsObj: JsObject => parseRamlJsonDocument(path.getParent, ramlJsObj)
         case x                   => sys.error(s"Could not parse $ramlSource, expected a RAML document.")
       }
-
-    require(
-      defaultPackage.length > 1,
-      s"The default package should contain at least 2 fragments, now it has only one or less: $defaultPackage."
-    )
 
     val parseContext = ParseContext(List(ramlSource), List.empty)
 

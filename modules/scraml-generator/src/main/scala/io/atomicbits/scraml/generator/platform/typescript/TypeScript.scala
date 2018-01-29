@@ -41,9 +41,9 @@ case class TypeScript() extends Platform with CleanNameTools {
 
   implicit val platform: TypeScript = this
 
-  override def dslBasePackageParts = ??? // not yet implemented
+  override def dslBasePackageParts = List.empty
 
-  override def rewrittenDslBasePackage = ??? // not yet implemented
+  override def rewrittenDslBasePackage = List.empty
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer): ClassReference = {
     classPointer match {
@@ -67,8 +67,7 @@ case class TypeScript() extends Platform with CleanNameTools {
         ClassReference(name = "InputStream", packageParts = List(), library = true)
         ??? // not implemented
       case JsObjectClassPointer =>
-        ClassReference(name = "JsObject", packageParts = List(), library = true)
-        ??? // not implemented
+        ClassReference(name = "any", packageParts = List(), library = true)
       case JsValueClassPointer =>
         ClassReference(name = "JsValue", packageParts = List(), library = true)
         ??? // not implemented
@@ -187,12 +186,11 @@ case class TypeScript() extends Platform with CleanNameTools {
   override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition) =
     EnumGenerator(this).generate(generationAggr, enumDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition) = ??? // not implemented
+  override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition) = generationAggr
 
-  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition) = ??? // not implemented
+  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition) = generationAggr
 
-  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition) =
-    ??? // not implemented
+  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition) = generationAggr
 
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition) =
     UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
@@ -287,7 +285,10 @@ case class TypeScript() extends Platform with CleanNameTools {
       "type",
       "from",
       "of"
-    )
+    ) ++
+      Set(
+        "otherFields"
+      ) // These are the fields we have reserved by scraml.
 
   def escapeTypeScriptKeyword(someName: String, escape: String = "$"): String =
     reservedKeywords.foldLeft(someName) { (name, resWord) =>
