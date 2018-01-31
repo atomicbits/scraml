@@ -37,7 +37,7 @@ class QueryParameterParseTest extends FeatureSpec with GivenWhenThen with Before
     scenario("test parsing query parameters in a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
-      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+      val parser = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

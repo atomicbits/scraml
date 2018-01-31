@@ -36,6 +36,7 @@ import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
+import io.atomicbits.scraml.generator.platform.typescript.TypeScript
 
 /**
   * The main Scraml generator class.
@@ -46,6 +47,7 @@ object ScramlGenerator {
   val JAVA_JACKSON: String         = "JavaJackson".toLowerCase
   val SCALA_PLAY: String           = "ScalaPlay".toLowerCase
   val ANDROID_JAVA_JACKSON: String = "AndroidJavaJackson".toLowerCase
+  val TYPESCRIPT: String           = "TypeScript".toLowerCase
   val OSX_SWIFT: String            = "OsxSwift".toLowerCase
   val PYTHON: String               = "Python".toLowerCase
   val CSHARP: String               = "C#".toLowerCase
@@ -58,7 +60,8 @@ object ScramlGenerator {
                          apiPackageName: String,
                          apiClassName: String,
                          licenseKey: String,
-                         thirdPartyClassHeader: String): JMap[String, String] =
+                         thirdPartyClassHeader: String,
+                         singleTargeSourceFileName: String): JMap[String, String] =
     platform.toLowerCase match {
       case JAVA_JACKSON =>
         generateFor(
@@ -66,7 +69,8 @@ object ScramlGenerator {
           ramlApiPath,
           apiClassName,
           licenseKey,
-          thirdPartyClassHeader
+          thirdPartyClassHeader,
+          singleTargeSourceFileName
         )
       case SCALA_PLAY =>
         generateFor(
@@ -74,7 +78,8 @@ object ScramlGenerator {
           ramlApiPath,
           apiClassName,
           licenseKey,
-          thirdPartyClassHeader
+          thirdPartyClassHeader,
+          singleTargeSourceFileName
         )
       case ANDROID_JAVA_JACKSON =>
         generateFor(
@@ -82,35 +87,31 @@ object ScramlGenerator {
           ramlApiPath,
           apiClassName,
           licenseKey,
-          thirdPartyClassHeader
+          thirdPartyClassHeader,
+          singleTargeSourceFileName
         )
+      case TYPESCRIPT => {
+        generateFor(
+          TypeScript(),
+          ramlApiPath,
+          apiClassName,
+          licenseKey,
+          thirdPartyClassHeader,
+          singleTargeSourceFileName
+        )
+      }
       case OSX_SWIFT => sys.error(s"There is no iOS support yet.")
       case PYTHON    => sys.error(s"There is no Python support yet.")
       case CSHARP    => sys.error(s"There is no C# support yet.")
       case unknown   => sys.error(s"Unknown platform: $unknown")
     }
 
-  @deprecated("Use generateScramlCode instead", "since 0.7.0")
-  def generateScalaCode(ramlApiPath: String,
-                        apiPackageName: String,
-                        apiClassName: String,
-                        licenseKey: String,
-                        thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(ScalaPlay(packageNameToPackagParts(apiPackageName)), ramlApiPath, apiClassName, licenseKey, thirdPartyClassHeader)
-
-  @deprecated("Use generateScramlCode instead", "since 0.7.0")
-  def generateJavaCode(ramlApiPath: String,
-                       apiPackageName: String,
-                       apiClassName: String,
-                       licenseKey: String,
-                       thirdPartyClassHeader: String): JMap[String, String] =
-    generateFor(JavaJackson(packageNameToPackagParts(apiPackageName)), ramlApiPath, apiClassName, licenseKey, thirdPartyClassHeader)
-
   private[generator] def generateFor(platform: Platform,
                                      ramlApiPath: String,
                                      apiClassName: String,
                                      scramlLicenseKey: String,
-                                     thirdPartyClassHeader: String): JMap[String, String] = {
+                                     thirdPartyClassHeader: String,
+                                     singleTargeSourceFileName: String): JMap[String, String] = {
 
     println(s"Generating client for platform ${platform.name}.")
 
@@ -138,8 +139,14 @@ object ScramlGenerator {
         .extract()
         .map(DslSourceRewriter.rewrite)
 
+    val singleSourceFile =
+      Option(singleTargeSourceFileName).collect {
+        case name if name.nonEmpty => name
+      }
+    val combinedSources = platform.mapSourceFiles((sources ++ dslSources).toSet, singleSourceFile)
+
     val tupleList =
-      (sources ++ dslSources)
+      combinedSources
         .map(addLicenseAndFormat(_, platform, licenseHeader))
         .map(sourceFile => (sourceFile.filePath.toString, sourceFile.content))
 
@@ -154,7 +161,7 @@ object ScramlGenerator {
 
     // Generate the RAML model
     println("Running RAML model generation")
-    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName, thePlatform.apiBasePackageParts).parse
+    val tryRaml: Try[Raml] = RamlParser(ramlApiPath, charsetName).parse
     val raml = tryRaml match {
       case Success(rml) => rml
       case Failure(rpe: RamlParseException) =>

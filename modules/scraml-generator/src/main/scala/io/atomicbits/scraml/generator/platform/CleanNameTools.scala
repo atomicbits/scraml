@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator.platform
 /**
   * Created by peter on 13/01/17.
   */
-trait CleanNameTools {
+trait CleanNameTools { // ToDo: this is a duplicate of CleanNameUtil, so refactor and remove one of the two
 
   def cleanClassNameFromFileName(fileName: String): String = {
     val withOutExtension = fileName.split('.').filter(_.nonEmpty).head
@@ -73,6 +73,8 @@ trait CleanNameTools {
   def cleanPackageName(dirtyName: String): String = {
     cleanClassName(dirtyName).toLowerCase
   }
+
+  def quoteString(text: String): String = s""""$text""""
 
 }
 

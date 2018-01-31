@@ -40,7 +40,7 @@ class InlineObjectTest extends FeatureSpec with GivenWhenThen with BeforeAndAfte
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "model")
-      val parser          = RamlParser("/inlineobject/test-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/inlineobject/test-api.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse

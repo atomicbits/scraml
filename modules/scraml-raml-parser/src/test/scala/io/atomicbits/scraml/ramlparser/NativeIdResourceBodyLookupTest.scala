@@ -37,7 +37,7 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
 
       Given("a RAML 1.0 specification with json-schema types")
       val defaultBasePath = List("io", "atomicbits", "model")
-      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel = parser.parse
@@ -68,7 +68,7 @@ class NativeIdResourceBodyLookupTest extends FeatureSpec with GivenWhenThen with
 
       Given("A RAML 0.8 specification with a json-schema that has its required fields defined outside the object properties")
       val defaultBasePath = List("io", "atomicbits", "model")
-      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/json-schema-types/TestApi.raml", "UTF-8")
 
       When("we parse the spec")
       val parsedModel = parser.parse
