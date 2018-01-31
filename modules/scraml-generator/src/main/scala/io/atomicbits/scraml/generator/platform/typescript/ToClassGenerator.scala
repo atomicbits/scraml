@@ -54,9 +54,18 @@ case class ToClassGenerator(typeScript: TypeScript) extends SourceGenerator {
       (toClassDefinition.typeDiscriminator +: recursiveExtendedParents.map(_.typeDiscriminator)).flatten.headOption
         .getOrElse(defaultDiscriminator)
 
+    // register all parents for interface generation
+    val parentInterfacesToGenerate =
+      recursiveExtendedParents.map(TransferObjectInterfaceDefinition(_, discriminator))
+
+    val generationAggrWithParentInterfaces =
+      parentInterfacesToGenerate.foldLeft(generationAggr) { (aggr, parentInt) =>
+        aggr.addInterfaceSourceDefinition(parentInt)
+      }
+
     val interfaceDefinition = TransferObjectInterfaceDefinition(toClassDefinition, discriminator)
 
-    generationAggr.addInterfaceSourceDefinition(interfaceDefinition) // We only generate interfaces
+    generationAggrWithParentInterfaces.addInterfaceSourceDefinition(interfaceDefinition) // We only generate interfaces
   }
 
 }

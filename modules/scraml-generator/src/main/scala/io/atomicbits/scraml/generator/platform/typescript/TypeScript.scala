@@ -164,16 +164,18 @@ case class TypeScript() extends Platform with CleanNameTools {
 
   override def safePackageParts(classPointer: ClassPointer): List[String] = List()
 
-  override def safeFieldName(field: Field) = {
-    val cleanName = cleanFieldName(field.fieldName)
-    escapeTypeScriptKeyword(cleanName)
+  override def safeFieldName(field: Field): String = {
+    // In typescript, all field names are allowed, even reserved words.
+    // If the field name contains spaces, then we need to quote it.
+    if (field.fieldName.contains(' ')) quoteString(field.fieldName)
+    else field.fieldName
   }
 
   override def fieldDeclarationWithDefaultValue(field: Field) = fieldDeclaration(field)
 
   override def fieldDeclaration(field: Field) =
-    if (field.required) s"${safeFieldName(field)}: ${classDefinition(field.classPointer)}"
-    else s"${safeFieldName(field)}?: ${classDefinition(field.classPointer)}"
+    if (field.required) s"${safeFieldName(field)}: ${classDefinition(field.classPointer)},"
+    else s"${safeFieldName(field)}?: ${classDefinition(field.classPointer)},"
 
   override def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer]): Set[String] = Set()
 

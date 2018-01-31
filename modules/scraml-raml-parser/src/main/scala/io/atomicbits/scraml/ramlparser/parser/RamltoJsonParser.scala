@@ -47,7 +47,9 @@ object RamlToJsonParser {
       (path, anyToJson(ramlMap))
     } match {
       case Success((path, jsvalue)) => JsonFile(path, jsvalue)
-      case Failure(ex)              => sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
+      case Failure(ex) =>
+        ex.printStackTrace()
+        sys.error(s"Parsing $source resulted in the following error:\n${ex.getMessage}")
     }
   }
 

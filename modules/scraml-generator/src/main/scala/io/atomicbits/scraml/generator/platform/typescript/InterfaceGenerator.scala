@@ -23,7 +23,7 @@
 package io.atomicbits.scraml.generator.platform.typescript
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
+import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel.TransferObjectInterfaceDefinition
 import Platform._
 import io.atomicbits.scraml.ramlparser.parser.SourceFile
@@ -49,10 +49,22 @@ case class InterfaceGenerator(typeScript: TypeScript) extends SourceGenerator {
 
     val fieldDefinitions: Seq[String] = toInterfaceDefinition.fields.map(_.fieldDeclaration)
 
+    val typeDiscriminatorFieldDefinition: String = {
+
+      val typeDiscriminatorFieldDefOpt =
+        for {
+          typeDiscriminator <- toInterfaceDefinition.origin.typeDiscriminator
+          typeDiscriminatorValue <- toInterfaceDefinition.origin.typeDiscriminatorValue
+        } yield s"$typeDiscriminator: ${CleanNameTools.quoteString(typeDiscriminatorValue)},"
+
+      typeDiscriminatorFieldDefOpt.getOrElse("")
+    }
+
     val source =
       s"""
          |export interface ${classReference.classDefinition} $extendsInterfaces {
-         |  ${fieldDefinitions.mkString("\n")}
+         |  ${fieldDefinitions.mkString("\n  ")}
+         |  $typeDiscriminatorFieldDefinition
          |  [otherFields: string]: any
          |}
        """.stripMargin
