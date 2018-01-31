@@ -19,8 +19,8 @@
 
 package io.atomicbits.scraml.generator.platform.scalaplay
 
-import io.atomicbits.scraml.generator.codegen.{DslSourceRewriter, GenerationAggr}
-import io.atomicbits.scraml.generator.platform.{Platform, SourceGenerator}
+import io.atomicbits.scraml.generator.codegen.{ DslSourceRewriter, GenerationAggr }
+import io.atomicbits.scraml.generator.platform.{ Platform, SourceGenerator }
 import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
@@ -61,7 +61,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
     // Add all parents recursively as traits to implement and collect all fields.
     val parentNames: List[CanonicalName] = generationAggr.allParents(originalToCanonicalName)
-    val traitsAndFieldsAggr = (initialTosWithTrait, initialFields)
+    val traitsAndFieldsAggr              = (initialTosWithTrait, initialFields)
 
     val (recursiveExtendedTraits, collectedFields) =
       parentNames.foldLeft(traitsAndFieldsAggr) { (aggr, parentName) =>
@@ -69,7 +69,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
         val parentDefinition: TransferObjectClassDefinition =
           generationAggr.toMap.getOrElse(parentName, sys.error(s"Expected to find $parentName in the generation aggregate."))
         val withParentFields = fields ++ parentDefinition.fields
-        val withParentTrait = traits :+ parentDefinition
+        val withParentTrait  = traits :+ parentDefinition
         (withParentTrait, withParentFields)
       }
 
@@ -140,7 +140,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
     def isRecursive(field: Field): Boolean = isRecursiveClassReference(field.classPointer.native)
 
     def isRecursiveClassReference(classReference: ClassReference): Boolean = {
-      val hasRecursiveType = selfAndParents.contains(classReference)
+      val hasRecursiveType         = selfAndParents.contains(classReference)
       val typeParamClassReferences = classReference.typeParamValues.map(_.native)
       typeParamClassReferences.foldLeft(hasRecursiveType) {
         case (aggr, typeParamClassReference) => aggr || isRecursiveClassReference(typeParamClassReference.native)
@@ -163,7 +163,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                                 generationAggr: GenerationAggr): GenerationAggr = {
 
     val importPointers = {
-      val ownFields = fields.map(_.classPointer) // includes all the fields of its parents for case classes
+      val ownFields      = fields.map(_.classPointer) // includes all the fields of its parents for case classes
       val traitsToExtend = traits.map(_.classReference)
 
       (ownFields ++ traitsToExtend).toSet
@@ -198,10 +198,10 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
     val sourceFile =
       SourceFile(
         filePath = toClassReference.toFilePath,
-        content = source
+        content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggr.addSourceFile(sourceFile)
   }
 
   private def selectAndSortFields(fields: Seq[Field], skipFieldName: Option[String] = None): Seq[Field] = {
@@ -250,7 +250,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
        */
       val typeParametersFormat = toClassReference.typeParameters.map(typeParameter => s"${typeParameter.name}: Format")
       (s"import play.api.libs.functional.syntax._",
-        s"def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${toClassReference.classDefinition}] = ")
+       s"def jsonFormatter[${typeParametersFormat.mkString(",")}]: Format[${toClassReference.classDefinition}] = ")
     }
 
     def singleFieldFormatterBody =
@@ -268,7 +268,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
       val (fieldGroupDefinitions, fieldGroupNames): (List[String], List[String]) =
         groupedFields.zipWithIndex.map {
           case (group, index) =>
-            val formatFields = group.map(field => platform.fieldFormatUnlift(field, recursiveFields))
+            val formatFields   = group.map(field => platform.fieldFormatUnlift(field, recursiveFields))
             val fieldGroupName = s"fieldGroup$index"
             val fieldGroupDefinition =
               if (formatFields.size > 1) {
@@ -289,22 +289,18 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
            ${fieldGroupDefinitions.mkString("\n")}
 
            (${fieldGroupNames.mkString(" and ")}).apply({
-             case (${
-        groupedFields
-          .map { group =>
-            s"(${group.map(_.safeFieldName).mkString(", ")})"
-          }
-          .mkString(", ")
-      })
+             case (${groupedFields
+        .map { group =>
+          s"(${group.map(_.safeFieldName).mkString(", ")})"
+        }
+        .mkString(", ")})
                => ${toClassReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
            }, cclass =>
-              (${
-        groupedFields
-          .map { group =>
-            s"(${group.map(_.safeFieldName).map(cf => s"cclass.$cf").mkString(", ")})"
-          }
-          .mkString(", ")
-      })
+              (${groupedFields
+        .map { group =>
+          s"(${group.map(_.safeFieldName).map(cf => s"cclass.$cf").mkString(", ")})"
+        }
+        .mkString(", ")})
            )
         }
        """
@@ -336,27 +332,27 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
     def simpleFormatter: (String, String) =
       ("", s"val jsonFormatter: Format[${toClassReference.classDefinition}] = Json.format[${toClassReference.classDefinition}]")
 
-    val hasTypeVariables = toClassReference.typeParameters.nonEmpty
-    val anyFieldRenamed = sortedFields.exists(field => field.fieldName != field.safeFieldName)
-    val hasSingleField = formatUnLiftFields.size == 1
-    val hasOver22Fields = formatUnLiftFields.size > 22
-    val hasJsonTypeInfo = jsonTypeInfo.isDefined
+    val hasTypeVariables   = toClassReference.typeParameters.nonEmpty
+    val anyFieldRenamed    = sortedFields.exists(field => field.fieldName != field.safeFieldName)
+    val hasSingleField     = formatUnLiftFields.size == 1
+    val hasOver22Fields    = formatUnLiftFields.size > 22
+    val hasJsonTypeInfo    = jsonTypeInfo.isDefined
     val hasRecursiveFields = recursiveFields.nonEmpty
 
     // ToDo: Inject the json type discriminator and its value on the write side if there is one defined.
     // ToDo: make jsonFormatter not implicit and use it in the TypeHint in Animal and make a new implicit typedJsonFormatter that extends
     // ToDo: the jsonFormatter with the type discriminator and its value. Peek in the TypeHint implementation for how to do the latter
     val ((imports, formatter), body) =
-    (hasTypeVariables, anyFieldRenamed, hasSingleField, hasOver22Fields, hasJsonTypeInfo, hasRecursiveFields) match {
-      case (true, _, true, _, _, _)       => (complexTypedFormatterDefinition, singleFieldFormatterBody)
-      case (true, _, _, true, _, _)       => (complexTypedFormatterDefinition, over22FieldFormatterBody)
-      case (true, _, _, _, _, _)          => (complexTypedFormatterDefinition, multiFieldFormatterBody)
-      case (false, _, true, _, _, _)      => (complexFormatterDefinition, singleFieldFormatterBody)
-      case (false, _, _, true, _, _)      => (complexFormatterDefinition, over22FieldFormatterBody)
-      case (false, true, false, _, _, _)  => (complexFormatterDefinition, multiFieldFormatterBody)
-      case (false, false, _, _, _, true)  => (complexFormatterDefinition, multiFieldFormatterBody)
-      case (false, false, _, _, _, false) => (simpleFormatter, "")
-    }
+      (hasTypeVariables, anyFieldRenamed, hasSingleField, hasOver22Fields, hasJsonTypeInfo, hasRecursiveFields) match {
+        case (true, _, true, _, _, _)       => (complexTypedFormatterDefinition, singleFieldFormatterBody)
+        case (true, _, _, true, _, _)       => (complexTypedFormatterDefinition, over22FieldFormatterBody)
+        case (true, _, _, _, _, _)          => (complexTypedFormatterDefinition, multiFieldFormatterBody)
+        case (false, _, true, _, _, _)      => (complexFormatterDefinition, singleFieldFormatterBody)
+        case (false, _, _, true, _, _)      => (complexFormatterDefinition, over22FieldFormatterBody)
+        case (false, true, false, _, _, _)  => (complexFormatterDefinition, multiFieldFormatterBody)
+        case (false, false, _, _, _, true)  => (complexFormatterDefinition, multiFieldFormatterBody)
+        case (false, false, _, _, _, false) => (simpleFormatter, "")
+      }
 
     val objectName = toClassReference.name
 

@@ -41,7 +41,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schema")
-      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
@@ -96,7 +96,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       Given("a RAML specification containing json-schema definitions")
       val defaultBasePath = List("io", "atomicbits", "schema")
-      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse
@@ -225,7 +225,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       Given("a RAML specification containing RAML 1.0 definitions")
       val defaultBasePath = List("io", "atomicbits", "schema")
-      val parser          = RamlParser("/nativeidlookup/NativeIdLookupTest.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/nativeidlookup/NativeIdLookupTest.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

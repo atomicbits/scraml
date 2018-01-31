@@ -43,7 +43,7 @@ class MultipleAcceptHeadersTest extends FeatureSpec with GivenWhenThen with Befo
       When("we generate the RAMl specification into a resource DSL")
       implicit val platform = ScalaPlay(packageBasePath)
 
-      val raml: Raml = RamlParser("multipleacceptheaders/TestMultipleAcceptHeaders.raml", "UTF-8", packageBasePath).parse.get
+      val raml: Raml = RamlParser("multipleacceptheaders/TestMultipleAcceptHeaders.raml", "UTF-8").parse.get
 
       val (ramlExp, canonicalLookup) = raml.collectCanonicals(packageBasePath)
 

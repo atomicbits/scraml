@@ -38,7 +38,7 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
     scenario("test parsing fragments in json-schema") {
 
       Given("a json-schema containing fragments")
-      val parser = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", List("io", "atomicbits", "model"))
+      val parser = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse
@@ -73,7 +73,7 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
 
       Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
       val defaultBasePath = List("io", "atomicbits", "schemas")
-      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

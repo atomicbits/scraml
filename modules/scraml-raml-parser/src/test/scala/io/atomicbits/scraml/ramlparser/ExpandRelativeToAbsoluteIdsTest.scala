@@ -39,7 +39,7 @@ class ExpandRelativeToAbsoluteIdsTest extends FeatureSpec with GivenWhenThen wit
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schemas")
-      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

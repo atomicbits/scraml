@@ -39,7 +39,7 @@ class ResourceTypesParseTest extends FeatureSpec with GivenWhenThen with BeforeA
     scenario("test the application of unparameterized resourceTypes in a RAML 1.0 model") {
 
       Given("a RAML 1.0 specification with a resourceTypes definition")
-      val parser = RamlParser("/resourcetypes/zoo-api.raml", "UTF-8", List("io", "atomicbits", "zoo"))
+      val parser = RamlParser("/resourcetypes/zoo-api.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse
@@ -69,7 +69,7 @@ class ResourceTypesParseTest extends FeatureSpec with GivenWhenThen with BeforeA
     scenario("test the application of parameterized resourceTypes in a RAML 1.0 model") {
 
       Given("a RAML 1.0 specification with a parameterized resourceTypes definition")
-      val parser = RamlParser("/resourcetypes/zoo-api.raml", "UTF-8", List("io", "atomicbits", "zoo"))
+      val parser = RamlParser("/resourcetypes/zoo-api.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml] = parser.parse

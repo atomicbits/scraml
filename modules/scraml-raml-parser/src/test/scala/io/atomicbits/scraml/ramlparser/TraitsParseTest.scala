@@ -34,7 +34,7 @@ class TraitsParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfter
   scenario("test the application of traits in a complex RAML 1.0 model") {
 
     Given("a RAML 1.0 specification with a traits definition")
-    val parser = RamlParser("/raml08/TestApi.raml", "UTF-8", List("io", "atomicbits", "schemas"))
+    val parser = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
     When("we parse the specification")
     val parsedModel: Try[Raml] = parser.parse

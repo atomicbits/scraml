@@ -144,7 +144,7 @@ case class InterfaceGenerator(javaJackson: CommonJavaJacksonPlatform) extends So
         content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggr.addSourceFile(sourceFile)
   }
 
   private def generateInterfaceSource(toClassReference: ClassReference,

@@ -40,7 +40,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schemas")
-      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
@@ -86,7 +86,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
       val defaultBasePath = List("io", "atomicbits", "schemas")
-      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/raml08/TestApi.raml", "UTF-8")
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse

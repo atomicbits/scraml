@@ -37,7 +37,7 @@ class InlineQueryparameterTest extends FeatureSpec with GivenWhenThen with Befor
 
       Given("a RAML specification with an inline enum query parameter")
       val defaultBasePath = List("io", "atomicbits", "raml10")
-      val parser          = RamlParser("/inlinequeryparameter/inlinequeryparameter-api.raml", "UTF-8", defaultBasePath)
+      val parser          = RamlParser("/inlinequeryparameter/inlinequeryparameter-api.raml", "UTF-8")
 
       When("we parse the RAML spec")
       val raml: Raml                      = parser.parse.get

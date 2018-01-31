@@ -58,7 +58,7 @@ case class EnumGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
         content  = source
       )
 
-    generationAggr.copy(sourceFilesGenerated = sourceFile +: generationAggr.sourceFilesGenerated)
+    generationAggr.addSourceFile(sourceFile)
   }
 
   private def generateEnumCompanionObject(enumDefinition: EnumDefinition): String = {
@@ -66,7 +66,7 @@ case class EnumGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
     // Accompany the enum names with their 'Scala-safe' name.
     val enumsValuesWithSafeName =
       enumDefinition.values map { value =>
-        val safeName = CleanNameUtil.escapeScalaKeyword(CleanNameUtil.cleanEnumName(value))
+        val safeName = scalaPlay.escapeScalaKeyword(CleanNameUtil.cleanEnumName(value))
         value -> safeName
       }
 

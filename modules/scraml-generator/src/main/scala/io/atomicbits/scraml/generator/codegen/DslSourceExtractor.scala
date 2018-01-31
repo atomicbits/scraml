@@ -24,6 +24,7 @@ package io.atomicbits.scraml.generator.codegen
 
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.ramlparser.parser.{ SourceFile, SourceReader }
+import org.slf4j.{ Logger, LoggerFactory }
 
 import scala.util.{ Failure, Success, Try }
 
@@ -31,6 +32,8 @@ import scala.util.{ Failure, Success, Try }
   * Created by peter on 12/04/17.
   */
 object DslSourceExtractor {
+
+  val logger: Logger = LoggerFactory.getLogger(DslSourceExtractor.getClass)
 
   @volatile
   var cache: Map[(String, String), Set[SourceFile]] = Map.empty
@@ -53,7 +56,7 @@ object DslSourceExtractor {
         Try(SourceReader.readResources(baseDir, s".$extension")) match {
           case Success(theFiles) => theFiles
           case Failure(exception) =>
-            sys.error(
+            logger.debug(
               s"""
                  |Could not read the DSL source files from $baseDir with extension $extension
                  |The exception was:
