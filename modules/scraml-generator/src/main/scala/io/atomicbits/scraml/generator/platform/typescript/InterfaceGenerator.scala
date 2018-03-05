@@ -24,8 +24,9 @@ package io.atomicbits.scraml.generator.platform.typescript
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform, SourceGenerator }
-import io.atomicbits.scraml.generator.typemodel.TransferObjectInterfaceDefinition
+import io.atomicbits.scraml.generator.typemodel.{ TransferObjectClassDefinition, TransferObjectInterfaceDefinition }
 import Platform._
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 import io.atomicbits.scraml.ramlparser.parser.SourceFile
 
 /**
@@ -49,23 +50,35 @@ case class InterfaceGenerator(typeScript: TypeScript) extends SourceGenerator {
 
     val fieldDefinitions: Seq[String] = toInterfaceDefinition.fields.map(_.fieldDeclaration)
 
-    val typeDiscriminatorFieldDefinition: String = {
+    def childTypeDiscriminatorValues: List[String] = {
+      val originalToCanonicalName         = toInterfaceDefinition.origin.reference.canonicalName
+      val childNames: List[CanonicalName] = generationAggr.allChildren(originalToCanonicalName)
+      childNames.flatMap { childName =>
+        val childDefinition: TransferObjectClassDefinition =
+          generationAggr.toMap.getOrElse(childName, sys.error(s"Expected to find $childName in the generation aggregate."))
+        childDefinition.typeDiscriminatorValue
+      }
+    }
+
+    val typeDiscriminatorFieldDefinition: Seq[String] = {
 
       val typeDiscriminatorFieldDefOpt =
         for {
-          typeDiscriminator <- toInterfaceDefinition.origin.typeDiscriminator
           typeDiscriminatorValue <- toInterfaceDefinition.origin.typeDiscriminatorValue
-        } yield s"$typeDiscriminator: ${CleanNameTools.quoteString(typeDiscriminatorValue)},"
+          typeDiscriminator          = toInterfaceDefinition.discriminator
+          allTypeDiscriminatorValues = typeDiscriminatorValue :: childTypeDiscriminatorValues
+        } yield {
+          val typeDiscriminatorUnionString = allTypeDiscriminatorValues.map(CleanNameTools.quoteString).mkString(" | ")
+          Seq(s"${CleanNameTools.quoteString(typeDiscriminator)}: $typeDiscriminatorUnionString,")
+        }
 
-      typeDiscriminatorFieldDefOpt.getOrElse("")
+      typeDiscriminatorFieldDefOpt.getOrElse(Seq.empty)
     }
 
     val source =
       s"""
          |export interface ${classReference.classDefinition} $extendsInterfaces {
-         |  ${fieldDefinitions.mkString("\n  ")}
-         |  $typeDiscriminatorFieldDefinition
-         |  [otherFields: string]: any
+         |  ${(fieldDefinitions ++ typeDiscriminatorFieldDefinition).mkString(",\n  ")}
          |}
        """.stripMargin
 

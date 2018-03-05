@@ -75,9 +75,10 @@ object RamlToJsonParser {
             case (field, theValue) => field.toString -> anyToJson(theValue)
           }
         JsObject(mapped.toSeq)
-      case include: Include => Json.toJson(include)
-      case null             => JsNull
-      case x                => sys.error(s"Cannot parse unknown type $x (${x.getClass.getCanonicalName})")
+      case include: Include =>
+        Json.toJson(include) // the included body is attached in a json object as the string value of the !include field of that JSON object
+      case null => JsNull
+      case x    => sys.error(s"Cannot parse unknown type $x (${x.getClass.getCanonicalName})")
     }
   }
 
