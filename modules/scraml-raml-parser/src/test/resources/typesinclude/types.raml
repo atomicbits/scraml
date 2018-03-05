@@ -1,0 +1,23 @@
+Book:
+  type: object
+  properties:
+    isbn:
+      type: string
+      required: true
+    title:
+      type: string
+      required: true
+    genre:
+      type: string
+    author:
+      type: Author
+      required: true
+Author:
+  type: object
+  properties:
+    firstName:
+      type: string
+      required: true
+    lastName:
+      type: string
+      required: true

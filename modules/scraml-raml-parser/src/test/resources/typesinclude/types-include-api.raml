@@ -1,0 +1,15 @@
+#%RAML 1.0
+---
+title: types include api
+version: 1.0
+
+types: !include types.raml
+
+/rest/books:
+  get:
+    description: Get all books
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
