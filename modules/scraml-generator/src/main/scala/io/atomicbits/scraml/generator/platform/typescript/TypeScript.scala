@@ -166,16 +166,16 @@ case class TypeScript() extends Platform with CleanNameTools {
 
   override def safeFieldName(field: Field): String = {
     // In typescript, all field names are allowed, even reserved words.
-    // If the field name contains spaces, then we need to quote it.
-    if (field.fieldName.contains(' ')) quoteString(field.fieldName)
-    else field.fieldName
+    // If the field name contains special characters such as spaces, '-', '~', ..., then we need to quote it.
+    // Just to be sure to handle all special characters, we quote all fields.
+    quoteString(field.fieldName)
   }
 
   override def fieldDeclarationWithDefaultValue(field: Field) = fieldDeclaration(field)
 
   override def fieldDeclaration(field: Field) =
-    if (field.required) s"${safeFieldName(field)}: ${classDefinition(field.classPointer)},"
-    else s"${safeFieldName(field)}?: ${classDefinition(field.classPointer)},"
+    if (field.required) s"${safeFieldName(field)}: ${classDefinition(field.classPointer)}"
+    else s"${safeFieldName(field)}?: ${classDefinition(field.classPointer)}"
 
   override def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer]): Set[String] = Set()
 
@@ -215,7 +215,7 @@ case class TypeScript() extends Platform with CleanNameTools {
 
   override def mapSourceFiles(sources: Set[SourceFile], combinedSourcesFileName: Option[String] = None): Set[SourceFile] = {
     combinedSourcesFileName.map { combinedName =>
-      val allContent = sources.map(_.content)
+      val allContent = sources.toList.sortBy(_.filePath).map(_.content)
       Set(
         SourceFile(
           filePath = Paths.get(combinedName), // We will fill in the actual filePath later.
