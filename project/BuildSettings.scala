@@ -1,18 +1,20 @@
 /*
- * (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Affero General Public License
- * (AGPL) version 3.0 which accompanies this distribution, and is available in
- * the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ * (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Affero General Public License for more details.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Contributors:
- *     Peter Rigole
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *  Contributors:
+ *      Peter Rigole
  *
  */
 
@@ -24,8 +26,6 @@ object BuildSettings {
   val Organization = "io.atomicbits"
 
   val snapshotSuffix = "-SNAPSHOT"
-
-  val Version = "0.8.2" + snapshotSuffix // Change in 1 place
 
   val scala2_10 = "2.10.6"
   val scala2_11 = "2.11.11"
@@ -51,8 +51,7 @@ object BuildSettings {
 
   def projectSettings(extraDependencies: Seq[ModuleID]) = Seq(
     organization := Organization,
-    version := Version,
-    isSnapshot := Version.endsWith(snapshotSuffix),
+    isSnapshot := version.value.endsWith(snapshotSuffix),
     scalaVersion := ScalaVersion,
     crossScalaVersions := defaultCrossScalaVersions,
     scalacOptions := scalacBuildOptions,
@@ -75,7 +74,7 @@ object BuildSettings {
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)
-        None // Some("snapshots" at nexus + "content/repositories/snapshots")
+        Some("snapshots" at nexus + "content/repositories/snapshots")
       else
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     },
