@@ -173,6 +173,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
        """
 
     generationAggr
+      .addSourceDefinitions(clientClassDefinition.topLevelResourceDefinitions)
       .addSourceDefinitions(headerPathSourceDefs)
       .addSourceFile(SourceFile(filePath = apiClassReference.toFilePath, content = sourcecode))
   }

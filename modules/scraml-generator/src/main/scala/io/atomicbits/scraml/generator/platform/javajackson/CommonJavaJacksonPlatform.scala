@@ -221,7 +221,7 @@ trait CommonJavaJacksonPlatform extends Platform with CleanNameTools {
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
     UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
 
-  override def classFileExtension: String = "java"
+  override val classFileExtension: String = "java"
 
   override def toFilePath(classPointer: ClassPointer): Path = {
     classPointer match {

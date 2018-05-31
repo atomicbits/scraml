@@ -36,9 +36,9 @@ object Dependencies {
   val okHttpProvided      = "com.squareup.okhttp3" % "okhttp"            % "3.9.0" % "provided"
   val playJson            = "com.typesafe.play"    %% "play-json"        % "2.6.2"
 
-  val scalariform = "org.scalariform"             %% "scalariform"       % "0.2.3"
-  val javaFormat  = "com.google.googlejavaformat" % "google-java-format" % "1.2"
-  // val scalaFmt    = "com.geirsson"                %% "scalafmt-core"     % "1.1.0"
+  val scalariform  = "org.scalariform"                   %% "scalariform"       % "0.2.3"
+  val javaFormat   = "com.google.googlejavaformat"       % "google-java-format" % "1.2"
+  val mustacheJava = "com.github.spullara.mustache.java" % "compiler"           % "0.9.5"
 
   val slf4j = "org.slf4j" % "slf4j-api" % "1.7.12"
 
@@ -58,6 +58,7 @@ object Dependencies {
   val scramlGeneratorDeps = Seq(
     scalariform,
     javaFormat,
+    mustacheJava,
     junit
   )
 

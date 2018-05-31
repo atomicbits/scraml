@@ -217,7 +217,7 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
   override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition): GenerationAggr =
     UnionClassGenerator(this).generate(generationAggr, unionClassDefinition)
 
-  override def classFileExtension: String = "scala"
+  override val classFileExtension: String = "scala"
 
   override def toFilePath(classPointer: ClassPointer): Path = {
     classPointer match {

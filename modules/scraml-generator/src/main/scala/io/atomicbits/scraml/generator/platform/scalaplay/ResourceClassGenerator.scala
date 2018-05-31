@@ -83,6 +83,7 @@ case class ResourceClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator 
        """
 
     generationAggr
+      .addSourceDefinitions(resourceClassDefinition.childResourceDefinitions)
       .addSourceDefinitions(headerPathSourceDefs)
       .addSourceFile(SourceFile(filePath = resourceClassReference.toFilePath, content = sourcecode))
   }
