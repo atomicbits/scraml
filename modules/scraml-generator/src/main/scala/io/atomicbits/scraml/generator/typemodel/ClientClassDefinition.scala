@@ -31,7 +31,10 @@ import io.atomicbits.scraml.generator.platform.{ CleanNameTools, Platform }
 case class ClientClassDefinition(apiName: String,
                                  baseUri: Option[String],
                                  basePackage: List[String],
-                                 topLevelResourceDefinitions: List[ResourceClassDefinition])
+                                 topLevelResourceDefinitions: List[ResourceClassDefinition],
+                                 title: String       = "",
+                                 version: String     = "",
+                                 description: String = "") // ToDo: insert title, version and description from the RAML model
     extends SourceDefinition {
 
   override def classReference(implicit platform: Platform): ClassReference = {

@@ -37,6 +37,44 @@
     <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('.page-header pre code, .top-resource-description pre code, .modal-body pre code').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+
+            $('[data-toggle]').click(function() {
+                var selector = $(this).data('target') + ' pre code';
+                $(selector).each(function(i, block) {
+                    hljs.highlightBlock(block);
+                });
+            });
+
+            // open modal on hashes like #_action_get
+            $(window).bind('hashchange', function(e) {
+                var anchor_id = document.location.hash.substr(1); //strip #
+                var element = $('#' + anchor_id);
+
+                // do we have such element + is it a modal?  --> show it
+                if (element.length && element.hasClass('modal')) {
+                    element.modal('show');
+                }
+            });
+
+            // execute hashchange on first page load
+            $(window).trigger('hashchange');
+
+            // remove url fragment on modal hide
+            $('.modal').on('hidden.bs.modal', function() {
+                try {
+                    if (history && history.replaceState) {
+                        history.replaceState({}, '', '#');
+                    }
+                } catch(e) {}
+            });
+        });
+    </script>
+
 
     <style>
         .hljs {
@@ -210,68 +248,74 @@
     <div class="row">
         <div class="col-md-9" role="main">
             <div class="page-header">
-                <h1>{{ title }} API documentation{% if version %}
-                    <small>version {{ version }}</small>
-                    {% endif %}
+                <h1>{{title}} API documentation
+                    {{#version}}
+                    <small>version {{version}}</small>
+                    {{/version}}
                 </h1>
-                <p>{{ baseUri }}</p>
 
-                {% if description %}
-                {% markdown %}
-                {{ description }}
-                {% endmarkdown %}
-                {% endif %}
+                {{#baseUri}}
+                <p>{{baseUri}}</p>
+                {{/baseUri}}
 
-                {% if baseUriParameters %}
-                <ul>
-                    {% for item in baseUriParameters %}
-                    {% include "./item.nunjucks" %}
-                    {% endfor %}
-                </ul>
-                {% endif %}
-
-                {% for chapter in documentation %}
-                <h3 id="{{ chapter.uniqueId }}"><a href="#{{ chapter.uniqueId }}">{{ chapter.title }}</a></h3>
-                {% markdown %}
-                {{ chapter.content }}
-                {% endmarkdown %}
-                {% endfor %}
+                {{#description}}
+                {{description}}
+                {{/description}}
             </div>
 
-            {% for resource in resources %}
+            {{#combinedResources}}
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 id="{{ resource.uniqueId }}" class="panel-title">{% if resource.displayName %}{{ resource.displayName}}{% else %}{{
-                        resource.relativeUri }}{% endif %}</h3>
+                    <h3 id="{{uniqueId}}" class="panel-title">
+                        {{#displayName}}
+                        {{displayName}}
+                        {{/displayName}}
+                        {{^displayName}}
+                        {{url}}
+                        {{/displayName}}
+                    </h3>
                 </div>
 
                 <div class="panel-body">
-                    {% if resource.description %}
+                    {{#description}}
                     <div class="top-resource-description">
-                        {% markdown %}
-                        {{ resource.description }}
-                        {% endmarkdown %}
+                        {{description}}
                     </div>
-                    {% endif %}
+                    {{/description}}
 
                     <div class="panel-group">
-                        {% include "./resource.nunjucks" %}
+                        {{> resource}}
                     </div>
+
+                    {{#subResources}}
+                    <div class="panel-group">
+                        {{> resource}}
+                    </div>
+                    {{/subResources}}
+
                 </div>
             </div>
-            {% endfor %}
+            {{/combinedResources}}
+
         </div>
 
         <div class="col-md-3">
             <div id="sidebar" class="hidden-print affix" role="complementary">
                 <ul class="nav nav-pills nav-stacked">
-                    {% for resource in resources %}
-                    <li><a href="#{{ resource.uniqueId}}">{% if resource.displayName %}{{ resource.displayName }}{% else %}{{
-                        resource.relativeUri }}{% endif %}</a></li>
-                    {% endfor %}
+                    {{#combinedResources}}
+                    <li><a href="#{{uniqueId}}">
+                        {{#displayName}}
+                        {{displayName}}
+                        {{/displayName}}
+                        {{^displayName}}
+                        {{url}}
+                        {{/displayName}}
+                    </a></li>
+                    {{/combinedResources}}
                 </ul>
             </div>
         </div>
+
     </div>
 </div>
 </body>

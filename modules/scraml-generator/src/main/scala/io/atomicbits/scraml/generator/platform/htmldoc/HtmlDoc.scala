@@ -20,6 +20,8 @@
 
 package io.atomicbits.scraml.generator.platform.htmldoc
 
+import java.nio.file.{ Path, Paths }
+
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.typemodel._
@@ -31,11 +33,11 @@ object HtmlDoc extends Platform {
 
   val name = "HTML Documentation"
 
-  override def apiBasePackageParts = ???
+  override def apiBasePackageParts = List.empty[String]
 
-  override def dslBasePackageParts = ???
+  override def dslBasePackageParts = List.empty[String]
 
-  override def rewrittenDslBasePackage = ???
+  override def rewrittenDslBasePackage = List.empty[String]
 
   override def classPointerToNativeClassReference(classPointer: ClassPointer) = ???
 
@@ -59,19 +61,19 @@ object HtmlDoc extends Platform {
 
   override def importStatements(targetClassReference: ClassPointer, dependencies: Set[ClassPointer]) = ???
 
-  override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition) = ???
+  override def toSourceFile(generationAggr: GenerationAggr, toClassDefinition: TransferObjectClassDefinition) = generationAggr
 
-  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition) = ???
+  override def toSourceFile(generationAggr: GenerationAggr, toInterfaceDefinition: TransferObjectInterfaceDefinition) = generationAggr
 
-  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition) = ???
+  override def toSourceFile(generationAggr: GenerationAggr, enumDefinition: EnumDefinition) = generationAggr
 
   override def toSourceFile(generationAggr: GenerationAggr, clientClassDefinition: ClientClassDefinition) =
     IndexDocGenerator.generate(generationAggr, clientClassDefinition)
 
-  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition)           = ???
-  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition) = ???
+  override def toSourceFile(generationAggr: GenerationAggr, resourceClassDefinition: ResourceClassDefinition)           = generationAggr
+  override def toSourceFile(generationAggr: GenerationAggr, headerSegmentClassDefinition: HeaderSegmentClassDefinition) = generationAggr
 
-  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition) = ???
+  override def toSourceFile(generationAggr: GenerationAggr, unionClassDefinition: UnionClassDefinition) = generationAggr
 
   val classFileExtension = "html"
 
@@ -81,7 +83,13 @@ object HtmlDoc extends Platform {
     * @param classPointer The class reference for which a file path is generated.
     * @return The relative file name for the given class.
     */
-  override def toFilePath(classPointer: ClassPointer) = ???
+  override def toFilePath(classPointer: ClassPointer): Path = {
+    classPointer match {
+      case classReference: ClassReference =>
+        Paths.get("", s"${classReference.name}.$classFileExtension") // This results in a relative path both on Windows as on Linux/Mac
+      case _ => sys.error(s"Cannot create a file path from a class pointer that is not a class reference!")
+    }
+  }
 
   override def reservedKeywords = Set.empty[String]
 

@@ -34,7 +34,8 @@ case class Action(actionType: Method,
                   queryParameters: Parameters,
                   body: Body,
                   responses: Responses,
-                  queryString: Option[QueryString] = None)
+                  queryString: Option[QueryString] = None,
+                  description: Option[String]      = None) // ToDo: add action description from parsed data
 
 object Action {
 
