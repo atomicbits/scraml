@@ -23,16 +23,17 @@ package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 import java.util.UUID
 
 import io.atomicbits.scraml.generator.typemodel.ResourceClassDefinition
-import io.atomicbits.scraml.ramlparser.model.Action
+import io.atomicbits.scraml.ramlparser.model.{ Action, Parameter }
 
 /**
   * Created by peter on 4/06/18.
   */
 case class CombinedResource(uniqueId: String,
                             url: String,
+                            urlParameters: List[Parameter],
                             displayName: Option[String],
                             description: Option[String],
-                            actions: List[Action],
+                            actions: List[SimpleAction],
                             subResources: List[CombinedResource])
 
 object CombinedResource {
@@ -40,22 +41,32 @@ object CombinedResource {
   /**
     * Recursively create the combined resource tree from a given resource class definition.
     */
-  def apply(resourceClassDefinition: ResourceClassDefinition): List[CombinedResource] = {
+  def apply(resourceClassDefinition: ResourceClassDefinition,
+            parentUrl: String              = "",
+            urlParameters: List[Parameter] = List.empty): List[CombinedResource] = {
+
+    val combinedUrlPrameters = resourceClassDefinition.resource.urlParameter.toList ++ urlParameters
+
+    val url = resourceClassDefinition.resource.urlParameter match {
+      case None        => s"$parentUrl/${resourceClassDefinition.resource.urlSegment}"
+      case Some(param) => s"$parentUrl/{${resourceClassDefinition.resource.urlSegment}}"
+    }
 
     resourceClassDefinition.resource.actions match {
       case am :: ams =>
-        val urlSegments = resourceClassDefinition.precedingUrlSegments :+ resourceClassDefinition.resource.urlSegment
         val combinedResource =
           CombinedResource(
-            uniqueId     = UUID.randomUUID().toString,
-            url          = urlSegments.mkString("/", "/", ""),
-            displayName  = resourceClassDefinition.resource.displayName,
-            description  = resourceClassDefinition.resource.description,
-            actions      = resourceClassDefinition.resource.actions,
-            subResources = resourceClassDefinition.childResourceDefinitions.flatMap(rd => CombinedResource(rd))
+            uniqueId      = UUID.randomUUID().toString,
+            url           = url,
+            urlParameters = combinedUrlPrameters,
+            displayName   = resourceClassDefinition.resource.displayName,
+            description   = resourceClassDefinition.resource.description,
+            actions       = resourceClassDefinition.resource.actions.map(SimpleAction(_)),
+            subResources  = resourceClassDefinition.childResourceDefinitions.flatMap(rd => CombinedResource(rd, url, combinedUrlPrameters))
           )
         List(combinedResource)
-      case Nil => resourceClassDefinition.childResourceDefinitions.flatMap(rd => CombinedResource(rd))
+      case Nil =>
+        resourceClassDefinition.childResourceDefinitions.flatMap(rd => CombinedResource(rd, url, combinedUrlPrameters))
     }
   }
 

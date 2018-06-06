@@ -60,16 +60,20 @@ object IndexDocGenerator extends SourceGenerator {
     * See: https://stackoverflow.com/questions/1226555/case-class-to-map-in-scala
     *
     */
-  def toJavaMap(cc: Product): java.util.Map[String, Any] = {
+  def toJavaMap(cc: Product, visited: Set[Any] = Set.empty): java.util.Map[String, Any] = {
 
     def mapValue(f: Any): Any = {
       f match {
-        case None                             => null
-        case l: List[_]                       => l.map(mapValue).asJava
-        case p: Product if p.productArity > 0 => toJavaMap(p)
-        case x                                => x
+        case None                                                     => null
+        case Nil                                                      => null
+        case l: List[_]                                               => l.map(mapValue).asJava
+        case m: Map[_, _]                                             => m.mapValues(mapValue).asJava
+        case p: Product if p.productArity > 0 && !visited.contains(p) => toJavaMap(p, visited + cc)
+        case x                                                        => x
       }
     }
+
+    // println(s"Processing class ${cc.getClass.getSimpleName}")
 
     cc.getClass.getDeclaredFields
       .foldLeft(Map.empty[String, Any]) { (fieldMap, field) =>
