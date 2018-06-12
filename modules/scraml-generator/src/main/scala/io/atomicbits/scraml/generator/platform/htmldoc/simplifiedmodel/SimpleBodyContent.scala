@@ -21,16 +21,29 @@
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.ramlparser.model.{ Body, BodyContent }
+import io.atomicbits.scraml.ramlparser.model.{ BodyContent, MediaType, Parameters, TypeRepresentation }
 
 /**
-  * Created by peter on 6/06/18.
+  * Created by peter on 7/06/18.
   */
-case class SimpleBody(bodyContent: List[SimpleBodyContent])
+case class SimpleBodyContent(mediaType: MediaType, bodyType: Option[TypeRepresentation], formParameters: Parameters, html: String)
 
-object SimpleBody {
+object SimpleBodyContent {
 
-  def apply(body: Body, generationAggr: GenerationAggr): SimpleBody =
-    SimpleBody(bodyContent = body.contentMap.values.toList.map(bc => SimpleBodyContent(bc, generationAggr)))
+  def apply(bodyContent: BodyContent, generationAggr: GenerationAggr): SimpleBodyContent = {
+    val html = {
+      for {
+        bt <- bodyContent.bodyType
+        canonical <- bt.canonical
+      } yield BodyContentRenderer(generationAggr).renderHtmlForType(canonical)
+    } getOrElse ""
+
+    SimpleBodyContent(
+      mediaType      = bodyContent.mediaType,
+      bodyType       = bodyContent.bodyType,
+      formParameters = bodyContent.formParameters,
+      html           = html
+    )
+  }
 
 }

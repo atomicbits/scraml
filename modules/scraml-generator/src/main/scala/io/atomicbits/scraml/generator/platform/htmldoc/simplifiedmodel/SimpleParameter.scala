@@ -21,16 +21,23 @@
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.ramlparser.model.{ Body, BodyContent }
+import io.atomicbits.scraml.ramlparser.model.Parameter
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.TypeReference
 
 /**
-  * Created by peter on 6/06/18.
+  * Created by peter on 12/06/18.
   */
-case class SimpleBody(bodyContent: List[SimpleBodyContent])
+case class SimpleParameter(name: String, canonical: Option[TypeReference], required: Boolean, html: Option[String])
 
-object SimpleBody {
+object SimpleParameter {
 
-  def apply(body: Body, generationAggr: GenerationAggr): SimpleBody =
-    SimpleBody(bodyContent = body.contentMap.values.toList.map(bc => SimpleBodyContent(bc, generationAggr)))
+  def apply(parameter: Parameter, generationAggr: GenerationAggr): SimpleParameter = {
+    SimpleParameter(
+      name      = parameter.name,
+      canonical = parameter.parameterType.canonical,
+      required  = parameter.required,
+      html      = parameter.parameterType.canonical.map(BodyContentRenderer(generationAggr).renderHtmlForType(_))
+    )
+  }
 
 }

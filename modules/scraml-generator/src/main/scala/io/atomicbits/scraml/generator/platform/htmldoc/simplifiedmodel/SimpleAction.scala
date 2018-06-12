@@ -20,28 +20,29 @@
 
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.ramlparser.model._
 
 /**
   * Created by peter on 6/06/18.
   */
 case class SimpleAction(actionType: Method,
-                        headers: Parameters,
-                        queryParameters: Parameters,
+                        headers: List[SimpleParameter],
+                        queryParameters: List[SimpleParameter],
                         body: SimpleBody,
-                        responses: Responses,
+                        responses: List[SimpleResponse],
                         queryString: Option[QueryString] = None,
                         description: Option[String]      = None)
 
 object SimpleAction {
 
-  def apply(action: Action): SimpleAction = {
+  def apply(action: Action, generationAggr: GenerationAggr): SimpleAction = {
     SimpleAction(
       actionType      = action.actionType,
-      headers         = action.headers,
-      queryParameters = action.queryParameters,
-      body            = SimpleBody(action.body),
-      responses       = action.responses,
+      headers         = action.headers.values.map(SimpleParameter(_, generationAggr)),
+      queryParameters = action.queryParameters.values.map(SimpleParameter(_, generationAggr)),
+      body            = SimpleBody(action.body, generationAggr),
+      responses       = action.responses.values.map(res => SimpleResponse(res, generationAggr)),
       queryString     = action.queryString,
       description     = action.description
     )

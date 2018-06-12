@@ -20,6 +20,7 @@
 
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
+import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.typemodel.ClientClassDefinition
 
 /**
@@ -34,12 +35,12 @@ case class ClientDocModel(apiName: String,
 
 object ClientDocModel {
 
-  def apply(clientClassDefinition: ClientClassDefinition): ClientDocModel = {
+  def apply(clientClassDefinition: ClientClassDefinition, generationAggr: GenerationAggr): ClientDocModel = {
 
     ClientDocModel(
       apiName           = clientClassDefinition.apiName,
       baseUri           = clientClassDefinition.baseUri,
-      combinedResources = clientClassDefinition.topLevelResourceDefinitions.flatMap(rd => CombinedResource(rd)),
+      combinedResources = clientClassDefinition.topLevelResourceDefinitions.flatMap(rd => CombinedResource(rd, generationAggr)),
       title             = clientClassDefinition.title,
       version           = clientClassDefinition.version,
       description       = clientClassDefinition.description

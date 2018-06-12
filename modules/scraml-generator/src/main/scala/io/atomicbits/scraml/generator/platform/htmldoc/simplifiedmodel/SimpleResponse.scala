@@ -21,16 +21,22 @@
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
-import io.atomicbits.scraml.ramlparser.model.{ Body, BodyContent }
+import io.atomicbits.scraml.ramlparser.model.{ Parameters, Response, StatusCode }
 
 /**
-  * Created by peter on 6/06/18.
+  * Created by peter on 7/06/18.
   */
-case class SimpleBody(bodyContent: List[SimpleBodyContent])
+case class SimpleResponse(status: StatusCode, headers: Parameters, body: SimpleBody, description: Option[String])
 
-object SimpleBody {
+object SimpleResponse {
 
-  def apply(body: Body, generationAggr: GenerationAggr): SimpleBody =
-    SimpleBody(bodyContent = body.contentMap.values.toList.map(bc => SimpleBodyContent(bc, generationAggr)))
+  def apply(response: Response, generationAggr: GenerationAggr): SimpleResponse = {
+    SimpleResponse(
+      status      = response.status,
+      headers     = response.headers,
+      body        = SimpleBody(response.body, generationAggr),
+      description = response.description
+    )
+  }
 
 }

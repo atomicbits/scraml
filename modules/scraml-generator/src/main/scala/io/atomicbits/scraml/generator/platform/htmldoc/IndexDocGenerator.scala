@@ -45,7 +45,7 @@ object IndexDocGenerator extends SourceGenerator {
     val mf       = new DefaultMustacheFactory()
     val mustache = mf.compile("platform/htmldoc/index.mustache")
 
-    val clientDocModel = ClientDocModel(clientClassDefinition)
+    val clientDocModel = ClientDocModel(clientClassDefinition, generationAggr)
     mustache.execute(writer, toJavaMap(clientDocModel))
 
     writer.flush()
@@ -65,6 +65,7 @@ object IndexDocGenerator extends SourceGenerator {
     def mapValue(f: Any): Any = {
       f match {
         case None                                                     => null
+        case Some(v)                                                  => mapValue(v)
         case Nil                                                      => null
         case l: List[_]                                               => l.map(mapValue).asJava
         case m: Map[_, _]                                             => m.mapValues(mapValue).asJava
