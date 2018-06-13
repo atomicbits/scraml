@@ -1,19 +1,17 @@
 /*
  *
- *  (C) Copyright 2017 Atomic BITS (http://atomicbits.io).
+ * (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
  *
- *  All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the GNU Affero General Public License
- *  (AGPL) version 3.0 which accompanies this distribution, and is available in
- *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
- *  Alternatively, you may also use this code under the terms of the
- *  Scraml End-User License Agreement, see http://scraml.io
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License or the Scraml End-User License Agreement for
- *  more details.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  *  Contributors:
  *      Peter Rigole
@@ -22,9 +20,11 @@
 
 package io.atomicbits.scraml.ramlparser
 
-import io.atomicbits.scraml.ramlparser.model.Raml
+import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedString, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.Matchers._
 
 import scala.util.Try
 
@@ -43,6 +43,19 @@ class TypesIncludeTest extends FeatureSpec with GivenWhenThen with BeforeAndAfte
 
     Then("we get the included types")
     val raml = parsedModel.get
+
+    val bookType   = raml.types(NativeId("Book")).asInstanceOf[ParsedObject]
+    val authorType = raml.types(NativeId("Author")).asInstanceOf[ParsedObject]
+
+    bookType.properties("title").propertyType.parsed match {
+      case stringType: ParsedString => stringType.required shouldBe Some(true)
+      case _                        => fail(s"The title property of a book should be a StringType.")
+    }
+
+    bookType.properties("author").propertyType.parsed match {
+      case typeReference: ParsedTypeReference => typeReference.refersTo.asInstanceOf[NativeId] shouldBe NativeId("Author")
+      case _                                  => fail(s"The author property of a book should be a ReferenceType.")
+    }
 
   }
 

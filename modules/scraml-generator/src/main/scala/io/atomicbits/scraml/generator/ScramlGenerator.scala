@@ -1,16 +1,17 @@
 /*
  *
- *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ * (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
  *
- *  All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the GNU Affero General Public License
- *  (AGPL) version 3.0 which accompanies this distribution, and is available in
- *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  *  Contributors:
  *      Peter Rigole
@@ -36,6 +37,7 @@ import io.atomicbits.scraml.generator.platform.javajackson.JavaJackson
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import io.atomicbits.scraml.generator.codegen.{ DslSourceExtractor, DslSourceRewriter, GenerationAggr }
 import io.atomicbits.scraml.generator.platform.androidjavajackson.AndroidJavaJackson
+import io.atomicbits.scraml.generator.platform.htmldoc.HtmlDoc
 import io.atomicbits.scraml.generator.platform.typescript.TypeScript
 
 /**
@@ -48,6 +50,7 @@ object ScramlGenerator {
   val SCALA_PLAY: String           = "ScalaPlay".toLowerCase
   val ANDROID_JAVA_JACKSON: String = "AndroidJavaJackson".toLowerCase
   val TYPESCRIPT: String           = "TypeScript".toLowerCase
+  val HTML_DOC: String             = "HtmlDoc".toLowerCase
   val OSX_SWIFT: String            = "OsxSwift".toLowerCase
   val PYTHON: String               = "Python".toLowerCase
   val CSHARP: String               = "C#".toLowerCase
@@ -68,7 +71,6 @@ object ScramlGenerator {
           JavaJackson(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -77,7 +79,6 @@ object ScramlGenerator {
           ScalaPlay(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -86,7 +87,6 @@ object ScramlGenerator {
           AndroidJavaJackson(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -95,7 +95,15 @@ object ScramlGenerator {
           TypeScript(),
           ramlApiPath,
           apiClassName,
-          licenseKey,
+          thirdPartyClassHeader,
+          singleTargeSourceFileName
+        )
+      }
+      case HTML_DOC => {
+        generateFor(
+          HtmlDoc,
+          ramlApiPath,
+          apiClassName,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -109,7 +117,6 @@ object ScramlGenerator {
   private[generator] def generateFor(platform: Platform,
                                      ramlApiPath: String,
                                      apiClassName: String,
-                                     scramlLicenseKey: String,
                                      thirdPartyClassHeader: String,
                                      singleTargeSourceFileName: String): JMap[String, String] = {
 
@@ -119,16 +126,11 @@ object ScramlGenerator {
 
     // We transform the scramlLicenseKey and thirdPartyClassHeader fields to optionals here. We don't take them as optional parameters
     // higher up the chain to maintain a Java-compatible interface for the ScramlGenerator.
-    val licenseKey: Option[String] =
-      if (scramlLicenseKey == null || scramlLicenseKey.isEmpty) None
-      else Some(scramlLicenseKey)
     val classHeader: Option[String] =
       if (thirdPartyClassHeader == null || thirdPartyClassHeader.isEmpty) None
       else Some(thirdPartyClassHeader)
 
-    val licenseData: Option[LicenseData] = licenseKey.flatMap(LicenseVerifier.validateLicense)
-
-    val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
+    val licenseHeader: String = deferLicenseHeader(classHeader)
 
     val generationAggregator = buildGenerationAggr(ramlApiPath, apiClassName, platform)
 
@@ -210,34 +212,13 @@ object ScramlGenerator {
     sourceFile.copy(content = formattedContent)
   }
 
-  private val agplClassHeader =
-    s"""|All rights reserved. This program and the accompanying materials
-        |are made available under the terms of the GNU Affero General Public License
-        |(AGPL) version 3.0 which accompanies this distribution, and is available in
-        |the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
-        |
-        |This library is distributed in the hope that it will be useful,
-        |but WITHOUT ANY WARRANTY; without even the implied warranty of
-        |MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-        |Affero General Public License for more details. """.stripMargin
-
-  private def deferLicenseHeader(licenseKey: Option[LicenseData], thirdPartyLicenseHeader: Option[String]): String = {
-
-    val classHeader =
-      licenseKey.map { licenseData =>
-        val thirdPartyHeader = thirdPartyLicenseHeader.getOrElse {
-          s"""
-             | All rights are reserved to ${licenseData.owner}.
-           """.stripMargin.trim
-        }
-        //        s"""$thirdPartyHeader
-        //           |This API client was generated by Scraml (http://scraml.io) for ${licenseData.owner}
-        //           |on ${LocalDate.now().format(DateTimeFormatter.ISO_DATE)} using license ${licenseData.licenseId}.
-        //         """.stripMargin.trim
-        thirdPartyHeader
-      } getOrElse agplClassHeader
-
-    classHeader.split('\n').map(line => s" * ${line.trim}").mkString("/**\n", "\n", "\n */")
+  private def deferLicenseHeader(thirdPartyLicenseHeader: Option[String],
+                                 commentPrefix: String = "  * ",
+                                 headerPrefix: String  = "/**\n",
+                                 headerSuffix: String  = "\n  */"): String = {
+    thirdPartyLicenseHeader.map { licenseHeader =>
+      licenseHeader.split('\n').map(line => s"$commentPrefix${line.trim}").mkString(headerPrefix, "\n", headerSuffix)
+    } getOrElse ""
   }
 
 }

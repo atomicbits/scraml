@@ -4,7 +4,9 @@ Type safe Java and Scala RAML client generator
 [![Build Status](https://travis-ci.org/atomicbits/scraml.svg?branch=develop)](https://travis-ci.org/atomicbits/scraml)
 
 
-[Scraml](http://scraml.io) generates a typesafe Java or Scala client library based on a [RAML](http://raml.org) specification. It transforms JSON schema into fully typed Java POJOs or Scala case classes and a REST resources DSL that enforces your RAML specification. See [scraml.io](http://scraml.io) for more information. 
+[Scraml](http://scraml.io) generates a typesafe Java or Scala client library based on a [RAML](http://raml.org) specification. It transforms 
+JSON schema into fully typed Java POJOs or Scala case classes and a REST resources DSL that enforces your RAML specification. We also support
+Typescript TO generation and HTML documentation generation. Plugins are available for maven, gradle and sbt.  
 
 ## Quickstart
 
@@ -17,15 +19,6 @@ Follow the steps in these quickstart guidelines:
 
 [Read here about the most recent releases](https://github.com/atomicbits/scraml/blob/develop/documentation/release-notes.adoc) 
 
-## Scraml 
-
-The scraml code contains the following modules:
-
-   * *scraml-parser*: This is a simple Scala wrapper around the java-raml-generator. The resulting Raml model is expressed in Scala case classes without 'null' references.
-   * *scraml-jsonschema-parser*: This module parses json-schema files into a high-level lookup table to simplify the code generation step.  
-   * *scraml-dsl-java*: This is the Java code that supports the generated DSL.
-   * *scraml-dsl-scala*: This is the Scala code that supports the generated DSL.
-   * *scraml-generator*: The generator will generate the actual DSL code from a given RAML specification. 
 
 Enable code generation with scraml in your project with the [scraml-maven-plugin](https://github.com/atomicbits/scraml-maven-plugin), 
 the [scraml-gradle-plugin](https://github.com/atomicbits/scraml-gradle-plugin) 
@@ -35,9 +28,4 @@ and the [scraml-test-scala](https://github.com/atomicbits/scraml-test-scala) pro
 
 
 ## Copyright and License
-Copyright 2017 Atomic BITS bvba. Code released under a dual license philosophy, you can choose which license you use: 
-
-   1. [AGPLv3](https://github.com/atomicbits/scraml/blob/develop/LICENSE) license (default) 
-      * the generated code inherits the AGPLv3 license
-   2. [Scraml End-User License Agreement](https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA) with a free variant for non-commercial use
-      * the generated code has no license restrictions but your own
+Copyright 2018 Atomic BITS bvba. Code released under the Apache 2.0 License. 

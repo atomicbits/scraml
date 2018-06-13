@@ -1,16 +1,17 @@
 /*
  *
- *  (C) Copyright 2015 Atomic BITS (http://atomicbits.io).
+ * (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
  *
- *  All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the GNU Affero General Public License
- *  (AGPL) version 3.0 which accompanies this distribution, and is available in
- *  the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  Affero General Public License for more details.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  *  Contributors:
  *      Peter Rigole
@@ -20,9 +21,9 @@
 package io.atomicbits.scraml.ramlparser.lookup
 
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{CanonicalName, NonPrimitiveType}
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ParsedNull, ParsedType}
-import org.slf4j.{Logger, LoggerFactory}
+import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{ CanonicalName, NonPrimitiveType }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedNull, ParsedType }
+import org.slf4j.{ Logger, LoggerFactory }
 
 /**
   * Created by peter on 17/12/16.
@@ -42,9 +43,9 @@ import org.slf4j.{Logger, LoggerFactory}
   *                                        have their own json-schema id internally. This map enables us to translate the canonical
   *                                        name that matches the native id to the canonical name that matches the json-schema id.
   */
-case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveType] = Map.empty,
-                                 parsedTypeIndex: Map[UniqueId, ParsedType] = Map.empty,
-                                 referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType] = Map.empty,
+case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveType]          = Map.empty,
+                                 parsedTypeIndex: Map[UniqueId, ParsedType]                 = Map.empty,
+                                 referenceOnlyParsedTypeIndex: Map[UniqueId, ParsedType]    = Map.empty,
                                  jsonSchemaNativeToAbsoluteIdMap: Map[NativeId, AbsoluteId] = Map.empty) {
 
   val logger: Logger = LoggerFactory.getLogger(CanonicalLookupHelper.getClass)
@@ -52,14 +53,14 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
   def getParsedTypeWithProperId(id: Id): Option[ParsedType] = {
     val parsedTypeOpt =
       id match {
-        case NoId               =>
+        case NoId =>
           Some(ParsedNull())
         case nativeId: NativeId =>
           val realIndex = jsonSchemaNativeToAbsoluteIdMap.getOrElse(nativeId, nativeId)
           List(parsedTypeIndex.get(realIndex), referenceOnlyParsedTypeIndex.get(realIndex)).flatten.headOption
         case uniqueId: UniqueId =>
           List(parsedTypeIndex.get(uniqueId), referenceOnlyParsedTypeIndex.get(uniqueId)).flatten.headOption
-        case other              => None
+        case other => None
       }
     parsedTypeOpt.map { parsedType =>
       parsedType.id match {
@@ -89,7 +90,7 @@ case class CanonicalLookupHelper(lookupTable: Map[CanonicalName, NonPrimitiveTyp
           warnDuplicate(uniqueId, parsedType)
           copy(parsedTypeIndex = parsedTypeIndex + (uniqueId -> parsedType))
         }
-      case _                  => this
+      case _ => this
     }
   }
 
