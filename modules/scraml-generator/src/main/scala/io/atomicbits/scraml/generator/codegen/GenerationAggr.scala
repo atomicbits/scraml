@@ -244,18 +244,6 @@ object GenerationAggr {
             raml: Raml,
             canonicalToMap: Map[CanonicalName, NonPrimitiveType]): GenerationAggr = {
 
-    def collectResourceDefinitions(
-        resourceDefinitionsToProcess: List[ResourceClassDefinition],
-        collectedResourceDefinitions: List[ResourceClassDefinition] = List.empty): List[ResourceClassDefinition] = {
-
-      resourceDefinitionsToProcess match {
-        case Nil => collectedResourceDefinitions
-        case _ =>
-          val childResourceDefinitions = resourceDefinitionsToProcess.flatMap(_.childResourceDefinitions)
-          collectResourceDefinitions(childResourceDefinitions, collectedResourceDefinitions ++ resourceDefinitionsToProcess)
-      }
-    }
-
     val topLevelResourceDefinitions = raml.resources.map(ResourceClassDefinition(apiBasePackage, List.empty, _))
 
     val clientClassDefinition =
@@ -266,9 +254,7 @@ object GenerationAggr {
         topLevelResourceDefinitions = topLevelResourceDefinitions
       )
 
-    val collectedResourceDefinitions = collectResourceDefinitions(topLevelResourceDefinitions)
-
-    val sourceDefinitions: Seq[SourceDefinition] = clientClassDefinition +: collectedResourceDefinitions
+    val sourceDefinitions: Seq[SourceDefinition] = Seq(clientClassDefinition)
 
     val generationAggrBeforeCanonicalDefinitions =
       GenerationAggr(basePackage = apiBasePackage, sourceDefinitionsToProcess = sourceDefinitions, canonicalToMap = canonicalToMap)

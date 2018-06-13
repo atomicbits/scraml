@@ -1,0 +1,168 @@
+<div class="panel panel-white-bordered resource-modal">
+
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <a>
+                {{url}}
+            </a>
+
+            <span class="methods">
+            {{#actions}}
+            <a  data-toggle="collapse" href="#{{uniqueId}}_{{actionType.action}}"><!-- modal shown by hashchange event -->
+              <span class="badge badge_{{actionType.action}}">{{actionType.action}}</span>
+            </a>
+            {{/actions}}
+        </span>
+        </h4>
+    </div>
+
+
+    {{#description}}
+    <div id="panel_{{uniqueId}}">
+        <div class="panel-body">
+            <div class="resource-description">
+                {{description}}
+            </div>
+        </div>
+    </div>
+    {{/description}}
+
+    {{#actions}}
+    <div class="panel panel-white panel-collapse collapse" id="{{uniqueId}}_{{actionType.action}}">
+
+        <div>
+            <span class="badge badge_{{actionType.action}}">{{actionType.action}}</span>
+
+            {{#description}}
+            <div class="alert alert-info method_description">
+                {{description}}
+            </div>
+            {{/description}}
+
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="panel-body">
+
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs">
+
+                <!--method request tab-->
+                <li class="active">
+                    <a href="#{{uniqueId}}_{{actionType.action}}_request" data-toggle="tab">Request</a>
+                </li>
+
+                <!--method response tab-->
+                <li>
+                    <a href="#{{uniqueId}}_{{actionType.action}}_response" data-toggle="tab">Response</a>
+                </li>
+
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+
+                <!--method requests-->
+                <div class="tab-pane active" id="{{uniqueId}}_{{actionType.action}}_request">
+                    {{#urlParameters.size}}
+                    <h3>URI Parameters</h3>
+                    <ul>
+                        {{#urlParameters}}
+                        <li>
+                            {{> parameter}}
+                        </li>
+                        {{/urlParameters}}
+                    </ul>
+                    {{/urlParameters.size}}
+
+
+                    {{#headers.size}}
+                    <h3>Headers</h3>
+                    <ul>
+                        {{#headers}}
+                        <li>
+                            {{> parameter}}
+                        </li>
+                        {{/headers}}
+                    </ul>
+                    {{/headers.size}}
+
+                    {{#queryParameters.size}}
+                    <h3>Query Parameters</h3>
+                    <ul>
+                        {{#queryParameters}}
+                        <li>
+                            {{> parameter}}
+                        </li>
+                        {{/queryParameters}}
+                    </ul>
+                    {{/queryParameters.size}}
+
+                    {{#queryString}}
+                    <h3>Query String</h3>
+                    <ul>
+                        <li>
+                            (ToDo: render TypeRepresentation for the query string)
+                        </li>
+                    </ul>
+                    {{/queryString}}
+
+
+                    {{#body.bodyContent.size}}
+                    <h3>Body</h3>
+
+                    {{#body.bodyContent}}
+
+                    <p><strong>Media type:</strong> {{mediaType.value}}</p>
+                    <p><strong>Type:</strong>{{{html}}}</p>
+
+                    {{/body.bodyContent}}
+
+                    {{/body.bodyContent.size}}
+
+                </div>
+
+                <!--method responses-->
+                <div class="tab-pane" id="{{uniqueId}}_{{actionType.action}}_response">
+                    {{#responses}}
+
+                    <h2>HTTP status code <a href="http://httpstatus.es/{{ response.code }}" target="_blank">{{status.code}}</a></h2>
+
+                    {{description}}
+
+                    {{#headers.values.size}}
+                    <h3>Headers</h3>
+                    <ul>
+                        {{#headers.values}}
+                        <li>
+                            {{> parameter}}
+                        </li>
+                        {{/headers.values}}
+                    </ul>
+                    {{/headers.values.size}}
+
+
+                    {{#body.bodyContent.size}}
+                    <h3>Body</h3>
+
+                    {{#body.bodyContent}}
+
+                    <p><strong>Media type:</strong>{{mediaType.value}}</p>
+                    <p><strong>Type:</strong>{{{html}}}</p>
+
+                    {{/body.bodyContent}}
+
+                    {{/body.bodyContent.size}}
+
+                    {{/responses}}
+                </div>
+
+
+            </div>
+
+        </div>
+    </div>
+    {{/actions}}
+
+
+</div>

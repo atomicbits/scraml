@@ -17,7 +17,7 @@ Setting up [scramlfont]#Scraml# using the maven-plugin is super-easy if you add 
 .configure the scraml maven-plugin and the http client dependency in your maven pom.xml file
 ----
     <properties>
-        <scraml.version>0.8.1</scraml.version>
+        <scraml.version>0.8.2</scraml.version>
     </properties>
 
     <build>
@@ -88,24 +88,14 @@ When you compile your project, you'll see a lot of dependencies being downloaded
 mind that these packages are all compile-time dependencies. They will not end up in your packaged project!
 
 
-=== Optional: use a license to overcome AGPL limitations
+=== Optional: set a license header onto the generated code files
 
 [[license.key]]
 [source,xml]
-.configure a license key for activating the commercial scraml license in your maven pom.xml file
+.configure a license header in your maven pom.xml file
 ----
 <configuration>
     <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
-    <licenseKey>
-        U1Q7Q1ZQWnZMbHZSakQ7TGVwN0JSYkJXT2I7aW8uYXRvbWljYml0czsyMDE2LTA3LTAxOzM2NiFj
-        VzlubUlqM2t4a1o2aUZFUFhDQm5nb01pd005bXVrb0k3MVczUnI2cmxaYjc3UC92OWlRUDFXeHBD
-        Mk9Gd2hQcHBUVXkwYVBQZFhRCnJ6Y3VialdQv3d1c3gxVHVaOTAxNEVKbmI4cm9vdk1FakVqNlZw
-        UG1mLzVyaHdTUXg5bWRtOWxtTDdUVnJoWTM1MEZaNVNJVWxGcG4Kb201cWVkdGp5cEs5dHRhajd3
-        V3FEby9jN2FJOEtNZk9lME5wWjhidDBzUFFoZkdvV2VDMEZCWU9pTU1BdkZPWlNuWTZDNk1UNmhM
-        WQo0eEoxVWFrTkNaaFNOeHhqRUQyNk44SHBFcFlybjlKWWRBa1piME5mVm9hczM0bHQ4WmN1OWJE
-        bFExK3FmaDlmazlpbm5SdjVRVkhrCnEyMFJCZ3NKbHlubnFlZHdJYm5oNTk3V1hFTE4yVzNyTC9l
-        Mjl3PT0=
-    </licenseKey>
     <classHeader>
         All rights reserved.
         This is a custom class header.
@@ -113,44 +103,93 @@ mind that these packages are all compile-time dependencies. They will not end up
 </configuration>
 ----
 
-In order to use your own custom license on the generated code, you can <<license.key>>. As soon as a valid license is configured
-using the `licenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
-the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
-generate and your own license applies instead.
 
+== Generate other languages or documentation from SBT
 
-=== Optional: use a free license for non-commercial use
+The Java test project illustrates how several other languages and HTML documentation can be generated before compilation:
+https://github.com/atomicbits/scraml-test-java
 
-In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
-can replace the license key in the previous section with the following statement of intend:
+=== TypeScript Transfer Object (TO) generation
 
-[[statement.of.intend]]
+[[pom2.sbt]]
 [source,java]
-.Free license statement of intend
+.configure typescript TO generation
 ----
-<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
+    <properties>
+        <scraml.version>0.8.2</scraml.version>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>io.atomicbits</groupId>
+                <artifactId>scraml-maven-plugin</artifactId>
+                <version>${scraml.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-client-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
+                            <baseDir>"src/main/resources"</baseDir> // omit when the raml files are in the module's own resources folder
+                            <language>"TypeScript"</language>
+                            <apiPackage>"io.atomicbits"</apiPackage> // our path to the main raml file is too short to use it as a package name (helloworld/helloworld.raml), so we have to declare our own package name
+                            <classHeader>"Some header"</classHeader>
+                            <destinationDir>"modules/raml-typescript/src/public"</destinationDir>
+                            <singleSourceFile>"helloworld.d.ts"</singleSourceFile>
+                        </configuration>
+                        <goals>
+                            <goal>scraml</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
 ----
 
-For example:
+=== HTML documentation generation
 
-[[statement.of.intend.example]]
-[source,xml]
-.configure a free license statement of intend
+
+[[pom3.sbt]]
+[source,java]
+.configure HTML documentation generation
 ----
-<configuration>
-    <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
-    <licenseKey>
-        We, Atomic BITS, use the free scraml license in this project without any intend to serve
-        commercial purposes for ourselves or anyone else.
-    </licenseKey>
-    <classHeader>
-        All rights reserved.
-        This is a custom class header.
-    </classHeader>
-</configuration>
+    <properties>
+        <scraml.version>0.8.2</scraml.version>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>io.atomicbits</groupId>
+                <artifactId>scraml-maven-plugin</artifactId>
+                <version>${scraml.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-client-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <ramlApi>/io/atomicbits/my-api.raml</ramlApi>
+                            <baseDir>"src/main/resources"</baseDir> // omit when the raml files are in the module's own resources folder
+                            <language>"HtmlDoc"</language>
+                            <apiPackage>"io.atomicbits"</apiPackage> // our path to the main raml file is too short to use it as a package name (helloworld/helloworld.raml), so we have to declare our own package name
+                            <classHeader>""</classHeader>
+                            <destinationDir>"modules/raml-htmldoc/src/public"</destinationDir>
+                        </configuration>
+                        <goals>
+                            <goal>scraml</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
 ----
-
-
 
 
 
@@ -189,8 +228,8 @@ targetCompatibility = JavaVersion.VERSION_1_8
 scraml {
     ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
 
-    // Optional:
-    // platform 'JavaJackson' or 'ScalaPlay' // on roadmap: 'AndroidJavaJackson', 'OsxSwift' and 'Python' // default is JavaJackson
+    // Optional: (similar to the maven configuration)
+    // platform 'JavaJackson', 'ScalaPlay' or 'HtmlDoc' // on roadmap: 'AndroidJavaJackson', 'OsxSwift' and 'Python' // default is JavaJackson
     // apiPackage // Override the base package name  (optional)
     // resourceDirectory  // override the base location of the RAML files  (optional)
     // outputDirectory  // Override the default output directory (optional)
@@ -234,71 +273,23 @@ When you compile your project, you might see a lot of dependencies being downloa
 mind that these packages are all compile-time dependencies. They will not end up in your packaged project!
 
 
-=== Optional: use a license to overcome AGPL limitations
+=== Optional: set a license header onto the generated code files
 
 [[gradle-license.key]]
 [source,groovy]
-.configure a license key for activating the commercial scraml license in your build.gralde file
+.configure a license header in your build.gradle file
 ----
 scraml {
     ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
-    licenseKey """U1Q7Q1ZQWnZMbHZSakQ7TGVwN0JSYkJXT2I7aW8uYXRvbWljYml0czsyMDE2LTA3LTAxOzM2NiFj
-                 |VzlubUlqM2t4a1o2aUZFUFhDQm5nb01pd005bXVrb0k3MVczUnI2cmxaYjc3UC92OWlRUDFXeHBD
-                 |Mk9Gd2hQcHBUVXkwYVBQZFhRCnJ6Y3VialdQv3d1c3gxVHVaOTAxNEVKbmI4cm9vdk1FakVqNlZw
-                 |UG1mLzVyaHdTUXg5bWRtOWxtTDdUVnJoWTM1MEZaNVNJVWxGcG4Kb201cWVkdGp5cEs5dHRhajd3
-                 |V3FEby9jN2FJOEtNZk9lME5wWjhidDBzUFFoZkdvV2VDMEZCWU9pTU1BdkZPWlNuWTZDNk1UNmhM
-                 |WQo0eEoxVWFrTkNaaFNOeHhqRUQyNk44SHBFcFlybjlKWWRBa1piME5mVm9hczM0bHQ4WmN1OWJE
-                 |bFExK3FmaDlmazlpbm5SdjVRVkhrCnEyMFJCZ3NKbHlubnFlZHdJYm5oNTk3V1hFTE4yVzNyTC9l
-                 |Mjl3PT0=""".stripMargin()
     classHeader """All rights reserved.
                   |This is a custom class header.""".stripMargin()
 }
 ----
-
-In order to use your own custom license on the generated code, you can <<gradle-license.key>>. As soon as a valid license is configured
-using the `licenseKey` variable, a custom header will be put above each generated code file. The new header has to be assigned to
-the `classHeader` maven variable. From that point on, the default AGPL license doesn't apply any longer on the client APIs you
-generate and your own license applies instead.
-
-
-=== Optional: use a free license for non-commercial use
-
-In order to use the https://github.com/atomicbits/scraml/blob/develop/LICENSE-EULA[EULA] under its free license conditions, you
-can replace the license key in the previous section with the following statement of intend:
-
-[[gradle.statement.of.intend]]
-[source,java]
-.Free license statement of intend
-----
-<We/I>, <enter name here>, use the free scraml license in this project without any intend to serve commercial purposes for ourselves or anyone else.
-----
-
-For example:
-
-[[gradle.statement.of.intend.example]]
-[source,groovy]
-.configure a free license statement of intend
-----
-scraml {
-    ramlApi '/io/atomicbits/raml10/RamlTestClient.raml'
-    licenseKey """We, Atomic BITS, use the free scraml license in this project without any intend
-                 |to serve commercial purposes for ourselves or anyone else.""".stripMargin()
-    classHeader """All rights reserved.
-                  |This is a custom class header.""".stripMargin()
-}
-----
-
-
-
-
-
-
 
 
 
 // == Writing RAML documentation
 
-Learn more about writing RAML:
 include::writing-raml.adoc[]
 
 

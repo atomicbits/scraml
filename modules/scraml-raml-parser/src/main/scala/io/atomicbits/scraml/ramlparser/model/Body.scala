@@ -33,6 +33,8 @@ case class Body(contentMap: Map[MediaType, BodyContent] = Map.empty) {
 
   def forHeader(mimeType: MediaType): Option[BodyContent] = contentMap.get(mimeType)
 
+  // val values = contentMap.values.toList
+
 }
 
 object Body {

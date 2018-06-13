@@ -1,0 +1,265 @@
+<!DOCTYPE HTML>
+
+<!--
+  ~
+  ~ (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~  Contributors:
+  ~      Peter Rigole
+  ~
+  -->
+
+<html>
+<head>
+    <title>Test file for the JSON HTML styling</title>
+
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script>
+        // see at the bottom of https://github.com/twbs/bootstrap/issues/19374
+        $(function() {
+            $(".apply-active").click(function() { // remove classes from all
+              $(this).siblings().removeClass("active"); // add class to the one we clicked
+              $(this).addClass("active");
+            });
+        });
+    </script>
+
+    <script>
+        $(function() {
+            $(".typeselect").change(function() {
+                var value = $(this).find("option:selected").val();
+                console.log('div: #' + value);
+                var theDiv = $("#" + value);
+                theDiv.removeClass("hidden");
+                theDiv.siblings().addClass("hidden")
+            });
+        });
+    </script>
+
+    <style>
+        .indent {
+            margin-left: 20px;
+        }
+
+        .collapse.in {
+            display: inline;
+        }
+
+        /* Icon when the collapsible content is shown */
+        .classref {
+            font-style: italic;
+            color: navy;
+            font-weight: 300;
+        }
+
+        .classref.active {
+            font-style: italic;
+            color: navy;
+            font-weight: bold;
+        }
+
+        /* Icon when the collapsible content is hidden */
+        .classref.collapsed {
+            font-weight: bold;
+        }
+
+        .classref.recursive {
+            color: black
+        }
+
+        .primitivetype {
+            font-style: italic;
+            margin-left: 5px;
+        }
+
+        .tab-content>.active {
+            display: inherit;
+        }
+
+        .hidden {
+            display: none
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div>
+
+    <span>[</span>
+
+    <div class="indent">
+
+        <span>{</span>
+
+        <div class="indent">
+            <span>"begin:"</span>
+
+            <span>{</span>
+
+            <div class="indent">
+                <span>"ident8": </span><span>"N0080001",</span>
+            </div>
+            <div class="indent">
+                <span>"opschrift": </span><span>20.4,</span>
+            </div>
+            <div class="indent">
+                <span>"afstand": </span><span>-8,</span>
+            </div>
+            <div class="indent">
+                <span>"bron": </span><span>"relatief"</span>
+            </div>
+
+            <span>},</span>
+
+        </div>
+        <div class="indent">
+            <span>"eind:"</span>
+
+            <span>{</span>
+
+            <div class="indent">
+                <span>"ident8":</span><span>"N0080001",</span>
+            </div>
+            <div class="indent">
+                <span>"opschrift":</span><span>22.4,</span>
+            </div>
+            <div class="indent">
+                <span>"afstand":</span><span>74,</span>
+            </div>
+            <div class="indent">
+                <span>"bron":</span><span>"relatief"</span>
+            </div>
+
+            <span>},</span>
+
+        </div>
+
+        <div class="indent">
+
+            <span>"link:"</span>
+            <!--<span data-toggle="collapse" data-target="#weglocatie" class="classref collapsed">WegLocatie</span>-->
+            <!--<span id="weglocatie" class="collapse">-->
+
+            <span>&lt;WegLocatie&gt;</span> <span data-toggle="collapse" data-target="#weglocatie" class="classref" area-expanded="true">&lt;toggle&gt;</span>
+
+            <span id="weglocatie" class="collapse in" area-expanded="true">
+                <span>{</span>
+
+               <div class="indent">
+                   <span>"ident8":</span><span class="primitivetype">string,</span>
+               </div>
+               <div class="indent">
+                   <span>"opschrift":</span><span>number,</span>
+               </div>
+               <div class="indent">
+                   <span>"afstand":</span><span>number,</span>
+               </div>
+               <div class="indent">
+                   <span>"bron":</span><span>string</span>
+               </div>
+
+               <span>},</span>
+
+            </span>
+
+        </div>
+
+        <div class="indent">
+
+            <span>"multi:"</span>
+            <!--<span data-toggle="collapse" data-target="#weglocatie" class="classref collapsed">WegLocatie</span>-->
+            <!--<span id="weglocatie" class="collapse">-->
+
+            <select class="typeselect">
+                <option value="weglocatie1">WegLocatie 1</option>
+                <option value="weglocatie2">WegLocatie 2</option>
+            </select>
+
+            <!--<span class="apply-active classref active" data-toggle="tab" href="#weglocatie1" tab-selected="true">&lt;WegLocatie 1&gt;</span>-->
+            <!--<span class="apply-active classref" data-toggle="tab" href="#weglocatie2">&lt;WegLocatie 2&gt;</span>-->
+
+            <!--<span class="active"><span class="classref" data-toggle="tab" data-target="#weglocatie1">&lt;WegLocatie 1&gt;</span></span>-->
+            <!--<span class=""><span class="classref" data-toggle="tab" data-target="#weglocatie2">&lt;WegLocatie 2&gt;</span></span>-->
+
+            <span data-toggle="collapse" data-target="#togglepane" class="classref" area-expanded="true">&lt;toggle&gt;</span>
+
+            <span id="togglepane" class="collapse in tab-content" area-expanded="true">
+
+                <span class="" id="weglocatie1">
+
+                       <span>{</span>
+
+                      <div class="indent">
+                          <span>"ident8":</span><span class="primitivetype">string,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"opschrift":</span><span>number,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"afstand":</span><span>number,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"bron":</span><span>string</span>
+                      </div>
+
+                      <span>},</span>
+
+                </span>
+
+                <span class="hidden" id="weglocatie2">
+
+                       <span>{</span>
+
+                      <div class="indent">
+                          <span>"ident8":</span><span class="primitivetype">string,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"x":</span><span>number,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"y":</span><span>number,</span>
+                      </div>
+                      <div class="indent">
+                          <span>"bron":</span><span>string</span>
+                      </div>
+
+                      <span>},</span>
+
+                </span>
+
+            </span>
+
+        </div>
+
+        <div class="indent">
+            <span>"recursive link:"</span>
+            <span class="classref recursive">&lt;WegLocatie&gt;</span>
+        </div>
+
+        <span>}</span>
+
+    </div>
+
+    <span>]</span>
+
+</div>
+
+
+</body>

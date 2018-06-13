@@ -94,6 +94,7 @@ case class ResourceClassGenerator(javaJackson: CommonJavaJacksonPlatform) extend
          """
 
     generationAggr
+      .addSourceDefinitions(resourceClassDefinition.childResourceDefinitions)
       .addSourceDefinitions(headerPathSourceDefs)
       .addSourceFile(SourceFile(filePath = resourceClassReference.toFilePath, content = sourcecode))
   }

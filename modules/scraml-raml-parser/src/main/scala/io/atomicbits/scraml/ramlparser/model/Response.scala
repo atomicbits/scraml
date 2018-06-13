@@ -28,7 +28,7 @@ import scala.util.Try
 /**
   * Created by peter on 10/02/16.
   */
-case class Response(status: StatusCode, headers: Parameters, body: Body)
+case class Response(status: StatusCode, headers: Parameters, body: Body, description: Option[String] = None) // ToDo add description from parsed model
 
 object Response {
 

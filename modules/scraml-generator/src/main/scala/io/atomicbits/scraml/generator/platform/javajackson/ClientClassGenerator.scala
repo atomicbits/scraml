@@ -129,6 +129,7 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
          """
 
     generationAggr
+      .addSourceDefinitions(clientClassDefinition.topLevelResourceDefinitions)
       .addSourceDefinitions(headerPathSourceDefs)
       .addSourceFile(SourceFile(filePath = apiClassReference.toFilePath, content = sourcecode))
   }
