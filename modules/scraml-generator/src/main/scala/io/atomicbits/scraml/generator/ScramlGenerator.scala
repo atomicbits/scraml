@@ -71,7 +71,6 @@ object ScramlGenerator {
           JavaJackson(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -80,7 +79,6 @@ object ScramlGenerator {
           ScalaPlay(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -89,7 +87,6 @@ object ScramlGenerator {
           AndroidJavaJackson(packageNameToPackagParts(apiPackageName)),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -98,7 +95,6 @@ object ScramlGenerator {
           TypeScript(),
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -108,7 +104,6 @@ object ScramlGenerator {
           HtmlDoc,
           ramlApiPath,
           apiClassName,
-          licenseKey,
           thirdPartyClassHeader,
           singleTargeSourceFileName
         )
@@ -122,7 +117,6 @@ object ScramlGenerator {
   private[generator] def generateFor(platform: Platform,
                                      ramlApiPath: String,
                                      apiClassName: String,
-                                     scramlLicenseKey: String,
                                      thirdPartyClassHeader: String,
                                      singleTargeSourceFileName: String): JMap[String, String] = {
 
@@ -132,16 +126,11 @@ object ScramlGenerator {
 
     // We transform the scramlLicenseKey and thirdPartyClassHeader fields to optionals here. We don't take them as optional parameters
     // higher up the chain to maintain a Java-compatible interface for the ScramlGenerator.
-    val licenseKey: Option[String] =
-      if (scramlLicenseKey == null || scramlLicenseKey.isEmpty) None
-      else Some(scramlLicenseKey)
     val classHeader: Option[String] =
       if (thirdPartyClassHeader == null || thirdPartyClassHeader.isEmpty) None
       else Some(thirdPartyClassHeader)
 
-    val licenseData: Option[LicenseData] = licenseKey.flatMap(LicenseVerifier.validateLicense)
-
-    val licenseHeader: String = deferLicenseHeader(licenseData, classHeader)
+    val licenseHeader: String = deferLicenseHeader(classHeader)
 
     val generationAggregator = buildGenerationAggr(ramlApiPath, apiClassName, platform)
 
@@ -223,30 +212,13 @@ object ScramlGenerator {
     sourceFile.copy(content = formattedContent)
   }
 
-  private val agplClassHeader =
-    s"""|All rights reserved. This program and the accompanying materials
-        |are made available under the terms of the GNU Affero General Public License
-        |(AGPL) version 3.0 which accompanies this distribution, and is available in
-        |the LICENSE file or at http://www.gnu.org/licenses/agpl-3.0.en.html
-        |
-        |This library is distributed in the hope that it will be useful,
-        |but WITHOUT ANY WARRANTY; without even the implied warranty of
-        |MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-        |Affero General Public License for more details. """.stripMargin
-
-  private def deferLicenseHeader(licenseKey: Option[LicenseData], thirdPartyLicenseHeader: Option[String]): String = {
-
-    val classHeader =
-      licenseKey.map { licenseData =>
-        val thirdPartyHeader = thirdPartyLicenseHeader.getOrElse {
-          s"""
-             | All rights are reserved to ${licenseData.owner}.
-           """.stripMargin.trim
-        }
-        thirdPartyHeader
-      } getOrElse agplClassHeader
-
-    classHeader.split('\n').map(line => s" * ${line.trim}").mkString("/**\n", "\n", "\n */")
+  private def deferLicenseHeader(thirdPartyLicenseHeader: Option[String],
+                                 commentPrefix: String = "  * ",
+                                 headerPrefix: String  = "/**\n",
+                                 headerSuffix: String  = "\n  */"): String = {
+    thirdPartyLicenseHeader.map { licenseHeader =>
+      licenseHeader.split('\n').map(line => s"$commentPrefix${line.trim}").mkString(headerPrefix, "\n", headerSuffix)
+    } getOrElse ""
   }
 
 }

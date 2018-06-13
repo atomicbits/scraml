@@ -13,6 +13,19 @@ to check these release notes when upgrading to a newer version.
 
 Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
 
+=== Version 0.8.2
+
+Changes:
+
+ - added HTML documentation generation with (basic) type documentation, type documentation will be extended in next releases
+
+=== Version 0.8.1
+
+Changes:
+
+ - added TypeScript TO generation
+ - added SBT 1.0 plugin support
+
 === Version 0.7.0
 
 This is a major release with several RAML 1.0 additions.

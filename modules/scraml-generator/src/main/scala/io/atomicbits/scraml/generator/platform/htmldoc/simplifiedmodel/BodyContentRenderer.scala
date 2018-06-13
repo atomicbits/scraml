@@ -21,6 +21,7 @@
 package io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
+import io.atomicbits.scraml.generator.util.CleanNameUtil
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 
 /**
@@ -109,8 +110,8 @@ case class BodyContentRenderer(generationAggr: GenerationAggr) {
                |<span>}$suffix</span>
              """.stripMargin
           case (ref, Some(enumType: EnumType)) =>
-            s"""<span class="primitivetype">${enumType.choices.mkString(" | ")}$suffix$comment</span>"""
-          case (ref, Some(union: UnionType)) => ""
+            s"""<span class="primitivetype">${enumType.choices.map(CleanNameUtil.quoteString).mkString(" | ")}$suffix$comment</span>"""
+          case (ref, Some(union: UnionType)) => "ToDo: render union types"
         }
       case other => s"Unknown type representation for $other$suffix$comment"
     }

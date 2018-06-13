@@ -40,13 +40,13 @@
 
     <script>
         $(function() {
-            $("#theSelect").change(function(){
-                var value = $("#theSelect option:selected").val();
+            $(".typeselect").change(function() {
+                var value = $(this).find("option:selected").val();
                 console.log('div: #' + value);
                 var theDiv = $("#" + value);
-                theDiv.slideDown();
-                theDiv.siblings().slideUp();
-            });​
+                theDiv.removeClass("hidden");
+                theDiv.siblings().addClass("hidden")
+            });
         });
     </script>
 
@@ -88,6 +88,10 @@
 
         .tab-content>.active {
             display: inherit;
+        }
+
+        .hidden {
+            display: none
         }
 
     </style>
@@ -153,7 +157,7 @@
             <!--<span data-toggle="collapse" data-target="#weglocatie" class="classref collapsed">WegLocatie</span>-->
             <!--<span id="weglocatie" class="collapse">-->
 
-            <span>WegLocatie</span> <span data-toggle="collapse" data-target="#weglocatie" class="classref" area-expanded="true">&lt;toggle&gt;</span>
+            <span>&lt;WegLocatie&gt;</span> <span data-toggle="collapse" data-target="#weglocatie" class="classref" area-expanded="true">&lt;toggle&gt;</span>
 
             <span id="weglocatie" class="collapse in" area-expanded="true">
                 <span>{</span>
@@ -183,7 +187,7 @@
             <!--<span data-toggle="collapse" data-target="#weglocatie" class="classref collapsed">WegLocatie</span>-->
             <!--<span id="weglocatie" class="collapse">-->
 
-            <select id="theSelect">
+            <select class="typeselect">
                 <option value="weglocatie1">WegLocatie 1</option>
                 <option value="weglocatie2">WegLocatie 2</option>
             </select>
@@ -198,7 +202,7 @@
 
             <span id="togglepane" class="collapse in tab-content" area-expanded="true">
 
-                <span id="weglocatie1">
+                <span class="" id="weglocatie1">
 
                        <span>{</span>
 
@@ -219,7 +223,7 @@
 
                 </span>
 
-                <span id="weglocatie2">
+                <span class="hidden" id="weglocatie2">
 
                        <span>{</span>
 
