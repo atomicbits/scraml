@@ -53,7 +53,7 @@ object HtmlDoc extends Platform {
 
   override def safePackageParts(classPointer: ClassPointer) = ???
 
-  override def safeFieldName(field: Field) = ???
+  override def safeFieldName(fieldName: String) = ???
 
   override def fieldDeclarationWithDefaultValue(field: Field) = ???
 

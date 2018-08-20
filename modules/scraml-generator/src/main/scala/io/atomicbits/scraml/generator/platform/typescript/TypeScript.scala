@@ -162,11 +162,11 @@ case class TypeScript() extends Platform with CleanNameTools {
 
   override def safePackageParts(classPointer: ClassPointer): List[String] = List()
 
-  override def safeFieldName(field: Field): String = {
+  override def safeFieldName(fieldName: String): String = {
     // In typescript, all field names are allowed, even reserved words.
     // If the field name contains special characters such as spaces, '-', '~', ..., then we need to quote it.
     // Just to be sure to handle all special characters, we quote all fields.
-    quoteString(field.fieldName)
+    quoteString(fieldName)
   }
 
   override def fieldDeclarationWithDefaultValue(field: Field) = fieldDeclaration(field)

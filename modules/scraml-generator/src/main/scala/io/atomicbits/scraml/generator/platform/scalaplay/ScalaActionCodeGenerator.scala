@@ -142,7 +142,7 @@ case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
 
   def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment = {
 
-    val sanitizedParameterName = CleanNameTools.cleanFieldName("queryString")
+    val sanitizedParameterName = platform.safeFieldName("queryString")
     val classPointer           = queryString.classPointer()
     val classDefinition        = classPointer.classDefinition
 
@@ -152,7 +152,7 @@ case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
 
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment = {
     val (queryParameterName, parameter) = qParam
-    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val sanitizedParameterName          = platform.safeFieldName(queryParameterName)
     val classPointer                    = parameter.classPointer()
     val classDefinition                 = classPointer.classDefinition
 
@@ -169,7 +169,7 @@ case class ScalaActionCodeGenerator(scalaPlay: ScalaPlay) extends ActionCode {
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
-    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val sanitizedParameterName          = platform.safeFieldName(queryParameterName)
 
     val httpParamType: String =
       parameter.classPointer() match {

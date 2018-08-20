@@ -140,8 +140,8 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
   override def safePackageParts(classPointer: ClassPointer): List[String] =
     classPointer.native.packageParts.map(escapeScalaKeyword(_, "esc"))
 
-  override def safeFieldName(field: Field): String = {
-    val cleanName = cleanFieldName(field.fieldName)
+  override def safeFieldName(fieldName: String): String = {
+    val cleanName = cleanFieldName(fieldName)
     escapeScalaKeyword(cleanName)
   }
 
@@ -283,7 +283,7 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
 
   def escapeScalaKeyword(someName: String, escape: String = "$"): String =
     reservedKeywords.foldLeft(someName) { (name, resWord) =>
-      if (name == resWord) s"$name$escape"
+      if (name == resWord) s"`$name`"
       else name
     }
 
