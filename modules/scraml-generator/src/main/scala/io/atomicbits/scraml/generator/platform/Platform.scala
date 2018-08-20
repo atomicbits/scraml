@@ -91,7 +91,9 @@ trait Platform {
 
   def safePackageParts(classPointer: ClassPointer): List[String]
 
-  def safeFieldName(field: Field): String
+  def safeFieldName(field: Field): String = safeFieldName(field.fieldName)
+
+  def safeFieldName(fieldName: String): String
 
   def fieldDeclarationWithDefaultValue(field: Field): String
 

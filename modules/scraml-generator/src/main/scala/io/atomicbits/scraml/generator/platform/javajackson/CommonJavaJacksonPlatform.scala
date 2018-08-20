@@ -161,8 +161,8 @@ trait CommonJavaJacksonPlatform extends Platform with CleanNameTools {
     classPointer.native.packageParts.map(part => escapeJavaKeyword(cleanPackageName(part), "esc"))
   }
 
-  override def safeFieldName(field: Field): String = {
-    val cleanName = cleanFieldName(field.fieldName)
+  override def safeFieldName(fieldName: String): String = {
+    val cleanName = cleanFieldName(fieldName)
     escapeJavaKeyword(cleanName)
   }
 

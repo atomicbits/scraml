@@ -147,7 +147,7 @@ class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extend
 
   def expandQueryStringAsMethodParameter(queryString: QueryString): SourceCodeFragment = {
 
-    val sanitizedParameterName = CleanNameTools.cleanFieldName("queryString")
+    val sanitizedParameterName = platform.safeFieldName("queryString")
     val classPointer           = queryString.classPointer()
     val classDefinition        = classPointer.classDefinition
 
@@ -158,7 +158,7 @@ class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extend
 
   def expandQueryOrFormParameterAsMethodParameter(qParam: (String, Parameter), noDefault: Boolean = false): SourceCodeFragment = {
     val (queryParameterName, parameter) = qParam
-    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val sanitizedParameterName          = platform.safeFieldName(queryParameterName)
     val classPointer                    = parameter.classPointer()
     val classDefinition                 = classPointer.classDefinition
 
@@ -169,7 +169,7 @@ class JavaActionCodeGenerator(val javaJackson: CommonJavaJacksonPlatform) extend
 
   def expandQueryOrFormParameterAsMapEntry(qParam: (String, Parameter)): String = {
     val (queryParameterName, parameter) = qParam
-    val sanitizedParameterName          = CleanNameTools.cleanFieldName(queryParameterName)
+    val sanitizedParameterName          = platform.safeFieldName(queryParameterName)
 
     val classPointer = parameter.classPointer()
     val (httpParamType, callParameters) =
