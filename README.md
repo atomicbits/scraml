@@ -4,7 +4,7 @@ Type safe Java and Scala RAML client generator
 [![Build Status](https://travis-ci.org/atomicbits/scraml.svg?branch=develop)](https://travis-ci.org/atomicbits/scraml)
 
 
-[Scraml](http://scraml.io) generates a typesafe Java or Scala client library based on a [RAML](http://raml.org) specification. It transforms 
+Scraml generates a typesafe Java or Scala client library based on a [RAML](http://raml.org) specification. It transforms 
 JSON schema into fully typed Java POJOs or Scala case classes and a REST resources DSL that enforces your RAML specification. We also support
 Typescript TO generation and HTML documentation generation. Plugins are available for maven, gradle and sbt.  
 
