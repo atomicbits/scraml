@@ -22,19 +22,20 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
-import io.atomicbits.scraml.ramlparser.model.{ Raml }
+import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 20/03/17.
   */
-class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class TypeParametersTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Test cases using type parameters") {
+  Feature("Test cases using type parameters") {
 
-    scenario("a json-schema definition with a reference to a paged-list in an object field") {
+    Scenario("a json-schema definition with a reference to a paged-list in an object field") {
 
       Given("a RAML specification containing a json-schema definition with type parameters")
       val defaultBasePath = List("io", "atomicbits", "raml10")
@@ -71,7 +72,7 @@ class TypeParametersTest extends FeatureSpec with GivenWhenThen with BeforeAndAf
 
     }
 
-    scenario("a RAML 1.0 definition with a reference to a paged-list in an object field") {
+    Scenario("a RAML 1.0 definition with a reference to a paged-list in an object field") {
 
       Given("a RAML specification containing a RAML 1.0 definition with type parameters")
       val defaultBasePath = List("io", "atomicbits", "raml10")

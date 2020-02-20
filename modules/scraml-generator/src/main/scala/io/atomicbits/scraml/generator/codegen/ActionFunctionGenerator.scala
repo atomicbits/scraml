@@ -57,7 +57,7 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
     val formParameterMapEntries: List[String] =
       actualFormParameters.map {
         case (name, parameter) => actionCode.expandQueryOrFormParameterAsMapEntry((name, parameter))
-      } toList
+      }.toList
 
     val queryStringType = actionCode.queryStringType(actionSelection)
 
@@ -158,8 +158,8 @@ case class ActionFunctionGenerator(actionCode: ActionCode) {
   private def generateActionImports(actionSelection: ActionSelection): Set[ClassPointer] = {
 
     // Todo: add the imports from the Parameters (headers / query parameters)
-    actionSelection.action.queryParameters
-    actionSelection.action.headers
+    // actionSelection.action.queryParameters
+    // actionSelection.action.headers
 
     val bodyTypes     = actionCode.bodyTypes(actionSelection).flatten.toSet
     val responseTypes = actionCode.responseTypes(actionSelection).flatten.toSet

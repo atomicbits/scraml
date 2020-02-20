@@ -23,8 +23,9 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 import scala.language.postfixOps
 import scala.util.Try
@@ -32,11 +33,11 @@ import scala.util.Try
 /**
   * Created by peter on 6/02/16.
   */
-class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class JsonSchemaParseTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("json schema parsing") {
+  Feature("json schema parsing") {
 
-    scenario("test parsing fragments in json-schema") {
+    Scenario("test parsing fragments in json-schema") {
 
       Given("a json-schema containing fragments")
       val parser = RamlParser("/fragments/TestFragmentsApi.raml", "UTF-8")
@@ -70,7 +71,7 @@ class JsonSchemaParseTest extends FeatureSpec with GivenWhenThen with BeforeAndA
       //       println(s"Parsed raml: $prettyModel")
     }
 
-    scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
+    Scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
 
       Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
       val defaultBasePath = List("io", "atomicbits", "schemas")

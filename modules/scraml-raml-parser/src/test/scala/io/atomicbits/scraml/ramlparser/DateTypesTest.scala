@@ -25,16 +25,17 @@ import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedString }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
 
 import scala.util.Try
 
 /**
   * Created by peter on 6/07/17.
   */
-class DateTypesTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class DateTypesTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  scenario("test parsing date types in a RAML 1.0 model") {
+  Scenario("test parsing date types in a RAML 1.0 model") {
 
     Given("a RAML 1.0 specification with date types")
     val defaultBasePath = List("io", "atomicbits", "types")

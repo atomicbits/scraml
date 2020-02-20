@@ -26,16 +26,17 @@ import java.util.{ List => JList }
 import com.fasterxml.jackson.databind.`type`.TypeFactory
 import com.fasterxml.jackson.databind.{ JavaType, ObjectMapper, ObjectWriter }
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
 
 /**
   * Created by peter on 12/10/15.
   */
-class ObjectMapperTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ObjectMapperTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
-  feature("We have an Object Mapper to serialize and deserialize objects") {
+  Feature("We have an Object Mapper to serialize and deserialize objects") {
 
-    scenario("Test the Object Mapper on canonical object representations") {
+    Scenario("Test the Object Mapper on canonical object representations") {
 
       Given("An object mapper")
 
@@ -65,7 +66,7 @@ class ObjectMapperTest extends FeatureSpec with GivenWhenThen with BeforeAndAfte
 
     }
 
-    scenario("Test the Object Mapper on a type hierarcy") {
+    Scenario("Test the Object Mapper on a type hierarcy") {
       val objectMapper: ObjectMapper = new ObjectMapper
 
       val dog: Dog = new Dog(true, "female", "Ziva")
@@ -74,7 +75,7 @@ class ObjectMapperTest extends FeatureSpec with GivenWhenThen with BeforeAndAfte
       assertResult("""{"_type":"Dog","canBark":true,"gender":"female","name":"Ziva"}""")(serializedDog)
     }
 
-    scenario("Test the object mapper on a type hierarcy in the type erased context of Java Lists") {
+    Scenario("Test the object mapper on a type hierarcy in the type erased context of Java Lists") {
       val objectMapper: ObjectMapper = new ObjectMapper
 
       val animals: JList[Animal] = util.Arrays.asList(new Dog(true, "male", "Wiskey"), new Fish("Wanda"), new Cat("male", "Duster"))

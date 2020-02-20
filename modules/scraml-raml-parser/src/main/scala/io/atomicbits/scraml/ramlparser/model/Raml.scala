@@ -127,10 +127,10 @@ object Raml {
       }
 
       (ramlJson \ "protocols").toOption.collect {
-        case JsArray(pcols) => accumulate(pcols.map(toProtocolString)).map(Some(_))
+        case JsArray(pcols) => TryUtils.accumulate(pcols.toSeq.map(toProtocolString)).map(Some(_))
         case x =>
           Failure(RamlParseException(s"The protocols field in ${parseCtxt.sourceTrail} must be an array of string values."))
-      } getOrElse Success(None)
+      }.getOrElse(Success(None))
     }
 
     val version: Try[Option[String]] = {
@@ -139,7 +139,7 @@ object Raml {
         case JsNumber(v) => Success(Option(v.toString()))
         case x =>
           Failure(RamlParseException(s"The version field in ${parseCtxt.sourceTrail} must be a string or a number value."))
-      } getOrElse Success(None)
+      }.getOrElse(Success(None))
     }
 
     val baseUri: Try[Option[String]] = {
@@ -147,7 +147,7 @@ object Raml {
         case JsString(v) => Success(Option(v))
         case x =>
           Failure(RamlParseException(s"The baseUri field in ${parseCtxt.sourceTrail} must be a string value."))
-      } getOrElse Success(None)
+      }.getOrElse(Success(None))
     }
 
     val baseUriParameters: Try[Parameters] = Parameters((ramlJson \ "baseUriParameters").toOption)
@@ -165,7 +165,7 @@ object Raml {
       val resourceFields: List[Try[Resource]] =
         ramlJson.fieldSet.collect {
           case (field, jsObject: JsObject) if field.startsWith("/") => Resource(field, jsObject)
-        } toList
+        }.toList
 
       TryUtils.accumulate(resourceFields).map(unparallellizeResources(_, None))
     }

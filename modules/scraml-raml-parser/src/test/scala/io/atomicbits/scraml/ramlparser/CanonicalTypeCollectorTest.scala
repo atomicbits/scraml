@@ -25,8 +25,9 @@ import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedArray, ParsedNumber, ParsedString, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.Matchers._
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
 import scala.language.postfixOps
 import scala.util.Try
@@ -34,11 +35,11 @@ import scala.util.Try
 /**
   * Created by peter on 30/12/16.
   */
-class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class CanonicalTypeCollectorTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Collect the canonical representations of a simple fragmented json-schema definition") {
+  Feature("Collect the canonical representations of a simple fragmented json-schema definition") {
 
-    scenario("test collecting of all canonical types") {
+    Scenario("test collecting of all canonical types") {
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schema")
@@ -46,7 +47,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
       Then("we all our relative fragment IDs and their references are expanded to absolute IDs")
@@ -77,23 +78,28 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
         canonicalLookup(CanonicalName.create(name = "FragmentsDefinitionsBars", packagePath = List("io", "atomicbits", "schema")))
           .asInstanceOf[ObjectType]
 
-      fragmentDefBars.properties("baz").isInstanceOf[Property[StringType.type]] shouldBe true
+      fragmentDefBars.properties("baz").isInstanceOf[Property[_]] shouldBe true
+      fragmentDefBars.properties("baz").ttype.isInstanceOf[StringType.type] shouldBe true
 
       val fragmentDefAddress =
         canonicalLookup(CanonicalName.create(name = "FragmentsDefinitionsAddress", packagePath = List("io", "atomicbits", "schema")))
           .asInstanceOf[ObjectType]
 
-      fragmentDefAddress.properties("city").isInstanceOf[Property[StringType.type]] shouldBe true
-      fragmentDefAddress.properties("state").isInstanceOf[Property[StringType.type]] shouldBe true
-      fragmentDefAddress.properties("zip").isInstanceOf[Property[IntegerType.type]] shouldBe true
-      fragmentDefAddress.properties("streetAddress").isInstanceOf[Property[StringType.type]] shouldBe true
+      fragmentDefAddress.properties("city").isInstanceOf[Property[_]] shouldBe true
+      fragmentDefAddress.properties("city").ttype.isInstanceOf[StringType.type] shouldBe true
+      fragmentDefAddress.properties("state").isInstanceOf[Property[_]] shouldBe true
+      fragmentDefAddress.properties("state").ttype.isInstanceOf[StringType.type] shouldBe true
+      fragmentDefAddress.properties("zip").isInstanceOf[Property[_]] shouldBe true
+      fragmentDefAddress.properties("zip").ttype.isInstanceOf[IntegerType.type] shouldBe true
+      fragmentDefAddress.properties("streetAddress").isInstanceOf[Property[_]] shouldBe true
+      fragmentDefAddress.properties("streetAddress").ttype.isInstanceOf[StringType.type] shouldBe true
     }
 
   }
 
-  feature("Collect the canonical representations of a complex and mixed json-schema/RAML1.0 definition") {
+  Feature("Collect the canonical representations of a complex and mixed json-schema/RAML1.0 definition") {
 
-    scenario("test collecting json-schema types in a RAML model") {
+    Scenario("test collecting json-schema types in a RAML model") {
 
       Given("a RAML specification containing json-schema definitions")
       val defaultBasePath = List("io", "atomicbits", "schema")
@@ -158,7 +164,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
       val collectedCanonicalNames = canonicalLookup.map.map {
         case (canonicalName, theType) => canonicalName
-      } toSet
+      }.toSet
 
       expectedCanonicalNames -- collectedCanonicalNames shouldBe Set.empty
       collectedCanonicalNames -- expectedCanonicalNames shouldBe Set.empty
@@ -222,7 +228,7 @@ class CanonicalTypeCollectorTest extends FeatureSpec with GivenWhenThen with Bef
 
     }
 
-    scenario("test collecting RAML 1.0 types in a RAML model") {
+    Scenario("test collecting RAML 1.0 types in a RAML model") {
 
       Given("a RAML specification containing RAML 1.0 definitions")
       val defaultBasePath = List("io", "atomicbits", "schema")

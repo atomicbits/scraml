@@ -24,19 +24,20 @@ import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, Canonica
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes._
 import io.atomicbits.scraml.ramlparser.model.{ Get, MediaType, Raml, StatusCode }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 import scala.util.Try
 
 /**
   * Created by peter on 15/02/17.
   */
-class JsonSchemaWithRelativeIdsTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class JsonSchemaWithRelativeIdsTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Collect the canonical representations of a simple fragmented json-schema definition") {
+  Feature("Collect the canonical representations of a simple fragmented json-schema definition") {
 
-    scenario("test collecting of all canonical types") {
+    Scenario("test collecting of all canonical types") {
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "model")
@@ -44,7 +45,7 @@ class JsonSchemaWithRelativeIdsTest extends FeatureSpec with GivenWhenThen with 
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
       Then("we all our relative fragment IDs and their references are expanded to absolute IDs")

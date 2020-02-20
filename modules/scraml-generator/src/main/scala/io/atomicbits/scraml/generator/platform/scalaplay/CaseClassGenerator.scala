@@ -207,9 +207,9 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
   private def selectAndSortFields(fields: Seq[Field], skipFieldName: Option[String] = None): Seq[Field] = {
     val selectedFields =
-      skipFieldName map { skipField =>
+      skipFieldName.map { skipField: String =>
         fields.filterNot(_.fieldName == skipField)
-      } getOrElse fields
+      }.getOrElse(fields)
 
     val sortedFields = selectedFields.sortBy(field => (!field.required, field.fieldName))
     sortedFields
@@ -284,7 +284,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                """
               }
             (fieldGroupDefinition, fieldGroupName)
-        } unzip
+        }.unzip
 
       s""" {
            ${fieldGroupDefinitions.mkString("\n")}
@@ -369,7 +369,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                $objectName.jsonFormatter.withTypeHint("${jsTypeInfo.discriminatorValue}")
              )
          """
-      } getOrElse ""
+      }.getOrElse("")
 
     s"""
        object $objectName {

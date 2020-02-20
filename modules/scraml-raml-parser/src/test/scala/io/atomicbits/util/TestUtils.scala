@@ -138,7 +138,7 @@ object TestUtils {
         case (key, text) =>
           s"""$contentIndentString$key ->
              |${text.print(indent + 1 + indentIncrement)}""".stripMargin
-      } mkString (",\n")
+      }.mkString(",\n")
 
       if (content.isEmpty) {
         s"${indentString}Map()"

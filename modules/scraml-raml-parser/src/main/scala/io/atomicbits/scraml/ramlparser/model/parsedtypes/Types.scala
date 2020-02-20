@@ -62,15 +62,15 @@ object Types {
         typesJsObj.fields.collect {
           case (key: String, incl: JsValue) => parseContext.withSourceAndUrlSegments(incl)(typeObjectToType(key, incl))
         }
-      foldTryTypes(tryTypes)
+      foldTryTypes(tryTypes.toSeq)
     }
 
     def foldTryTypes(tryTypes: Seq[Try[Types]])(implicit parseContext: ParseContext): Try[Types] = {
       tryTypes.foldLeft[Try[Types]](Success(Types())) {
         case (Success(aggr), Success(types))   => Success(aggr ++ types)
+        case (Failure(eAggr), Failure(eTypes)) => Failure(RamlParseException(s"${eAggr.getMessage}\n${eTypes.getMessage}"))
         case (fail @ Failure(e), _)            => fail
         case (_, fail @ Failure(e))            => fail
-        case (Failure(eAggr), Failure(eTypes)) => Failure(RamlParseException(s"${eAggr.getMessage}\n${eTypes.getMessage}"))
       }
     }
 

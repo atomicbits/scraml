@@ -81,7 +81,7 @@ trait Fragmented {
         case ((Some(fragm), _), field) =>
           val next = fragm.fragment(field)
           next match {
-            case frag: Option[Fragmented] => (frag, next)
+            case Some(frag: Fragmented) => (Some(frag), next)
             case _                        => (None, next)
           }
         case ((None, _), _) => (None, None)

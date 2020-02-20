@@ -62,10 +62,10 @@ case class ActionGenerator(actionCode: ActionCode) {
 
     // now, we have to map the actions onto a segment path if necessary
     val actionPathToAction: Set[ActionPath] =
-      groupedByActionType.values.toList.map(_.toList) flatMap {
+      groupedByActionType.values.toList.map(_.toList).flatMap {
         case actionOfKindList @ (aok :: Nil) => List(ActionPath(NoContentHeaderSegment, NoAcceptHeaderSegment, actionOfKindList.head))
         case actionOfKindList @ (aok :: aoks) =>
-          actionOfKindList map { actionOfKind =>
+          actionOfKindList.map { actionOfKind =>
             val contentHeader =
               actionOfKind.selectedContentType match {
                 case NoContentType   => NoContentHeaderSegment
@@ -78,13 +78,15 @@ case class ActionGenerator(actionCode: ActionCode) {
               }
             ActionPath(contentHeader, acceptHeader, actionOfKind)
           }
-      } toSet
+        case Nil => Set.empty
+      }.toSet
 
     val uniqueActionPaths: Map[ContentHeaderSegment, Map[AcceptHeaderSegment, Set[ActionSelection]]] =
       actionPathToAction
         .groupBy(_.contentHeader)
+        .view
         .mapValues(_.groupBy(_.acceptHeader))
-        .mapValues(_.mapValues(_.map(_.action)))
+        .mapValues(_.view.mapValues(_.map(_.action)).toMap).toMap
 
     val actionPathExpansion =
       uniqueActionPaths map {
@@ -139,6 +141,7 @@ case class ActionGenerator(actionCode: ActionCode) {
             case (ActualAcceptHeaderSegment(responseType), actionSelections) =>
               List(expandResponseTypePath(resourcePackageParts, responseType, actionSelections))
           }
+        case Nil => List.empty
       }
 
     actionPathExpansion.foldLeft(SourceCodeFragment())(_ ++ _)

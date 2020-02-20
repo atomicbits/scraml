@@ -26,7 +26,6 @@ import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
-import scala.collection.JavaConversions.mapAsScalaMap
 import scala.util.{ Failure, Success, Try }
 
 /**
@@ -69,8 +68,8 @@ object RamlToJsonParser {
       case i: java.lang.Integer           => Json.toJson(i.doubleValue())
       case l: java.lang.Long              => Json.toJson(l.doubleValue())
       case d: Double                      => Json.toJson(d)
-      case list: java.util.ArrayList[Any] => JsArray(list.asScala.map(anyToJson))
-      case map: java.util.Map[Any, Any] =>
+      case list: java.util.ArrayList[_] => JsArray(list.asScala.map(anyToJson))
+      case map: java.util.Map[_, _] =>
         val mapped =
           mapAsScalaMap(map).map {
             case (field, theValue) => field.toString -> anyToJson(theValue)

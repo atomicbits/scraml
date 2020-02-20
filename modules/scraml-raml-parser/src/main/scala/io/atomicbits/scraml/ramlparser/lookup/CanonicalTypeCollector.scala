@@ -115,7 +115,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     }
 
     def transformBody(body: Body): Body = {
-      val updatedContentMap = body.contentMap.mapValues(transformBodyContent)
+      val updatedContentMap = body.contentMap.view.mapValues(transformBodyContent).toMap
       body.copy(contentMap = updatedContentMap)
     }
 
@@ -132,7 +132,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       val updatedResponseMap = action.responses.responseMap.mapValues { response =>
         val updatedResponseBody = transformBody(response.body)
         response.copy(body = updatedResponseBody)
-      }
+      }.toMap
       val updatedResponses = action.responses.copy(responseMap = updatedResponseMap)
 
       action.copy(headers         = updatedHeaders,

@@ -24,17 +24,18 @@ import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, Canonica
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 6/04/17.
   */
-class InlineQueryparameterTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class InlineQueryparameterTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Parsing of complex inline query parameters") {
+  Feature("Parsing of complex inline query parameters") {
 
-    scenario("An inline enum query parameter must be parsed, indexed and properly typed") {
+    Scenario("An inline enum query parameter must be parsed, indexed and properly typed") {
 
       Given("a RAML specification with an inline enum query parameter")
       val defaultBasePath = List("io", "atomicbits", "raml10")
@@ -42,7 +43,7 @@ class InlineQueryparameterTest extends FeatureSpec with GivenWhenThen with Befor
 
       When("we parse the RAML spec")
       val raml: Raml                      = parser.parse.get
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
       val (ramlUpdated, canonicalLookup)  = canonicalTypeCollector.collect(raml)
 

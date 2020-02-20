@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.formatting.{ JavaFormatter, ScalaFormatter }
 
-import scala.collection.JavaConversions.mapAsJavaMap
+import scala.collection.JavaConverters._
 import scala.language.postfixOps
 import java.util.{ Map => JMap }
 
@@ -207,7 +207,7 @@ object ScramlGenerator {
       case ScalaPlay(_)          => Try(ScalaFormatter.format(content)).getOrElse(content)
       case JavaJackson(_)        => Try(JavaFormatter.format(content)).getOrElse(content)
       case AndroidJavaJackson(_) => Try(JavaFormatter.format(content)).getOrElse(content)
-      case unknown               => content
+      case _                     => content
     }
     sourceFile.copy(content = formattedContent)
   }

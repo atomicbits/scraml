@@ -30,30 +30,31 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig
 import io.atomicbits.scraml.dsl.javajackson.Response
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
 
 /**
   * Created by peter on 19/08/15.
   */
-class JavaScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class JavaScramlGeneratorTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   val port = 8181
   val host = "localhost"
 
   val wireMockServer = new WireMockServer(wireMockConfig().port(port))
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     wireMockServer.start()
     WireMock.configureFor(host, port)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     wireMockServer.stop()
   }
 
-  feature("build a restful request using a Scala DSL") {
+  Feature("build a restful request using a Scala DSL") {
 
-    scenario("test manually written Scala DSL") {
+    Scenario("test manually written Scala DSL") {
 
       Given("some manually written DSL code and a mock service that listens for client calls")
 

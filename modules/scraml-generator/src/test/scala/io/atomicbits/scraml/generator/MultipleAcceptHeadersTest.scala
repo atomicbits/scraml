@@ -22,27 +22,26 @@ package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.codegen.GenerationAggr
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 import org.scalatest.concurrent.ScalaFutures
 import io.atomicbits.scraml.ramlparser.model.Raml
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-
-import scala.util.Try
+import org.scalatest.featurespec.AnyFeatureSpec
 
 /**
   * Created by peter on 12/03/17.
   */
-class MultipleAcceptHeadersTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class MultipleAcceptHeadersTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
-  feature("A RAML model may have multiple equal or different content type or accept headers") {
+  Feature("A RAML model may have multiple equal or different content type or accept headers") {
 
-    scenario("test multiple equal accept headers in a RAML model") {
+    Scenario("test multiple equal accept headers in a RAML model") {
 
       Given("a json-schema containing an object hierarcy")
       val packageBasePath = List("io", "atomicbits")
 
       When("we generate the RAMl specification into a resource DSL")
-      implicit val platform = ScalaPlay(packageBasePath)
+      implicit val platform: ScalaPlay = ScalaPlay(packageBasePath)
 
       val raml: Raml = RamlParser("multipleacceptheaders/TestMultipleAcceptHeaders.raml", "UTF-8").parse.get
 

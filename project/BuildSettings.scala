@@ -1,6 +1,6 @@
 /*
  *
- * (C) Copyright 2018 Atomic BITS (http://atomicbits.io).
+ * (C) Copyright 2018 Atomic BITS (https://atomicbits.io).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ object BuildSettings {
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val scala2_10 = "2.10.6"
-  val scala2_11 = "2.11.11"
-  val scala2_12 = "2.12.3"
+  val scala2_11 = "2.11.12"
+  val scala2_12 = "2.12.10"
+  val scala2_13 = "2.13.1"
 
-  val ScalaVersion = scala2_12
+  val ScalaVersion = scala2_13
 
-  val defaultCrossScalaVersions = Seq(scala2_10, scala2_11, scala2_12)
+  val defaultCrossScalaVersions = Seq(scala2_11, scala2_12, scala2_13)
 
   val scalacBuildOptions =
     Seq(

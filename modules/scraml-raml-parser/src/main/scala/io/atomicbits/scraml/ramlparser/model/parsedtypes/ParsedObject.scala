@@ -88,7 +88,7 @@ object ParsedObject {
 
     // Process the required field
     val (required, requiredFields) =
-      json \ "required" toOption match {
+      (json \ "required").toOption match {
         case Some(req: JsArray) =>
           val reqFields =
             req.value.toList collect {
@@ -101,21 +101,21 @@ object ParsedObject {
 
     // Process the typeVariables field
     val typeVariables: List[String] =
-      json \ "typeVariables" toOption match {
+      (json \ "typeVariables").toOption match {
         case Some(typeVars: JsArray) => typeVars.value.toList.collect { case JsString(value) => value }
         case _                       => List.empty[String]
       }
 
     // Process the discriminator field
     val discriminator: Option[String] =
-      List(json \ "discriminator" toOption, json \ "typeDiscriminator" toOption).flatten.headOption match {
+      List((json \ "discriminator").toOption, (json \ "typeDiscriminator").toOption).flatten.headOption match {
         case Some(JsString(value)) => Some(value)
         case _                     => None
       }
 
     // Process the discriminatorValue field
     val discriminatorValue: Option[String] =
-      json \ "discriminatorValue" toOption match {
+      (json \ "discriminatorValue").toOption match {
         case Some(JsString(value)) => Some(value)
         case _                     => None
       }
@@ -168,8 +168,8 @@ object ParsedObject {
 
     def isParentRef(theOtherType: String): Option[Try[ParsedTypeReference]] = {
       ParsedType(theOtherType) match {
-        case typeRef: Try[ParsedTypeReference] => Some(typeRef) // It is not a primitive type and not an array, so it is a type reference.
-        case _                                 => None
+        case Success(typeRef: ParsedTypeReference) => Some(Try(typeRef)) // It is not a primitive type and not an array, so it is a type reference.
+        case _                                     => None
       }
     }
 
@@ -202,9 +202,9 @@ object ParsedObject {
       implicit parseContext: ParseContext): Try[ParsedType] = {
 
     def typeDiscriminatorFromProperties(oneOfFragment: Fragments): Option[String] = {
-      oneOfFragment.fragmentMap.get("properties") collect {
+      oneOfFragment.fragmentMap.get("properties").collect {
         case propFrag: Fragments => propFrag.fragmentMap.get(typeDiscriminator) flatMap schemaToDiscriminatorValue
-      } getOrElse None
+      }.flatten
     }
 
     def fixId(id: Id, parentId: Id, discriminatorValue: String): Option[RelativeId] = {

@@ -20,17 +20,18 @@
 
 package io.atomicbits.scraml.ramlparser.model
 
-import org.scalatest.{ FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.GivenWhenThen
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 14/06/17.
   */
-class FetchReplaceStringsTest extends FeatureSpec with GivenWhenThen {
+class FetchReplaceStringsTest extends AnyFeatureSpec with GivenWhenThen {
 
-  feature("Fetch the trait and resource type replace strings from their definition") {
+  Feature("Fetch the trait and resource type replace strings from their definition") {
 
-    scenario("fetch the replace strings form a trait or resource type definition") {
+    Scenario("fetch the replace strings form a trait or resource type definition") {
 
       Given("a trait or resource type definition")
       val definition = "Return <<resourcePathName>> that have their <<queryParamName | !singularize>> matching the given value"

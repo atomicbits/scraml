@@ -37,13 +37,13 @@ object JsUtils {
 
     def fieldIntValue(field: String): Option[Int] = {
       (jsValue \ field).toOption.collect {
-        case JsNumber(value) => value.intValue()
+        case JsNumber(value) => value.intValue
       }
     }
 
     def fieldDoubleValue(field: String): Option[Double] = {
       (jsValue \ field).toOption.collect {
-        case JsNumber(value) => value.doubleValue()
+        case JsNumber(value) => value.doubleValue
       }
     }
 
@@ -59,7 +59,7 @@ object JsUtils {
           values.collect {
             case JsString(value) => value
           }
-      }
+      } map(_.toSeq)
     }
 
   }
