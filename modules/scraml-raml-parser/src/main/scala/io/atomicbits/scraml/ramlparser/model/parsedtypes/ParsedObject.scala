@@ -126,7 +126,7 @@ object ParsedObject {
           val selectionSchemas = selections.value collect {
             case jsObj: JsObject => jsObj
           } map (tryToInterpretOneOfSelectionAsObjectType(_, id, discriminator.getOrElse("type")))
-          TryUtils.accumulate(selectionSchemas.toList).map(selections => OneOf(selections.map(_.asTypeModel(JsonSchemaModel))))
+          TryUtils.accumulate(selectionSchemas.toSeq).map(_.toList).map(selections => OneOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
 
     val anyOf =
@@ -135,7 +135,7 @@ object ParsedObject {
           val selectionSchemas = selections.value collect {
             case ParsedType(theType) => theType
           }
-          TryUtils.accumulate(selectionSchemas.toList).map(selections => AnyOf(selections.map(_.asTypeModel(JsonSchemaModel))))
+          TryUtils.accumulate(selectionSchemas.toList).map(_.toList).map(selections => AnyOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
 
     val allOf =
@@ -144,7 +144,7 @@ object ParsedObject {
           val selectionSchemas = selections.value collect {
             case ParsedType(theType) => theType
           }
-          TryUtils.accumulate(selectionSchemas.toList).map(selections => AllOf(selections.map(_.asTypeModel(JsonSchemaModel))))
+          TryUtils.accumulate(selectionSchemas.toList).map(_.toList).map(selections => AllOf(selections.map(_.asTypeModel(JsonSchemaModel))))
       }
 
     val selection = List(oneOf, anyOf, allOf).flatten.headOption

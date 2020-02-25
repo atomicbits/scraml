@@ -167,7 +167,7 @@ object Raml {
           case (field, jsObject: JsObject) if field.startsWith("/") => Resource(field, jsObject)
         }.toList
 
-      TryUtils.accumulate(resourceFields).map(unparallellizeResources(_, None))
+      TryUtils.accumulate(resourceFields).map(_.toList).map(unparallellizeResources(_, None))
     }
 
     //    val resourceTypes: Try[]

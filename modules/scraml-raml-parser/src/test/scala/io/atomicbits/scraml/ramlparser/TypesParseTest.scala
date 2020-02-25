@@ -75,7 +75,7 @@ class TypesParseTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAft
 
     // ToDo: parse the RAML 1.0 type discriminator and type discriminator value
 
-//    println(s"Parsed raml: $prettyModel")
+    //    println(s"Parsed raml: $prettyModel")
 
   }
 

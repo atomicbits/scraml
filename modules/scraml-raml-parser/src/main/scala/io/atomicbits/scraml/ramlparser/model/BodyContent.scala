@@ -70,7 +70,7 @@ object BodyContentAsMediaTypeMap {
     json match {
       case jsObj: JsObject =>
         val bodyContentList = jsObj.value.toList.map(fromJsObjectValues).flatten
-        accumulate(bodyContentList) match {
+        accumulate(bodyContentList).map(_.toList) match {
           case Success(Nil)           => None
           case Success(someContent)   => Some(Success(someContent))
           case failure @ Failure(exc) => Some(failure)
