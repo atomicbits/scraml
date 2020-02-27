@@ -39,7 +39,7 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
   def -(name: String): ParsedProperties = copy(valueMap = valueMap - name)
 
   def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
-    copy(valueMap = valueMap.view.mapValues(f).toMap)
+    copy(valueMap = valueMap.mapValues(f).toMap)
   }
 
   def asTypeMap: Map[String, ParsedType] = {

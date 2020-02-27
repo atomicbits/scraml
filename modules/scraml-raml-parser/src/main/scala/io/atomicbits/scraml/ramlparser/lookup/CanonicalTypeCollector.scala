@@ -115,7 +115,7 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
     }
 
     def transformBody(body: Body): Body = {
-      val updatedContentMap = body.contentMap.view.mapValues(transformBodyContent).toMap
+      val updatedContentMap = body.contentMap.mapValues(transformBodyContent).toMap
       body.copy(contentMap = updatedContentMap)
     }
 

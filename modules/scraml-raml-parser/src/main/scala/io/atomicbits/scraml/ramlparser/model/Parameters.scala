@@ -38,7 +38,7 @@ case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
   val isEmpty = valueMap.isEmpty
 
-  def mapValues(fn: Parameter => Parameter): Parameters = copy(valueMap = valueMap.view.mapValues(fn).toMap)
+  def mapValues(fn: Parameter => Parameter): Parameters = copy(valueMap = valueMap.mapValues(fn).toMap)
 
 }
 

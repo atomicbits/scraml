@@ -23,8 +23,6 @@ package io.atomicbits.scraml.generator.formatting
 import scalariform.formatter.preferences._
 import scala.util.Try
 
-// import org.scalafmt.{ Formatted, Scalafmt }
-
 /**
   * Created by peter on 17/07/17.
   */
@@ -32,20 +30,11 @@ object ScalaFormatter {
 
   private val formatSettings =
     FormattingPreferences()
-      .setPreference(RewriteArrowSymbols, true)
       .setPreference(AlignParameters, true)
       .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(DoubleIndentClassDeclaration, true)
+      .setPreference(DoubleIndentConstructorArguments, true)
       .setPreference(IndentSpaces, 2)
 
   def format(code: String): String = Try(scalariform.formatter.ScalaFormatter.format(code, formatSettings)).getOrElse(code)
-
-  //  def format(code: String): String =
-  //    Scalafmt.format(code) match {
-  //      case Formatted.Success(formattedCode) => formattedCode
-  //      case Formatted.Failure(e) =>
-  //        println(s"WARNING: Could not format scala file: ${e.getMessage}")
-  //        code
-  //    }
 
 }

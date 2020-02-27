@@ -27,13 +27,13 @@ object BuildSettings {
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val scala2_11 = "2.11.12"
+  // val scala2_11 = "2.11.12"
   val scala2_12 = "2.12.10"
-  val scala2_13 = "2.13.1"
+  //  val scala2_13 = "2.13.1"
 
-  val ScalaVersion = scala2_13
+  val ScalaVersion = scala2_12
 
-  val defaultCrossScalaVersions = Seq(scala2_11, scala2_12, scala2_13)
+  val defaultCrossScalaVersions = Seq(scala2_12)
 
   val scalacBuildOptions =
     Seq(

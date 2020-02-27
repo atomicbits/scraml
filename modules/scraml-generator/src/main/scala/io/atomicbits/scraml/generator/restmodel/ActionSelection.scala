@@ -62,7 +62,7 @@ object ActionSelection {
     val contentTypeMap: Map[MediaType, ContentType] = {
       val contentTypes = ContentType(action.body)
       if (contentTypes.isEmpty) Map(NoMediaType -> NoContentType)
-      else contentTypes.groupBy(_.contentTypeHeader).view.mapValues(_.head).toMap // There can be only one content type per content type header.
+      else contentTypes.groupBy(_.contentTypeHeader).mapValues(_.head).toMap // There can be only one content type per content type header.
     }
 
     val responseTypeMap: Map[MediaType, Set[ResponseTypeWithStatus]] = {
