@@ -20,7 +20,7 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import play.api.libs.json.{ JsArray, JsObject, JsString, Json }
+import play.api.libs.json.{JsArray, JsObject, JsString, Json}
 
 /**
   * Created by peter on 26/02/16.
@@ -65,7 +65,7 @@ object KeyedList {
     * @return
     */
   def toJsObject(keyedList: JsArray): JsObject = {
-    val collected: Seq[JsObject] =
+    val collected: scala.collection.IndexedSeq[JsObject] =
       keyedList.value.collect {
         case jsObj: JsObject => jsObj
         case JsString(value) => Json.obj() + (value -> Json.obj())

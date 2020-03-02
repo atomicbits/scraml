@@ -30,8 +30,9 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.scalaplay.RequestBuilder
 import io.atomicbits.scraml.dsl.scalaplay.client.ning.Ning19ClientFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 import io.atomicbits.scraml.dsl.scalaplay.client.{ ClientConfig, ClientFactory }
+import org.scalatest.featurespec.AnyFeatureSpec
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -139,7 +140,7 @@ object XoClient {
 
 }
 
-class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class ManualScramlGeneratorTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   import XoClient._
 
@@ -148,18 +149,18 @@ class ManualScramlGeneratorTest extends FeatureSpec with GivenWhenThen with Befo
 
   val wireMockServer = new WireMockServer(wireMockConfig().port(port))
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     wireMockServer.start()
     WireMock.configureFor(host, port)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     wireMockServer.stop()
   }
 
-  feature("build a restful request using a Scala DSL") {
+  Feature("build a restful request using a Scala DSL") {
 
-    scenario("test manually written Scala DSL") {
+    Scenario("test manually written Scala DSL") {
 
       Given("some manually written DSL code and a mock service that listens for client calls")
 

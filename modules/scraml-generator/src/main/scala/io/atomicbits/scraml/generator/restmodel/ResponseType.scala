@@ -62,7 +62,7 @@ object ResponseType {
         val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer)
         val formParams      = bodyContent.formParameters
         ResponseType(acceptHeader = mediaType, classPointer = classPointerOpt)
-    } toSet
+    }.toSet
   }
 
   def apply(acceptHeader: MediaType, classPointer: Option[ClassPointer])(implicit platform: Platform): ResponseType = {

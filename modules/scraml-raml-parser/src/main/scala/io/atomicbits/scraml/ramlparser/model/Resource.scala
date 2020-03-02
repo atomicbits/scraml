@@ -85,6 +85,7 @@ object Resource {
                 val actionResourceTraits = actionOwnTraits.flatMap(parseContext.traits.mergeInToActionFromResource(_, resourceJsObj))
                 (meth, actionResourceTraits)
             }
+            .toSeq
 
         val accumulated: Try[Map[Method, JsObject]] = accumulate(tryMethods.toMap)
         val actionSeq: Try[Seq[Try[Action]]]        = accumulated.map(methodMap => methodMap.map(Action(_)).toSeq)

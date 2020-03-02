@@ -18,7 +18,7 @@
  *
  */
 
-package io.atomicbit.scraml.client.manual
+package io.atomicbits.scraml.client.manual
 
 import play.api.libs.json._
 
@@ -88,11 +88,12 @@ object BigCaseClass {
         (__ \ "y").format[String] ~
         (__ \ "z").format[String]).tupled
 
-    (fields1 and fields2).apply(
-      {
-        case ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u), (v, w, x, y, z)) =>
-          BigCaseClass.apply(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
-      },
+    def pack: ((Option[String], String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String), (String, String, String, String, String)) => BigCaseClass = {
+      case ((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u), (v, w, x, y, z)) =>
+        BigCaseClass.apply(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+    }
+
+    def unpack: BigCaseClass => ((Option[String], String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String), (String, String, String, String, String)) = {
       bcc =>
         ((bcc.a,
           bcc.b,
@@ -115,8 +116,11 @@ object BigCaseClass {
           bcc.s,
           bcc.t,
           bcc.u),
-         (bcc.v, bcc.w, bcc.x, bcc.y, bcc.z))
-    )
+          (bcc.v, bcc.w, bcc.x, bcc.y, bcc.z))
+    }
+
+    (fields1 and fields2).apply(pack, unpack)
+
   }
 
 }

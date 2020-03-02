@@ -77,7 +77,7 @@ object TestUtils {
           val prefix        = text.take(begin)
           val contentString = text.drop(begin + 1).dropRight(text.length - end)
 
-          if ("Map" == prefix) {
+          if ("Map" == prefix || "HashMap" == prefix) {
             val contentStrings = splitListElements(contentString, ',')
             val content = contentStrings.filter(_.nonEmpty).map { contentString =>
               val replaced = contentString.replaceFirst("->", "@")
@@ -138,7 +138,7 @@ object TestUtils {
         case (key, text) =>
           s"""$contentIndentString$key ->
              |${text.print(indent + 1 + indentIncrement)}""".stripMargin
-      } mkString (",\n")
+      }.mkString(",\n")
 
       if (content.isEmpty) {
         s"${indentString}Map()"

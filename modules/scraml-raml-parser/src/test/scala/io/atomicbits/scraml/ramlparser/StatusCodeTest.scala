@@ -21,17 +21,18 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.model.StatusCode
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 16/03/17.
   */
-class StatusCodeTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class StatusCodeTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Status code test") {
+  Feature("Status code test") {
 
-    scenario("test the ordering of the status codes") {
+    Scenario("test the ordering of the status codes") {
 
       Given("a set containing status codes")
       val statusCodes = Set(StatusCode("401"), StatusCode("201"), StatusCode("404"))

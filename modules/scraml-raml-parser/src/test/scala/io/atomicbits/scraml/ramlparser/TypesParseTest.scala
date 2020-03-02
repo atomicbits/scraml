@@ -25,17 +25,18 @@ import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedS
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
 import io.atomicbits.util.TestUtils
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 import scala.util.Try
 
 /**
   * Created by peter on 25/11/16.
   */
-class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class TypesParseTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  scenario("test parsing types in a RAML 1.0 model") {
+  Scenario("test parsing types in a RAML 1.0 model") {
 
     Given("a RAML 1.0 specification with some types defined")
     val defaultBasePath = List("io", "atomicbits", "types")
@@ -74,7 +75,7 @@ class TypesParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterA
 
     // ToDo: parse the RAML 1.0 type discriminator and type discriminator value
 
-//    println(s"Parsed raml: $prettyModel")
+    //    println(s"Parsed raml: $prettyModel")
 
   }
 

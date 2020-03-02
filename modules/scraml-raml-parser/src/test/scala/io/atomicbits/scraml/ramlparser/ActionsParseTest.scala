@@ -22,19 +22,20 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.Matchers._
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
 import scala.util.Try
 
 /**
   * Created by peter on 1/11/16.
   */
-class ActionsParseTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class ActionsParseTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("actions parsing") {
+  Feature("actions parsing") {
 
-    scenario("test parsing actions in a complex RAML 1.0 model") {
+    Scenario("test parsing actions in a complex RAML 1.0 model") {
 
       Given("a RAML 1.0 specification")
       val parser = RamlParser("/raml08/TestApi.raml", "UTF-8")

@@ -65,7 +65,7 @@ object ContentType {
         val classPointerOpt = bodyContent.bodyType.flatMap(_.canonical).map(Platform.typeReferenceToClassPointer)
         val formParams      = bodyContent.formParameters
         ContentType(mediaType = mediaType, content = classPointerOpt, formParameters = formParams)
-    } toSet
+    }.toSet
 
   def apply(mediaType: MediaType, content: Option[ClassPointer], formParameters: Parameters)(implicit platform: Platform): ContentType = {
 

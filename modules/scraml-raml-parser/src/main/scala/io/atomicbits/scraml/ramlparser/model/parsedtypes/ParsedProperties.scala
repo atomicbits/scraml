@@ -39,12 +39,12 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
   def -(name: String): ParsedProperties = copy(valueMap = valueMap - name)
 
   def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
-    copy(valueMap = valueMap.mapValues(f))
+    copy(valueMap = valueMap.mapValues(f).toMap)
   }
 
   def asTypeMap: Map[String, ParsedType] = {
     valueMap.mapValues(_.propertyType.parsed)
-  }
+  }.toMap
 
   val values: List[ParsedProperty] = valueMap.values.toList
 
@@ -88,7 +88,7 @@ object ParsedProperties {
                 )
               )
             }
-        } toMap
+        }.toMap
 
       accumulate(valueMap).map(vm => ParsedProperties(vm))
     }

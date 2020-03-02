@@ -28,24 +28,25 @@ import io.atomicbits.scraml.generator.typemodel._
 import io.atomicbits.scraml.ramlparser.model.canonicaltypes.CanonicalName
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 10/09/15.
   */
-class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class GeneratorTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   import io.atomicbits.scraml.generator.platform.Platform._
 
-  feature("The scraml generator generates DSL classes") {
+  Feature("The scraml generator generates DSL classes") {
 
-    scenario("test the generation of an object hierarchy") {
+    Scenario("test the generation of an object hierarchy") {
 
       Given("a json-schema containing an object hierarcy")
       val apiLocation = "objecthierarchy/TestObjectHierarchyApi.raml"
 
       When("we generate the RAMl specification into class representations")
-      implicit val platform = ScalaPlay(List("io", "atomicbits", "scraml"))
+      implicit val platform: ScalaPlay = ScalaPlay(List("io", "atomicbits", "scraml"))
 
       val generationAggr: GenerationAggr =
         ScramlGenerator
@@ -77,7 +78,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       generationAggr.directParents(fishToClassName) shouldBe Set(animalToClassName)
     }
 
-    scenario("test generated Scala DSL") {
+    Scenario("test generated Scala DSL") {
 
       Given("a RAML specification")
       val apiLocation = "io/atomicbits/scraml/TestApi.raml"
@@ -152,7 +153,7 @@ class GeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAl
       bboxFieldClassPointer shouldBe ListClassPointer(DoubleClassPointer(primitive = false))
     }
 
-    scenario("test generated Java DSL") {
+    Scenario("test generated Java DSL") {
 
       Given("a RAML specification")
       val apiLocation = "io/atomicbits/scraml/TestApi.raml"

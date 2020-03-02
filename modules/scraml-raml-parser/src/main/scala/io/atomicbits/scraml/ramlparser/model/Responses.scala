@@ -51,7 +51,7 @@ object Responses {
             tryResponse.map { response =>
               response.status -> response
             }
-        } toSeq
+        }.toSeq
 
       accumulate(tryResponseMap).map(responses => Responses(responses.toMap))
     }

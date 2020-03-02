@@ -23,17 +23,18 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.model.{ NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedString, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 import scala.util.Try
 
 /**
   * Created by peter on 5/03/18.
   */
-class TypesIncludeTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class TypesIncludeTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  scenario("test the inclusion of types at the top level types definition") {
+  Scenario("test the inclusion of types at the top level types definition") {
 
     Given("a RAML 1.0 specification with types inclusion")
     val parser = RamlParser("/typesinclude/types-include-api.raml", "UTF-8")

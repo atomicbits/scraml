@@ -207,9 +207,9 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
   private def selectAndSortFields(fields: Seq[Field], skipFieldName: Option[String] = None): Seq[Field] = {
     val selectedFields =
-      skipFieldName map { skipField =>
+      skipFieldName.map { skipField: String =>
         fields.filterNot(_.fieldName == skipField)
-      } getOrElse fields
+      }.getOrElse(fields)
 
     val sortedFields = selectedFields.sortBy(field => (!field.required, field.fieldName))
     sortedFields
@@ -266,7 +266,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
     def over22FieldFormatterBody = {
       val groupedFields: List[List[Field]] = sortedFields.toList.grouped(22).toList
 
-      val (fieldGroupDefinitions, fieldGroupNames): (List[String], List[String]) =
+      val (fieldGroupDefinitions, fieldGroupNames, groupedFieldDeclarations): (List[String], List[String], List[String]) =
         groupedFields.zipWithIndex.map {
           case (group, index) =>
             val formatFields   = group.map(field => platform.fieldFormatUnlift(field, recursiveFields))
@@ -283,27 +283,41 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                   (${formatFields.mkString("~\n")})
                """
               }
-            (fieldGroupDefinition, fieldGroupName)
-        } unzip
+
+            val fieldDeclarations = group.map(field => s"""${platform.classDefinition(field.classPointer)}""")
+            val groupedFieldDeclaration =
+              if (fieldDeclarations.size > 1) {
+                s"""(${fieldDeclarations.mkString(", ")})"""
+              } else {
+                fieldDeclarations.head
+              }
+
+            (fieldGroupDefinition, fieldGroupName, groupedFieldDeclaration)
+        }.foldRight((List.empty[String], List.empty[String], List.empty[String])){ // unzip with 3 elements
+          case ((definition, group, ttype), (defList, groupList, typeList)) =>
+            ( definition :: defList, group :: groupList, ttype :: typeList)
+        }
 
       s""" {
            ${fieldGroupDefinitions.mkString("\n")}
 
-           (${fieldGroupNames.mkString(" and ")}).apply({
-             case (${groupedFields
-        .map { group =>
-          s"(${group.map(_.safeFieldName).mkString(", ")})"
-        }
-        .mkString(", ")})
-               => ${toClassReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
-           }, cclass =>
-              (${groupedFields
-        .map { group =>
-          s"(${group.map(_.safeFieldName).map(cf => s"cclass.$cf").mkString(", ")})"
-        }
-        .mkString(", ")})
-           )
-        }
+           def pack: (${groupedFieldDeclarations.mkString(", ")}) => ${toClassReference.name} = {
+              case (${groupedFields.map { group =>
+                        s"(${group.map(_.safeFieldName).mkString(", ")})"
+                      }.mkString(", ")}) =>
+                      ${toClassReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
+           }
+
+           def unpack: ${toClassReference.name} => (${groupedFieldDeclarations.mkString(", ")}) = {
+              cclass =>
+              (${groupedFields.map { group =>
+                   s"(${group.map(_.safeFieldName).map(cf => s"cclass.$cf").mkString(", ")})"
+                 }.mkString(", ")})
+           }
+
+           (${fieldGroupNames.mkString(" and ")}).apply(pack, unpack)
+
+           }
        """
     }
 
@@ -369,7 +383,7 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                $objectName.jsonFormatter.withTypeHint("${jsTypeInfo.discriminatorValue}")
              )
          """
-      } getOrElse ""
+      }.getOrElse("")
 
     s"""
        object $objectName {

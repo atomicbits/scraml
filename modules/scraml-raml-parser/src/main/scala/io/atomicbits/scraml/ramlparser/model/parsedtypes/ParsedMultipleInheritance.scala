@@ -94,7 +94,7 @@ object ParsedMultipleInheritance {
 
     // Process the required field
     val (required, requiredFields) =
-      json \ "required" toOption match {
+      (json \ "required").toOption match {
         case Some(req: JsArray) =>
           (None, Some(req.value.toList collect {
             case JsString(value) => value
@@ -105,8 +105,8 @@ object ParsedMultipleInheritance {
 
     val triedParentsOpt =
       (ParsedType.typeDeclaration(json), json) match {
-        case (Some(JsArray(parentReferences)), _) => processParentReferences(parentReferences)
-        case (_, JsArray(parentReferences))       => processParentReferences(parentReferences)
+        case (Some(JsArray(parentReferences)), _) => processParentReferences(parentReferences.toSeq)
+        case (_, JsArray(parentReferences))       => processParentReferences(parentReferences.toSeq)
         case _                                    => None
       }
 

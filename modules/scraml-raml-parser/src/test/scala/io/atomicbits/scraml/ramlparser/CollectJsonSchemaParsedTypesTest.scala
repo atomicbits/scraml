@@ -22,22 +22,23 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalLookupHelper, CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.model._
-import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedType, ParsedTypeReference }
+import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedObject, ParsedTypeReference }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 
 import scala.util.Try
-import org.scalatest.Matchers._
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 import io.atomicbits.util.TestUtils._
 
 /**
   * Created by peter on 2/01/17.
   */
-class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class CollectJsonSchemaParsedTypesTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Collect all json-schema ParsedTypes after expanding all relative IDs to absolute IDs") {
+  Feature("Collect all json-schema ParsedTypes after expanding all relative IDs to absolute IDs") {
 
-    scenario("test collecting of all types in a json-schema type declaration") {
+    Scenario("test collecting of all types in a json-schema type declaration") {
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schemas")
@@ -45,7 +46,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
       Then("all our relative fragment IDs and their references are expanded to absolute IDs")
@@ -83,7 +84,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
       // println(s"$collectedParsedTypes")
     }
 
-    scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
+    Scenario("test collecting of all types in a complex json-schema type declaration with RAML 1.0 type declarations") {
 
       Given("a RAML specification containing complex json-schema definitions and RAML 1.0 type definitions")
       val defaultBasePath = List("io", "atomicbits", "schemas")
@@ -91,7 +92,7 @@ class CollectJsonSchemaParsedTypesTest extends FeatureSpec with GivenWhenThen wi
 
       When("we parse the specification")
       val parsedModel: Try[Raml]          = parser.parse
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
       Then("we get all four actions in the userid resource")

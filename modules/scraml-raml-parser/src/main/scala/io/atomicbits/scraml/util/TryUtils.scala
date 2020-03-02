@@ -30,10 +30,6 @@ import scala.util.{ Failure, Success, Try }
   */
 object TryUtils {
 
-  def accumulate[T](tries: List[Try[T]]): Try[List[T]] = {
-    accumulate(tries.toSeq).map(_.toList)
-  }
-
   def accumulate[T](tries: Seq[Try[T]]): Try[Seq[T]] = {
 
     val (successes, errors) = tries.partition(_.isSuccess)
