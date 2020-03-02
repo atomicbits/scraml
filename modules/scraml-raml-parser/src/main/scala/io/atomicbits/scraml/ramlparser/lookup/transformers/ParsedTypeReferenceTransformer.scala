@@ -48,6 +48,7 @@ object ParsedTypeReferenceTransformer {
 
       val (typeRefAsGenericReferrable, updatedCanonicalLH) =
         canonicalLookupHelper.getParsedTypeWithProperId(parsedTypeReference.refersTo).map {
+          case _: ParsedNull => (NullType, canonicalLH)
           case primitiveType: ParsedPrimitiveType =>
             val (typeRef, unusedCanonicalLH) = ParsedToCanonicalTypeTransformer.transform(primitiveType, canonicalLH)
             (typeRef, canonicalLH)
@@ -97,7 +98,6 @@ object ParsedTypeReferenceTransformer {
               sys.error(s"Cyclic reference detected when following $parsedTRef")
             else
               registerParsedTypeReference(parsedTRef, canonicalLH, parsedTypeReference :: referencesFollowed)
-          case parsedNull: ParsedNull => (NullType, canonicalLH)
           case unexpected             => sys.error(s"Didn't expect to find a type reference to a $unexpected in $parsedTypeReference")
         } getOrElse {
           sys.error(

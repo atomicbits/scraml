@@ -59,7 +59,7 @@ trait BinaryData {
     val directoriesCreated =
       Option(path.getParent) collect {
         case parent => Try(Files.createDirectories(parent))
-      } getOrElse Success(Unit)
+      } getOrElse Success(())
 
     directoriesCreated flatMap { _ =>
       Try(Files.copy(asStream, path, options: _*))

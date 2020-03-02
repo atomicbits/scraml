@@ -13,6 +13,12 @@ to check these release notes when upgrading to a newer version.
 
 Stay updated whenever we release new versions by https://twitter.com/scraml_io[following us on twitter].
 
+=== Version 0.8.3
+
+Changes:
+
+ - bugfix #157: Query and form parameter names are not escaped if they match with a Scala/Java keyword
+
 === Version 0.8.2
 
 Changes:

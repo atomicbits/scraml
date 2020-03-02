@@ -22,16 +22,17 @@ package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import io.atomicbits.scraml.dsl.scalaplay.client.ClientConfig
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
 
 /**
   * Created by peter on 22/04/16.
   */
-class Ning19ClientTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class Ning19ClientTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
-  feature("Extracting the charset from the response headers") {
+  Feature("Extracting the charset from the response headers") {
 
-    scenario("test a valid charset in a response header") {
+    Scenario("test a valid charset in a response header") {
 
       Given("A ning client")
       val client = Ning19Client(

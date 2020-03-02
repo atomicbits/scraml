@@ -27,7 +27,10 @@ import java.nio.file.{ FileSystem => _, _ }
 import java.util.Collections
 
 import scala.util.Try
-import scala.collection.JavaConversions._
+// We don't use CollectionConverters yet since we still want to cross-compile to scala 2.11 and 2.12
+//import scala.jdk.CollectionConverters
+import scala.collection.JavaConverters._
+
 
 /**
   * Created by peter on 12/04/17.
@@ -130,7 +133,7 @@ object SourceReader {
       }
 
     val walk             = Files.walk(thePath)
-    val paths: Set[Path] = walk.iterator.toSet
+    val paths: Set[Path] = walk.iterator.asScala.toSet
 
     def isFileWithExtension(somePath: Path): Boolean =
       Files.isRegularFile(somePath) && somePath.getFileName.toString.toLowerCase.endsWith(extension.toLowerCase)
@@ -159,7 +162,7 @@ object SourceReader {
       if (path.isAbsolute) Paths.get(FileSystems.getDefault.getSeparator)
       else Paths.get("")
 
-    path.foldLeft(rootPath) {
+    path.iterator().asScala.foldLeft(rootPath) {
       case (aggr, component) => aggr.resolve(component.getFileName.toString)
     }
   }

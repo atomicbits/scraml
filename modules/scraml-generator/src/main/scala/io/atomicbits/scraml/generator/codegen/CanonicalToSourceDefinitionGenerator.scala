@@ -33,6 +33,7 @@ import io.atomicbits.scraml.ramlparser.model.canonicaltypes.{
   UnionType,
   TypeParameter => CanonicalTypeParameter
 }
+import scala.language.existentials
 
 /**
   * Created by peter on 14/01/17.

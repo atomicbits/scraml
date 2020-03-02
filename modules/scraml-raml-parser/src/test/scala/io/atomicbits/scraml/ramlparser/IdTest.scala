@@ -21,17 +21,18 @@
 package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.model.{ RelativeId, RootId }
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 14/02/17.
   */
-class IdTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class IdTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("RootId parsing") {
+  Feature("RootId parsing") {
 
-    scenario("test parsing a RootId") {
+    Scenario("test parsing a RootId") {
 
       Given("a RootId string ")
       val rootIdString = "http://atomicbits.io/model/home-address.json"
@@ -44,7 +45,7 @@ class IdTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
     }
 
-    scenario("test parsing a less obvious RootId") {
+    Scenario("test parsing a less obvious RootId") {
 
       Given("a RootId string ")
       val rootIdString = "https://atomicbits.io/home-address.myfile#"
@@ -59,9 +60,9 @@ class IdTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
   }
 
-  feature("RelativeId parsing") {
+  Feature("RelativeId parsing") {
 
-    scenario("test parsing a relative id") {
+    Scenario("test parsing a relative id") {
 
       Given("relative id strings")
       val relativeIdString01 = "some/path/file.json"

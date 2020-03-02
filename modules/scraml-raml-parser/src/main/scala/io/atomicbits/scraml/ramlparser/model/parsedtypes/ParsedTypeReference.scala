@@ -119,7 +119,7 @@ object ParsedTypeReference {
           genericTs.value collect {
             case ParsedType(t) => t
           }
-        TryUtils.accumulate(genericTsList.toList)
+        TryUtils.accumulate(genericTsList.toList).map(_.toList)
       case genericTs: JsObject =>
         val message =
           s"""

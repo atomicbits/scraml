@@ -22,17 +22,18 @@ package io.atomicbits.scraml.ramlparser
 
 import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, CanonicalTypeCollector }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 11/02/17.
   */
-class NativeClassHierarchyTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class NativeClassHierarchyTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("json schema native id lookup test") {
+  Feature("json schema native id lookup test") {
 
-    scenario("test json-schema native id lookup") {
+    Scenario("test json-schema native id lookup") {
 
       Given("a RAML 1.0 specification with json-schema types")
       val defaultBasePath = List("io", "atomicbits", "model")
@@ -44,7 +45,7 @@ class NativeClassHierarchyTest extends FeatureSpec with GivenWhenThen with Befor
       Then("we are able to to a lookup of json-schema types using a native id in the resource definition")
       val raml = parsedModel.get
 
-      implicit val canonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
+      implicit val canonicalNameGenerator: CanonicalNameGenerator = CanonicalNameGenerator(defaultBasePath)
       val canonicalTypeCollector          = CanonicalTypeCollector(canonicalNameGenerator)
 
       val (ramlUpdated, canonicalLookup) = canonicalTypeCollector.collect(raml)

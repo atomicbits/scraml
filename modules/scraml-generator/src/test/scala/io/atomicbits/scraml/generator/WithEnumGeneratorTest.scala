@@ -25,17 +25,18 @@ import io.atomicbits.scraml.generator.platform.Platform
 import io.atomicbits.scraml.generator.platform.scalaplay.ScalaPlay
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
-class WithEnumGeneratorTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class WithEnumGeneratorTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   import io.atomicbits.scraml.generator.platform.Platform._
 
-  implicit val platform = ScalaPlay
+  implicit val platform: ScalaPlay.type = ScalaPlay
 
-  feature("The scraml generator generates DSL classes suited for enums") {
+  Feature("The scraml generator generates DSL classes suited for enums") {
 
-    scenario("test generated Scala DSL") {
+    Scenario("test generated Scala DSL") {
 
       Given("a RAML specification")
       val apiResourceUrl = this.getClass.getClassLoader.getResource("withenum/EnumApi.raml")

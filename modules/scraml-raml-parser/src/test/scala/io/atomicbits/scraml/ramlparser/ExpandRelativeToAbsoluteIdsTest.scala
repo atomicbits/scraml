@@ -24,19 +24,20 @@ import io.atomicbits.scraml.ramlparser.lookup.{ CanonicalNameGenerator, Canonica
 import io.atomicbits.scraml.ramlparser.model.parsedtypes._
 import io.atomicbits.scraml.ramlparser.model._
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 import scala.util.Try
 
 /**
   * Created by peter on 1/01/17.
   */
-class ExpandRelativeToAbsoluteIdsTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class ExpandRelativeToAbsoluteIdsTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Expand all relative IDs to absolute IDs in any json-schema ParsedType") {
+  Feature("Expand all relative IDs to absolute IDs in any json-schema ParsedType") {
 
-    scenario("test fragment reference ID expansion in a json-schema type") {
+    Scenario("test fragment reference ID expansion in a json-schema type") {
 
       Given("a RAML specification containing a json-schema definition with fragments")
       val defaultBasePath = List("io", "atomicbits", "schemas")

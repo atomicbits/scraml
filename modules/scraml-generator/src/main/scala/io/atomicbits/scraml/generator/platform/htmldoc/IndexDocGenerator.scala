@@ -82,7 +82,7 @@ object IndexDocGenerator extends SourceGenerator {
         val name  = field.getName
         val value = mapValue(field.get(cc))
       fieldMap + (name -> value)
-    } asJava
+    }.asJava
 
   }
 

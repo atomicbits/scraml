@@ -98,7 +98,7 @@ case class Ning19Client(protocol: String,
       case response @ Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
       case response @ Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
       case Response(_, _, _, Some(JsError(e)), _) =>
-        val validationMessages: Seq[String] = {
+        val validationMessages = {
           e flatMap { errorsByPath =>
             val (path, errors) = errorsByPath
             errors map (error => s"$path -> ${error.message}")

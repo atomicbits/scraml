@@ -23,17 +23,18 @@ package io.atomicbits.scraml.ramlparser
 import io.atomicbits.scraml.ramlparser.model.parsedtypes.{ ParsedArray, ParsedObject, ParsedString }
 import io.atomicbits.scraml.ramlparser.model.{ Get, NativeId, Raml }
 import io.atomicbits.scraml.ramlparser.parser.RamlParser
-import org.scalatest.{ BeforeAndAfterAll, FeatureSpec, GivenWhenThen }
-import org.scalatest.Matchers._
+import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * Created by peter on 24/03/17.
   */
-class QuestionMarkMarksOptionalPropertyOrParameterTest extends FeatureSpec with GivenWhenThen with BeforeAndAfterAll {
+class QuestionMarkMarksOptionalPropertyOrParameterTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll {
 
-  feature("Question marks can be used to mark optional properties or parameters") {
+  Feature("Question marks can be used to mark optional properties or parameters") {
 
-    scenario("Test parsing an optional property ") {
+    Scenario("Test parsing an optional property ") {
 
       Given("a RAML specification with an optional property marked by a '?'")
       val defaultBasePath = List("io", "atomicbits", "raml10")
@@ -54,7 +55,7 @@ class QuestionMarkMarksOptionalPropertyOrParameterTest extends FeatureSpec with 
 
     }
 
-    scenario("Test parsing an optional parameter") {
+    Scenario("Test parsing an optional parameter") {
 
       Given("a RAML specification with an optional parameter marked by a '?'")
       val defaultBasePath = List("io", "atomicbits", "raml10")
