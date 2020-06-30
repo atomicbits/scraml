@@ -95,6 +95,8 @@ trait Platform {
 
   def safeFieldName(fieldName: String): String
 
+  def safeDeconstructionName(fieldName: String): String = safeFieldName(fieldName)
+
   def fieldDeclarationWithDefaultValue(field: Field): String
 
   def fieldDeclaration(field: Field): String
@@ -224,6 +226,8 @@ object Platform {
   implicit class PlatformFieldOps(val field: Field) {
 
     def safeFieldName(implicit platform: Platform): String = platform.safeFieldName(field)
+
+    def safeDeconstructionName(implicit platform: Platform): String = platform.safeDeconstructionName(field.fieldName)
 
     def fieldDeclarationWithDefaultValue(implicit platform: Platform): String = platform.fieldDeclarationWithDefaultValue(field)
 

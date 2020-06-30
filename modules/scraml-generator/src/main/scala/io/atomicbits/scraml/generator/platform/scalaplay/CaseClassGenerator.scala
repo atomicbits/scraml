@@ -303,9 +303,9 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
            def pack: (${groupedFieldDeclarations.mkString(", ")}) => ${toClassReference.name} = {
               case (${groupedFields.map { group =>
-                        s"(${group.map(_.safeFieldName).mkString(", ")})"
+                        s"(${group.map(_.safeDeconstructionName).mkString(", ")})"
                       }.mkString(", ")}) =>
-                      ${toClassReference.name}.apply(${sortedFields.map(_.safeFieldName).mkString(", ")})
+                      ${toClassReference.name}.apply(${sortedFields.map(_.safeDeconstructionName).mkString(", ")})
            }
 
            def unpack: ${toClassReference.name} => (${groupedFieldDeclarations.mkString(", ")}) = {
