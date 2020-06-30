@@ -73,6 +73,6 @@ lazy val main = Project(
   base     = file(".")
 ).settings(
     projSettings(dependencies = allDeps),
-    publish := (),
-    publishLocal := ()
+    publish := ((): Unit),
+    publishLocal := ((): Unit)
   ) aggregate (scramlRamlParser, scramlDslScala, scramlDslJava, scramlDslAndroid, scramlGenSimulation, scramlGenerator)
