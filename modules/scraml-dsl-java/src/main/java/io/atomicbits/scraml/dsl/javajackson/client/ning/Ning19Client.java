@@ -20,8 +20,15 @@
 
 package io.atomicbits.scraml.dsl.javajackson.client.ning;
 
-import com.ning.http.client.*;
-import com.ning.http.client.generators.InputStreamBodyGenerator;
+//import com.ning.http.client.*;
+//import com.ning.http.client.generators.InputStreamBodyGenerator;
+
+import io.netty.handler.ssl.SslContext;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.filter.RequestFilter;
+import org.asynchttpclient.filter.ThrottleRequestFilter;
+
 import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig;
 import io.atomicbits.scraml.dsl.javajackson.json.Json;
@@ -88,7 +95,7 @@ public class Ning19Client implements Client {
             this.defaultHeaders = new HashMap<>();
         }
 
-        AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+        DefaultAsyncHttpClientConfig.Builder configBuilder = new DefaultAsyncHttpClientConfig.Builder();
         this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());
     }
 
@@ -136,13 +143,13 @@ public class Ning19Client implements Client {
         return ningClient;
     }
 
-    private AsyncHttpClientConfig.Builder applyConfiguration(AsyncHttpClientConfig.Builder builder) {
+    private DefaultAsyncHttpClientConfig.Builder applyConfiguration(DefaultAsyncHttpClientConfig.Builder builder) {
         builder.setReadTimeout(config.getRequestTimeout());
         builder.setMaxConnections(config.getMaxConnections());
         builder.setRequestTimeout(config.getRequestTimeout());
         builder.setMaxRequestRetry(config.getMaxRequestRetry());
         builder.setConnectTimeout(config.getConnectTimeout());
-        builder.setConnectionTTL(config.getConnectionTTL());
+        builder.setConnectionTtl(config.getConnectionTTL());
         builder.setWebSocketTimeout(config.getWebSocketTimeout());
         builder.setMaxConnectionsPerHost(config.getMaxConnectionsPerHost());
         builder.setAllowPoolingConnections(config.getAllowPoolingConnections());
