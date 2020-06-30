@@ -284,7 +284,12 @@ case class CaseClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
                """
               }
 
-            val fieldDeclarations = group.map(field => s"""${platform.classDefinition(field.classPointer)}""")
+            val fieldDeclarations = group.map { field =>
+              if (field.required)
+                platform.classDefinition(field.classPointer)
+              else
+                s"Option[${platform.classDefinition(field.classPointer)}]"
+            }
             val groupedFieldDeclaration =
               if (fieldDeclarations.size > 1) {
                 s"""(${fieldDeclarations.mkString(", ")})"""
