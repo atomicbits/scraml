@@ -3,7 +3,7 @@ scala:
 - 2.12.10
 script: sbt clean test
 jdk:
-- oraclejdk8
+- openjdk8
 notifications:
   email:
     recipients:
