@@ -20,14 +20,11 @@
 
 package io.atomicbits.scraml.dsl.javajackson.client.ning;
 
-//import com.ning.http.client.*;
-//import com.ning.http.client.generators.InputStreamBodyGenerator;
-
-import io.netty.handler.ssl.SslContext;
+import io.netty.handler.codec.http.HttpHeaders;
+import org.asynchttpclient.AsyncCompletionHandler;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
-import org.asynchttpclient.filter.RequestFilter;
-import org.asynchttpclient.filter.ThrottleRequestFilter;
+import org.asynchttpclient.Request;
 
 import io.atomicbits.scraml.dsl.javajackson.*;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig;
@@ -35,13 +32,12 @@ import io.atomicbits.scraml.dsl.javajackson.json.Json;
 import io.atomicbits.scraml.dsl.javajackson.ByteArrayPart;
 import io.atomicbits.scraml.dsl.javajackson.FilePart;
 import io.atomicbits.scraml.dsl.javajackson.StringPart;
+import org.asynchttpclient.request.body.generator.InputStreamBodyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +45,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class Ning19Client implements Client {
+import static org.asynchttpclient.Dsl.*;
+
+
+/**
+ * Created by peter on 08/07/2020.
+ */
+public class Ning2Client implements Client {
 
     private String protocol;
     private String host;
@@ -60,14 +62,14 @@ public class Ning19Client implements Client {
 
     private AsyncHttpClient ningClient;
 
-    private Logger LOGGER = LoggerFactory.getLogger(Ning19Client.class);
+    private Logger LOGGER = LoggerFactory.getLogger(Ning2Client.class);
 
-    public Ning19Client(String host,
-                        Integer port,
-                        String protocol,
-                        String prefix,
-                        ClientConfig config,
-                        Map<String, String> defaultHeaders) {
+    public Ning2Client(String host,
+                       Integer port,
+                       String protocol,
+                       String prefix,
+                       ClientConfig config,
+                       Map<String, String> defaultHeaders) {
         if (host != null) {
             this.host = host;
         } else {
@@ -96,7 +98,7 @@ public class Ning19Client implements Client {
         }
 
         DefaultAsyncHttpClientConfig.Builder configBuilder = new DefaultAsyncHttpClientConfig.Builder();
-        this.ningClient = new AsyncHttpClient(applyConfiguration(configBuilder).build());
+        this.ningClient = asyncHttpClient(applyConfiguration(configBuilder).build());
     }
 
     public ClientConfig getConfig() {
@@ -150,19 +152,19 @@ public class Ning19Client implements Client {
         builder.setMaxRequestRetry(config.getMaxRequestRetry());
         builder.setConnectTimeout(config.getConnectTimeout());
         builder.setConnectionTtl(config.getConnectionTTL());
-        builder.setWebSocketTimeout(config.getWebSocketTimeout());
+        // builder.setWebSocketTimeout(config.getWebSocketTimeout());
         builder.setMaxConnectionsPerHost(config.getMaxConnectionsPerHost());
-        builder.setAllowPoolingConnections(config.getAllowPoolingConnections());
-        builder.setAllowPoolingSslConnections(config.getAllowPoolingSslConnections());
+        // builder.setAllowPoolingConnections(config.getAllowPoolingConnections());
+        // builder.setAllowPoolingSslConnections(config.getAllowPoolingSslConnections());
         builder.setPooledConnectionIdleTimeout(config.getPooledConnectionIdleTimeout());
-        builder.setAcceptAnyCertificate(config.getAcceptAnyCertificate());
+        builder.setUseInsecureTrustManager(config.getUseInsecureTrustManager());
         builder.setFollowRedirect(config.getFollowRedirect());
         builder.setMaxRedirects(config.getMaxRedirects());
         builder.setStrict302Handling(config.getStrict302Handling());
-        builder.setSSLContext(config.getSslContext());
+        builder.setSslContext(config.getSslContext());
         builder.setSslSessionCacheSize(config.getSslSessionCacheSize());
         builder.setSslSessionTimeout(config.getSslSessionTimeout());
-        builder.setHostnameVerifier(config.getHostnameVerifier());
+        // builder.setHostnameVerifier(config.getHostnameVerifier());
         return builder;
     }
 
@@ -191,9 +193,9 @@ public class Ning19Client implements Client {
 
     private <R> CompletableFuture<io.atomicbits.scraml.dsl.javajackson.Response<R>> callToResponse(io.atomicbits.scraml.dsl.javajackson.RequestBuilder requestBuilder,
                                                                                                    String body,
-                                                                                                   Function<com.ning.http.client.Response, io.atomicbits.scraml.dsl.javajackson.Response<R>> transformer) {
+                                                                                                   Function<org.asynchttpclient.Response, io.atomicbits.scraml.dsl.javajackson.Response<R>> transformer) {
         // Create builder
-        com.ning.http.client.RequestBuilder ningRb = new com.ning.http.client.RequestBuilder();
+        org.asynchttpclient.RequestBuilder ningRb = new org.asynchttpclient.RequestBuilder();
         String baseUrl = protocol + "://" + host + ":" + port + getCleanPrefix();
         ningRb.setUrl(baseUrl + "/" + requestBuilder.getRelativePath());
         ningRb.setMethod(requestBuilder.getMethod().name());
@@ -269,7 +271,7 @@ public class Ning19Client implements Client {
             if (bodyPart.isString()) {
                 StringPart part = (StringPart) bodyPart;
                 ningRb.addBodyPart(
-                        new com.ning.http.client.multipart.StringPart(
+                        new org.asynchttpclient.request.body.multipart.StringPart(
                                 part.getName(),
                                 part.getValue(),
                                 part.getContentType(),
@@ -283,7 +285,7 @@ public class Ning19Client implements Client {
             if (bodyPart.isFile()) {
                 FilePart part = (FilePart) bodyPart;
                 ningRb.addBodyPart(
-                        new com.ning.http.client.multipart.FilePart(
+                        new org.asynchttpclient.request.body.multipart.FilePart(
                                 part.getName(),
                                 part.getFile(),
                                 part.getContentType(),
@@ -298,7 +300,7 @@ public class Ning19Client implements Client {
             if (bodyPart.isByteArray()) {
                 ByteArrayPart part = (ByteArrayPart) bodyPart;
                 ningRb.addBodyPart(
-                        new com.ning.http.client.multipart.ByteArrayPart(
+                        new org.asynchttpclient.request.body.multipart.ByteArrayPart(
                                 part.getName(),
                                 part.getBytes(),
                                 part.getContentType(),
@@ -320,10 +322,13 @@ public class Ning19Client implements Client {
 
         getClient().executeRequest(ningRequest, new AsyncCompletionHandler<String>() {
 
+            private org.asynchttpclient.Response response;
+
             @Override
-            public String onCompleted(com.ning.http.client.Response response) throws Exception {
+            public String onCompleted(org.asynchttpclient.Response response) throws Exception {
+                this.response = response;
                 try {
-                    io.atomicbits.scraml.dsl.javajackson.Response<R> resp = transformer.apply(response);
+                    io.atomicbits.scraml.dsl.javajackson.Response<R> resp = transformer.apply(this.response);
                     future.complete(resp);
                 } catch (Throwable t) {
                     future.completeExceptionally(t);
@@ -343,91 +348,82 @@ public class Ning19Client implements Client {
     }
 
 
-    private io.atomicbits.scraml.dsl.javajackson.Response<String> transformToStringBody(com.ning.http.client.Response response) {
-        try {
-            String responseBody =
-                    response.getResponseBody(
-                            getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
-                    );
-            return new io.atomicbits.scraml.dsl.javajackson.Response<String>(
-                    responseBody,
-                    responseBody,
+    private io.atomicbits.scraml.dsl.javajackson.Response<String> transformToStringBody(org.asynchttpclient.Response response) {
+        Map<String, List<String>> headers = headersToMap(response.getHeaders());
+        String responseBody =
+                response.getResponseBody(
+                        getResponseCharsetFromHeaders(headers, config.getResponseCharset())
+                );
+        return new io.atomicbits.scraml.dsl.javajackson.Response<String>(
+                responseBody,
+                responseBody,
+                response.getStatusCode(),
+                headers
+        );
+    }
+
+
+    private io.atomicbits.scraml.dsl.javajackson.Response<BinaryData> transformToBinaryBody(org.asynchttpclient.Response response) {
+        Map<String, List<String>> headers = headersToMap(response.getHeaders());
+        if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+            // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+            // there are many responses in the 200 range with different typed responses.
+            BinaryData binaryData = new Ning2BinaryData(response);
+            return new io.atomicbits.scraml.dsl.javajackson.Response<BinaryData>(
+                    null,
+                    binaryData,
                     response.getStatusCode(),
-                    response.getHeaders()
+                    headers
             );
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-
-    private io.atomicbits.scraml.dsl.javajackson.Response<BinaryData> transformToBinaryBody(com.ning.http.client.Response response) {
-        try {
-            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-                // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
-                // there are many responses in the 200 range with different typed responses.
-                BinaryData binaryData = new Ning19BinaryData(response);
-                return new io.atomicbits.scraml.dsl.javajackson.Response<BinaryData>(
-                        null,
-                        binaryData,
-                        response.getStatusCode(),
-                        response.getHeaders()
-                );
-            } else {
-                String responseBody =
-                        response.getResponseBody(
-                                getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
-                        );
-                return new io.atomicbits.scraml.dsl.javajackson.Response<BinaryData>(
-                        responseBody,
-                        null,
-                        response.getStatusCode(),
-                        response.getHeaders()
-                );
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-
-    private <R> io.atomicbits.scraml.dsl.javajackson.Response<R> transformToTypedBody(com.ning.http.client.Response response, String canonicalResponseType) {
-        try {
+        } else {
             String responseBody =
                     response.getResponseBody(
-                            getResponseCharsetFromHeaders(response.getHeaders(), config.getResponseCharset().displayName())
+                            getResponseCharsetFromHeaders(headers, config.getResponseCharset())
                     );
-            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-                // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
-                // there are many responses in the 200 range with different typed responses.
-                return new io.atomicbits.scraml.dsl.javajackson.Response<R>(
-                        responseBody,
-                        Json.parseBodyToObject(responseBody, canonicalResponseType),
-                        response.getStatusCode(),
-                        response.getHeaders()
+            return new io.atomicbits.scraml.dsl.javajackson.Response<BinaryData>(
+                    responseBody,
+                    null,
+                    response.getStatusCode(),
+                    headers
+            );
+        }
+    }
+
+
+    private <R> io.atomicbits.scraml.dsl.javajackson.Response<R> transformToTypedBody(org.asynchttpclient.Response response, String canonicalResponseType) {
+        Map<String, List<String>> headers = headersToMap(response.getHeaders());
+        String responseBody =
+                response.getResponseBody(
+                        getResponseCharsetFromHeaders(headers, config.getResponseCharset())
                 );
-            } else {
-                return new io.atomicbits.scraml.dsl.javajackson.Response<R>(
-                        responseBody,
-                        null,
-                        response.getStatusCode(),
-                        response.getHeaders()
-                );
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+            // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+            // there are many responses in the 200 range with different typed responses.
+            return new io.atomicbits.scraml.dsl.javajackson.Response<R>(
+                    responseBody,
+                    Json.parseBodyToObject(responseBody, canonicalResponseType),
+                    response.getStatusCode(),
+                    headers
+            );
+        } else {
+            return new io.atomicbits.scraml.dsl.javajackson.Response<R>(
+                    responseBody,
+                    null,
+                    response.getStatusCode(),
+                    headers
+            );
         }
     }
 
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         if (ningClient != null) {
             ningClient.close();
         }
     }
 
-    String getResponseCharsetFromHeaders(Map<String, List<String>> headers, String defaultCharset) {
+    Charset getResponseCharsetFromHeaders(Map<String, List<String>> headers, Charset defaultCharset) {
         for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
             if ("content-type".equals(entry.getKey().toLowerCase())) {
                 for (String value : entry.getValue()) {
@@ -439,7 +435,7 @@ public class Ning19Client implements Client {
                                 String charsetValue = charsetSplit[1];
                                 String cleanValue = charsetValue.replace('=', ' ').trim();
                                 try {
-                                    return Charset.forName(cleanValue).name();
+                                    return Charset.forName(cleanValue);
                                 } catch (Throwable e) {
                                     // ignore, we'll fallback to the default charset
                                 }
@@ -450,6 +446,14 @@ public class Ning19Client implements Client {
             }
         }
         return defaultCharset;
+    }
+
+    Map<String, List<String>> headersToMap(HttpHeaders httpHeaders) {
+        Map<String, List<String>> map = new HashMap<String, List<String>>();
+        for (String name : httpHeaders.names()) {
+            map.put(name, httpHeaders.getAll(name));
+        }
+        return map;
     }
 
 }

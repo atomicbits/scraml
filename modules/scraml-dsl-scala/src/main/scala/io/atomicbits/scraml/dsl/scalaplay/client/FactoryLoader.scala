@@ -28,7 +28,7 @@ import scala.util.{ Failure, Try }
   */
 object FactoryLoader {
 
-  val defaultClientFactoryClass = "io.atomicbits.scraml.dsl.scalaplay.client.ning.Ning19ClientFactory"
+  val defaultClientFactoryClass = "io.atomicbits.scraml.dsl.scalaplay.client.ning.Ning2ClientFactory"
 
   def load(clientFactoryClass: Option[String] = None): Try[ClientFactory] = {
     val factoryClass = clientFactoryClass.getOrElse(defaultClientFactoryClass)

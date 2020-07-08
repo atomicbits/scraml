@@ -32,7 +32,7 @@ object Dependencies {
 
   val snakeYaml = "org.yaml" % "snakeyaml" % "1.16"
 
-  val asyncClientOld      = "com.ning"             % "async-http-client" % "1.9.40" % "provided"
+  // val asyncClientOld      = "com.ning"             % "async-http-client" % "1.9.40" % "provided"
   val asyncClientProvided = "org.asynchttpclient"  % "async-http-client" % "2.8.1"  % "provided"
   val okHttpProvided      = "com.squareup.okhttp3" % "okhttp"            % "3.9.0"  % "provided"
   val playJson            = "com.typesafe.play"    %% "play-json"        % "2.8.1"
@@ -47,7 +47,7 @@ object Dependencies {
   val scalaTest       = "org.scalatest"          %% "scalatest"        % "3.1.0"  % "test"
   val wiremock        = "com.github.tomakehurst" % "wiremock"          % "1.57"   % "test"
   val junit           = "junit"                  % "junit"             % "4.12"   % "test"
-  val asyncClientTest = "com.ning"               % "async-http-client" % "1.9.40" % "test"
+  val asyncClientTest = "org.asynchttpclient"    % "async-http-client" % "2.8.1"  % "test"
 
   val scramlRamlParserDeps = Seq(
     playJson,
@@ -66,7 +66,6 @@ object Dependencies {
   val scramlDslDepsScala = Seq(
     slf4j,
     playJson,
-    asyncClientOld,
     asyncClientProvided
   )
 
@@ -85,7 +84,6 @@ object Dependencies {
     jacksonCore,
     jacksonAnnotations,
     jacksonDatabind,
-    asyncClientOld,
     asyncClientProvided
   )
 

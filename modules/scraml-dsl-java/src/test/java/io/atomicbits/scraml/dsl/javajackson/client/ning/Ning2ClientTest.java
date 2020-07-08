@@ -25,6 +25,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,11 +39,11 @@ import static org.junit.Assert.*;
  * Created by peter on 22/04/16.
  */
 @RunWith(BlockJUnit4ClassRunner.class)
-public class Ning19ClientTest {
+public class Ning2ClientTest {
 
     @Test
     public void testFetchCharsetFromHeaders() {
-        Ning19Client client = new Ning19Client("localhost", 8080, "http", null, new ClientConfig(), null);
+        Ning2Client client = new Ning2Client("localhost", 8080, "http", null, new ClientConfig(), null);
 
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         List<String> acceptValues = new ArrayList<>();
@@ -52,12 +54,12 @@ public class Ning19ClientTest {
         contentTypeValues.add("application/json;charset=UTF-8");
         headers.put("Content-Type", contentTypeValues);
 
-        assertEquals("UTF-8", client.getResponseCharsetFromHeaders(headers, "ascii"));
+        assertEquals("UTF-8", client.getResponseCharsetFromHeaders(headers, StandardCharsets.US_ASCII));
     }
 
     @Test
     public void testFetchCharsetFromHeadersSpace() {
-        Ning19Client client = new Ning19Client("localhost", 8080, "http", null, new ClientConfig(), null);
+        Ning2Client client = new Ning2Client("localhost", 8080, "http", null, new ClientConfig(), null);
 
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         List<String> acceptValues = new ArrayList<>();
@@ -68,12 +70,12 @@ public class Ning19ClientTest {
         contentTypeValues.add("application/json; charset=UTF-8");
         headers.put("Content-type", contentTypeValues);
 
-        assertEquals("UTF-8", client.getResponseCharsetFromHeaders(headers, "ascii"));
+        assertEquals("UTF-8", client.getResponseCharsetFromHeaders(headers, StandardCharsets.US_ASCII));
     }
 
     @Test
     public void testFetchCharsetFromHeadersDefault() {
-        Ning19Client client = new Ning19Client("localhost", 8080, "http", null, new ClientConfig(), null);
+        Ning2Client client = new Ning2Client("localhost", 8080, "http", null, new ClientConfig(), null);
 
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         List<String> acceptValues = new ArrayList<>();
@@ -84,7 +86,7 @@ public class Ning19ClientTest {
         contentTypeValues.add("application/json");
         headers.put("Content-type", contentTypeValues);
 
-        assertEquals("ascii", client.getResponseCharsetFromHeaders(headers, "ascii"));
+        assertEquals("ascii", client.getResponseCharsetFromHeaders(headers, StandardCharsets.US_ASCII));
     }
 
 }

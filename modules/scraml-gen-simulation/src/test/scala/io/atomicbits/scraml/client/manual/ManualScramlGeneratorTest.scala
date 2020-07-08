@@ -28,7 +28,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import io.atomicbits.scraml.dsl.scalaplay.RequestBuilder
-import io.atomicbits.scraml.dsl.scalaplay.client.ning.Ning19ClientFactory
+import io.atomicbits.scraml.dsl.scalaplay.client.ning.Ning2ClientFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen }
 import io.atomicbits.scraml.dsl.scalaplay.client.{ ClientConfig, ClientFactory }
@@ -65,7 +65,7 @@ object XoClient {
     val requestBuilder =
       RequestBuilder(
         clientFactory
-          .getOrElse(Ning19ClientFactory)
+          .getOrElse(Ning2ClientFactory)
           .createClient(
             protocol       = url.getProtocol,
             host           = url.getHost,
@@ -90,7 +90,7 @@ object XoClient {
     val requestBuilder =
       RequestBuilder(
         clientFactory
-          .getOrElse(Ning19ClientFactory)
+          .getOrElse(Ning2ClientFactory)
           .createClient(
             protocol       = protocol,
             host           = host,

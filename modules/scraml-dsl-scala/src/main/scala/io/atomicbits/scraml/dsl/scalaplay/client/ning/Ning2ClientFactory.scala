@@ -28,7 +28,7 @@ import scala.util.{ Failure, Try }
 /**
   * Created by peter on 8/01/16.
   */
-object Ning19ClientFactory extends ClientFactory {
+object Ning2ClientFactory extends ClientFactory {
 
   override def createClient(protocol: String,
                             host: String,
@@ -37,7 +37,7 @@ object Ning19ClientFactory extends ClientFactory {
                             config: ClientConfig,
                             defaultHeaders: Map[String, String]): Try[Client] = {
     Try {
-      new Ning19Client(protocol, host, port, prefix, config, defaultHeaders)
+      new Ning2Client(protocol, host, port, prefix, config, defaultHeaders)
     } recoverWith {
       case cnfe: NoClassDefFoundError =>
         Failure(
