@@ -65,7 +65,7 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
           val defaultCIS = s"import $dslBasePackage.client.okhttp.$defaultCF;"
           (defaultCF, defaultCIS)
         case _ =>
-          val defaultCF  = "Ning19ClientFactory"
+          val defaultCF  = "Ning2ClientFactory"
           val defaultCIS = s"import $dslBasePackage.client.ning.$defaultCF;"
           (defaultCF, defaultCIS)
       }
@@ -121,7 +121,7 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
                    return this._requestBuilder;
                }
 
-               public void close() {
+               public void close() throws Exception {
                    this._requestBuilder.getClient().close();
                }
 

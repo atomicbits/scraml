@@ -21,35 +21,39 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.nio.charset.Charset
-import java.util.{ Map => JMap, List => JList }
+import java.util.{List => JList, Map => JMap}
 import java.util.concurrent.CompletionStage
-import java.util.function.{ BiConsumer, Function => JFunction }
+import java.util.function.{BiConsumer, Function => JFunction}
 
-import com.ning.http.client.generators.InputStreamBodyGenerator
+import org.asynchttpclient.AsyncCompletionHandlerBase
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+import org.asynchttpclient.Request
+import org.asynchttpclient.request.body.generator.InputStreamBodyGenerator
+import org.asynchttpclient.Dsl._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.ning.http.client.{ AsyncCompletionHandler, AsyncHttpClient, AsyncHttpClientConfig, Request }
 import io.atomicbits.scraml.dsl.scalaplay.client.ClientConfig
 import io.atomicbits.scraml.dsl.scalaplay._
-import org.slf4j.{ Logger, LoggerFactory }
+import io.netty.handler.codec.http.HttpHeaders
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
 
-import scala.concurrent.{ Future, Promise }
-import scala.util.{ Failure, Success, Try }
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
 
 /**
   * Created by peter on 28/10/15.
   */
-case class Ning19Client(protocol: String,
-                        host: String,
-                        port: Int,
-                        prefix: Option[String],
-                        config: ClientConfig,
-                        defaultHeaders: Map[String, String])
+case class Ning2Client(protocol: String,
+                       host: String,
+                       port: Int,
+                       prefix: Option[String],
+                       config: ClientConfig,
+                       defaultHeaders: Map[String, String])
     extends Client {
 
-  val LOGGER: Logger = LoggerFactory.getLogger(classOf[Ning19Client])
+  val LOGGER: Logger = LoggerFactory.getLogger(classOf[Ning2Client])
 
   private val cleanPrefix = prefix.map { pref =>
     val strippedPref = pref.stripPrefix("/").stripSuffix("/")
@@ -57,8 +61,8 @@ case class Ning19Client(protocol: String,
   } getOrElse ""
 
   private lazy val client = {
-    val configBuilder: AsyncHttpClientConfig.Builder = new AsyncHttpClientConfig.Builder
-    new AsyncHttpClient(applyConfiguration(configBuilder).build)
+    val configBuilder: DefaultAsyncHttpClientConfig.Builder = new DefaultAsyncHttpClientConfig.Builder
+    asyncHttpClient(applyConfiguration(configBuilder).build)
   }
 
   def callToJsonResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[JsValue]] = {
@@ -112,17 +116,12 @@ case class Ning19Client(protocol: String,
 
   def callToStringResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[String]] = {
 
-    val transformer: com.ning.http.client.Response => Response[String] = { response =>
-      val headers: Map[String, List[String]] =
-        response.getHeaders.asInstanceOf[JMap[String, JList[String]]].asScala.foldLeft(Map.empty[String, List[String]]) {
-          (map, headerPair) =>
-            val (key, value) = headerPair
-            map + (key -> value.asScala.toList)
-        }
+    val transformer: org.asynchttpclient.Response => Response[String] = { response =>
+      val headers: Map[String, List[String]] = headersToMap(response.getHeaders)
 
       val responseCharset: String = getResponseCharsetFromHeaders(headers).getOrElse(config.responseCharset.displayName)
 
-      val stringResponseBody: Option[String] = Option(response.getResponseBody(responseCharset))
+      val stringResponseBody: Option[String] = Option(response.getResponseBody(Charset.forName(responseCharset)))
 
       Response[String](response.getStatusCode, stringResponseBody, None, stringResponseBody, headers)
     }
@@ -132,15 +131,10 @@ case class Ning19Client(protocol: String,
 
   def callToBinaryResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[BinaryData]] = {
 
-    val transformer: com.ning.http.client.Response => Response[BinaryData] = { response =>
-      val binaryData: BinaryData = new Ning19BinaryData(response)
+    val transformer: org.asynchttpclient.Response => Response[BinaryData] = { response =>
+      val binaryData: BinaryData = new Ning2BinaryData(response)
 
-      val headers: Map[String, List[String]] =
-        response.getHeaders.asInstanceOf[JMap[String, JList[String]]].asScala.foldLeft(Map.empty[String, List[String]]) {
-          (map, headerPair) =>
-            val (key, value) = headerPair
-            map + (key -> value.asScala.toList)
-        }
+      val headers: Map[String, List[String]] = headersToMap(response.getHeaders)
 
       Response[BinaryData](response.getStatusCode, None, None, Some(binaryData), headers)
     }
@@ -150,10 +144,10 @@ case class Ning19Client(protocol: String,
 
   private def callToResponse[T](requestBuilder: RequestBuilder,
                                 body: Option[String],
-                                transformer: com.ning.http.client.Response => Response[T]): Future[Response[T]] = {
+                                transformer: org.asynchttpclient.Response => Response[T]): Future[Response[T]] = {
     val ningBuilder = {
       // Create builder
-      val ningRb: com.ning.http.client.RequestBuilder = new com.ning.http.client.RequestBuilder
+      val ningRb: org.asynchttpclient.RequestBuilder = new org.asynchttpclient.RequestBuilder
       val baseUrl: String                             = protocol + "://" + host + ":" + port + cleanPrefix
       ningRb.setUrl(baseUrl + "/" + requestBuilder.relativePath.stripPrefix("/"))
       ningRb.setMethod(requestBuilder.method.toString)
@@ -201,7 +195,7 @@ case class Ning19Client(protocol: String,
     requestBuilder.multipartParams.foreach {
       case part: ByteArrayPart =>
         ningBuilder.addBodyPart(
-          new com.ning.http.client.multipart.ByteArrayPart(
+          new org.asynchttpclient.request.body.multipart.ByteArrayPart(
             part.name,
             part.bytes,
             part.contentType.orNull,
@@ -212,7 +206,7 @@ case class Ning19Client(protocol: String,
         )
       case part: FilePart =>
         ningBuilder.addBodyPart(
-          new com.ning.http.client.multipart.FilePart(
+          new org.asynchttpclient.request.body.multipart.FilePart(
             part.name,
             part.file,
             part.contentType.orNull,
@@ -224,7 +218,7 @@ case class Ning19Client(protocol: String,
         )
       case part: StringPart =>
         ningBuilder.addBodyPart(
-          new com.ning.http.client.multipart.StringPart(
+          new org.asynchttpclient.request.body.multipart.StringPart(
             part.name,
             part.value,
             part.contentType.orNull,
@@ -237,16 +231,15 @@ case class Ning19Client(protocol: String,
 
     val ningRequest: Request = ningBuilder.build()
     LOGGER.debug(s"Executing request: $ningRequest")
-    LOGGER.trace(s"Request body encoding: ${ningRequest.getBodyEncoding}")
     LOGGER.trace(s"Request body: $body")
 
     val promise = Promise[Response[T]]()
 
     client.executeRequest(
       ningRequest,
-      new AsyncCompletionHandler[String]() {
+      new AsyncCompletionHandlerBase() {
         @throws(classOf[Exception])
-        def onCompleted(response: com.ning.http.client.Response): String = {
+        override def onCompleted(response: org.asynchttpclient.Response): org.asynchttpclient.Response = {
           val resp: Try[Response[T]] = Try(transformer(response))
           promise.complete(resp)
           null
@@ -268,19 +261,16 @@ case class Ning19Client(protocol: String,
 
   def close(): Unit = client.close()
 
-  private def applyConfiguration(builder: AsyncHttpClientConfig.Builder): AsyncHttpClientConfig.Builder = {
+  private def applyConfiguration(builder: DefaultAsyncHttpClientConfig.Builder): DefaultAsyncHttpClientConfig.Builder = {
     builder.setReadTimeout(config.readTimeout)
     builder.setMaxConnections(config.maxConnections)
     builder.setRequestTimeout(config.requestTimeout)
     builder.setMaxRequestRetry(config.maxRequestRetry)
     builder.setConnectTimeout(config.connectTimeout)
-    builder.setConnectionTTL(config.connectionTTL)
-    builder.setWebSocketTimeout(config.webSocketTimeout)
+    builder.setConnectionTtl(config.connectionTTL)
     builder.setMaxConnectionsPerHost(config.maxConnectionsPerHost)
-    builder.setAllowPoolingConnections(config.allowPoolingConnections)
-    builder.setAllowPoolingSslConnections(config.allowPoolingSslConnections)
     builder.setPooledConnectionIdleTimeout(config.pooledConnectionIdleTimeout)
-    builder.setAcceptAnyCertificate(config.acceptAnyCertificate)
+    builder.setUseInsecureTrustManager(config.useInsecureTrustManager)
     builder.setFollowRedirect(config.followRedirect)
     builder.setMaxRedirects(config.maxRedirects)
     builder.setStrict302Handling(config.strict302Handling)
@@ -310,7 +300,13 @@ case class Ning19Client(protocol: String,
     } yield charsetString
   }
 
-  private def toJavaFunction[A, B](f: A => B): JFunction[A, B] = new JFunction[A, B] {
+  private def headersToMap(httpHeaders: HttpHeaders) = {
+    httpHeaders.names.asScala.foldLeft(Map.empty[String,List[String]]) { (map, name) =>
+      map + (name -> httpHeaders.getAll(name).asScala.toList)
+    }
+  }
+
+  private def toJavaFunction[A, B](f: A => B) = new JFunction[A, B] {
     override def apply(a: A): B = f(a)
   }
 

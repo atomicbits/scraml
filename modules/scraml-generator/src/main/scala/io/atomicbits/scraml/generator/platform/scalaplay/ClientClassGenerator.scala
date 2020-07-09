@@ -64,7 +64,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
          import $dslBasePackage.client.{ClientFactory, ClientConfig}
          import $dslBasePackage.RestException
          import $dslBasePackage.RequestBuilder
-         import $dslBasePackage.client.ning.Ning19ClientFactory
+         import $dslBasePackage.client.ning.Ning2ClientFactory
          import java.net.URL
          import play.api.libs.json._
          import java.io._
@@ -96,7 +96,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
              val requestBuilder =
                RequestBuilder(
-                 clientFactory.getOrElse(Ning19ClientFactory)
+                 clientFactory.getOrElse(Ning2ClientFactory)
                    .createClient(
                      protocol = url.getProtocol,
                      host = url.getHost,
@@ -121,7 +121,7 @@ case class ClientClassGenerator(scalaPlay: ScalaPlay) extends SourceGenerator {
 
              val requestBuilder =
                RequestBuilder(
-                 clientFactory.getOrElse(Ning19ClientFactory)
+                 clientFactory.getOrElse(Ning2ClientFactory)
                    .createClient(
                      protocol = protocol,
                      host = host,

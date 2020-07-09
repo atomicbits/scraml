@@ -145,6 +145,14 @@ case class ScalaPlay(apiBasePackageParts: List[String]) extends Platform with Cl
     escapeScalaKeyword(cleanName)
   }
 
+  override def safeDeconstructionName(fieldName: String): String = {
+    val cleanName = cleanFieldName(fieldName)
+    if (reservedKeywords.contains(cleanName))
+      s"${cleanName}_"
+    else
+      cleanName
+  }
+
   override def fieldDeclarationWithDefaultValue(field: Field): String = {
     if (field.required) {
       s"${safeFieldName(field)}: ${classDefinition(field.classPointer)}"

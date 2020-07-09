@@ -26,10 +26,11 @@ import io.atomicbits.scraml.dsl.javajackson.Client;
 
 import java.util.Map;
 
+
 /**
- * Created by peter on 10/01/16.
+ * Created by peter on 08/07/2020.
  */
-public class Ning19ClientFactory implements ClientFactory {
+public class Ning2ClientFactory implements ClientFactory {
 
     @Override
     public Client createClient(String host,
@@ -39,11 +40,11 @@ public class Ning19ClientFactory implements ClientFactory {
                                ClientConfig config,
                                Map<String, String> defaultHeaders) {
         try {
-            return new Ning19Client(host, port, protocol, prefix, config, defaultHeaders);
+            return new Ning2Client(host, port, protocol, prefix, config, defaultHeaders);
         } catch (NoClassDefFoundError e) {
             String message = e.getMessage() +
-                    " The Scraml ning client factory cannot find the necessary ning dependencies to instantiate its client. " +
-                    "Did you add the necessary ning dependencies to your project?";
+                    " The Scraml ning 2 client factory cannot find the necessary ning dependencies to instantiate its client. " +
+                    "Did you add the necessary ning 2 dependencies to your project?";
             throw new NoClassDefFoundError(message);
         }
     }

@@ -28,14 +28,14 @@ import org.scalatest.featurespec.AnyFeatureSpec
 /**
   * Created by peter on 22/04/16.
   */
-class Ning19ClientTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
+class Ning2ClientTest extends AnyFeatureSpec with GivenWhenThen with BeforeAndAfterAll with ScalaFutures {
 
   Feature("Extracting the charset from the response headers") {
 
     Scenario("test a valid charset in a response header") {
 
       Given("A ning client")
-      val client = Ning19Client(
+      val client = Ning2Client(
         protocol       = "http",
         host           = "localhost",
         port           = 8080,

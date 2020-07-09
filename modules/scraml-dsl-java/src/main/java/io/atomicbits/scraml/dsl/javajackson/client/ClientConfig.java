@@ -20,10 +20,11 @@
 
 package io.atomicbits.scraml.dsl.javajackson.client;
 
-import com.ning.http.client.AsyncHttpClientConfigDefaults;
+//import com.ning.http.client.AsyncHttpClientConfigDefaults;
+import io.netty.handler.ssl.SslContext;
+import org.asynchttpclient.config.AsyncHttpClientConfigDefaults;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import java.nio.charset.Charset;
 
 /**
@@ -36,21 +37,18 @@ public class ClientConfig {
     private int requestTimeout = AsyncHttpClientConfigDefaults.defaultRequestTimeout();
     private int maxRequestRetry = AsyncHttpClientConfigDefaults.defaultMaxRequestRetry();
     private int connectTimeout = AsyncHttpClientConfigDefaults.defaultConnectTimeout();
-    private int connectionTTL = AsyncHttpClientConfigDefaults.defaultConnectionTTL();
+    private int connectionTTL = AsyncHttpClientConfigDefaults.defaultConnectionTtl();
     private int readTimeout = AsyncHttpClientConfigDefaults.defaultReadTimeout();
-    private int webSocketTimeout = AsyncHttpClientConfigDefaults.defaultWebSocketTimeout();
     private int maxConnections = AsyncHttpClientConfigDefaults.defaultMaxConnections();
     private int maxConnectionsPerHost = AsyncHttpClientConfigDefaults.defaultMaxConnectionsPerHost();
-    private Boolean allowPoolingConnections = AsyncHttpClientConfigDefaults.defaultAllowPoolingConnections();
-    private Boolean allowPoolingSslConnections = AsyncHttpClientConfigDefaults.defaultAllowPoolingSslConnections();
     private int pooledConnectionIdleTimeout = AsyncHttpClientConfigDefaults.defaultPooledConnectionIdleTimeout();
-    private Boolean acceptAnyCertificate = AsyncHttpClientConfigDefaults.defaultAcceptAnyCertificate();
+    private Boolean useInsecureTrustManager = AsyncHttpClientConfigDefaults.defaultUseInsecureTrustManager();
     private Boolean followRedirect = AsyncHttpClientConfigDefaults.defaultFollowRedirect();
     private int maxRedirects = AsyncHttpClientConfigDefaults.defaultMaxRedirects();
     private Boolean strict302Handling = AsyncHttpClientConfigDefaults.defaultStrict302Handling();
     private Integer sslSessionTimeout = AsyncHttpClientConfigDefaults.defaultSslSessionTimeout();
     private Integer sslSessionCacheSize = AsyncHttpClientConfigDefaults.defaultSslSessionCacheSize();
-    private SSLContext sslContext;
+    private SslContext sslContext;
     private HostnameVerifier hostnameVerifier;
 
     public ClientConfig() {
@@ -58,9 +56,7 @@ public class ClientConfig {
 
     public ClientConfig(Charset requestCharset,
                         Charset responseCharset,
-                        Boolean acceptAnyCertificate,
-                        Boolean allowPoolingConnections,
-                        Boolean allowPoolingSslConnections,
+                        Boolean useInsecureTrustManager,
                         int connectionTTL,
                         int connectTimeout,
                         Boolean followRedirect,
@@ -70,16 +66,12 @@ public class ClientConfig {
                         int maxRequestRetry,
                         int pooledConnectionIdleTimeout,
                         int readTimeout,
-                        Boolean removeQueryParamOnRedirect,
                         int requestTimeout,
-                        Boolean strict302Handling,
-                        int webSocketTimeout) {
+                        Boolean strict302Handling) {
 
         this.requestCharset = requestCharset;
         this.responseCharset = responseCharset;
-        this.acceptAnyCertificate = acceptAnyCertificate;
-        this.allowPoolingConnections = allowPoolingConnections;
-        this.allowPoolingSslConnections = allowPoolingSslConnections;
+        this.useInsecureTrustManager = useInsecureTrustManager;
         this.connectionTTL = connectionTTL;
         this.connectTimeout = connectTimeout;
         this.followRedirect = followRedirect;
@@ -91,7 +83,6 @@ public class ClientConfig {
         this.readTimeout = readTimeout;
         this.requestTimeout = requestTimeout;
         this.strict302Handling = strict302Handling;
-        this.webSocketTimeout = webSocketTimeout;
     }
 
     public Charset getRequestCharset() {
@@ -110,28 +101,12 @@ public class ClientConfig {
         this.responseCharset = responseCharset;
     }
 
-    public Boolean getAcceptAnyCertificate() {
-        return acceptAnyCertificate;
+    public Boolean getUseInsecureTrustManager() {
+        return useInsecureTrustManager;
     }
 
-    public void setAcceptAnyCertificate(Boolean acceptAnyCertificate) {
-        this.acceptAnyCertificate = acceptAnyCertificate;
-    }
-
-    public Boolean getAllowPoolingConnections() {
-        return allowPoolingConnections;
-    }
-
-    public void setAllowPoolingConnections(Boolean allowPoolingConnections) {
-        this.allowPoolingConnections = allowPoolingConnections;
-    }
-
-    public Boolean getAllowPoolingSslConnections() {
-        return allowPoolingSslConnections;
-    }
-
-    public void setAllowPoolingSslConnections(Boolean allowPoolingSslConnections) {
-        this.allowPoolingSslConnections = allowPoolingSslConnections;
+    public void setUseInsecureTrustManager(Boolean useInsecureTrustManager) {
+        this.useInsecureTrustManager = useInsecureTrustManager;
     }
 
     public int getConnectionTTL() {
@@ -222,14 +197,6 @@ public class ClientConfig {
         this.strict302Handling = strict302Handling;
     }
 
-    public int getWebSocketTimeout() {
-        return webSocketTimeout;
-    }
-
-    public void setWebSocketTimeout(int webSocketTimeout) {
-        this.webSocketTimeout = webSocketTimeout;
-    }
-
     public Integer getSslSessionTimeout() {
         return sslSessionTimeout;
     }
@@ -246,11 +213,11 @@ public class ClientConfig {
         this.sslSessionCacheSize = sslSessionCacheSize;
     }
 
-    public SSLContext getSslContext() {
+    public SslContext getSslContext() {
         return sslContext;
     }
 
-    public void setSslContext(SSLContext sslContext) {
+    public void setSslContext(SslContext sslContext) {
         this.sslContext = sslContext;
     }
 
