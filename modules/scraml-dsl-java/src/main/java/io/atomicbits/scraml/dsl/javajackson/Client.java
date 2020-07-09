@@ -48,6 +48,6 @@ public interface Client extends AutoCloseable {
 
     String getPrefix();
 
-    void close();
+    void close() throws Exception;;
 
 }

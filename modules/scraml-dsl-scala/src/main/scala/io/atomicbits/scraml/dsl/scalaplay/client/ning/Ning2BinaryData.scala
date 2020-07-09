@@ -21,19 +21,20 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.io.InputStream
+import java.nio.charset.Charset
 
 import io.atomicbits.scraml.dsl.scalaplay.BinaryData
 
 /**
   * Created by peter on 21/01/16.
   */
-class Ning19BinaryData(val innerResponse: com.ning.http.client.Response) extends BinaryData {
+class Ning2BinaryData(val innerResponse: org.asynchttpclient.Response) extends BinaryData {
 
   override def asBytes: Array[Byte] = innerResponse.getResponseBodyAsBytes
 
   override def asString: String = innerResponse.getResponseBody
 
-  override def asString(charset: String): String = innerResponse.getResponseBody(charset)
+  override def asString(charset: String): String = innerResponse.getResponseBody(Charset.forName(charset))
 
   /**
     * Request the binary data as a stream. This is convenient when there is a large amount of data to receive.

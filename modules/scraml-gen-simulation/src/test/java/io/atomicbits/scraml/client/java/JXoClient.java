@@ -24,7 +24,7 @@ import io.atomicbits.scraml.dsl.javajackson.Client;
 import io.atomicbits.scraml.dsl.javajackson.RequestBuilder;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientConfig;
 import io.atomicbits.scraml.dsl.javajackson.client.ClientFactory;
-import io.atomicbits.scraml.dsl.javajackson.client.ning.Ning19ClientFactory;
+import io.atomicbits.scraml.dsl.javajackson.client.ning.Ning2ClientFactory;
 
 import java.util.Map;
 
@@ -52,7 +52,7 @@ public class JXoClient {
                      ClientConfig clientConfig,
                      Map<String, String> defaultHeaders,
                      ClientFactory clientFactory) {
-        ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning19ClientFactory();
+        ClientFactory cFactory = clientFactory != null ? clientFactory : new Ning2ClientFactory();
         Client client = cFactory.createClient(host, port, protocol, prefix, clientConfig, defaultHeaders);
         this._requestBuilder.setClient(client);
         System.out.println(this._requestBuilder.toString());
@@ -61,7 +61,11 @@ public class JXoClient {
     public RestResource rest = new RestResource(this._requestBuilder);
 
     public void _close() {
-        this._requestBuilder.getClient().close();
+        try {
+            this._requestBuilder.getClient().close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
