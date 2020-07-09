@@ -121,7 +121,7 @@ case class ClientClassGenerator(javaJackson: CommonJavaJacksonPlatform) extends 
                    return this._requestBuilder;
                }
 
-               public void close() {
+               public void close() throws Exception {
                    this._requestBuilder.getClient().close();
                }
 

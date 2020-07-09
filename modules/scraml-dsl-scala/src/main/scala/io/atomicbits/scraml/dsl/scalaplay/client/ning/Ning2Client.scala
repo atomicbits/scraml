@@ -134,12 +134,7 @@ case class Ning2Client(protocol: String,
     val transformer: org.asynchttpclient.Response => Response[BinaryData] = { response =>
       val binaryData: BinaryData = new Ning2BinaryData(response)
 
-      val headers: Map[String, List[String]] =
-        response.getHeaders.asInstanceOf[JMap[String, JList[String]]].asScala.foldLeft(Map.empty[String, List[String]]) {
-          (map, headerPair) =>
-            val (key, value) = headerPair
-            map + (key -> value.asScala.toList)
-        }
+      val headers: Map[String, List[String]] = headersToMap(response.getHeaders)
 
       Response[BinaryData](response.getStatusCode, None, None, Some(binaryData), headers)
     }
