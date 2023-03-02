@@ -108,14 +108,14 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
       parsedParameter.copy(parameterType = updatedParameterType)
     }
 
-    def transformBodyContent(bodyContent: BodyContent): BodyContent = {
+    def transformBodyContent(mediaType: MediaType, bodyContent: BodyContent): BodyContent = {
       val updatedFormParameters = bodyContent.formParameters.mapValues(transformParsedParameter)
       val updatedBodyType       = bodyContent.bodyType.map(injectCanonicalTypeRepresentation(_))
       bodyContent.copy(formParameters = updatedFormParameters, bodyType = updatedBodyType)
     }
 
     def transformBody(body: Body): Body = {
-      val updatedContentMap = body.contentMap.mapValues(transformBodyContent).toMap
+      val updatedContentMap = body.contentMap.transform(transformBodyContent)
       body.copy(contentMap = updatedContentMap)
     }
 
@@ -129,10 +129,10 @@ case class CanonicalTypeCollector(canonicalNameGenerator: CanonicalNameGenerator
 
       val updatedBody = transformBody(action.body)
 
-      val updatedResponseMap = action.responses.responseMap.mapValues { response =>
+      val updatedResponseMap = action.responses.responseMap.transform { (_, response) =>
         val updatedResponseBody = transformBody(response.body)
         response.copy(body = updatedResponseBody)
-      }.toMap
+      }
       val updatedResponses = action.responses.copy(responseMap = updatedResponseMap)
 
       action.copy(headers         = updatedHeaders,

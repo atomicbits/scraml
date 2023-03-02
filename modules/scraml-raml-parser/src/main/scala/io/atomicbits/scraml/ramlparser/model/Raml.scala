@@ -93,7 +93,8 @@ object Raml {
       } getOrElse Failure(RamlParseException(s"File ${parseCtxt.sourceTrail} does not contain the mandatory title field."))
 
     val types: Try[Types] = {
-      List((ramlJson \ "types").toOption, (ramlJson \ "schemas").toOption).flatten match {
+      val x = List((ramlJson \ "types").toOption, (ramlJson \ "schemas").toOption).flatten
+      (x: @unchecked) match {
         case List(ts, ss) =>
           Failure(
             RamlParseException(

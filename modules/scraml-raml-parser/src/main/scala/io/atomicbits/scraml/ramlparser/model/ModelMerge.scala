@@ -180,7 +180,7 @@ trait ModelMerge {
             case None => sys.error(s"Did not find trait or resourceType replacement for value ${replaceString.matchString}.")
           }
         val transformedReplacement = replaceString.transformReplacementString(replacement)
-        text.replaceAllLiterally(replaceString.toReplace, transformedReplacement)
+        text.replace(replaceString.toReplace, transformedReplacement)
       }
 
     }

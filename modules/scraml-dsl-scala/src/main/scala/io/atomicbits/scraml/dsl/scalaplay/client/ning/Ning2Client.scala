@@ -21,7 +21,6 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.nio.charset.Charset
-import java.util.{List => JList, Map => JMap}
 import java.util.concurrent.CompletionStage
 import java.util.function.{BiConsumer, Function => JFunction}
 
@@ -40,7 +39,7 @@ import play.api.libs.json._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by peter on 28/10/15.

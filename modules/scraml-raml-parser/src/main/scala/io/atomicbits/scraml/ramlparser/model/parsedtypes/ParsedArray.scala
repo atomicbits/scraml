@@ -113,7 +113,7 @@ object ParsedArray {
     // Process the required field
     val required = json.fieldBooleanValue("required")
 
-    val fragments = json match {
+    val fragments = (json: @unchecked) match {
       case Fragments(fragment) => fragment
     }
 

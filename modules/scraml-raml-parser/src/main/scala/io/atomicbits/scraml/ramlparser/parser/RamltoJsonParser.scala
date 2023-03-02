@@ -25,7 +25,7 @@ import java.net.URI
 import org.yaml.snakeyaml.Yaml
 import play.api.libs.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.{ Failure, Success, Try }
 
 /**
@@ -71,7 +71,7 @@ object RamlToJsonParser {
       case list: java.util.ArrayList[_] => JsArray(list.asScala.map(anyToJson))
       case map: java.util.Map[_, _] =>
         val mapped =
-          mapAsScalaMap(map).map {
+          map.asScala.map {
             case (field, theValue) => field.toString -> anyToJson(theValue)
           }
         JsObject(mapped.toSeq)

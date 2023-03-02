@@ -38,13 +38,8 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
 
   def -(name: String): ParsedProperties = copy(valueMap = valueMap - name)
 
-  def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
-    copy(valueMap = valueMap.mapValues(f).toMap)
-  }
-
-  def asTypeMap: Map[String, ParsedType] = {
-    valueMap.mapValues(_.propertyType.parsed)
-  }.toMap
+  def map(f: ParsedProperty => ParsedProperty): ParsedProperties =
+    copy(valueMap = valueMap.transform((_, parsedProperty) => f(parsedProperty)))
 
   val values: List[ParsedProperty] = valueMap.values.toList
 
@@ -71,8 +66,8 @@ object ParsedProperties {
     def jsObjectToProperties(jsObject: JsObject): Try[ParsedProperties] = {
 
       val valueMap: Map[String, Try[ParsedProperty]] =
-        jsObject.value
-          .mapValues(model.mark)
+        jsObject.value.toMap
+          .transform((_, jsValue) => model.mark(jsValue))
           .collect {
             case (name, ParsedType(tryType)) =>
               val (actualName, requiredProp) = detectRequiredPropertyName(name)

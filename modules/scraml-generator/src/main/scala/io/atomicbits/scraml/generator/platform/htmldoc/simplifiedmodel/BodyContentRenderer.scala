@@ -76,7 +76,7 @@ case class BodyContentRenderer(generationAggr: GenerationAggr) {
           case TypeParameter(paramName) => s"type parameter$suffix$comment"
         }
       case NonPrimitiveTypeReference(refers, genericTypes, genericTypeParameters) =>
-        (refers, generationAggr.canonicalToMap.get(refers)) match {
+        ((refers, generationAggr.canonicalToMap.get(refers)): @unchecked) match {
           case (ref, _) if recursiveCanonicals.contains(ref) => "" // ToDo: render recursive object type.
           case (ref, None)                                   => ""
           case (ref, Some(objectType: ObjectType)) =>

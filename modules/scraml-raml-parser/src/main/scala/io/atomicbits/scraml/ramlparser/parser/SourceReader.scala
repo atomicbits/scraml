@@ -27,10 +27,7 @@ import java.nio.file.{ FileSystem => _, _ }
 import java.util.Collections
 
 import scala.util.Try
-// We don't use CollectionConverters yet since we still want to cross-compile to scala 2.11 and 2.12
-//import scala.jdk.CollectionConverters
-import scala.collection.JavaConverters._
-
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by peter on 12/04/17.
@@ -167,8 +164,8 @@ object SourceReader {
     }
   }
 
-  def getInputStreamContent(inputStream: InputStream): Array[Byte] =
-    Stream.continually(inputStream.read).takeWhile(_ != -1).map(_.toByte).toArray
+  //def getInputStreamContent(inputStream: InputStream): Array[Byte] =
+  //  Stream.continually(inputStream.read).takeWhile(_ != -1).map(_.toByte).toArray
 
   /**
     * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone

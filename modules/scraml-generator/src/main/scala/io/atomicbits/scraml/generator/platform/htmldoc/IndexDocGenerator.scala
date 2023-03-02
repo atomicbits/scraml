@@ -30,7 +30,7 @@ import java.io.StringWriter
 import io.atomicbits.scraml.generator.platform.Platform._
 import io.atomicbits.scraml.generator.platform.htmldoc.simplifiedmodel.ClientDocModel
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by peter on 9/05/18.
@@ -68,7 +68,7 @@ object IndexDocGenerator extends SourceGenerator {
         case Some(v)                                                  => mapValue(v)
         case Nil                                                      => null
         case l: List[_]                                               => l.map(mapValue).asJava
-        case m: Map[_, _]                                             => m.mapValues(mapValue).asJava
+        case m: Map[_, _]                                             => m.transform((_, v) => mapValue(v)).toList.asJava
         case p: Product if p.productArity > 0 && !visited.contains(p) => toJavaMap(p, visited + cc)
         case x                                                        => x
       }

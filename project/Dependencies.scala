@@ -37,6 +37,8 @@ object Dependencies {
   val okHttpProvided      = "com.squareup.okhttp3" % "okhttp"            % "4.10.0"  % "provided"
   val playJson            = "com.typesafe.play"    %% "play-json"        % "2.9.4"
 
+  val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0"
+
   val scalariform  = "org.scalariform"                   %% "scalariform"       % "0.2.10"
   val javaFormat   = "com.google.googlejavaformat"       % "google-java-format" % "1.15.0"
   val mustacheJava = "com.github.spullara.mustache.java" % "compiler"           % "0.9.10"
@@ -52,7 +54,8 @@ object Dependencies {
   val scramlRamlParserDeps = Seq(
     playJson,
     snakeYaml,
-    slf4j
+    slf4j,
+    scalaCollectionCompat
   )
 
   // inclusion of the above dependencies in the modules
@@ -66,7 +69,8 @@ object Dependencies {
   val scramlDslDepsScala = Seq(
     slf4j,
     playJson,
-    asyncClientProvided
+    asyncClientProvided,
+    scalaCollectionCompat
   )
 
   val scramlDslDepsAndroid = Seq(
