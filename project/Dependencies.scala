@@ -33,9 +33,9 @@ object Dependencies {
   val snakeYaml = "org.yaml" % "snakeyaml" % "1.16"
 
   // val asyncClientOld      = "com.ning"             % "async-http-client" % "1.9.40" % "provided"
-  val asyncClientProvided = "org.asynchttpclient"  % "async-http-client" % "2.8.1"  % "provided"
+  val asyncClientProvided = "org.asynchttpclient"  % "async-http-client" % "2.12.3"  % "provided"
   val okHttpProvided      = "com.squareup.okhttp3" % "okhttp"            % "3.9.0"  % "provided"
-  val playJson            = "com.typesafe.play"    %% "play-json"        % "2.8.1"
+  val playJson            = "com.typesafe.play"    %% "play-json"        % "2.9.4"
 
   val scalariform  = "org.scalariform"                   %% "scalariform"       % "0.2.10"
   val javaFormat   = "com.google.googlejavaformat"       % "google-java-format" % "1.2"
@@ -47,7 +47,7 @@ object Dependencies {
   val scalaTest       = "org.scalatest"          %% "scalatest"        % "3.1.0"  % "test"
   val wiremock        = "com.github.tomakehurst" % "wiremock"          % "1.57"   % "test"
   val junit           = "junit"                  % "junit"             % "4.12"   % "test"
-  val asyncClientTest = "org.asynchttpclient"    % "async-http-client" % "2.8.1"  % "test"
+  val asyncClientTest = "org.asynchttpclient"    % "async-http-client" % "2.12.3"  % "test"
 
   val scramlRamlParserDeps = Seq(
     playJson,

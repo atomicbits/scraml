@@ -200,6 +200,7 @@ case class Ning2Client(protocol: String,
             part.bytes,
             part.contentType.orNull,
             part.charset.orNull,
+            part.fileName.orNull,
             part.contentId.orNull,
             part.transferEncoding.orNull
           )
@@ -227,6 +228,19 @@ case class Ning2Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
+      case part: InputStreamPart =>
+        ningBuilder.addBodyPart(
+          new org.asynchttpclient.request.body.multipart.InputStreamPart(
+            part.name,
+            part.inputStream,
+            part.fileName,
+            part.contentLength,
+            part.contentType.orNull,
+            part.charset.orNull,
+            part.contentId.orNull,
+            part.transferEncoding.orNull
+          )
+        )
     }
 
     val ningRequest: Request = ningBuilder.build()
@@ -245,7 +259,7 @@ case class Ning2Client(protocol: String,
           null
         }
 
-        override def onThrowable(t: Throwable) {
+        override def onThrowable(t: Throwable) = {
           super.onThrowable(t)
           promise.failure(t)
           // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
