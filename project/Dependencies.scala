@@ -30,7 +30,7 @@ object Dependencies {
   val jacksonCore        = "com.fasterxml.jackson.core" % "jackson-core"        % "2.14.2"
   val jacksonDatabind    = "com.fasterxml.jackson.core" % "jackson-databind"    % "2.14.2"
 
-  val snakeYaml = "org.yaml" % "snakeyaml" % "2.0"
+  val snakeYaml = "org.yaml" % "snakeyaml" % "1.16"
 
   // val asyncClientOld      = "com.ning"             % "async-http-client" % "1.9.40" % "provided"
   val asyncClientProvided = "org.asynchttpclient"  % "async-http-client" % "2.12.3"  % "provided"

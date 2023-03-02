@@ -20,14 +20,13 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.constructor.{ AbstractConstruct, Construct, SafeConstructor }
 import org.yaml.snakeyaml.nodes.{ Node, ScalarNode, Tag }
 
 /**
   * Created by peter on 6/02/16.
   */
-class SimpleRamlConstructor extends SafeConstructor(new LoaderOptions()) {
+class SimpleRamlConstructor extends SafeConstructor {
 
   def addYamlConstructor(tag: Tag, construct: Construct): Unit = {
     this.yamlConstructors.put(tag, construct)
