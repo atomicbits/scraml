@@ -199,14 +199,14 @@ case class ParsedTypeIndexer(canonicalNameGenerator: CanonicalNameGenerator) {
   }
 
   /**
-    * Expand all relative ids to absolute ids and also expand all $ref pointers.
+    * Expand all relative ids to absolute ids and also expand all $$ref pointers.
     *
     * @param ttype
     * @return
     */
   def expandRelativeToAbsoluteIds(ttype: ParsedType): ParsedType = { // ToDo: move this into a separate class
 
-    /**
+    /*
       * Expand the ids in a schema based on the nearest root id of the enclosing schemas.
       *
       * @param ttype         the schema whose ids need expanding

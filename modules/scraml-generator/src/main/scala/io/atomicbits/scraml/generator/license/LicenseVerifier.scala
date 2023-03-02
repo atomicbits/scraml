@@ -24,8 +24,7 @@ import java.security.{ KeyFactory, PublicKey, Signature }
 import java.security.spec.X509EncodedKeySpec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-import sun.misc.BASE64Decoder
+import java.util.Base64
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -113,7 +112,7 @@ object LicenseVerifier {
   private def decodeCommercialLicense(licenseKey: String): Option[LicenseData] = {
     val encodedKey = licenseKey.trim
     val signedKeyBytes =
-      Try(new BASE64Decoder().decodeBuffer(encodedKey)).getOrElse(sys.error(s"Cannot verify license key with bad key format."))
+      Try(Base64.getDecoder().decode(encodedKey)).getOrElse(sys.error(s"Cannot verify license key with bad key format."))
     val signedKey = new String(signedKeyBytes, charset)
     val (unsignedKey, signature) = signedKey.split('!').toList match {
       case uKey :: sig :: _ => (uKey, sig)
@@ -182,14 +181,13 @@ object LicenseVerifier {
     val signer: Signature      = Signature.getInstance(signatureAlgorithm)
     signer.initVerify(publicKey)
     signer.update(textBytes)
-    Try(signer.verify(new BASE64Decoder().decodeBuffer(signature))).recover {
+    Try(signer.verify(Base64.getDecoder.decode(signature))).recover {
       case NonFatal(exc) => false
     }.get
   }
 
   lazy val publicKey: PublicKey = {
-    val b64: BASE64Decoder       = new BASE64Decoder
-    val decoded: Array[Byte]     = b64.decodeBuffer(publicKeyPEM)
+    val decoded: Array[Byte]     = Base64.getDecoder.decode(publicKeyPEM)
     val spec: X509EncodedKeySpec = new X509EncodedKeySpec(decoded)
     val kf: KeyFactory           = KeyFactory.getInstance(algorithm)
     kf.generatePublic(spec)

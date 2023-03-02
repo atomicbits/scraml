@@ -36,7 +36,7 @@ import scala.util.{ Failure, Success, Try }
   * Generic Object elements have a 'genericType' field:
   *
   * | {
-  * |   "$schema": "http://json-schema.org/draft-03/schema",
+  * |   "$$schema": "http://json-schema.org/draft-03/schema",
   * |   "id": "http://atomicbits.io/schema/paged-list.json#",
   * |   "type": "object",
   * |   "typeVariables": ["T", "U"],

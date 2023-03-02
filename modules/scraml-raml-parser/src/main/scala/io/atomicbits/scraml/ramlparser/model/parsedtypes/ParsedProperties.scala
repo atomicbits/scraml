@@ -58,7 +58,7 @@ object ParsedProperties {
 
   def apply(jsValueOpt: Option[JsValue], model: TypeModel)(implicit parseContext: ParseContext): Try[ParsedProperties] = {
 
-    /**
+    /*
       * @param name The name of the property
       * @return A pair whose first element is de actual property name and the second element indicates whether or not the
       *         property is an optional property. None (no indication for optional is given) Some(false) (it is an optional property).

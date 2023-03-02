@@ -8,7 +8,7 @@ lazy val scramlDslScala = Project(
   projSettings(dependencies = scramlDslDepsScala ++ testDeps) ++
     Seq(
       // Copy all source files into the artifact.
-      (unmanagedResourceDirectories in Compile) += (scalaSource in Compile).value
+      (Compile / unmanagedResourceDirectories) += (Compile / scalaSource).value
     )
 )
 
@@ -25,7 +25,7 @@ lazy val scramlDslJava = Project(
       crossPaths := false,
       autoScalaLibrary := false,
       // Copy all source files into the artifact.
-      (unmanagedResourceDirectories in Compile) += (javaSource in Compile).value
+      (Compile / unmanagedResourceDirectories) += (Compile / javaSource).value
     )
 )
 
@@ -43,7 +43,7 @@ lazy val scramlDslAndroid = Project(
       autoScalaLibrary := false,
       javacOptions ++= Seq("-source", "1.7"), // Android 4 till android 7 and above are on Java 1.7
       // Copy all source files into the artifact.
-      (unmanagedResourceDirectories in Compile) += (javaSource in Compile).value
+      (Compile / unmanagedResourceDirectories) += (Compile / javaSource).value
     )
 )
 

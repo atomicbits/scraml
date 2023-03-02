@@ -41,7 +41,7 @@ object InlineTypeDeclaration {
     * .          {
     * .            "type": "array",
     * .              "items": {
-    * .                "$ref": "user.json"
+    * .                "$$ref": "user.json"
     * .              }
     * .          }
     *

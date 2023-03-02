@@ -111,6 +111,7 @@ case class Ning2Client(protocol: String,
         Future.failed(
           new IllegalArgumentException(
             s"JSON validation error in the response from ${requestBuilder.summary}: ${validationMessages mkString ", "}"))
+      case _ => sys.error("Unexpected type") // shouldn't occur, make scalac happy
     }
   }
 
