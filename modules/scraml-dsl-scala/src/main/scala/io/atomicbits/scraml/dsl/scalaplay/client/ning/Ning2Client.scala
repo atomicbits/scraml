@@ -21,8 +21,9 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.nio.charset.Charset
+import java.util.UUID
 import java.util.concurrent.CompletionStage
-import java.util.function.{BiConsumer, Function => JFunction}
+import java.util.function.{ BiConsumer, Function => JFunction }
 
 import org.asynchttpclient.AsyncCompletionHandlerBase
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
@@ -34,11 +35,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.atomicbits.scraml.dsl.scalaplay.client.ClientConfig
 import io.atomicbits.scraml.dsl.scalaplay._
 import io.netty.handler.codec.http.HttpHeaders
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
-import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ Future, Promise }
+import scala.util.{ Failure, Success, Try }
 import scala.jdk.CollectionConverters._
 
 /**
@@ -244,8 +245,9 @@ case class Ning2Client(protocol: String,
     }
 
     val ningRequest: Request = ningBuilder.build()
-    LOGGER.debug(s"Executing request: $ningRequest")
-    LOGGER.trace(s"Request body: $body")
+    val requestId = UUID.randomUUID()
+    LOGGER.debug(s"Executing request $requestId: $ningRequest")
+    LOGGER.trace(s"Request body $requestId: $body")
 
     val promise = Promise[Response[T]]()
 
@@ -254,6 +256,7 @@ case class Ning2Client(protocol: String,
       new AsyncCompletionHandlerBase() {
         @throws(classOf[Exception])
         override def onCompleted(response: org.asynchttpclient.Response): org.asynchttpclient.Response = {
+          LOGGER.trace(s"Response $requestId: $response")
           val resp: Try[Response[T]] = Try(transformer(response))
           promise.complete(resp)
           null
