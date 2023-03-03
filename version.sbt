@@ -1,3 +1,3 @@
-ThisBuild / version := "0.9.2-SNAPSHOT"
+ThisBuild / version := "0.9.2"
 // To publish to https://oss.sonatype.org/#stagingRepositories
 // +publishSigned
