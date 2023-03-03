@@ -262,7 +262,7 @@ case class Ning2Client(protocol: String,
         override def onThrowable(t: Throwable): Unit = {
           super.onThrowable(t)
           promise.failure(t)
-          // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
+          // explicitly return Unit to avoid compilation errors on systems with strict compilation rules switched on,
           // such as "-Ywarn-value-discard"
           ()
         }
