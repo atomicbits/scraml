@@ -36,7 +36,7 @@ import scala.util.{ Failure, Success, Try }
   * Generic Object elements have a 'genericType' field:
   *
   * | {
-  * |   "$schema": "http://json-schema.org/draft-03/schema",
+  * |   "$$schema": "http://json-schema.org/draft-03/schema",
   * |   "id": "http://atomicbits.io/schema/paged-list.json#",
   * |   "type": "object",
   * |   "typeVariables": ["T", "U"],
@@ -93,7 +93,7 @@ object ParsedGenericObject {
     // Process the required field
     val required = (json \ "required").asOpt[Boolean]
 
-    val fragments = json match {
+    val fragments = (json: @unchecked) match {
       case Fragments(fragment) => fragment
     }
 

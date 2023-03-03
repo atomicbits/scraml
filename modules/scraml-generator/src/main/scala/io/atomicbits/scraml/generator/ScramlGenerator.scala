@@ -22,7 +22,7 @@ package io.atomicbits.scraml.generator
 
 import io.atomicbits.scraml.generator.formatting.{ JavaFormatter, ScalaFormatter }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import java.util.{ Map => JMap }
 
@@ -152,7 +152,7 @@ object ScramlGenerator {
         .map(addLicenseAndFormat(_, platform, licenseHeader))
         .map(sourceFile => (sourceFile.filePath.toString, sourceFile.content))
 
-    mapAsJavaMap[String, String](tupleList.toMap)
+    tupleList.toMap.asJava
   }
 
   def packageNameToPackagParts(packageName: String): List[String] = packageName.split('.').toList.filter(!_.isEmpty)

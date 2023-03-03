@@ -82,7 +82,7 @@ object ParsedObject {
     // Process the properties
     val properties: Try[ParsedProperties] = ParsedProperties((json \ "properties").toOption, model)
 
-    val fragments = json match {
+    val fragments = (json: @unchecked) match {
       case Fragments(fragment) => fragment
     }
 
@@ -216,7 +216,7 @@ object ParsedObject {
       }
     }
 
-    schema match {
+    (schema: @unchecked) match {
       case ParsedType(x) => x
     }
 

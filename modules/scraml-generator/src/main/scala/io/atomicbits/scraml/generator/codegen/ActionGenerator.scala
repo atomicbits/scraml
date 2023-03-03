@@ -84,8 +84,10 @@ case class ActionGenerator(actionCode: ActionCode) {
     val uniqueActionPaths: Map[ContentHeaderSegment, Map[AcceptHeaderSegment, Set[ActionSelection]]] =
       actionPathToAction
         .groupBy(_.contentHeader)
-        .mapValues(_.groupBy(_.acceptHeader))
-        .mapValues(_.mapValues(_.map(_.action)).toMap).toMap
+        .transform((_, actionPaths) => actionPaths.groupBy(_.acceptHeader))
+        .transform { (_, groups) =>
+          groups.transform((_, actionPaths) => actionPaths.map(_.action))
+        }
 
     val actionPathExpansion =
       uniqueActionPaths map {

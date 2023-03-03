@@ -27,23 +27,24 @@ object BuildSettings {
 
   val snapshotSuffix = "-SNAPSHOT"
 
-  val scala2_12 = "2.12.10"
+  val scala2_12 = "2.12.17"
+  val scala2_13 = "2.13.10"
 
   val ScalaVersion = scala2_12
 
-  val defaultCrossScalaVersions = Seq(scala2_12)
+  val defaultCrossScalaVersions = Seq(scala2_12, scala2_13)
 
   val scalacBuildOptions =
     Seq(
       "-unchecked",
       "-deprecation",
       "-feature",
-      // "-Xfatal-warnings",
+      "-Xfatal-warnings",
       // "-Xlint:-infer-any",
       // "-Ywarn-value-discard",
       "-encoding",
-      "UTF-8"
-      // "-target:jvm-1.8",
+      "UTF-8",
+      "-release:11",
       // "-Ydelambdafy:method"
     )
 

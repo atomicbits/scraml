@@ -33,7 +33,7 @@ object FactoryLoader {
   def load(clientFactoryClass: Option[String] = None): Try[ClientFactory] = {
     val factoryClass = clientFactoryClass.getOrElse(defaultClientFactoryClass)
     Try {
-      Class.forName(factoryClass).newInstance().asInstanceOf[ClientFactory]
+      Class.forName(factoryClass).getDeclaredConstructor().newInstance().asInstanceOf[ClientFactory]
     } recoverWith {
       case cnfe: NoClassDefFoundError =>
         Failure(

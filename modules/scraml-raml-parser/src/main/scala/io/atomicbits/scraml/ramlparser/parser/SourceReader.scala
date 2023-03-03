@@ -20,17 +20,13 @@
 
 package io.atomicbits.scraml.ramlparser.parser
 
-import java.io._
 import java.net.{ URI, URL }
 import java.nio.file.{ FileSystems, Files, Path, Paths, FileSystem }
 import java.nio.file.{ FileSystem => _, _ }
 import java.util.Collections
 
 import scala.util.Try
-// We don't use CollectionConverters yet since we still want to cross-compile to scala 2.11 and 2.12
-//import scala.jdk.CollectionConverters
-import scala.collection.JavaConverters._
-
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by peter on 12/04/17.
@@ -166,30 +162,4 @@ object SourceReader {
       case (aggr, component) => aggr.resolve(component.getFileName.toString)
     }
   }
-
-  def getInputStreamContent(inputStream: InputStream): Array[Byte] =
-    Stream.continually(inputStream.read).takeWhile(_ != -1).map(_.toByte).toArray
-
-  /**
-    * Beware, Windows paths are represented as URL as follows: file:///C:/Users/someone
-    * uri.normalize().getPath then gives /C:/Users/someone instead of C:/Users/someone
-    * also Paths.get(uri) then assumes /C:/Users/someone
-    * One would think the java.nio.file implementation does it right, but it doesn't.
-    *
-    * This hack fixes this.
-    *
-    * see: http://stackoverflow.com/questions/18520972/converting-java-file-url-to-file-path-platform-independent-including-u
-    *
-    * http://stackoverflow.com/questions/9834776/java-nio-file-path-issue
-    *
-    */
-  private def cleanWindowsTripleSlashIssue(path: String): String = {
-    val hasWindowsPrefix =
-      path.split('/').filter(_.nonEmpty).headOption.collect {
-        case first if first.endsWith(":") => true
-      } getOrElse false
-    if (hasWindowsPrefix && path.startsWith("/")) path.drop(1)
-    else path
-  }
-
 }

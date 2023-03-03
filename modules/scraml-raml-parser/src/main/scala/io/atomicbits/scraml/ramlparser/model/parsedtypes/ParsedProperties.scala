@@ -38,13 +38,8 @@ case class ParsedProperties(valueMap: Map[String, ParsedProperty] = Map.empty) {
 
   def -(name: String): ParsedProperties = copy(valueMap = valueMap - name)
 
-  def map(f: ParsedProperty => ParsedProperty): ParsedProperties = {
-    copy(valueMap = valueMap.mapValues(f).toMap)
-  }
-
-  def asTypeMap: Map[String, ParsedType] = {
-    valueMap.mapValues(_.propertyType.parsed)
-  }.toMap
+  def map(f: ParsedProperty => ParsedProperty): ParsedProperties =
+    copy(valueMap = valueMap.transform((_, parsedProperty) => f(parsedProperty)))
 
   val values: List[ParsedProperty] = valueMap.values.toList
 
@@ -58,7 +53,7 @@ object ParsedProperties {
 
   def apply(jsValueOpt: Option[JsValue], model: TypeModel)(implicit parseContext: ParseContext): Try[ParsedProperties] = {
 
-    /**
+    /*
       * @param name The name of the property
       * @return A pair whose first element is de actual property name and the second element indicates whether or not the
       *         property is an optional property. None (no indication for optional is given) Some(false) (it is an optional property).
@@ -71,8 +66,8 @@ object ParsedProperties {
     def jsObjectToProperties(jsObject: JsObject): Try[ParsedProperties] = {
 
       val valueMap: Map[String, Try[ParsedProperty]] =
-        jsObject.value
-          .mapValues(model.mark)
+        jsObject.value.toMap
+          .transform((_, jsValue) => model.mark(jsValue))
           .collect {
             case (name, ParsedType(tryType)) =>
               val (actualName, requiredProp) = detectRequiredPropertyName(name)

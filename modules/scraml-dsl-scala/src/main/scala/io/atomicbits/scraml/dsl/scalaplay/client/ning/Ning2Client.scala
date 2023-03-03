@@ -21,7 +21,6 @@
 package io.atomicbits.scraml.dsl.scalaplay.client.ning
 
 import java.nio.charset.Charset
-import java.util.{List => JList, Map => JMap}
 import java.util.concurrent.CompletionStage
 import java.util.function.{BiConsumer, Function => JFunction}
 
@@ -40,7 +39,7 @@ import play.api.libs.json._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Created by peter on 28/10/15.
@@ -82,36 +81,45 @@ case class Ning2Client(protocol: String,
     }
   }
 
-  def callToTypeResponse[R](requestBuilder: RequestBuilder, body: Option[String])(
-      implicit responseFormat: Format[R]): Future[Response[R]] = {
+  def callToTypeResponse[R](
+      requestBuilder: RequestBuilder,
+      body: Option[String]
+  )(implicit responseFormat: Format[R]): Future[Response[R]] = {
     // In case of a non-200 or non-204 response, we set the typed body to None and keep the future successful and return the
     // Response object. When the JSON body on a 200-response cannot be parsed into the expected type, we DO fail the future because
     // in that case we violate the RAML specs.
-    callToJsonResponse(requestBuilder, body) map { response =>
-      if (response.status >= 200 && response.status < 300) {
-        // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
-        // there are many responses in the 200 range with different typed responses.
-        response.map(responseFormat.reads)
-      } else {
-        // We hijack the 'JsError(Nil)' type here to mark the non-200 case that has to result in a successful future with empty body.
-        // Mind that the empty body only means that the requested type is None, the stringBody and jsonBody fields are present as well.
-        response.map(_ => JsError(Nil))
-      }
-    } flatMap {
-      case response @ Response(_, _, _, Some(JsSuccess(t, path)), _) => Future.successful(response.copy(body = Some(t)))
-      case response @ Response(_, _, _, Some(JsError(Nil)), _)       => Future.successful(response.copy(body = None))
-      case response @ Response(_, _, _, None, _)                     => Future.successful(response.copy(body = None))
-      case Response(_, _, _, Some(JsError(e)), _) =>
-        val validationMessages = {
-          e flatMap { errorsByPath =>
-            val (path, errors) = errorsByPath
-            errors map (error => s"$path -> ${error.message}")
-          }
+    callToJsonResponse(requestBuilder, body)
+      .map { response =>
+        if (response.status >= 200 && response.status < 300) {
+          // Where we assume that any response in the 200 range will map to the unique typed response. This doesn't hold true if
+          // there are many responses in the 200 range with different typed responses.
+          response.map(responseFormat.reads)
+        } else {
+          // We hijack the 'JsError(Nil)' type here to mark the non-200 case that has to result in a successful future with empty body.
+          // Mind that the empty body only means that the requested type is None, the stringBody and jsonBody fields are present as well.
+          response.map(_ => JsError(Nil))
         }
-        Future.failed(
-          new IllegalArgumentException(
-            s"JSON validation error in the response from ${requestBuilder.summary}: ${validationMessages mkString ", "}"))
-    }
+      }
+      .flatMap { response =>
+        (response: @unchecked) match {
+          case response @ Response(_, _, _, Some(JsSuccess(t, _)), _) =>
+            Future.successful(response.copy(body = Some(t)))
+          case response @ Response(_, _, _, Some(JsError(Nil)), _) =>
+            Future.successful(response.copy(body = None))
+          case response @ Response(_, _, _, None, _) =>
+            Future.successful(response.copy(body = None))
+          case Response(_, _, _, Some(JsError(e)), _) =>
+            val validationMessages = {
+              e flatMap { errorsByPath =>
+                val (path, errors) = errorsByPath
+                errors map (error => s"$path -> ${error.message}")
+              }
+            }
+            Future.failed(
+              new IllegalArgumentException(
+                s"JSON validation error in the response from ${requestBuilder.summary}: ${validationMessages mkString ", "}"))
+        }
+      }
   }
 
   def callToStringResponse(requestBuilder: RequestBuilder, body: Option[String]): Future[Response[String]] = {
@@ -162,13 +170,9 @@ case class Ning2Client(protocol: String,
     }
 
     requestBuilder.queryParameters.foreach {
-      case (key, value) =>
-        value match {
-          case SimpleHttpParam(parameter)  => ningBuilder.addQueryParam(key, parameter)
-          case ComplexHttpParam(parameter) => ningBuilder.addQueryParam(key, parameter)
-          case RepeatedHttpParam(parameters) =>
-            parameters.foreach(parameter => ningBuilder.addQueryParam(key, parameter))
-        }
+      case (key, SimpleHttpParam(parameter))    => ningBuilder.addQueryParam(key, parameter)
+      case (key, ComplexHttpParam(parameter))   => ningBuilder.addQueryParam(key, parameter)
+      case (key, RepeatedHttpParam(parameters)) => parameters.foreach(parameter => ningBuilder.addQueryParam(key, parameter))
     }
 
     body.foreach { body =>
@@ -183,13 +187,9 @@ case class Ning2Client(protocol: String,
     }
 
     requestBuilder.formParameters.foreach {
-      case (key, value) =>
-        value match {
-          case SimpleHttpParam(parameter)  => ningBuilder.addFormParam(key, parameter)
-          case ComplexHttpParam(parameter) => ningBuilder.addFormParam(key, parameter)
-          case RepeatedHttpParam(parameters) =>
-            parameters.foreach(parameter => ningBuilder.addFormParam(key, parameter))
-        }
+      case (key, SimpleHttpParam(parameter))    => ningBuilder.addFormParam(key, parameter)
+      case (key, ComplexHttpParam(parameter))   => ningBuilder.addFormParam(key, parameter)
+      case (key, RepeatedHttpParam(parameters)) => parameters.foreach(parameter => ningBuilder.addFormParam(key, parameter))
     }
 
     requestBuilder.multipartParams.foreach {
@@ -200,6 +200,7 @@ case class Ning2Client(protocol: String,
             part.bytes,
             part.contentType.orNull,
             part.charset.orNull,
+            part.fileName.orNull,
             part.contentId.orNull,
             part.transferEncoding.orNull
           )
@@ -227,6 +228,19 @@ case class Ning2Client(protocol: String,
             part.transferEncoding.orNull
           )
         )
+      case part: InputStreamPart =>
+        ningBuilder.addBodyPart(
+          new org.asynchttpclient.request.body.multipart.InputStreamPart(
+            part.name,
+            part.inputStream,
+            part.fileName,
+            part.contentLength,
+            part.contentType.orNull,
+            part.charset.orNull,
+            part.contentId.orNull,
+            part.transferEncoding.orNull
+          )
+        )
     }
 
     val ningRequest: Request = ningBuilder.build()
@@ -245,10 +259,10 @@ case class Ning2Client(protocol: String,
           null
         }
 
-        override def onThrowable(t: Throwable) {
+        override def onThrowable(t: Throwable): Unit = {
           super.onThrowable(t)
           promise.failure(t)
-          // explicitely return Unit to avoid compilation errors on systems with strict compilation rules switched on,
+          // explicitly return Unit to avoid compilation errors on systems with strict compilation rules switched on,
           // such as "-Ywarn-value-discard"
           ()
         }

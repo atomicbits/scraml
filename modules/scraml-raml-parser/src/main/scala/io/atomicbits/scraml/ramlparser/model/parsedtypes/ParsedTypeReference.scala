@@ -57,7 +57,7 @@ object ParsedTypeReference {
 
     val id = JsonSchemaIdExtractor(json)
 
-    val ref = json match {
+    val ref = (json: @unchecked) match {
       case RefExtractor(refId) => refId
     }
 
@@ -65,7 +65,7 @@ object ParsedTypeReference {
 
     val genericTypes = getGenericTypes(json)
 
-    val fragments = json match {
+    val fragments = (json: @unchecked) match {
       case Fragments(fragment) => fragment
     }
 

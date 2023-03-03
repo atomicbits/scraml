@@ -20,7 +20,7 @@
 
 package io.atomicbits.scraml.dsl.scalaplay
 
-import _root_.java.io.File
+import _root_.java.io.{ File, InputStream }
 import _root_.java.nio.charset.Charset
 
 /**
@@ -34,6 +34,7 @@ sealed trait BodyPart
   * @param bytes The content of the part.
   * @param contentType The optional content type.
   * @param charset The optional character encoding (defaults to UTF-8).
+  * @param fileName The name of the file.
   * @param contentId The optional content id.
   * @param transferEncoding The optional transfer encoding.
   */
@@ -41,6 +42,7 @@ case class ByteArrayPart(name: String,
                          bytes: Array[Byte],
                          contentType: Option[String]      = None,
                          charset: Option[Charset]         = Some(Charset.forName("UTF8")),
+                         fileName: Option[String]         = None,
                          contentId: Option[String]        = None,
                          transferEncoding: Option[String] = None)
     extends BodyPart
@@ -79,4 +81,25 @@ case class StringPart(name: String,
                       charset: Option[Charset]         = Some(Charset.forName("UTF8")),
                       contentId: Option[String]        = None,
                       transferEncoding: Option[String] = None)
+    extends BodyPart
+
+/**
+ *
+ * @param name The name of the part.
+ * @param inputStream The InputStream.
+ * @param fileName The name of the file.
+ * @param contentLength The number of bytes in the inputStream, if unknown use -1.
+ * @param contentType The optional content type.
+ * @param charset The optional character encoding (defaults to UTF-8).
+ * @param contentId The optional content id.
+ * @param transferEncoding The optional transfer encoding.
+ */
+case class InputStreamPart(name: String,
+                           inputStream: InputStream,
+                           fileName: String,
+                           contentLength: Long              = -1L,
+                           contentType: Option[String]      = None,
+                           charset: Option[Charset]         = Some(Charset.forName("UTF8")),
+                           contentId: Option[String]        = None,
+                           transferEncoding: Option[String] = None)
     extends BodyPart

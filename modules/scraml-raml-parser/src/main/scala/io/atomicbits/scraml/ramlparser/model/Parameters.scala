@@ -38,7 +38,8 @@ case class Parameters(valueMap: Map[String, Parameter] = Map.empty) {
 
   val isEmpty = valueMap.isEmpty
 
-  def mapValues(fn: Parameter => Parameter): Parameters = copy(valueMap = valueMap.mapValues(fn).toMap)
+  def mapValues(fn: Parameter => Parameter): Parameters =
+    copy(valueMap = valueMap.transform((_, parameter) => fn(parameter)))
 
 }
 
@@ -49,7 +50,7 @@ object Parameters {
 
   def apply(jsValueOpt: Option[JsValue])(implicit parseContext: ParseContext): Try[Parameters] = {
 
-    /**
+    /*
       * @param name The name of the parameter
       * @return A pair whose first element is de actual parameter name and the second element indicates whether or not the
       *         parameter is an optional parameter. None (no indication for optional is given) Some(false) (it is an optional parameter).
